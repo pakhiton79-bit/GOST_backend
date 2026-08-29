@@ -17,15 +17,28 @@ backend/            Express-сервер: расчётный API + раздач�
   server.js
   src/
     helpers.js       общие утилиты (roundup, vol, fillBoards, округление "в наличии")
-    i3/              тип I-3: табличные данные (Табл.19, Табл.4, Табл.14, п.1.6.x) + расчёт
-    i1/              тип I-1: формулы + расчёт
+    i3/              тип I-3: расчёт (compute.js) + данные/формулы ГОСТа
+      sections.js      небольшие формулы по отдельным пунктам (п.1.6.5, 1.6.8, 1.6.11, 1.6.15)
+      data/table19.js  Табл.19 (сечения полозьев) + подбор (selectSkid19)
+      data/table4.js   Табл.4 (толщина доски дна, крепление к доскам дна)
+      data/table14.js  Табл.14 (поперечный брус крышки)
+      tables.js        точка входа - реэкспортирует всё из sections.js/data/*
+    i1/              тип I-1: формулы (logic.js) + расчёт (compute.js)
 frontend/public/     статический фронтенд (HTML/CSS/JS, отдаётся Express'ом как есть)
   index.html          список ГОСТов
   gost-10198-91.html  список типов тары
   i3-skid.html        калькулятор I-3, крепление за полозья
   i3-floor.html       калькулятор I-3, крепление к доскам дна
   i1.html             калькулятор I-1
-  css/, js/, images/
+  css/, images/
+  js/
+    app-i3.js           слой отображения типа I-3 (вызов API, таблицы, печать)
+    common-diagrams.js  общий рендер чертежей-фото (renderDiagram) - тип I-3 и I-1
+    common-print.js     общая механика печати (подгонка под 1 лист А4)
+    diagrams/           чертежи типа I-3 по узлам: dno.js, kryshka.js, end-panel.js, bokovoy.js
+    i1/
+      ui.js, calc-i1.js   UI и слой отображения типа I-1
+      diagrams/           чертежи типа I-1 по узлам: torec.js, bokovoy.js, kryshka-dno.js
 ```
 
 ## Запуск локально
