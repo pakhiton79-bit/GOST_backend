@@ -1,0 +1,679 @@
+  :root{
+    /* Палитра и токены — см. design.md (WOODCALC UI DESIGN SPEC v1.0) */
+    --bg: #F7F5F2;
+    --panel: #FFFFFF;
+    --panel-hover: #FBFAF8;
+    --table-header-bg: #FAF8F5;
+    --ink: #1F1B18;
+    --ink-soft: #6B625D;
+    --rule: #E8E3DD;
+    --border-input: #E8E3DD;
+    --border-btn: #D7D0C8;
+    --secondary-hover: #F5F3F0;
+    --accent: #4E342E;
+    --accent-hover: #5D4037;
+    --accent-wash: #EFE9E6;
+    --ok: #2E7D32;
+    --warn: #B7791F;
+    --warn-wash: #FBF3E4;
+    --shadow-sm: 0 1px 2px rgba(31,27,24,.06);
+    --shadow-lg: 0 8px 24px rgba(31,27,24,.10);
+  }
+  *{box-sizing:border-box;}
+  html{overflow-x:hidden;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size:16px;
+    letter-spacing:.015em;
+    line-height:1.35;
+    overflow-x:hidden;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+
+  /* Навигация «Назад» / «Главная» - вверху страниц выбора ГОСТа/типа и самих
+     калькуляторов (везде, кроме самой стартовой страницы - там некуда). */
+  .top-nav{
+    display:flex;
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .top-nav a{
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    text-decoration:none;
+  }
+  .top-nav a:hover{color:var(--accent);}
+
+  header{
+    border-bottom:1px solid var(--rule);
+    padding-bottom:20px;
+    margin-bottom:32px;
+  }
+  .eyebrow{
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:8px;
+  }
+  h1{
+    font-size:30px;
+    margin:0 0 6px;
+    color:var(--ink);
+    font-weight:600;
+  }
+  .subtitle{
+    font-size:14px;
+    color:var(--ink-soft);
+    font-family:inherit;
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    padding:32px;
+    margin-bottom:24px;
+    box-shadow:var(--shadow-sm);
+  }
+  .card h2{
+    font-size:16px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--ink);
+    margin:0 0 16px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--rule);
+  }
+
+  .inputs{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+  }
+  @media (max-width:640px){
+    .inputs{grid-template-columns:repeat(2,1fr);}
+  }
+  label{
+    display:block;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  input[type=number]{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--border-input);
+    border-radius:10px;
+    font-family:inherit;
+    font-size:16px;
+    background:#ffffff;
+    color:var(--ink);
+    -moz-appearance:textfield;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+  input[type=number]:focus{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-color:var(--accent);
+  }
+  select{
+    width:100%;
+    padding:12px 14px;
+    border:1px solid var(--border-input);
+    border-radius:10px;
+    font-family:inherit;
+    font-size:16px;
+    background:#ffffff;
+    color:var(--ink);
+  }
+  select:focus{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-color:var(--accent);
+  }
+
+  .comment-field{
+    width:100%;
+    min-height:110px;
+    padding:14px 16px;
+    border:1px solid var(--border-input);
+    border-radius:10px;
+    font-family:inherit;
+    font-size:15px;
+    line-height:1.5;
+    background:#ffffff;
+    color:var(--ink);
+    resize:vertical;
+    box-sizing:border-box;
+  }
+  .comment-field:focus{
+    outline:2px solid var(--accent);
+    outline-offset:2px;
+    border-color:var(--accent);
+  }
+  .comment-field::placeholder{
+    color:var(--ink-soft);
+  }
+
+  button{
+    margin-top:20px;
+    background:var(--accent);
+    color:#ffffff;
+    border:none;
+    padding:12px 24px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.015em;
+    cursor:pointer;
+    border-radius:10px;
+    box-shadow:var(--shadow-sm);
+    transition:background-color .15s ease;
+  }
+  button:hover{background:var(--accent-hover);}
+  .action-card button:first-child{margin-top:0;}
+
+  /* Secondary — второстепенные действия (см. design.md: белая, рамка, hover-фон) */
+  .btn-secondary{
+    background:#ffffff;
+    color:var(--ink);
+    border:1px solid var(--border-btn);
+    box-shadow:none;
+  }
+  .btn-secondary:hover{background:var(--secondary-hover);}
+
+  .calc-check{
+    display:inline-flex;
+    visibility:hidden;
+    align-items:center;
+    margin-left:14px;
+    color:var(--ok);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    vertical-align:middle;
+  }
+  .calc-check .mark{
+    display:inline-block;
+    width:20px;height:20px;
+    line-height:20px;
+    text-align:center;
+    border-radius:50%;
+    background:var(--ok);
+    color:#fff;
+    font-weight:700;
+    margin-right:6px;
+  }
+
+  .print-btn{
+    margin-top:20px;
+    margin-left:12px;
+    padding:12px 22px;
+    font-size:13px;
+  }
+
+  .summary-row{
+    display:flex;
+    gap:24px;
+    align-items:center;
+  }
+  .summary-row .summary{flex:1;min-width:0;}
+  .box-view{
+    flex:0 0 280px;
+    width:280px;
+    height:auto;
+    display:block;
+    border:1px solid var(--rule);
+    border-radius:12px;
+    background:var(--panel);
+    padding:12px;
+    box-shadow:var(--shadow-sm);
+  }
+  @media (max-width:700px){
+    .summary-row{flex-direction:column;align-items:stretch;}
+    .box-view{flex-basis:auto;width:100%;max-width:280px;margin:0 auto;}
+  }
+
+  .summary{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--rule);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .summary div{background:var(--panel);padding:18px 16px;}
+  .summary .label{
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--ink-soft);
+    margin-bottom:4px;
+  }
+  .summary .value{
+    font-size:24px;
+    font-weight:700;
+    color:var(--ink);
+    font-family:inherit;
+  }
+  .summary .value span{font-size:13px;font-weight:400;color:var(--ink-soft);}
+
+  table{
+    width:100%;
+    table-layout:fixed;
+    border-collapse:collapse;
+    margin-bottom:8px;
+  }
+  th:first-child, td:first-child{width:34%;}
+  th:not(:first-child), td:not(:first-child){width:16.5%;}
+  th,td{
+    text-align:left;
+    padding:9px 10px;
+    font-family:inherit;
+    font-size:14px;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:0;
+    border-bottom:1px solid var(--rule);
+  }
+  th{
+    background:var(--table-header-bg);
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    font-size:11px;
+    letter-spacing:.05em;
+    font-weight:600;
+  }
+  th.num{text-align:right;}
+  td.num{text-align:right;}
+  /* Числовые ячейки (толщина/ширина/длина/кол-во) не переносим никогда - в
+     отличие от названия детали (первая колонка), где перенос длинного
+     названия на несколько строк - это нормально и ожидаемо, перенос ЧИСЛА
+     выглядит как будто оно сломалось (см. мобильный фикс ниже - именно узкие
+     числовые колонки на маленьких экранах были причиной). */
+  th.num, td.num{white-space:nowrap;}
+  tr.total td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none;}
+
+  .spec-table{margin-bottom:26px;}
+  .spec-table:last-child{margin-bottom:0;}
+  .editable-cell{
+    cursor:text;
+    border-bottom:1px dashed var(--accent);
+    border-radius:4px;
+  }
+  .editable-cell:hover{background:var(--accent-wash);}
+  .editable-cell:focus{
+    outline:none;
+    background:var(--accent-wash);
+    border-bottom:1px solid var(--accent);
+  }
+
+  .part-title{
+    font-size:15px;
+    font-weight:700;
+    color:var(--ink);
+    margin:22px 0 8px;
+  }
+  .part-title:first-child{margin-top:0;}
+
+  .note{
+    font-size:13px;
+    color:var(--ink-soft);
+    background:var(--warn-wash);
+    border-left:3px solid var(--warn);
+    border-radius:0 10px 10px 0;
+    padding:14px 16px;
+    margin-top:20px;
+    font-family:inherit;
+    line-height:1.6;
+  }
+
+  .disclaimer{
+    font-size:12px;
+    color:var(--ink-soft);
+    opacity:.75;
+    font-family:inherit;
+    line-height:1.5;
+    text-align:center;
+  }
+
+  #results{display:none;}
+  .error{color:#c23b2c;font-family:inherit;font-size:13px;font-weight:600;margin-top:12px;}
+
+  .spec-row-diagram{
+    display:flex;
+    gap:34px;
+    align-items:center;
+  }
+  .spec-row-diagram .spec-table{flex:1;min-width:0;margin-bottom:0;}
+
+  .diagram-slot{
+    flex:0 0 300px;
+    width:300px;
+    position:relative;
+    overflow:visible;
+    margin-left:32px;
+    margin-top:24px;
+  }
+  .diagram-wrap{
+    position:relative;
+    flex:0 0 260px;
+    width:260px;
+    --dk:1; /* масштаб чертежа на экране, см. reserveDiagramOverflowScreen() */
+  }
+  .diagram-wrap img{
+    display:block;
+    width:100%;
+    height:auto;
+  }
+  .diagram-arrows{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:visible;
+    pointer-events:none;
+  }
+  .diagram-labels{
+    position:absolute;
+    inset:0;
+    z-index:10;
+    pointer-events:none;
+  }
+  .diagram-label{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    background:#fff;
+    border:calc(var(--dk)*1px) solid var(--ink);
+    color:var(--ink);
+    font-family:inherit;
+    font-size:calc(var(--dk)*13px);
+    font-weight:700;
+    padding:calc(var(--dk)*2px) calc(var(--dk)*7px);
+    border-radius:calc(var(--dk)*6px);
+    white-space:nowrap;
+    line-height:1.3;
+  }
+  .diagram-label-vertical{
+    transform:translate(-50%,-50%) rotate(-90deg);
+  }
+
+  @media (max-width: 700px){
+    .spec-row-diagram{
+      flex-direction:column;
+      gap:16px !important;
+    }
+    .diagram-slot{
+      width:100% !important;
+      flex-basis:auto !important;
+    }
+    .diagram-wrap{
+      width:100% !important;
+      flex-basis:auto !important;
+      max-width:240px;
+      margin:0 auto;
+    }
+  }
+
+  /* Узкие экраны (телефоны). Две отдельные проблемы, обе - фиксированные
+     размеры (грид на 3 равные колонки, паддинги карточек и ячеек таблицы),
+     рассчитанные на десктопную ширину и не сжимающиеся вместе с экраном:
+     1) .summary (Наружные размеры/Расход/Норма) в 3 колонки на ~300px
+        доступной ширины физически не помещается - грид-колонка получает
+        меньше места, чем нужно её содержимому, и число переносится по
+        символу на отдельные строки ("2088" разбивается на "2", "0", "8", "8"
+        каждая на своей строке) - выглядит как будто сайт сломался. Ниже
+        такой ширины складываем плитки в один столбец.
+     2) Числовые колонки таблицы деталей (16.5% от и без того узкой ширины
+        карточки) с паддингом 9-10px не оставляют места даже для 4-значного
+        числа при шрифте 14px - оно тоже переносится на 2 строки. Внутри
+        карточки/таблицы места объективно мало, поэтому здесь одновременно
+        уменьшаем паддинг карточки и паддинг/шрифт ячеек - white-space:nowrap
+        (см. выше) сам по себе только скрыл бы часть числа, не решив нехватку
+        места. */
+  @media (max-width: 480px){
+    .card{padding:20px;}
+    .summary{grid-template-columns:1fr;}
+    .summary div{padding:14px 16px;}
+    th,td{padding:7px 6px;font-size:12.5px;}
+    th{font-size:10px;}
+  }
+
+  /* ============ Фильтр толщин пиломатериала "в наличии" ============ */
+  .thickness-filter{position:relative;}
+  .thickness-dropdown-btn{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:12px 14px;
+    border:1px solid var(--border-input);
+    border-radius:10px;
+    background:#ffffff;
+    color:var(--ink);
+    font-family:inherit;
+    font-size:14px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .thickness-dropdown-btn:hover{background:#ffffff;border-color:var(--accent);}
+  .thickness-dropdown-btn span:first-child{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .thickness-dropdown-arrow{flex:0 0 auto;color:var(--ink-soft);}
+  .thickness-dropdown-panel{
+    display:none;
+    position:absolute;
+    z-index:30;
+    top:calc(100% + 6px);
+    left:0;
+    right:0;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:12px;
+    box-shadow:var(--shadow-lg);
+    padding:16px;
+    max-height:340px;
+    overflow-y:auto;
+  }
+  .thickness-dropdown-panel.open{display:block;}
+  .thickness-dropdown-actions{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--rule);
+  }
+  .thickness-dropdown-actions button{
+    margin:0;
+    padding:8px 14px;
+    font-size:12px;
+  }
+  .thickness-checkbox-list{
+    display:grid;
+    /* Список стандартных толщин короткий (14 значений) - просто в 2 столбца,
+       заполнение по столбцам сверху вниз. */
+    grid-auto-flow:column;
+    grid-template-rows:repeat(7,auto);
+    grid-auto-columns:1fr;
+    gap:5px 12px;
+  }
+  .thickness-checkbox-list label{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:inherit;
+    font-size:13px;
+    text-transform:none;
+    letter-spacing:0;
+    color:var(--ink);
+    margin:0;
+    cursor:pointer;
+  }
+  .thickness-checkbox-list input{margin:0;accent-color:var(--accent);}
+  @media (max-width:640px){
+    .thickness-checkbox-list{grid-template-rows:repeat(14,auto);}
+  }
+  .fastening-option-list{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+  .fastening-option-list label{
+    display:flex;
+    align-items:flex-start;
+    gap:9px;
+    font-family:inherit;
+    font-size:14px;
+    color:var(--ink);
+    text-transform:none;
+    letter-spacing:0;
+    margin:0;
+    cursor:pointer;
+  }
+  .fastening-option-list input{margin-top:3px;flex:0 0 auto;accent-color:var(--accent);}
+  .fastening-option-disabled{opacity:.45;cursor:not-allowed !important;}
+  .fastening-option-disabled input{cursor:not-allowed !important;}
+  .fastening-option-list .option-hint{
+    display:block;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:3px;
+  }
+
+  /* ================= ПЕЧАТЬ =================
+     Печатный блок всегда отрисован (сдвинут за экран, но НЕ display:none) —
+     благодаря этому перед печатью можно измерить его настоящую высоту.
+
+     Бюджет листа А4 при полях 8 мм:
+        ширина  = (210 - 16) мм = 733 px
+        высота  = (297 - 16) мм = 1062 px
+     Ширина — жёсткий лимит, т.к. чертёж и таблица стоят в один ряд:
+        чертёж 388 + отступ 16 + зазор 20 + таблица 309 = 733
+     Размеры ниже подобраны под этот бюджет: самая длинная подпись
+     («Подполозная доска», «ТОЛЩИНА», «2450») помещается без обрезки.
+     Оставшуюся высоту распределяет JS (см. printBox) — за счёт этого лист
+     заполняется целиком, а не наполовину. */
+  #printArea{
+    position:fixed;
+    left:-100000px;
+    top:0;
+    overflow:hidden;   /* иначе при масштабировании появляется полоса прокрутки */
+  }
+  /* Внутренний слой — его и масштабируем. Внешний #printArea всегда остаётся
+     шириной с печатное поле, поэтому браузер не видит переполнения и не
+     применяет собственное «сжать до листа» поверх нашего (из-за этого
+     страница уменьшалась дважды и треть листа пустовала). */
+  #printScale{ transform-origin:top left; position:relative; --pk:1; }
+  #printArea, #printArea *{ box-sizing:border-box; }
+
+  /* Водяной знак — в правом нижнем углу. Общий вид ящика - отдельная
+     строка перед "Дно" (та же вёрстка .spec-row-diagram/.diagram-slot/
+     .diagram-wrap, что и у остальных чертежей - размер подхватывается
+     автоматически через applyDiagramWidths()), а не в шапке. Обе итоговые
+     таблицы - "Внутренние размеры груза" и "Итог" - справа от него, друг
+     под другом. flex:1, как у .spec-table в остальных строках, - колонка
+     растягивается на всю ширину, оставшуюся после чертежа, а не жмётся
+     по ширине своего текста. */
+  #printArea .print-summary-col{
+    display:flex;
+    flex-direction:column;
+    gap:calc(var(--pk)*14px);
+    flex:1;
+    min-width:0;
+  }
+  #printArea .print-watermark{
+    position:absolute;right:4px;bottom:0;
+    width:88px;height:auto;
+    opacity:.11;
+  }
+  #printArea{
+    background:#fff;
+    font-family:'Courier New', monospace;
+    color:#1F1B18;
+    font-size:16px;
+    font-weight:700;
+    line-height:1.4;
+  }
+  #printArea h1{font-size:calc(var(--pk)*24px);margin:0 0 6px;font-family:Georgia, serif;color:#4E342E;font-weight:700;}
+  #printArea .print-subtitle{color:#6B625D;margin-bottom:calc(var(--pk)*6px);font-size:calc(var(--pk)*16px);font-weight:700;}
+
+  /* Внутренние размеры груза + Итог — в колонке справа от чертежа ящика (см. .print-summary-col) */
+  #printArea .print-summary-block{flex:0 0 auto;}
+  #printArea .print-summary-block h2{font-size:calc(var(--pk)*12px);text-transform:uppercase;letter-spacing:.05em;color:#4E342E;margin:0 0 6px;font-weight:700;}
+  #printArea .print-plain-table{border-collapse:collapse;width:100%;}
+  #printArea .print-plain-table td{padding:calc(var(--pk)*2px) 0;text-align:left;font-size:calc(var(--pk)*13px);font-weight:700;white-space:nowrap;}
+  #printArea .print-plain-table td.k{color:#6B625D;}
+  #printArea .print-plain-table td:not(.k){width:100%;text-align:right;}
+
+  /* Таблицы конфигурации досок.
+     Ширины колонок подобраны под бюджет: «Подполозная» и «2450» влезают
+     без переноса при шрифте 20px. */
+  #printArea .spec-table table{width:100%;table-layout:fixed;border-collapse:collapse;margin:0;}
+  #printArea .spec-table th:first-child, #printArea .spec-table td:first-child{width:48%;}
+  #printArea .spec-table th:not(:first-child), #printArea .spec-table td:not(:first-child){width:13%;}
+  #printArea .spec-table th, #printArea .spec-table td{
+    text-align:left;padding:calc(var(--pk)*6px) calc(var(--pk)*4px);font-size:calc(var(--pk)*19px);font-weight:700;border-bottom:1px solid #E8E3DD;white-space:nowrap;overflow:hidden;
+  }
+  #printArea .spec-table th{color:#6B625D;text-transform:uppercase;font-size:calc(var(--pk)*10px);letter-spacing:0;font-weight:700;}
+  #printArea .spec-table td.num, #printArea .spec-table th.num{text-align:right;}
+
+  #printArea .part-title{font-size:calc(var(--pk)*20px);font-weight:700;color:#4E342E;margin:0 0 calc(var(--pk)*6px);}
+
+  /* Секция = заголовок узла + (чертёж | таблица). Обычный блочный контейнер:
+     на нём браузер надёжно соблюдает «не разрывать между листами». */
+  #printArea .print-section{break-inside:avoid-page;page-break-inside:avoid;}
+  #printArea .print-comment{
+    font-size:calc(var(--pk)*15px);
+    font-weight:700;
+    line-height:1.5;
+    white-space:pre-wrap;
+    word-break:break-word;
+    border:1px solid #E8E3DD;
+    border-radius:2px;
+    padding:calc(var(--pk)*10px) calc(var(--pk)*12px);
+  }
+  #printArea .spec-row-diagram{display:flex;gap:calc(var(--pk)*16px);align-items:center;page-break-inside:avoid;margin:0;}
+  #printArea .spec-row-diagram .spec-table{flex:1;min-width:0;margin:0;}
+  /* 310px / отступ 26px — измеренный максимальный вылет подписей вправо и влево
+     для старых (маленьких) чертежей. У Дна (2008×1212, длинная подпись у левого
+     края) вылет больше — отступ увеличен до 44px; вертикальные вылеты по-прежнему
+     резервируются из JS (reserveDiagramOverflow). Правый край при необходимости
+     обрезается — по договорённости с пользователем. */
+  #printArea .diagram-slot{flex:0 0 calc(var(--pk)*300px);width:calc(var(--pk)*300px);margin-left:calc(var(--pk)*44px);position:relative;overflow:visible;}
+  /* ширина самих чертежей проставляется из JS (у них разный масштаб) */
+  #printArea .diagram-wrap{position:relative;}
+  #printArea .diagram-wrap img{display:block;width:100%;height:auto;}
+  #printArea .diagram-arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+  /* Стрелки на чертежах — при печати заметно толще, чем на экране */
+  #printArea .diagram-arrows line{stroke-width:calc(var(--pk)*3px) !important;}
+  #printArea .diagram-labels{position:absolute;inset:0;pointer-events:none;}
+  #printArea .diagram-label{
+    position:absolute;transform:translate(-50%,-50%);background:#fff;
+    border:calc(var(--pk)*2px) solid #4E342E;color:#1F1B18;font-size:calc(var(--pk)*15px);font-weight:700;
+    padding:calc(var(--pk)*2px) calc(var(--pk)*6px);white-space:nowrap;line-height:1.3;
+  }
+  #printArea .diagram-label-vertical{
+    transform:translate(-50%,-50%) rotate(-90deg);
+  }

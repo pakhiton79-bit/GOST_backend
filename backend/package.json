@@ -1,0 +1,14 @@
+{
+  "name": "gost10198-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ГОСТ 10198-91: расчётный API (тип I-3, тип I-1) + статическая раздача фронтенда.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

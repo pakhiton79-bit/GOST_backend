@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ГОСТ 10198-91 — WOODCALC</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .wrap{max-width:820px;}
+  .type-card{
+    display:flex;
+    align-items:center;
+    gap:24px;
+    padding:20px;
+    border:1px solid var(--border-input);
+    border-radius:12px;
+    background:#ffffff;
+    text-decoration:none;
+    color:var(--ink);
+    margin-bottom:16px;
+    transition:border-color .15s ease, background-color .15s ease;
+  }
+  .type-card:hover{
+    border-color:var(--accent);
+    background:var(--accent-wash);
+  }
+  .type-info{flex:1;min-width:0;}
+  .type-info h3{
+    font-size:18px;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  .type-image{
+    flex:0 0 160px;
+    width:160px;
+    height:120px;
+    border-radius:8px;
+    border:1px solid var(--border-input);
+    overflow:hidden;
+    background:#ffffff;
+  }
+  .type-image img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+  @media (max-width:560px){
+    .type-card{flex-direction:column;align-items:stretch;}
+    .type-image{width:100%;flex-basis:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="index.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <header>
+    <h1>ГОСТ 10198-91</h1>
+  </header>
+
+  <div id="types"></div>
+</div>
+
+<script>
+const TYPES = [
+  {
+    name: 'Тип I-1',
+    file: 'i1.html',
+    image: '/images/box_i1.jpg'
+  },
+  {
+    name: 'Тип I-3',
+    file: 'i3-skid.html',
+    fasteningFiles: {
+      skid: 'i3-skid.html',
+      floor_boards: 'i3-floor.html'
+    },
+    image: '/images/box.png'
+  }
+];
+
+(function(){
+  const FASTENING_STORAGE_KEY = 'silvan-gost10198-t1-k3-fastening-type';
+  function resolveFile(t){
+    if(!t.fasteningFiles) return t.file;
+    let saved = null;
+    try{ saved = localStorage.getItem(FASTENING_STORAGE_KEY); }catch(e){}
+    return (saved && t.fasteningFiles[saved]) || t.file;
+  }
+
+  const root = document.getElementById('types');
+  let html = '';
+  TYPES.forEach(t => {
+    html += `<a class="type-card" href="${resolveFile(t)}">
+      <div class="type-info"><h3>${t.name}</h3></div>
+      <div class="type-image"><img src="${t.image}" alt="${t.name}"></div>
+    </a>`;
+  });
+  root.innerHTML = html;
+})();
+</script>
+</body>
+</html>

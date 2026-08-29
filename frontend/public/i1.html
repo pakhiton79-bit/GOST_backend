@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Расчёт ящика — ГОСТ 10198-91 тип I-1</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+
+<style media="print">
+  @page{ size:A4 portrait; margin:8mm; }
+  body > *:not(#printArea){ display:none !important; }
+  html, body{ background:#fff !important; }
+  #printArea{
+    position:relative !important;
+    left:auto !important;
+    top:auto !important;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="gost-10198-91.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <header>
+    <h1>ГОСТ 10198-91 тип I-1</h1>
+  </header>
+
+  <div class="card">
+    <h2>Внутренние размеры груза, мм</h2>
+    <div class="inputs">
+      <div>
+        <label for="L">Длина</label>
+        <input type="number" id="L" min="1">
+      </div>
+      <div>
+        <label for="W">Ширина</label>
+        <input type="number" id="W" min="1">
+      </div>
+      <div>
+        <label for="H">Высота</label>
+        <input type="number" id="H" min="1">
+      </div>
+      <div>
+        <label for="M">Масса груза, кг</label>
+        <input type="number" id="M" min="1">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Толщины пиломатериала в наличии</h2>
+    <div class="thickness-filter dropdown-wrap">
+      <button type="button" class="thickness-dropdown-btn" id="thicknessDropdownBtn" onclick="toggleThicknessDropdown()">
+        <span id="thicknessDropdownLabel">—</span>
+        <span class="thickness-dropdown-arrow">▾</span>
+      </button>
+      <div class="thickness-dropdown-panel" id="thicknessDropdownPanel">
+        <div class="thickness-dropdown-actions">
+          <button type="button" class="btn-secondary" onclick="setAllThickness(true)">Выбрать все</button>
+          <button type="button" class="btn-secondary" onclick="setAllThickness(false)">Снять все</button>
+        </div>
+        <div class="thickness-checkbox-list" id="thicknessCheckboxList"></div>
+      </div>
+    </div>
+    <div class="note" id="thicknessNote" style="display:none;margin-top:14px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Полоз</h2>
+    <div class="fastening-option-list">
+      <label>
+        <input type="checkbox" id="skidEnabled" checked onchange="onSkidToggle()">
+        <span>Полоз нужен<span class="option-hint">Если не нужен — в дне вместо полоза используется планка</span></span>
+      </label>
+    </div>
+    <div id="skidThicknessRow" class="thickness-filter dropdown-wrap" style="margin-top:14px;max-width:260px;">
+      <label>Толщина полоза, мм</label>
+      <button type="button" class="thickness-dropdown-btn" id="skidThicknessDropdownBtn" onclick="toggleSkidThicknessDropdown()">
+        <span id="skidThicknessDropdownLabel">—</span>
+        <span class="thickness-dropdown-arrow">▾</span>
+      </button>
+      <div class="thickness-dropdown-panel" id="skidThicknessDropdownPanel">
+        <div class="fastening-option-list">
+          <label><input type="radio" name="skidThickness" value="25" onchange="onSkidThicknessChange(this)"><span>25 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="32" onchange="onSkidThicknessChange(this)"><span>32 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="40" onchange="onSkidThicknessChange(this)"><span>40 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="50" checked onchange="onSkidThicknessChange(this)"><span>50 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="100" onchange="onSkidThicknessChange(this)"><span>100 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="150" onchange="onSkidThicknessChange(this)"><span>150 мм</span></label>
+          <label><input type="radio" name="skidThickness" value="200" onchange="onSkidThicknessChange(this)"><span>200 мм</span></label>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:6px;">Не менее 50 мм.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Дополнительные опции</h2>
+    <div class="fastening-option-list">
+      <label>
+        <input type="checkbox" id="roundBoardWidths">
+        <span>Округлить ширину досок<span class="option-hint">Только доски шириной 100 мм, без узких дополнительных — даже если по факту это занимает больше места, чем есть</span></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card action-card">
+    <button onclick="calculate()">Рассчитать</button>
+    <span class="calc-check" id="calcCheck"><span class="mark">&#10003;</span>Расчёт выполнен</span>
+    <button class="print-btn btn-secondary" onclick="printBox()">🖨 Печать</button>
+    <div class="error" id="err"></div>
+  </div>
+
+  <div id="results">
+    <div class="note" id="warningsTop" style="margin-bottom:16px;"></div>
+
+    <div class="card">
+      <h2>Итог</h2>
+      <div class="summary-row">
+        <img class="box-view" id="boxView" alt="Общий вид ящика">
+        <div class="summary">
+          <div>
+            <div class="label">Наружные размеры</div>
+            <div class="value" id="outDims">— <span>мм</span></div>
+          </div>
+          <div>
+            <div class="label">Расход пиломатериала</div>
+            <div class="value" id="outVolume">— <span>м³</span></div>
+          </div>
+          <div>
+            <div class="label">Норма времени</div>
+            <div class="value" id="outTime">— <span>ч</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Спецификация досок</h2>
+      <div id="boardTables"></div>
+    </div>
+
+    <div class="card">
+      <h2>Комментарий</h2>
+      <textarea id="userComment" class="comment-field" placeholder="Заметки по расчёту, пожелания заказчика, особенности партии и т.п. - попадут и в печатную версию."></textarea>
+    </div>
+
+    <div class="disclaimer" style="margin-top:20px;">Калькулятор может ошибаться. Проверяйте результаты перед использованием в производстве.</div>
+  </div>
+</div>
+
+<div id="printArea"><div id="printScale"></div></div>
+
+<script src="/js/common-diagrams.js"></script>
+<script src="/js/i1/diagrams.js"></script>
+<script src="/js/common-print.js"></script>
+<script src="/js/i1/ui.js"></script>
+<script src="/js/i1/calc-i1.js"></script>
+</body>
+</html>
