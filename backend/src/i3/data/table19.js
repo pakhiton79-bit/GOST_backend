@@ -165,8 +165,24 @@ function selectSkid19(mass, workingLengthMm, widthMm, availableThicknesses) {
     chosen = valid.reduce((a, b) => b.count < a.count ? b : a);
   }
 
+  // Достройка сечения сверх Табл.19 (см. цикл выше) снижает градацию только
+  // одной из двух величин (той, что была названа "w" при заходе в цикл),
+  // вторая ("h") не меняется - при достаточном числе итераций это снижаемое
+  // значение может опуститься НИЖЕ той, что осталась неизменной, нарушая
+  // правило "ширина всегда больше или равна толщине" (та же природа бага,
+  // что и при разборе ячеек самой Табл.19 - см. выше в этой функции). Сам
+  // цикл (включая minSkidsByWidth162 внутри него) не трогаем - по уточнению
+  // пользователя, поправляем только то, что возвращается наружу: в толщину
+  // всегда идёт меньшее из двух чисел, в ширину - большее. t9/w9 в
+  // compute.js читаются отсюда напрямую, поэтому наружная высота ящика
+  // (outerH), напуск планки бока на полоз (bokOverhang) и ширина
+  // подполозной доски (w10=min(w9,150)) автоматически пересчитаются по
+  // исправленным t9/w9, без отдельных правок в этих формулах.
+  const finalH = Math.min(chosen.h, chosen.w);
+  const finalW = Math.max(chosen.h, chosen.w);
+
   return {
-    h: chosen.h, w: chosen.w, count: chosen.count,
+    h: finalH, w: finalW, count: chosen.count,
     massUsed: massRow.mass, massSnapped,
     lengthUsed: chosen.lengthUsed, lengthSnapped: chosen.lengthSnapped,
     spacingExceeded,
