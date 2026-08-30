@@ -87,10 +87,28 @@ npm start
 
 ## Деплой на Render
 
-Один Web Service:
+В репозитории есть `render.yaml` (Blueprint) — Render считывает его сам и
+настраивает сервис автоматически, без ручного ввода полей:
+
+1. [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**.
+2. Подключить (или выбрать уже подключённый) GitHub-аккаунт и репозиторий
+   `pakhiton79-bit/GOST_backend`.
+3. Render найдёт `render.yaml` и предложит создать сервис `gost10198-91-backend`
+   (Free-тариф, ветка `main`) — подтвердить **Apply**.
+
+После этого **автодеплой уже включён**: любой `git push` в `main` сам
+запускает новую сборку и выкладку — отдельно ничего настраивать не нужно.
+Прогресс и логи каждого деплоя видны в Render Dashboard → сервис →
+вкладка **Events**/**Logs**.
+
+Тариф Free "засыпает" примерно через 15 минут без запросов — первый запрос
+после этого поднимает сервис заново (до ~50 секунд), дальше работает быстро.
+
+Без Blueprint то же самое можно настроить вручную (**New** → **Web Service**):
 - Root Directory: `backend`
 - Build Command: `npm install`
 - Start Command: `npm start`
+- Plan: Free
 
 Фронтенд раздаётся тем же сервисом (Express `express.static`), отдельного
 статического хостинга не требуется.

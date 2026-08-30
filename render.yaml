@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: gost10198-91-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    healthCheckPath: /index.html
