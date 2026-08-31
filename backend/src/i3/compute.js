@@ -73,10 +73,15 @@ function computeGost10198I3(input) {
     if (l9_default < minNeeded165) {
       l9 = minNeeded165;
     }
-    t9 = roundUpToAvailable(poloz.h); w9 = poloz.w;
+    // Толщина полоза (t9) - исключение из правила "в наличии" (по уточнению
+    // пользователя): полоз всегда берётся точным расчётным значением по
+    // ГОСТ, без округления вверх до ближайшего доступного номинала и без
+    // предупреждения о превышении - в отличие от всех остальных деталей.
+    t9 = poloz.h; w9 = poloz.w;
   } else {
     const sel = selectSkid19(MASS, k9Base, skidCalcWidth, availableThicknesses);
-    l9 = sel.count; t9 = roundUpToAvailable(sel.h); w9 = sel.w;
+    // t9 - тот же принцип исключения, что и в ветке solidRigidBase выше.
+    l9 = sel.count; t9 = sel.h; w9 = sel.w;
     if (sel.massSnapped) {
       warnings.push(`Масса ${MASS} кг отсутствует в Табл. 19 — принята ближайшая (${sel.massUsed} кг).`);
     }
