@@ -98,7 +98,16 @@
     grid-template-columns:repeat(4,1fr);
     gap:16px;
   }
-  @media (max-width:640px){
+  /* "screen and" на всех адаптивных breakpoint'ах ниже (640/700/480px) -
+     без него эти правила совпадали бы с теми же именами классов и внутри
+     печатной области (#printArea .spec-row-diagram и т.п. используют те
+     же общие имена классов, что и экранная вёрстка) - ширина печатного
+     листа A4 (~733px по расчёту в common-print.js) достаточно близка к
+     700px, и на части систем (другая трактовка @page margin/DPI при
+     печати) реально может просесть ниже порога, из-за чего чертежи в
+     печати непредсказуемо переключались на мобильную раскладку (в столбец,
+     на всю ширину листа) - по репорту пользователя. */
+  @media screen and (max-width:640px){
     .inputs{grid-template-columns:repeat(2,1fr);}
   }
   label{
@@ -245,7 +254,7 @@
     padding:12px;
     box-shadow:var(--shadow-sm);
   }
-  @media (max-width:700px){
+  @media screen and (max-width:700px){
     .summary-row{flex-direction:column;align-items:stretch;}
     .box-view{flex-basis:auto;width:100%;max-width:280px;margin:0 auto;}
   }
@@ -416,16 +425,31 @@
     transform:translate(-50%,-50%) rotate(-90deg);
   }
 
-  @media (max-width: 700px){
-    .spec-row-diagram{
+  /* #boardTables - явный скоуп (а не голые .spec-row-diagram/.diagram-slot/
+     .diagram-wrap): те же имена классов используются и в печатной области
+     (#printArea .spec-row-diagram и т.п., см. common-print.js). printBox()
+     измеряет и подгоняет печатную раскладку ДО window.print() - то есть
+     пока страница ещё в обычном (не print) режиме, а не в момент самой
+     печати - поэтому даже "@media screen and" не спасает: пока идёт это
+     измерение, узкий ЭКРАННЫЙ viewport (например, окно браузера уже
+     700px - не телефон, а обычное несведённое во весь экран окно или
+     масштабирование интерфейса Windows) заставлял этот !important-блок
+     сработать и на печатной разметке тоже (у неё нет !important на
+     flex-direction, значит она проигрывала), из-за чего чертежи в печати
+     "уезжали" над таблицу и растягивались на всю ширину листа - по репорту
+     пользователя. #boardTables-скоуп физически не пересекается с
+     #printArea (это два разных поддерева DOM), поэтому теперь это в
+     принципе невозможно, независимо от текущей ширины окна браузера. */
+  @media screen and (max-width: 700px){
+    #boardTables .spec-row-diagram{
       flex-direction:column;
       gap:16px !important;
     }
-    .diagram-slot{
+    #boardTables .diagram-slot{
       width:100% !important;
       flex-basis:auto !important;
     }
-    .diagram-wrap{
+    #boardTables .diagram-wrap{
       width:100% !important;
       flex-basis:auto !important;
       max-width:240px;
@@ -449,12 +473,18 @@
         уменьшаем паддинг карточки и паддинг/шрифт ячеек - white-space:nowrap
         (см. выше) сам по себе только скрыл бы часть числа, не решив нехватку
         места. */
-  @media (max-width: 480px){
+  @media screen and (max-width: 480px){
     .card{padding:20px;}
     .summary{grid-template-columns:1fr;}
     .summary div{padding:14px 16px;}
-    th,td{padding:7px 6px;font-size:12.5px;}
-    th{font-size:10px;}
+    /* #boardTables - тот же повод, что и у соседнего блока (max-width:700px)
+       выше: голые th/td совпадали бы и с ячейками печатной таблицы
+       (#printArea .spec-table th/td) - здесь у обеих сторон нет !important,
+       так что специфичность (#printArea .spec-table td сильнее голого td)
+       и так защищала бы печать, но скоуп к #boardTables делает это верным
+       по построению, а не по случайному стечению specificity. */
+    #boardTables th, #boardTables td{padding:7px 6px;font-size:12.5px;}
+    #boardTables th{font-size:10px;}
   }
 
   /* ============ Фильтр толщин пиломатериала "в наличии" ============ */
@@ -532,7 +562,7 @@
     cursor:pointer;
   }
   .thickness-checkbox-list input{margin:0;accent-color:var(--accent);}
-  @media (max-width:640px){
+  @media screen and (max-width:640px){
     .thickness-checkbox-list{grid-template-rows:repeat(14,auto);}
   }
   .fastening-option-list{
@@ -576,9 +606,20 @@
      Оставшуюся высоту распределяет JS (см. printBox) — за счёт этого лист
      заполняется целиком, а не наполовину. */
   #printArea{
+    /* Раньше прятали экстремальным сдвигом (left:-100000px) - на части
+       систем (другой DPI/масштаб экрана) такой огромный offset у
+       position:fixed элемента мог раздувать scrollWidth всего документа
+       и визуально "растягивать" видимую страницу вбок при вызове печати
+       (по репорту пользователя). opacity+pointer-events прячет элемент,
+       оставляя его на обычном месте (left:0;top:0) в пределах обычного
+       viewport - никакого экстремального смещения, которое могло бы
+       повлиять на layout документа.
+    */
     position:fixed;
-    left:-100000px;
+    left:0;
     top:0;
+    opacity:0;
+    pointer-events:none;
     overflow:hidden;   /* иначе при масштабировании появляется полоса прокрутки */
   }
   /* Внутренний слой — его и масштабируем. Внешний #printArea всегда остаётся
