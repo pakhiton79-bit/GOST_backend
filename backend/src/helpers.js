@@ -89,8 +89,38 @@ function makeRoundUpToAvailable(availableThicknesses) {
   return fn;
 }
 
+// Ищет первое отрицательное число где угодно в результате расчёта - и в
+// таблице деталей, и в параметрах для чертежей (они в том же объекте) - по
+// указанию пользователя: отрицательный размер всегда означает ошибку
+// формулы или невозможную геометрию, такой результат нельзя показывать
+// пользователю ни в каком виде (см. computeGost10198I1/I3). '⚠' (символ, не
+// число) - осознанный признак нерасчитанного узла, пропускается, это не
+// ошибка. Возвращает путь до первого найденного отрицательного значения
+// (для сообщения об ошибке) либо null, если всё в порядке.
+function findNegativeField(value, path) {
+  if (typeof value === 'number') {
+    return (Number.isFinite(value) && value < 0) ? path : null;
+  }
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const found = findNegativeField(value[i], `${path}[${i}]`);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (value && typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      const found = findNegativeField(value[key], path ? `${path}.${key}` : key);
+      if (found) return found;
+    }
+    return null;
+  }
+  return null;
+}
+
 module.exports = {
   roundup, ceilInt, vol, fillBoards,
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
+  findNegativeField,
 };

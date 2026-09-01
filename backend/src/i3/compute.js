@@ -17,7 +17,7 @@
 //     ранней недоделанной версии разделения "расчёт/рендер" - его результат
 //     нигде не использовался (calculate() в src/app.js делает то же самое ещё
 //     раз, уже пользуясь этим), поэтому в чистый расчёт он не входит.
-const { roundup, ceilInt, vol, fillBoards, makeRoundUpToAvailable } = require('../helpers');
+const { roundup, ceilInt, vol, fillBoards, makeRoundUpToAvailable, findNegativeField } = require('../helpers');
 const {
   subfloorThicknessRaw, wallThickness, polozSection165, selectSkid19, minSkidsByWidth162,
   endBeamSection, floorBoardThicknessNew, floorBoardThickness,
@@ -345,7 +345,7 @@ function computeGost10198I3(input) {
     warnings.push(`Расчётная толщина хотя бы одной детали превышает максимальную из «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — занижать толщину недопустимо, использовано расчётное значение по ГОСТ (потребуется пиломатериал большей толщины, чем отмечено «в наличии»).`);
   }
 
-  return {
+  const result = {
     warnings, dno, kryshka, endPanel, bokovoy,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
@@ -353,6 +353,11 @@ function computeGost10198I3(input) {
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
     H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43,
   };
+  const negField = findNegativeField(result, '');
+  if (negField) {
+    return { error: `Расчёт дал отрицательное значение (${negField}) — результат недостоверен, проверьте входные данные.` };
+  }
+  return result;
 }
 
 function volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) {

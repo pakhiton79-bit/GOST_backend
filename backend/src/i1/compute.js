@@ -3,7 +3,7 @@
 // вводный комментарий в ../i3/compute.js о характере отличий порта: только
 // избавление от модульного глобального состояния toлщин "в наличии", методика
 // расчёта не менялась).
-const { roundup, vol, fillBoards, makeRoundUpToAvailable } = require('../helpers');
+const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
 // input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses,manualOverrides}.
@@ -214,11 +214,16 @@ function computeGost10198I1(input) {
     warnings.push(`${b.label}: введено вручную ${b.value} мм — меньше расчётного по ГОСТ (${Math.round(b.gostValue * 100) / 100} мм). Использовано введённое значение.`);
   });
 
-  return {
+  const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kPlankaKryshka, H, W, wall,
   };
+  const negField = findNegativeField(result, '');
+  if (negField) {
+    return { error: `Расчёт дал отрицательное значение (${negField}) — результат недостоверен, проверьте входные данные.` };
+  }
+  return result;
 }
 
 module.exports = { computeGost10198I1 };
