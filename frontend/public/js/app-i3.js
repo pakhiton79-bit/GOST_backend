@@ -38,7 +38,7 @@ function buildThicknessCheckboxList(){
 }
 
 function invalidateCalc(){
-  document.getElementById('calcCheck').style.visibility = 'hidden';
+  document.getElementById('calcCheck').style.display = 'none';
 }
 
 function onThicknessCheckboxChange(el){
@@ -249,7 +249,7 @@ async function calculate(){
   warningsEl.style.display = calc.warnings.length ? 'block' : 'none';
 
   document.getElementById('results').style.display = 'block';
-  document.getElementById('calcCheck').style.visibility = 'visible';
+  document.getElementById('calcCheck').style.display = 'inline-flex';
 }
 
 ['L','W','H','M'].forEach(id=>{
