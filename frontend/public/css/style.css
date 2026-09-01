@@ -207,9 +207,19 @@
   }
   .btn-secondary:hover{background:var(--secondary-hover);}
 
+  .calc-outdated{
+    display:none;
+    align-items:center;
+    margin-left:14px;
+    color:var(--warn);
+    font-family:inherit;
+    font-size:14px;
+    font-weight:600;
+    vertical-align:middle;
+  }
+
   .calc-check{
-    display:inline-flex;
-    visibility:hidden;
+    display:none;
     align-items:center;
     margin-left:14px;
     color:var(--ok);

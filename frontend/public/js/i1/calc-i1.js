@@ -7,10 +7,30 @@
 // BOX_I1_IMG_B64 - см. js/i1/diagrams.js (общий вид ящика, используется и на
 // самом сайте, и в печати).
 
+// Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
+// читается ДО того, как calculate() эту таблицу перерисует, и отправляется
+// на сервер вместе с остальными входными данными (см. computeGost10198I1/
+// ov() в backend/src/i1/compute.js). Учитываются ТОЛЬКО ячейки, реально
+// отредактированные пользователем (data-user-edited, взводится обработчиком
+// input ниже) - иначе каноническое поле "замораживалось" бы на прежнем
+// расчётном значении при каждом нажатии "Рассчитать", даже если пользователь
+// его не трогал (см. тот же приём в src/i1/calc.js исходного репозитория).
+function readManualOverrides(){
+  const overrides = {};
+  document.querySelectorAll('#boardTables td[data-override][data-user-edited="true"]').forEach(cell=>{
+    const key = cell.getAttribute('data-override');
+    const val = parseFloat(cell.textContent.replace(',','.'));
+    if(!Number.isNaN(val) && val>0) overrides[key] = val;
+  });
+  return overrides;
+}
+
 async function calculate(){
   const errEl = document.getElementById('err');
   errEl.textContent = '';
-  document.getElementById('calcCheck').style.visibility = 'hidden';
+  const manualOverrides = readManualOverrides();
+  document.getElementById('calcCheck').style.display = 'none';
+  document.getElementById('calcOutdated').style.display = 'none';
 
   const input = {
     L: parseFloat(document.getElementById('L').value),
@@ -21,6 +41,7 @@ async function calculate(){
     skidThicknessRaw: skidThicknessValue,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     availableThicknesses,
+    manualOverrides,
   };
 
   let calc;
@@ -46,9 +67,10 @@ async function calculate(){
     html += `<div class="spec-table"><table>
       <thead><tr><th>Деталь</th><th class="num">Толщина</th><th class="num">Ширина</th><th class="num">Длина</th><th class="num">Кол-во</th></tr></thead><tbody>`;
     rows.forEach(r=>{
+      const overrideAttr = r.overrideKey ? ` data-override="${r.overrideKey}"` : '';
       html += `<tr>
         <td>${r.name}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="t">${r.t}</td>
+        <td class="num editable-cell" contenteditable="true" data-role="t"${overrideAttr}>${r.t}</td>
         <td class="num editable-cell" contenteditable="true" data-role="w">${r.w}</td>
         <td class="num editable-cell" contenteditable="true" data-role="l">${typeof r.l === 'number' ? Math.round(r.l) : r.l}</td>
         <td class="num editable-cell" contenteditable="true" data-role="qty">${r.qty}</td>
@@ -79,12 +101,12 @@ async function calculate(){
   warningsEl.style.display = calc.warnings.length ? 'block' : 'none';
 
   document.getElementById('results').style.display = 'block';
-  document.getElementById('calcCheck').style.visibility = 'visible';
+  document.getElementById('calcCheck').style.display = 'inline-flex';
 }
 
 ['L','W','H','M'].forEach(id=>{
   document.getElementById(id).addEventListener('input', ()=>{
-    document.getElementById('calcCheck').style.visibility = 'hidden';
+    invalidateCalc();
   });
 });
 
@@ -104,7 +126,13 @@ function recalcFromTable(){
 }
 
 document.getElementById('boardTables').addEventListener('input', e=>{
-  if(e.target.classList.contains('editable-cell')) recalcFromTable();
+  if(e.target.classList.contains('editable-cell')){
+    if(e.target.hasAttribute('data-override')){
+      e.target.setAttribute('data-user-edited', 'true');
+    }
+    recalcFromTable();
+    invalidateCalc();
+  }
 });
 
 function buildPrintHtml(){

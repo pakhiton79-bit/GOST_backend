@@ -26,6 +26,22 @@ function toNum(v) {
   return Number.isFinite(n) ? n : NaN;
 }
 
+// manualOverrides - правки толщины, введённые пользователем прямо в таблице
+// деталей (см. src/i1/calc.js исходного репозитория) - объект { ключ: число }.
+// На входе в API оставляем только конечные положительные числа под известными
+// ключами (сейчас единственный - wallValue, см. computeGost10198I1/ov()) -
+// произвольные поля из тела запроса дальше в расчёт не пропускаются.
+const I1_OVERRIDE_KEYS = ['wallValue'];
+function sanitizeManualOverrides(obj, allowedKeys) {
+  const result = {};
+  if (!obj || typeof obj !== 'object') return result;
+  allowedKeys.forEach(key => {
+    const n = Number(obj[key]);
+    if (Number.isFinite(n) && n > 0) result[key] = n;
+  });
+  return result;
+}
+
 app.post('/api/i3/calculate', (req, res) => {
   const b = req.body || {};
   if (b.variant !== 'skid' && b.variant !== 'floor_boards') {
@@ -53,6 +69,7 @@ app.post('/api/i1/calculate', (req, res) => {
     skidThicknessRaw: toNum(b.skidThicknessRaw),
     roundBoardWidths: !!b.roundBoardWidths,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
   };
   res.json(computeGost10198I1(input));
 });

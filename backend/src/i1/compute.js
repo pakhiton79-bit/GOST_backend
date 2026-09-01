@@ -6,17 +6,36 @@
 const { roundup, vol, fillBoards, makeRoundUpToAvailable } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses,manualOverrides}.
 function computeGost10198I1(input) {
   const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
+  const mo = input.manualOverrides || {};
 
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
     return { error: 'Заполните все поля положительными числами.' };
   }
 
   let warnings = [];
+
+  // Ручной ввод толщины в таблице (клиент шлёт его в manualOverrides) -
+  // подставляется вместо расчётного по ГОСТ значения везде, где оно дальше
+  // используется (перенесено из src/i1/calc.js исходного репозитория без
+  // изменений методики). У типа I-1 всего один общий параметр - wall.value
+  // (толщина всех досок/планок/раскосов), поэтому здесь только одна точка
+  // применения (см. ниже, сразу после wall.value).
+  const belowGost = {};
+  function ov(key, gostValue, label) {
+    const v = mo[key];
+    if (v === undefined || v === null || Number.isNaN(v) || v <= 0) return gostValue;
+    if (v < gostValue) {
+      belowGost[key] = { value: v, gostValue, label };
+    } else {
+      delete belowGost[key];
+    }
+    return v;
+  }
   if (MASS < 200) {
     warnings.push('Масса груза менее 200 кг.');
   }
@@ -53,7 +72,7 @@ function computeGost10198I1(input) {
     warnings.push(`Расстояние между планками ${Math.round(beltGapHit)} мм (400-500мм) — толщина досок/планок/раскосов снижена на одну градацию (${wallRaw}→${stepped} мм).`);
     wallRaw = stepped;
   }
-  const wall = { value: roundUpToAvailable(wallRaw) };
+  const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw), 'Толщина досок/планок/раскосов') };
 
   // kLen/plank/plankQty/plankGap выше посчитаны по wallRaw (толщине ДО
   // округления "в наличии") - пересчитываем под итоговую wall.value, чтобы
@@ -95,7 +114,7 @@ function computeGost10198I1(input) {
   const spanDno = W + wall.value * 2;
   const fbDno = fillBoards(spanDno, roundBoardWidths);
   const w12 = 100, l12 = fbDno.mainQty;
-  if (l12 > 0) dno.push({ name: 'Доска дна', t: wall.value, w: w12, l: kLen, qty: l12 });
+  if (l12 > 0) dno.push({ name: 'Доска дна', t: wall.value, w: w12, l: kLen, qty: l12, overrideKey: 'wallValue' });
   fbDno.extra.forEach((e, i) => {
     dno.push({ name: 'Доска дна (дополнительная) ' + (i + 1), t: wall.value, w: e.width, l: kLen, qty: e.qty });
   });
@@ -181,6 +200,10 @@ function computeGost10198I1(input) {
   if (roundUpToAvailable.state.exceeded) {
     warnings.push(`Расчётная толщина хотя бы одной детали превышает максимальную из «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — занижать толщину недопустимо, использовано расчётное значение по ГОСТ (потребуется пиломатериал большей толщины, чем отмечено «в наличии»).`);
   }
+
+  Object.values(belowGost).forEach(b => {
+    warnings.push(`${b.label}: введено вручную ${b.value} мм — меньше расчётного по ГОСТ (${Math.round(b.gostValue * 100) / 100} мм). Использовано введённое значение.`);
+  });
 
   return {
     warnings, dno, kryshka, bokovoy, torec,
