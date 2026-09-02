@@ -40,13 +40,44 @@ function computeGost10198I3(input) {
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
     return { error: 'Заполните все поля положительными числами.' };
   }
+
+  let warnings = [];
   if (L <= 1200 || W <= 800) {
-    return { error: `Габариты ${L}×${W} мм не превышают 1200×800 мм. Применяется ГОСТ 21140.` };
+    // По уточнению пользователя расчёт больше не блокируется здесь - только
+    // предупреждение: при таких габаритах формально применяется ГОСТ 21140,
+    // а не 10198-91, результат нужно проверить с его учётом (тот же фикс,
+    // что и в src/app.js исходного репозитория).
+    warnings.push(`Габариты ${L}×${W} мм не превышают 1200×800 мм — формально применяется ГОСТ 21140. Расчёт продолжен по ГОСТ 10198-91, но результат нужно проверить с учётом ГОСТ 21140.`);
+  }
+
+  // Ручной ввод толщины в таблице (см. computeGost10198I1/ov() для того же
+  // приёма) - подставляется вместо расчётного по ГОСТ значения. У wall.value/
+  // t12 (доска дна)/t21 (внутр. поперечный брус крышки)/t10 (подполозная
+  // доска) override каскадно применяется везде, где значение дальше
+  // используется - у t9 (полоз)/t11 (торцовый брус дна) НЕТ каскада (оба
+  // сечения выбираются из таблицы ГОСТа парой толщина+ширина сразу, override
+  // только толщины без пересчёта ширины нарушил бы табличную связку) -
+  // override меняет ТОЛЬКО отображаемое число в этой одной ячейке (см.
+  // t9Display/t11Display ниже), не толщину, которая участвует в остальных
+  // формулах (расход пиломатериала, наружные размеры и т.п. считаются по
+  // чистому расчётному t9/t11, как если бы override не было).
+  const belowGost = {};
+  let overridesApplied = 0;
+  const mo = input.manualOverrides || {};
+  function ov(key, gostValue, label) {
+    const v = mo[key];
+    if (v === undefined || v === null || Number.isNaN(v) || v <= 0) return gostValue;
+    overridesApplied++;
+    if (v < gostValue) {
+      belowGost[key] = { value: v, gostValue, label };
+    } else {
+      delete belowGost[key];
+    }
+    return v;
   }
 
   const wallRaw = wallThickness(MASS); // п.1.6.15
-  const wall = { value: roundUpToAvailable(wallRaw.value), exceeded: wallRaw.exceeded };
-  let warnings = [];
+  const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw.value), 'Толщина досок/планок/раскосов'), exceeded: wallRaw.exceeded };
   if (MASS > 3000) {
     warnings.push('Масса груза превышает 3000 кг — вне области действия типа I-3 (ГОСТ 10198-91, Табл. 1), расчёт продолжен по верхней границе диапазона.');
   }
@@ -97,10 +128,14 @@ function computeGost10198I3(input) {
     // градацию шириной сечения) как штатный способ применения таблицы, а не
     // как отклонение от ГОСТа - по уточнению пользователя.
   }
-  dno.push({ name: 'Полоз', t: t9, w: w9, l: k9Base, qty: l9 });
+  // t9Display - изолированный override (см. комментарий у ov() выше): t9 сам
+  // по себе НЕ переопределяется и используется дальше (volDno, outerH)
+  // расчётным по ГОСТ, override виден только в этой ячейке таблицы.
+  const t9Display = ov('t9Value', t9, 'Толщина полоза');
+  dno.push({ name: 'Полоз', t: t9Display, w: w9, l: k9Base, qty: l9, overrideKey: 't9Value' });
 
   const t10Raw = forkliftLoading ? Math.max(subfloorThicknessRaw(MASS), 50) : subfloorThicknessRaw(MASS);
-  const t10 = roundUpToAvailable(t10Raw), w10 = Math.min(w9, 150), k10 = k9Base - 400, l10 = l9;
+  const t10 = ov('t10Value', roundUpToAvailable(t10Raw), 'Толщина подполозной доски'), w10 = Math.min(w9, 150), k10 = k9Base - 400, l10 = l9;
   if (k10 < 300) {
     warnings.push(`Длина подполозной доски ${Math.round(k10)} мм менее 300 мм.`);
   }
@@ -115,6 +150,7 @@ function computeGost10198I3(input) {
       w: subfloorForkliftFail ? '⚠' : w10,
       l: subfloorForkliftFail ? '⚠' : k10,
       qty: subfloorForkliftFail ? '⚠' : l10,
+      overrideKey: subfloorForkliftFail ? undefined : 't10Value',
     });
   }
 
@@ -123,7 +159,10 @@ function computeGost10198I3(input) {
     warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) — сечение торцового бруса дна принято по крайнему значению таблицы.');
   }
   const t11 = roundUpToAvailable(endBeam.h), w11 = endBeam.w, k11 = W, l11 = 2;
-  dno.push({ name: 'Торцовый брус дна', t: t11, w: w11, l: k11, qty: l11 });
+  // t11Display - тот же изолированный override, что и у t9Display выше: t11
+  // сам по себе не используется дальше нигде, кроме этой строки.
+  const t11Display = ov('t11Value', t11, 'Толщина торцового бруса дна');
+  dno.push({ name: 'Торцовый брус дна', t: t11Display, w: w11, l: k11, qty: l11, overrideKey: 't11Value' });
 
   // Толщина доски дна - зависит от варианта комплектации (см. вводный комментарий).
   let t12, k12;
@@ -142,17 +181,17 @@ function computeGost10198I3(input) {
         warnings.push(`Расстояние между полозьями ${Math.round(floorSkidDistance)} мм вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
       }
     }
-    t12 = removeFloorBoards ? 0 : roundUpToAvailable(floor.value); k12 = W;
+    t12 = removeFloorBoards ? 0 : ov('t12Value', roundUpToAvailable(floor.value), 'Толщина доски дна'); k12 = W;
   } else {
     // Крепление за полозья ("новое правило", действует всегда, независимо от
     // галочки "сплошное жёсткое основание груза").
-    t12 = removeFloorBoards ? 0 : roundUpToAvailable(floorBoardThicknessNew(MASS)); k12 = W;
+    t12 = removeFloorBoards ? 0 : ov('t12Value', roundUpToAvailable(floorBoardThicknessNew(MASS)), 'Толщина доски дна'); k12 = W;
   }
 
   const fbDno = fillBoards(L - w11 * 2, roundBoardWidths);
   const w12 = 100, l12 = fbDno.mainQty;
   if (!removeFloorBoards) {
-    if (l12 > 0) dno.push({ name: 'Доска дна', t: t12, w: w12, l: k12, qty: l12 });
+    if (l12 > 0) dno.push({ name: 'Доска дна', t: t12, w: w12, l: k12, qty: l12, overrideKey: 't12Value' });
     fbDno.extra.forEach((e, i) => {
       dno.push({ name: 'Доска дна (дополнительная) ' + (i + 1), t: t12, w: e.width, l: k12, qty: e.qty });
     });
@@ -208,8 +247,8 @@ function computeGost10198I3(input) {
   if (crossBeam.exceeded) {
     warnings.push('Масса или ширина ящика вне Табл. 14 — брус крышки принят по крайнему значению.');
   }
-  const t21 = roundUpToAvailable(crossBeam.value), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0), l21 = ceilInt(L / 800);
-  kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21 });
+  const t21 = ov('t21Value', roundUpToAvailable(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки'), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0), l21 = ceilInt(L / 800);
+  kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21, overrideKey: 't21Value' });
 
   const volKryshka = vol(t19, w19, k19, l19) + vol(t20, w20, k20, l20) + vol(t21, w21, k21, l21)
     + fbKryshka.extra.reduce((s, e) => s + vol(t20, e.width, k20, e.qty), 0);
@@ -323,7 +362,7 @@ function computeGost10198I3(input) {
   const bokovoy = [
     { name: 'Вертикальная планка', t: t40, w: w40, l: k40, qty: l40 },
   ];
-  if (l41 > 0) bokovoy.push({ name: 'Доска бока', t: t41, w: w41, l: k41, qty: l41 });
+  if (l41 > 0) bokovoy.push({ name: 'Доска бока', t: t41, w: w41, l: k41, qty: l41, overrideKey: 'wallValue' });
   fbBok.extra.forEach((e, i) => {
     bokovoy.push({ name: 'Доска бока (дополнительная) ' + (i + 1), t: t41, w: e.width, l: k41, qty: e.qty });
   });
@@ -343,6 +382,16 @@ function computeGost10198I3(input) {
 
   if (roundUpToAvailable.state.exceeded) {
     warnings.push(`Расчётная толщина хотя бы одной детали превышает максимальную из «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — занижать толщину недопустимо, использовано расчётное значение по ГОСТ (потребуется пиломатериал большей толщины, чем отмечено «в наличии»).`);
+  }
+
+  Object.values(belowGost).forEach(b => {
+    warnings.push(`${b.label}: введено вручную ${b.value} мм — меньше расчётного по ГОСТ (${Math.round(b.gostValue * 100) / 100} мм). Использовано введённое значение.`);
+  });
+
+  // Только на экране - warnings в печать не попадают вообще (фронтенд не
+  // включает их в buildPrintHtml(), бэкенд-фронтенд наследует ту же вёрстку).
+  if (overridesApplied > 0) {
+    warnings.push('В расчёте использованы значения толщины, введённые вручную в таблице, а не расчётные по ГОСТ — чертежи ниже могут не точно отражать эти изменения.');
   }
 
   const result = {

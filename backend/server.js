@@ -27,11 +27,15 @@ function toNum(v) {
 }
 
 // manualOverrides - правки толщины, введённые пользователем прямо в таблице
-// деталей (см. src/i1/calc.js исходного репозитория) - объект { ключ: число }.
-// На входе в API оставляем только конечные положительные числа под известными
-// ключами (сейчас единственный - wallValue, см. computeGost10198I1/ov()) -
-// произвольные поля из тела запроса дальше в расчёт не пропускаются.
+// деталей (см. src/i1/calc.js/src/app.js исходного репозитория) - объект
+// { ключ: число }. На входе в API оставляем только конечные положительные
+// числа под известными ключами - произвольные поля из тела запроса дальше в
+// расчёт не пропускаются.
 const I1_OVERRIDE_KEYS = ['wallValue'];
+// I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
+// computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
+// изолированные (полное объяснение см. computeGost10198I3).
+const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value'];
 function sanitizeManualOverrides(obj, allowedKeys) {
   const result = {};
   if (!obj || typeof obj !== 'object') return result;
@@ -57,6 +61,7 @@ app.post('/api/i3/calculate', (req, res) => {
     solidRigidBase: !!b.solidRigidBase,
     forkliftLoading: !!b.forkliftLoading,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
   };
   res.json(computeGost10198I3(input));
 });

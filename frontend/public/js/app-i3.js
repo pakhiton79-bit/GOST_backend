@@ -39,6 +39,9 @@ function buildThicknessCheckboxList(){
 
 function invalidateCalc(){
   document.getElementById('calcCheck').style.display = 'none';
+  const outdated = document.getElementById('calcOutdated');
+  const results = document.getElementById('results');
+  if(outdated) outdated.style.display = (results && results.style.display === 'block') ? 'inline-flex' : 'none';
 }
 
 function onThicknessCheckboxChange(el){
@@ -171,11 +174,29 @@ function onSkidForkliftExclusive(el){
   invalidateCalc();
 }
 
+// Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
+// читается ДО того, как calculate() эту таблицу перерисует, и отправляется
+// на сервер вместе с остальными входными данными (см. computeGost10198I3/
+// ov() в backend/src/i3/compute.js). Учитываются ТОЛЬКО ячейки, реально
+// отредактированные пользователем (data-user-edited, взводится обработчиком
+// input ниже) - тот же приём, что и в типе I-1 (см. js/i1/calc-i1.js).
+function readManualOverrides(){
+  const overrides = {};
+  document.querySelectorAll('#boardTables td[data-override][data-user-edited="true"]').forEach(cell=>{
+    const key = cell.getAttribute('data-override');
+    const val = parseFloat(cell.textContent.replace(',','.'));
+    if(!Number.isNaN(val) && val>0) overrides[key] = val;
+  });
+  return overrides;
+}
+
 // ============ Вызов бэкенд-API и отрисовка результата ============
 async function calculate(){
   const errEl = document.getElementById('err');
   errEl.textContent = '';
-  invalidateCalc();
+  const manualOverrides = readManualOverrides();
+  document.getElementById('calcCheck').style.display = 'none';
+  document.getElementById('calcOutdated').style.display = 'none';
 
   const removeFloorBoardsEl = document.getElementById('removeFloorBoards');
   const input = {
@@ -191,6 +212,7 @@ async function calculate(){
     solidRigidBase: document.getElementById('solidRigidBase').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     availableThicknesses,
+    manualOverrides,
   };
 
   let calc;
@@ -216,9 +238,10 @@ async function calculate(){
     html += `<div class="spec-table"><table>
       <thead><tr><th>Деталь</th><th class="num">Толщина</th><th class="num">Ширина</th><th class="num">Длина</th><th class="num">Кол-во</th></tr></thead><tbody>`;
     rows.forEach(r=>{
+      const overrideAttr = r.overrideKey ? ` data-override="${r.overrideKey}"` : '';
       html += `<tr>
         <td>${r.name}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="t">${r.t}</td>
+        <td class="num editable-cell" contenteditable="true" data-role="t"${overrideAttr}>${r.t}</td>
         <td class="num editable-cell" contenteditable="true" data-role="w">${r.w}</td>
         <td class="num editable-cell" contenteditable="true" data-role="l">${typeof r.l === 'number' ? Math.round(r.l) : r.l}</td>
         <td class="num editable-cell" contenteditable="true" data-role="qty">${r.qty}</td>
@@ -276,7 +299,13 @@ function recalcFromTable(){
 }
 
 document.getElementById('boardTables').addEventListener('input', e=>{
-  if(e.target.classList.contains('editable-cell')) recalcFromTable();
+  if(e.target.classList.contains('editable-cell')){
+    if(e.target.hasAttribute('data-override')){
+      e.target.setAttribute('data-user-edited', 'true');
+    }
+    recalcFromTable();
+    invalidateCalc();
+  }
 });
 
 const BOX_IMG_B64 = "/images/box.png";
