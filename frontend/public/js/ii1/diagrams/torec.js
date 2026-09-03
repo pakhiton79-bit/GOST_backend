@@ -67,6 +67,14 @@ const TOREC_VARIANTS = {
       }
     },
     // «3 стойки» (2 раскосины) - по разметке пользователя.
+    // Левый конец стрелки widthVal и низ ближней (x=82) вертикальной линии
+    // группы skinVal - подправлены по аналогии с исправлением у «4 стойки»
+    // ниже (тот же тип ошибки: стрелка ширины начиналась у дальней линии
+    // x=10, а должна - у ближней x=82, вплотную к видимому краю стойки на
+    // фото; ближняя линия соответственно удлинена, чтобы визуально доходить
+    // до стрелки) - у «2 стойки» выше этой ошибки не было изначально (там
+    // своя отдельная линия-вынос для ширины, не переиспользует линию группы
+    // skinVal).
     3: { img: TOREC_IMG_3POSTS_B64, IW: 1460, IH: 605,
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
@@ -79,10 +87,10 @@ const TOREC_VARIANTS = {
         }
         records.push(
           {type:'line', x1:1379, y1:734, x2:1377, y2:530},
-          {type:'double', x1:11, y1:712, x2:1377, y2:712, lx:694, ly:735, text:widthVal+' мм'}
+          {type:'double', x1:82, y1:712, x2:1377, y2:712, lx:694, ly:735, text:widthVal+' мм'}
         );
         records.push(
-          {type:'line', x1:82, y1:528, x2:82, y2:662},
+          {type:'line', x1:82, y1:528, x2:82, y2:737},
           {type:'line', x1:10, y1:530, x2:10, y2:731},
           {type:'line', x1:10, y1:620, x2:82, y2:619},
           {type:'single', x1:-77, y1:716, x2:46, y2:620, lx:-83, ly:744, text:skinVal+' мм'}
@@ -108,10 +116,10 @@ const TOREC_VARIANTS = {
         }
         records.push(
           {type:'line', x1:2135, y1:567, x2:2138, y2:802},
-          {type:'double', x1:7, y1:744, x2:2135, y2:743, lx:1112, ly:801, text:widthVal+' мм'}
+          {type:'double', x1:78, y1:744, x2:2135, y2:743, lx:1112, ly:801, text:widthVal+' мм'}
         );
         records.push(
-          {type:'line', x1:78, y1:565, x2:78, y2:729},
+          {type:'line', x1:78, y1:565, x2:76, y2:769},
           {type:'line', x1:8, y1:564, x2:8, y2:788},
           {type:'line', x1:9, y1:679, x2:78, y2:678},
           {type:'single', x1:-108, y1:532, x2:44, y2:679, lx:-109, ly:499, text:skinVal+' мм'}
