@@ -33,6 +33,7 @@ const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 рас�
 const TOREC_IMG_3POSTS_B64 = "/images/torec_ii1_1floor_3posts.jpg"; // 2 раскосины
 const TOREC_IMG_4POSTS_B64 = "/images/torec_ii1_1floor_4posts.jpg"; // 3 раскосины
 const TOREC_IMG_2FLOOR_2POSTS_B64 = "/images/torec_ii1_2floor_2posts.jpg"; // 2 этажа, 2 раскосины
+const TOREC_IMG_2FLOOR_3POSTS_B64 = "/images/torec_ii1_2floor_3posts.jpg"; // 2 этажа, 4 раскосины
 
 const TOREC_VARIANTS = {
   1: {
@@ -154,6 +155,43 @@ const TOREC_VARIANTS = {
           {type:'line', x1:100, y1:966, x2:99, y2:1130},
           {type:'line', x1:745, y1:963, x2:746, y2:1130},
           {type:'double', x1:100, y1:1096, x2:746, y2:1095, lx:424, ly:1116, text:widthVal+' мм'}
+        );
+        return records;
+      }
+    },
+    // «3 стойки, 2 этажа» (4 раскосины, по 2 на этаж) - по разметке
+    // пользователя. В отличие от схемы «2 стойки» выше, здесь есть своя
+    // группа skinVal (толщина досок обшивки бока) - на схеме «2 стойки» её
+    // не было вовсе.
+    3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, IW: 1473, IH: 1088,
+      records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
+        const records = [];
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:1317, y1:20, x2:1653, y2:20},
+            {type:'line', x1:1317, y1:73, x2:1654, y2:73},
+            {type:'line', x1:1593, y1:20, x2:1593, y2:72},
+            {type:'single', x1:1369, y1:-114, x2:1593, y2:47, lx:1317, ly:-119, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:1316, y1:1072, x2:1667, y2:1071},
+          {type:'double', x1:1570, y1:73, x2:1570, y2:1070, lx:1597, ly:582, text:heightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:152, y1:606, x2:-75, y2:605},
+          {type:'line', x1:151, y1:1072, x2:-91, y2:1072},
+          {type:'double', x1:-57, y1:607, x2:-56, y2:1073, lx:-77, ly:844, text:floorHeightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:1382, y1:1005, x2:1382, y2:1180},
+          {type:'line', x1:86, y1:1005, x2:85, y2:1167},
+          {type:'double', x1:1382, y1:1148, x2:86, y2:1149, lx:735, ly:1164, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:14, y1:1009, x2:14, y2:1167},
+          {type:'line', x1:14, y1:1107, x2:86, y2:1106},
+          {type:'single', x1:-97, y1:1222, x2:52, y2:1106, lx:-102, ly:1234, text:skinVal+' мм'}
         );
         return records;
       }

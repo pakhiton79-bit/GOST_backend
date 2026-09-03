@@ -454,7 +454,7 @@ function nearestKryshkaVariant(longbeamCount, crossBeamCount) {
 // (какая схема реально показана), сам чертёж рисуется на клиенте.
 // Независимая копия по тому же принципу, что и KRYSHKA_LONG_OPTIONS/
 // KRYSHKA_CROSS_BY_LONG выше - фронтенд/сервер не делят код напрямую.
-const TOREC_VARIANT_OPTIONS = { 1: [2, 3, 4], 2: [2] };
+const TOREC_VARIANT_OPTIONS = { 1: [2, 3, 4], 2: [2, 3] };
 function nearestTorecVariant(count, floors) {
   const floorsAvailable = Object.keys(TOREC_VARIANT_OPTIONS).map(Number);
   const bestFloors = floorsAvailable.includes(floors) ? floors
