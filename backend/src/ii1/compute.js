@@ -317,9 +317,9 @@ function computeGost10198II1(input) {
   if (bokFrame.len <= 0) {
     return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита — расчёт не выполняется.` };
   }
-  const torecVariant = nearestTorecVariant(torecFrame.count);
-  if (!torecVariant.exact || torecFrame.floors !== 1) {
-    warnings.push(`Щит торцевой: чертёж показывает ближайшую готовую схему (${torecVariant.count} стойки, 1 этаж) вместо расчётной (${torecFrame.count} стоек, ${torecFrame.floors} этаж(а)) — в таблице деталей ниже указано настоящее количество.`);
+  const torecVariant = nearestTorecVariant(torecFrame.count, torecFrame.floors);
+  if (!torecVariant.exact) {
+    warnings.push(`Щит торцевой: чертёж показывает ближайшую готовую схему (${torecVariant.count} стойки, ${torecVariant.floors} этаж(а)) вместо расчётной (${torecFrame.count} стоек, ${torecFrame.floors} этаж(а)) — в таблице деталей ниже указано настоящее количество.`);
   }
 
   // --- ЩИТ ТОРЦЕВОЙ (расчёт на 1 щит, далее удвоение) ---
@@ -449,10 +449,19 @@ function nearestKryshkaVariant(longbeamCount, crossBeamCount) {
   return { longbeamCount: bestLong, crossBeamCount: bestCross, exact: bestLong === longbeamCount && bestCross === crossBeamCount };
 }
 
-const TOREC_POST_OPTIONS = [2, 3, 4];
-function nearestTorecVariant(count) {
-  const best = TOREC_POST_OPTIONS.reduce((a, b) => Math.abs(b - count) < Math.abs(a - count) ? b : a);
-  return { count: best, exact: best === count };
+// Отражает набор готовых схем в frontend/public/js/ii1/diagrams/torec.js
+// (TOREC_VARIANTS) - используется здесь ТОЛЬКО для текста предупреждения
+// (какая схема реально показана), сам чертёж рисуется на клиенте.
+// Независимая копия по тому же принципу, что и KRYSHKA_LONG_OPTIONS/
+// KRYSHKA_CROSS_BY_LONG выше - фронтенд/сервер не делят код напрямую.
+const TOREC_VARIANT_OPTIONS = { 1: [2, 3, 4], 2: [2] };
+function nearestTorecVariant(count, floors) {
+  const floorsAvailable = Object.keys(TOREC_VARIANT_OPTIONS).map(Number);
+  const bestFloors = floorsAvailable.includes(floors) ? floors
+    : floorsAvailable.reduce((a, b) => Math.abs(b - floors) < Math.abs(a - floors) ? b : a);
+  const countOptions = TOREC_VARIANT_OPTIONS[bestFloors];
+  const bestCount = countOptions.reduce((a, b) => Math.abs(b - count) < Math.abs(a - count) ? b : a);
+  return { count: bestCount, floors: bestFloors, exact: bestCount === count && bestFloors === floors };
 }
 
 module.exports = { computeGost10198II1 };
