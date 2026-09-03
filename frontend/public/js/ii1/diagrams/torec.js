@@ -134,10 +134,10 @@ const TOREC_VARIANTS = {
     2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, IW: 833, IH: 1041,
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
+        records.push({type:'line', x1:680, y1:78, x2:989, y2:78});
         if(longbeamVal > 0){
           records.push(
             {type:'line', x1:679, y1:28, x2:984, y2:30},
-            {type:'line', x1:680, y1:78, x2:989, y2:78},
             {type:'line', x1:934, y1:79, x2:934, y2:30},
             {type:'single', x1:715, y1:-127, x2:934, y2:56, lx:642, ly:-136, text:longbeamVal+' мм'}
           );
@@ -166,10 +166,10 @@ const TOREC_VARIANTS = {
     3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, IW: 1473, IH: 1088,
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
+        records.push({type:'line', x1:1317, y1:73, x2:1654, y2:73});
         if(longbeamVal > 0){
           records.push(
             {type:'line', x1:1317, y1:20, x2:1653, y2:20},
-            {type:'line', x1:1317, y1:73, x2:1654, y2:73},
             {type:'line', x1:1593, y1:20, x2:1593, y2:72},
             {type:'single', x1:1369, y1:-114, x2:1593, y2:47, lx:1317, ly:-119, text:longbeamVal+' мм'}
           );
