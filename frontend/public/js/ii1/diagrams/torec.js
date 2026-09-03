@@ -158,7 +158,7 @@ const TOREC_VARIANTS = {
         records.push(
           {type:'line', x1:163, y1:584, x2:-107, y2:585},
           {type:'line', x1:163, y1:1026, x2:-115, y2:1028},
-          {type:'double', x1:-61, y1:586, x2:-61, y2:1027, lx:-93, ly:805, text:floorHeightVal+' мм', vertical:true}
+          {type:'double', x1:-61, y1:586, x2:-61, y2:1027, lx:-148, ly:805, text:floorHeightVal+' мм', vertical:true}
         );
         records.push(
           {type:'line', x1:100, y1:966, x2:99, y2:1130},
@@ -190,7 +190,7 @@ const TOREC_VARIANTS = {
         records.push(
           {type:'line', x1:152, y1:606, x2:-75, y2:605},
           {type:'line', x1:151, y1:1072, x2:-91, y2:1072},
-          {type:'double', x1:-57, y1:607, x2:-56, y2:1073, lx:-77, ly:844, text:floorHeightVal+' мм', vertical:true}
+          {type:'double', x1:-57, y1:607, x2:-56, y2:1073, lx:-170, ly:844, text:floorHeightVal+' мм', vertical:true}
         );
         records.push(
           {type:'line', x1:1382, y1:1005, x2:1382, y2:1180},
@@ -200,7 +200,7 @@ const TOREC_VARIANTS = {
         records.push(
           {type:'line', x1:14, y1:1009, x2:14, y2:1167},
           {type:'line', x1:14, y1:1107, x2:86, y2:1106},
-          {type:'single', x1:-97, y1:1222, x2:52, y2:1106, lx:-102, ly:1234, text:skinVal+' мм'}
+          {type:'single', x1:-97, y1:1222, x2:52, y2:1106, lx:-102, ly:1335, text:skinVal+' мм'}
         );
         return records;
       }
@@ -229,7 +229,7 @@ const TOREC_VARIANTS = {
         records.push(
           {type:'line', x1:158, y1:652, x2:-104, y2:648},
           {type:'line', x1:157, y1:1152, x2:-127, y2:1152},
-          {type:'double', x1:-68, y1:651, x2:-70, y2:1152, lx:-95, ly:902, text:floorHeightVal+' мм', vertical:true}
+          {type:'double', x1:-68, y1:651, x2:-70, y2:1152, lx:-239, ly:902, text:floorHeightVal+' мм', vertical:true}
         );
         records.push(
           {type:'line', x1:2135, y1:1080, x2:2136, y2:1264},
@@ -239,7 +239,7 @@ const TOREC_VARIANTS = {
         records.push(
           {type:'line', x1:8, y1:1084, x2:7, y2:1254},
           {type:'line', x1:8, y1:1189, x2:77, y2:1189},
-          {type:'single', x1:-97, y1:1296, x2:44, y2:1189, lx:-100, ly:1312, text:skinVal+' мм'}
+          {type:'single', x1:-97, y1:1296, x2:44, y2:1189, lx:-100, ly:1467, text:skinVal+' мм'}
         );
         return records;
       }
