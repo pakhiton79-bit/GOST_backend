@@ -365,7 +365,7 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 10198-91 · тип 1, комплектация 3</h1>
+    <h1>ГОСТ 10198-91 тип I-3</h1>
     <div class="print-subtitle">Плотный дощатый ящик с полозьями</div>
 
     <div class="part-title">Общий вид ящика</div>
