@@ -34,6 +34,7 @@ const TOREC_IMG_3POSTS_B64 = "/images/torec_ii1_1floor_3posts.jpg"; // 2 рас�
 const TOREC_IMG_4POSTS_B64 = "/images/torec_ii1_1floor_4posts.jpg"; // 3 раскосины
 const TOREC_IMG_2FLOOR_2POSTS_B64 = "/images/torec_ii1_2floor_2posts.jpg"; // 2 этажа, 2 раскосины
 const TOREC_IMG_2FLOOR_3POSTS_B64 = "/images/torec_ii1_2floor_3posts.jpg"; // 2 этажа, 4 раскосины
+const TOREC_IMG_2FLOOR_4POSTS_B64 = "/images/torec_ii1_2floor_4posts.jpg"; // 2 этажа, 6 раскосин
 
 const TOREC_VARIANTS = {
   1: {
@@ -204,16 +205,55 @@ const TOREC_VARIANTS = {
         return records;
       }
     },
+    // «4 стойки, 2 этажа» (6 раскосин, по 3 на этаж) - по разметке
+    // пользователя. Здесь, в отличие от «2/3 стойки» выше, стрелка widthVal
+    // уже сразу присланной с обеими своими выносными линиями (без
+    // переиспользования линии группы skinVal) - как у «2 стойки», без
+    // ошибки, что была у «3 стойки»/1-этажной «4 стойки» (см. комментарии
+    // там).
+    4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, IW: 2223, IH: 1160,
+      records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
+        const records = [];
+        records.push({type:'line', x1:2065, y1:78, x2:2390, y2:76});
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:2062, y1:9, x2:2389, y2:9},
+            {type:'line', x1:2317, y1:10, x2:2318, y2:77},
+            {type:'single', x1:2037, y1:-141, x2:2317, y2:44, lx:2027, ly:-144, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:2063, y1:1152, x2:2381, y2:1152},
+          {type:'double', x1:2298, y1:77, x2:2299, y2:1152, lx:2319, ly:622, text:heightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:158, y1:652, x2:-104, y2:648},
+          {type:'line', x1:157, y1:1152, x2:-127, y2:1152},
+          {type:'double', x1:-68, y1:651, x2:-70, y2:1152, lx:-95, ly:902, text:floorHeightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:2135, y1:1080, x2:2136, y2:1264},
+          {type:'line', x1:77, y1:1084, x2:77, y2:1252},
+          {type:'double', x1:2136, y1:1224, x2:77, y2:1222, lx:1107, ly:1242, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:8, y1:1084, x2:7, y2:1254},
+          {type:'line', x1:8, y1:1189, x2:77, y2:1189},
+          {type:'single', x1:-97, y1:1296, x2:44, y2:1189, lx:-100, ly:1312, text:skinVal+' мм'}
+        );
+        return records;
+      }
+    },
   },
 };
 const TOREC_POST_OPTIONS = [2, 3, 4];
 
-// Готовых фото - 1 этаж (2/3/4 стойки, т.е. 1/2/3 раскосины) и пока только
-// начало 2-этажных схем (2 стойки, ещё пришлют 3/4 позже - см. комментарий у
-// TOREC_VARIANTS выше). Если для расчётной этажности нет НИ ОДНОЙ готовой
-// схемы у нужного числа стоек - берём ближайшее число стоек СРЕДИ схем ТОЙ
-// ЖЕ этажности (не подменяя другой этажностью - геометрия слишком разная);
-// если для расчётной этажности готовых схем нет вовсе - используем схемы
+// Готовых фото - 2/3/4 стойки (1/2/3 раскосины), И для 1 этажа, И для 2
+// этажей (см. TOREC_VARIANTS выше). Если для расчётного числа стоек нет
+// готовой схемы (5+) - берём ближайшее число стоек СРЕДИ схем ТОЙ ЖЕ
+// этажности (не подменяя другой этажностью - геометрия слишком разная);
+// если для расчётной этажности готовых схем нет вовсе (не может случиться
+// при нынешнем наборе фото, floors всегда 1 или 2) - используем схемы
 // доступной этажности (тот же приём, что и у Крышки, nearestKryshkaVariant,
 // но с дополнительным измерением "этаж").
 function nearestTorecVariant(count, floors){
