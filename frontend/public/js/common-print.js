@@ -94,12 +94,22 @@ function printBox(){
 // fitPrintAreaToOnePage - страница «влезала» при замере, а печатала обрезанной.
 function reserveDiagramOverflow(printArea){
   printArea.querySelectorAll('.diagram-slot').forEach(slot=>{
+    // margin-left сбрасываем ДО проверки на wrap - иначе у пустого слота
+    // (напр. «Общий вид ящика» у типа II-1, где фото ещё нет - см.
+    // buildPrintHtml в src/ii1/calc.js) остаётся CSS-отступ по умолчанию
+    // (#printArea .diagram-slot{margin-left:calc(var(--pk)*44px)}), а у
+    // остальных слотов (где wrap есть) он явно обнулён ниже - из-за этого
+    // левый край таблицы сразу после ТАКОГО слота (напр. сводная таблица
+    // «Внутренние размеры груза»/«Итог») не совпадал с левым краем таблиц
+    // деталей у остальных узлов, и вдобавок разъезжался на разную величину
+    // от расчёта к расчёту (отступ масштабируется через --pk) - по репорту
+    // пользователя.
+    slot.style.marginLeft = '0px';
     const wrap = slot.querySelector('.diagram-wrap');
     if(!wrap) return;
 
     slot.style.paddingTop = '0px';
     slot.style.paddingBottom = '0px';
-    slot.style.marginLeft = '0px';
     wrap.style.marginLeft = '0px';
 
     function measure(){
@@ -148,19 +158,41 @@ function reserveDiagramOverflow(printArea){
     // margin-left на wrap просто двигает картинку внутри уже фиксированной по
     // ширине ячейки (.diagram-slot{width:calc(var(--pk)*300px)} в style.css) -
     // таблица никогда не сдвигается.
-    const leftGap0 = Math.max(0, Math.ceil(m0.box.left - m0.left));
+    // SAFETY_PAD - небольшой запас, а не впритык до края слота (см. тот же
+    // константу и комментарий в reserveDiagramOverflowScreen ниже) - у схемы
+    // «3 укосины» чертежа «Щит торцевой» типа II-1 рамка щита занимает
+    // самую большую долю кадра фото из всех присланных, поэтому те же ДОЛИ
+    // отступа дают наибольший вылет в пикселях, и без запаса подпись
+    // получалась впритык к краю слота - по репорту пользователя.
+    const SAFETY_PAD = 6;
+
+    const leftGap0 = Math.max(0, Math.ceil(m0.box.left - m0.left)) + SAFETY_PAD;
     wrap.style.marginLeft = leftGap0 + 'px';
 
-    // Подстраховка: если отступ + сама картинка не помещаются в фиксированную
+    // Подстраховка: если отступ + сама картинка + вылет подписей/стрелок
+    // ВПРАВО (за пределы самой картинки - как у widthVal-подписи чертежа
+    // «Крышка» типа II-1, которая размещена почти у самого правого края
+    // фото и потому торчит за его границу) не помещаются в фиксированную
     // ширину слота, чертёж наложился бы на таблицу (слот - overflow:visible,
     // это не ловится проверкой fits() в fitPrintAreaToOnePage, т.к. не меняет
-    // scrollWidth). Пропорционально уменьшаем ширину картинки, чтобы отступ +
-    // картинка гарантированно остались внутри слота.
+    // scrollWidth). Раньше здесь проверялась только ширина САМОЙ картинки без
+    // учёта вылета подписей вправо - тот же приём, что и в экранной версии
+    // (reserveDiagramOverflowScreen в этом же файле): пропорционально
+    // уменьшаем чертёж (картинку + подписи + стрелки, через --dk) в
+    // несколько итераций, пока правый край (с учётом вылета) не впишется в
+    // оставшуюся ширину слота.
     const slotWidth = slot.getBoundingClientRect().width;
-    const wrapWidth0 = wrap.getBoundingClientRect().width;
-    const available = slotWidth - leftGap0;
-    if(available > 0 && wrapWidth0 > available){
-      wrap.style.width = available + 'px';
+    const fullWidth = wrap.getBoundingClientRect().width;
+    wrap.style.setProperty('--dk', '1');
+    let scale = 1;
+    for(let i = 0; i < 8; i++){
+      const mi = measure();
+      const rightGap = Math.max(0, Math.ceil(mi.right - mi.box.right)) + SAFETY_PAD;
+      const usedWidth = leftGap0 + mi.box.width + rightGap;
+      if(usedWidth <= slotWidth || scale <= 0.3) break;
+      scale = Math.max(0.3, scale * (slotWidth - 4 - leftGap0) / (mi.box.width + rightGap));
+      wrap.style.width = Math.round(fullWidth * scale) + 'px';
+      wrap.style.setProperty('--dk', scale.toFixed(3));
     }
 
     // Центрируем САМУ КАРТИНКУ (а не весь охват вместе с вылетающими подписями)
@@ -174,8 +206,8 @@ function reserveDiagramOverflow(printArea){
     // чтобы не наехать на таблицу) - если картинка узкая, а вылет большой и
     // несимметричный, эти границы важнее идеальной центровки.
     const m = measure();
-    const leftGap = Math.max(0, Math.ceil(m.box.left - m.left));
-    const rightGap = Math.max(0, Math.ceil(m.right - m.box.right));
+    const leftGap = Math.max(0, Math.ceil(m.box.left - m.left)) + SAFETY_PAD;
+    const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
     const idealCenter = (slotWidth - m.box.width) / 2;
     const maxMargin = Math.max(leftGap, slotWidth - m.box.width - rightGap);
     const marginLeft = Math.min(Math.max(idealCenter, leftGap), maxMargin);
@@ -251,8 +283,18 @@ function reserveDiagramOverflowScreen(container){
     // одновременном вылете подписей и слева, и справа (как на «Щит боковой»)
     // margin-left, добавленный ПОСЛЕ проверки масштаба, мог вытолкнуть чертёж
     // за пределы слота и наложить подпись на соседнюю таблицу деталей.
+    // SAFETY_PAD - небольшой запас (не только впритык до края слота), иначе
+    // при вылете подписи почти на весь бюджет слота (напр. «Щит торцевой»
+    // схема «3 укосины» типа II-1 - у неё рамка щита на фото занимает
+    // самую большую долю кадра из всех присланных фото, поэтому те же
+    // ДОЛИ отступа дают самый большой вылет в пикселях) отступ получался
+    // ровно впритык (0-1px до края слота) - формально не налезает на
+    // таблицу справа, но подпись слева визуально "выходит за пределы" -
+    // по репорту пользователя.
+    const SAFETY_PAD = 6;
+
     const m0 = measure();
-    const leftGap0 = Math.max(0, Math.ceil(m0.box.left - m0.left));
+    const leftGap0 = Math.max(0, Math.ceil(m0.box.left - m0.left)) + SAFETY_PAD;
     wrap.style.marginLeft = leftGap0 + 'px';
 
     // Правый вылет не резервируем отступом (это сдвинуло бы таблицу деталей) -
@@ -262,7 +304,7 @@ function reserveDiagramOverflowScreen(container){
     let scale = 1;
     for(let i = 0; i < 8; i++){
       const m = measure();
-      const rightGap = Math.max(0, Math.ceil(m.right - m.box.right));
+      const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
       const usedWidth = leftGap0 + m.box.width + rightGap;
       if(usedWidth <= DIAGRAM_SLOT_BUDGET || scale <= 0.3) break;
       scale = Math.max(0.3, scale * (DIAGRAM_SLOT_BUDGET - 4 - leftGap0) / (m.box.width + rightGap));
@@ -273,8 +315,8 @@ function reserveDiagramOverflowScreen(container){
     const m = measure();
     const topGap = Math.max(0, Math.ceil(m.box.top - m.top));
     const bottomGap = Math.max(0, Math.ceil(m.bottom - m.box.bottom));
-    const leftGap = Math.max(0, Math.ceil(m.box.left - m.left));
-    const rightGap = Math.max(0, Math.ceil(m.right - m.box.right));
+    const leftGap = Math.max(0, Math.ceil(m.box.left - m.left)) + SAFETY_PAD;
+    const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
 
     // Центрируем САМУ КАРТИНКУ (а не весь охват вместе с вылетающими подписями)
     // в слоте. Центрирование охвата целиком (первая версия этой правки) не

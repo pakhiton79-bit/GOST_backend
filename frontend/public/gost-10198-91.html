@@ -12,6 +12,7 @@
 <style>
   .wrap{max-width:820px;}
   .type-card{
+    position:relative;
     display:flex;
     align-items:center;
     gap:24px;
@@ -23,6 +24,31 @@
     color:var(--ink);
     margin-bottom:16px;
     transition:border-color .15s ease, background-color .15s ease;
+  }
+  .type-badge{
+    position:absolute;
+    top:-10px;
+    right:16px;
+    padding:4px 12px;
+    border-radius:999px;
+    background:var(--warn);
+    color:#ffffff;
+    font-size:12px;
+    font-weight:600;
+    line-height:1.4;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+    pointer-events:none;
+  }
+  /* Отдельный тип (сейчас II-1) ещё не проверен на чертежах вовсе - плашка
+     ярче обычной "Требует проверки", чтобы выделяться сильнее (см. badgeDanger
+     в TYPES ниже). */
+  .type-badge-danger{
+    background:var(--error);
+  }
+  /* Найденные расхождения у типа уже исправлены и подтверждены контрольным
+     примером - зелёная плашка вместо жёлтой (см. badgeOk в TYPES ниже). */
+  .type-badge-ok{
+    background:var(--ok);
   }
   .type-card:hover{
     border-color:var(--accent);
@@ -70,6 +96,7 @@
 </div>
 
 <script>
+const REVIEW_BADGE = 'Требует проверки';
 const TYPES = [
   {
     name: 'Тип I-1',
@@ -83,7 +110,8 @@ const TYPES = [
       skid: 'i3-skid.html',
       floor_boards: 'i3-floor.html'
     },
-    image: '/images/box.png'
+    image: '/images/box.png',
+    badge: REVIEW_BADGE
   }
 ];
 
@@ -99,7 +127,10 @@ const TYPES = [
   const root = document.getElementById('types');
   let html = '';
   TYPES.forEach(t => {
+    const badgeClass = 'type-badge' + (t.badgeDanger ? ' type-badge-danger' : t.badgeOk ? ' type-badge-ok' : '');
+    const badge = t.badge ? `<span class="${badgeClass}">${t.badge}</span>` : '';
     html += `<a class="type-card" href="${resolveFile(t)}">
+      ${badge}
       <div class="type-info"><h3>${t.name}</h3></div>
       <div class="type-image"><img src="${t.image}" alt="${t.name}"></div>
     </a>`;

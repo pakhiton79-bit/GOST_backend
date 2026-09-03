@@ -48,17 +48,17 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale){
     const hasLabel = ('lx' in r);
     if(hasLine){
       if(r.type==='line'){
-        shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${r.x2}" y2="${r.y2}" stroke="#4E342E" stroke-width="${lineWidth}"/>`;
+        shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${r.x2}" y2="${r.y2}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;
       } else if(r.type==='double'){
         const headStart = headTriangle(r.x2,r.y2,r.x1,r.y1,scale);
         const headEnd   = headTriangle(r.x1,r.y1,r.x2,r.y2,scale);
-        shapes += `<line x1="${headStart.bx.toFixed(1)}" y1="${headStart.by.toFixed(1)}" x2="${headEnd.bx.toFixed(1)}" y2="${headEnd.by.toFixed(1)}" stroke="#4E342E" stroke-width="${lineWidth}"/>`;
-        shapes += `<polygon points="${headStart.poly}" fill="#4E342E"/>`;
-        shapes += `<polygon points="${headEnd.poly}" fill="#4E342E"/>`;
+        shapes += `<line x1="${headStart.bx.toFixed(1)}" y1="${headStart.by.toFixed(1)}" x2="${headEnd.bx.toFixed(1)}" y2="${headEnd.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;
+        shapes += `<polygon points="${headStart.poly}" fill="#8A4B26"/>`;
+        shapes += `<polygon points="${headEnd.poly}" fill="#8A4B26"/>`;
       } else if(r.type==='single'){
         const head = headTriangle(r.x1,r.y1,r.x2,r.y2,scale);
-        shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${head.bx.toFixed(1)}" y2="${head.by.toFixed(1)}" stroke="#4E342E" stroke-width="${lineWidth}"/>`;
-        shapes += `<polygon points="${head.poly}" fill="#4E342E"/>`;
+        shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${head.bx.toFixed(1)}" y2="${head.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;
+        shapes += `<polygon points="${head.poly}" fill="#8A4B26"/>`;
       }
     }
     if(hasLabel){
