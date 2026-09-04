@@ -174,6 +174,31 @@ function onSkidForkliftExclusive(el){
   invalidateCalc();
 }
 
+// ============ Запоминание галочек «Дополнительные опции» ============
+// Тот же принцип, что и у THICKNESS_STORAGE_KEY/FASTENING_STORAGE_KEY выше -
+// свой набор ключей localStorage для этой комплектации ящика (t1-k3), чтобы
+// выбор не «утекал» между калькуляторами разных типов. По просьбе
+// пользователя: все чекбоксы опций должны запоминаться между заходами, как
+// уже давно работает для толщин "в наличии" и способа крепления. Общий и
+// для i3-skid.html, и для i3-floor.html (I3_VARIANT - обе страницы грузят
+// этот же файл) - у них уже общий FASTENING_STORAGE_KEY, поэтому здесь
+// логично то же самое: переключение "за полозья"/"к доскам дна" не должно
+// сбрасывать остальные опции.
+const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-t1-k3-opt-';
+function persistCheckbox(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const key = OPTIONS_STORAGE_PREFIX + id;
+  try{
+    const saved = localStorage.getItem(key);
+    if(saved !== null) el.checked = (saved === '1');
+  }catch(e){}
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(key, el.checked ? '1' : '0'); }catch(e){}
+  });
+}
+['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards'].forEach(persistCheckbox);
+
 // Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
 // читается ДО того, как calculate() эту таблицу перерисует, и отправляется
 // на сервер вместе с остальными входными данными (см. computeGost10198I3/

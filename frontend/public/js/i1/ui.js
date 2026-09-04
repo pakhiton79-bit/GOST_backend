@@ -120,4 +120,43 @@ function toggleSkidThicknessDropdown(){
   document.getElementById('skidThicknessDropdownPanel').classList.toggle('open');
 }
 
+// ============ Запоминание галочек и переключателей ============
+// Тот же принцип, что и у THICKNESS_STORAGE_KEY выше - свой набор ключей
+// localStorage для этого типа ящика, чтобы выбор не «утекал» между
+// калькуляторами разных типов. По просьбе пользователя: все чекбоксы/
+// переключатели опций должны запоминаться между заходами, как уже давно
+// работает для толщин "в наличии".
+const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-i1-opt-';
+function persistCheckbox(id, onRestore){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const key = OPTIONS_STORAGE_PREFIX + id;
+  try{
+    const saved = localStorage.getItem(key);
+    if(saved !== null) el.checked = (saved === '1');
+  }catch(e){}
+  if(onRestore) onRestore();
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(key, el.checked ? '1' : '0'); }catch(e){}
+  });
+}
+persistCheckbox('skidEnabled', ()=>{
+  document.getElementById('skidThicknessRow').style.display = document.getElementById('skidEnabled').checked ? '' : 'none';
+});
+persistCheckbox('roundBoardWidths');
+
+// skidThicknessValue (а не DOM) - источник истины при расчёте (см. calc-i1.js),
+// поэтому восстанавливаем именно его, а не только checked-состояние радио.
+const SKID_THICKNESS_KEY = OPTIONS_STORAGE_PREFIX + 'skidThickness';
+try{
+  const saved = localStorage.getItem(SKID_THICKNESS_KEY);
+  if(saved && ['50','100','150','200'].includes(saved)) skidThicknessValue = parseInt(saved, 10);
+}catch(e){}
+document.querySelectorAll('input[name="skidThickness"]').forEach(el=>{
+  el.checked = (parseInt(el.value,10) === skidThicknessValue);
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(SKID_THICKNESS_KEY, el.value); }catch(e){}
+  });
+});
+
 updateSkidThicknessSummary();

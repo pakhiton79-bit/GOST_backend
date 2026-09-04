@@ -145,3 +145,41 @@ function onSkidForkliftExclusive(el){
   }
   invalidateCalc();
 }
+
+// ============ Запоминание галочек и переключателей «Дополнительные опции» /
+// «Расположение досок крышки» ============
+// Тот же принцип, что и у толщин/способа крепления выше (THICKNESS_STORAGE_KEY/
+// FASTENING_STORAGE_KEY) - свой набор ключей localStorage для этого типа
+// ящика, чтобы выбор не «утекал» между калькуляторами разных типов. По
+// просьбе пользователя: все чекбоксы/переключатели опций должны запоминаться
+// между заходами, как уже давно работает для толщин "в наличии" и способа
+// крепления.
+const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-ii1-opt-';
+function persistCheckbox(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const key = OPTIONS_STORAGE_PREFIX + id;
+  try{
+    const saved = localStorage.getItem(key);
+    if(saved !== null) el.checked = (saved === '1');
+  }catch(e){}
+  el.addEventListener('change', ()=>{
+    try{ localStorage.setItem(key, el.checked ? '1' : '0'); }catch(e){}
+  });
+}
+function persistRadioGroup(name){
+  const els = Array.from(document.querySelectorAll(`input[name="${name}"]`));
+  if(els.length === 0) return;
+  const key = OPTIONS_STORAGE_PREFIX + name;
+  try{
+    const saved = localStorage.getItem(key);
+    if(saved !== null && els.some(el=>el.value===saved)){
+      els.forEach(el=>{ el.checked = (el.value === saved); });
+    }
+  }catch(e){}
+  els.forEach(el=>el.addEventListener('change', ()=>{
+    if(el.checked){ try{ localStorage.setItem(key, el.value); }catch(e){} }
+  }));
+}
+['removeFloorBoards','removeSkidBoards','forkliftLoading','solidRigidBase','roundBoardWidths','optimizeSizes'].forEach(persistCheckbox);
+persistRadioGroup('lidLayout');
