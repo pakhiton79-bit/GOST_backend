@@ -39,10 +39,10 @@ function computeGost10198I1(input) {
     return v;
   }
   if (MASS < 200) {
-    warnings.push('Масса груза менее 200 кг.');
+    warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): менее 200 кг.');
   }
   if (MASS > 1000) {
-    warnings.push('Масса груза более 1000 кг — вне документированного диапазона типа I-1 (200-1000 кг).');
+    warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): более 1000 кг.');
   }
 
   const density = packingDensity(MASS, L, W, H);
@@ -71,7 +71,7 @@ function computeGost10198I1(input) {
     if (beltGapHit === undefined) break;
     const stepped = stepDownGrade(wallRaw);
     if (stepped === wallRaw) break;
-    warnings.push(`Расстояние между планками ${Math.round(beltGapHit)} мм (400-500мм) — толщина досок/планок/раскосов снижена на одну градацию (${wallRaw}→${stepped} мм).`);
+    warnings.push(`Шаг планок ${Math.round(beltGapHit)} мм (400–500) — толщина досок/планок/раскосов снижена на градацию (${wallRaw}→${stepped} мм).`);
     wallRaw = stepped;
   }
   const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw), 'Толщина досок/планок/раскосов') };
@@ -102,7 +102,7 @@ function computeGost10198I1(input) {
     // предупреждения о превышении - в отличие от всех остальных деталей.
     const t9 = Math.max(skidThicknessRaw, 50);
     if (skidThicknessRaw < 50) {
-      warnings.push(`Выбранная толщина полоза ${skidThicknessRaw} мм менее 50 мм — принято 50 мм.`);
+      warnings.push(`Толщина полоза ${skidThicknessRaw} мм менее 50 — принято 50 мм.`);
     }
     const w9 = 100;
     const k9 = W + wall.value * 2;
@@ -205,19 +205,19 @@ function computeGost10198I1(input) {
   const normaVremeni = roundup(totalVolume * 800 / 60 * 1.2, 1);
 
   if (plankQty > 4) {
-    warnings.push(`Число планок (${plankQty}) больше максимального доступного на чертежах дна/крышки/бока (4) — показаны чертежи с 4 планками.`);
+    warnings.push(`Планки: чертёж — макс. 4 (расчётных ${plankQty}); точное количество см. в таблице ниже.`);
   }
 
   if (roundUpToAvailable.state.exceeded) {
-    warnings.push(`Расчётная толщина хотя бы одной детали превышает максимальную из «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — занижать толщину недопустимо, использовано расчётное значение по ГОСТ (потребуется пиломатериал большей толщины, чем отмечено «в наличии»).`);
+    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
 
   Object.values(belowGost).forEach(b => {
-    warnings.push(`${b.label}: введено вручную ${b.value} мм — меньше расчётного по ГОСТ (${Math.round(b.gostValue * 100) / 100} мм). Использовано введённое значение.`);
+    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) — использовано введённое значение.`);
   });
 
   if (overridesApplied > 0) {
-    warnings.push('В расчёте использованы значения толщины, введённые вручную в таблице, а не расчётные по ГОСТ — чертежи ниже могут не точно отражать эти изменения.');
+    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ — чертежи ниже могут их не точно отражать.');
   }
 
   const result = {

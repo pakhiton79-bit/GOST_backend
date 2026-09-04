@@ -47,7 +47,7 @@ function computeGost10198I3(input) {
     // предупреждение: при таких габаритах формально применяется ГОСТ 21140,
     // а не 10198-91, результат нужно проверить с его учётом (тот же фикс,
     // что и в src/app.js исходного репозитория).
-    warnings.push(`Габариты ${L}×${W} мм не превышают 1200×800 мм — формально применяется ГОСТ 21140. Расчёт продолжен по ГОСТ 10198-91, но результат нужно проверить с учётом ГОСТ 21140.`);
+    warnings.push(`Габариты ${L}×${W} мм ≤ 1200×800 — формально действует ГОСТ 21140. Расчёт по ГОСТ 10198-91 продолжен, но результат нужно сверить с ГОСТ 21140.`);
   }
 
   // Ручной ввод толщины в таблице (см. computeGost10198I1/ov() для того же
@@ -79,10 +79,10 @@ function computeGost10198I3(input) {
   const wallRaw = wallThickness(MASS); // п.1.6.15
   const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw.value), 'Толщина досок/планок/раскосов'), exceeded: wallRaw.exceeded };
   if (MASS > 3000) {
-    warnings.push('Масса груза превышает 3000 кг — вне области действия типа I-3 (ГОСТ 10198-91, Табл. 1), расчёт продолжен по верхней границе диапазона.');
+    warnings.push('Масса груза вне диапазона типа I-3 (Табл. 1, ≤3000 кг) — расчёт продолжен по крайнему значению.');
   }
   if (wall.exceeded) {
-    warnings.push('Масса вне диапазона п.1.6.15 — толщина стенок принята по верхней границе (25 мм).');
+    warnings.push('Масса вне диапазона п.1.6.15 — толщина стенок принята по крайнему значению (25 мм).');
   }
 
   // --- ДНО ---
@@ -98,7 +98,7 @@ function computeGost10198I3(input) {
     l9 = l9_default;
     const poloz = polozSection165(MASS); // п.1.6.5
     if (poloz.exceeded) {
-      warnings.push('Масса вне диапазона п.1.6.5 (500–20000 кг) — сечение полоза принято по крайнему значению таблицы.');
+      warnings.push('Масса вне диапазона п.1.6.5 (500–20000 кг) — сечение полоза принято по крайнему значению.');
     }
     const minNeeded165 = minSkidsByWidth162(skidCalcWidth, poloz.w);
     if (l9_default < minNeeded165) {
@@ -114,10 +114,10 @@ function computeGost10198I3(input) {
     // t9 - тот же принцип исключения, что и в ветке solidRigidBase выше.
     l9 = sel.count; t9 = sel.h; w9 = sel.w;
     if (sel.massSnapped) {
-      warnings.push(`Масса ${MASS} кг отсутствует в Табл. 19 — принята ближайшая (${sel.massUsed} кг).`);
+      warnings.push(`Масса ${MASS} кг вне Табл. 19 — принята ближайшая (${sel.massUsed} кг).`);
     }
     if (sel.lengthSnapped) {
-      warnings.push(`Длина полоза ${Math.round(k9Base)} мм отсутствует в Табл. 19 — принята ближайшая (${sel.lengthUsed} мм).`);
+      warnings.push(`Длина полоза ${Math.round(k9Base)} мм вне Табл. 19 — принята ближайшая (${sel.lengthUsed} мм).`);
     }
     if (sel.extrapolatedBeyondOne) {
       // По уточнению пользователя: достройка сверх таблицы разрешена
@@ -126,7 +126,7 @@ function computeGost10198I3(input) {
       // (п.1.6.2) не хватает даже +1 - добавляем ещё (тем же сечением), но
       // это уже отклонение от документированного правила, поэтому здесь
       // предупреждение.
-      warnings.push(`Табл. 19 не предусматривает достаточного количества полозьев для шага осей ≤1200 мм (п.1.6.2) даже с одним полозом сверх таблицы — добавлено больше (${sel.count} шт.) того же сечения.`);
+      warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) — добавлен ещё того же сечения (${sel.count} шт. итого).`);
     }
   }
   // t9Display - изолированный override (см. комментарий у ov() выше): t9 сам
@@ -142,7 +142,7 @@ function computeGost10198I3(input) {
   }
   const subfloorForkliftFail = forkliftLoading && k10 < 300;
   if (subfloorForkliftFail) {
-    warnings.push(`Требование ≥300 мм для подполозной доски при погрузке погрузчиком не выполнено (${Math.round(k10)} мм).`);
+    warnings.push(`Погрузка погрузчиком требует ≥300 мм у подполозной доски (сейчас ${Math.round(k10)} мм).`);
   }
   if (!removeSkidBoards) {
     dno.push({
@@ -157,7 +157,7 @@ function computeGost10198I3(input) {
 
   const endBeam = endBeamSection(MASS); // п.1.6.8
   if (endBeam.exceeded) {
-    warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) — сечение торцового бруса дна принято по крайнему значению таблицы.');
+    warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) — сечение торцового бруса дна принято по крайнему значению.');
   }
   const t11 = roundUpToAvailable(endBeam.h), w11 = endBeam.w, k11 = W, l11 = 2;
   // t11Display - тот же изолированный override, что и у t9Display выше: t11
@@ -179,7 +179,7 @@ function computeGost10198I3(input) {
         warnings.push(`Удельная нагрузка на дно ${floor.udel.toFixed(2)} кг/см² вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
       }
       if (distExceeded) {
-        warnings.push(`Расстояние между полозьями ${Math.round(floorSkidDistance)} мм вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
+        warnings.push(`Шаг полозьев ${Math.round(floorSkidDistance)} мм вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
       }
     }
     t12 = removeFloorBoards ? 0 : ov('t12Value', roundUpToAvailable(floor.value), 'Толщина доски дна'); k12 = W;
@@ -197,10 +197,10 @@ function computeGost10198I3(input) {
       dno.push({ name: 'Доска дна (дополнительная) ' + (i + 1), t: t12, w: e.width, l: k12, qty: e.qty });
     });
     if (fbDno.warn) {
-      warnings.push('Доска дна: остаток занят доской нестандартной ширины (вне 75–99 мм).');
+      warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
     }
     if (fbDno.singleNarrow) {
-      warnings.push('Доска дна: применена одна доска шириной менее 100 мм.');
+      warnings.push('Доска дна: одна доска уже менее 100 мм.');
     }
   }
 
@@ -221,7 +221,7 @@ function computeGost10198I3(input) {
   const middleKryshka = k9Base - edgeDistKryshka * 2;
   let l19;
   if (middleKryshka < 0) {
-    warnings.push(`Планка крышки: длина ящика ${Math.round(k9Base)} мм недостаточна для отступа — принято минимальное количество (2 шт.).`);
+    warnings.push(`Планка крышки: длины ${Math.round(k9Base)} мм не хватает на отступ — принят минимум (2 шт.).`);
     l19 = 2;
   } else {
     l19 = ceilInt(middleKryshka / 1000) + 1;
@@ -238,10 +238,10 @@ function computeGost10198I3(input) {
     kryshka.push({ name: 'Доска крышки (дополнительная) ' + (i + 1), t: t20, w: e.width, l: k20, qty: e.qty });
   });
   if (fbKryshka.warn) {
-    warnings.push('Доска крышки: остаток занят доской нестандартной ширины (вне 75–99 мм).');
+    warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
   }
   if (fbKryshka.singleNarrow) {
-    warnings.push('Доска крышки: применена одна доска шириной менее 100 мм.');
+    warnings.push('Доска крышки: одна доска уже менее 100 мм.');
   }
 
   const crossBeam = crossBeamThickness(MASS, outerW); // Табл. 14
@@ -283,12 +283,12 @@ function computeGost10198I3(input) {
       torecSections++;
     }
     if (torecAngleDeg(torecSections) < 20) {
-      warnings.push(`Щит торцевой: угол раскосины менее 20° даже при максимально возможном по ширине числе секций (${torecSections}) — дальше добавлять секции некуда, не хватает места для планок (${w30} мм каждая).`);
+      warnings.push(`Щит торцевой: угол раскосины <20° даже при максимуме секций (${torecSections}) — больше не добавить, не хватает места (по ${w30} мм на планку).`);
     }
   }
   const torecHasRaskosina = H > 600 && W > 600 && !(torecSections === 1 && torecAngleDeg(1) > 60);
   if (torecHasRaskosina && torecSections > 3) {
-    warnings.push(`Щит торцевой: секций по ширине ${torecSections} — чертёж показывает максимум 3 (расположение планок и раскосин аналогичное), в таблице деталей ниже указано реальное количество.`);
+    warnings.push(`Щит торцевой: чертёж — макс. 3 секции (расчётных ${torecSections}, раскладка та же); точное количество см. в таблице ниже.`);
   }
 
   const l30 = (torecSections + 1) * torecFloors;
@@ -302,10 +302,10 @@ function computeGost10198I3(input) {
   const fbTorec = fillBoards(H + t12, roundBoardWidths);
   const w32 = 100, l32 = fbTorec.mainQty;
   if (fbTorec.warn) {
-    warnings.push('Доска торца: остаток занят доской нестандартной ширины (вне 75–99 мм).');
+    warnings.push('Доска торца: остаток — нестандартная ширина (вне 75–99 мм).');
   }
   if (fbTorec.singleNarrow) {
-    warnings.push('Доска торца: применена одна доска шириной менее 100 мм.');
+    warnings.push('Доска торца: одна доска уже менее 100 мм.');
   }
 
   const endPanel = [
@@ -338,10 +338,10 @@ function computeGost10198I3(input) {
   const fbBok = fillBoards(H + t12, roundBoardWidths);
   const w41 = 100, l41 = fbBok.mainQty;
   if (fbBok.warn) {
-    warnings.push('Доска бока: остаток занят доской нестандартной ширины (вне 75–99 мм).');
+    warnings.push('Доска бока: остаток — нестандартная ширина (вне 75–99 мм).');
   }
   if (fbBok.singleNarrow) {
-    warnings.push('Доска бока: применена одна доска шириной менее 100 мм.');
+    warnings.push('Доска бока: одна доска уже менее 100 мм.');
   }
 
   const t42 = wall.value, w42 = 100;
@@ -352,7 +352,7 @@ function computeGost10198I3(input) {
   if (bokHasRaskosina && bokSectionW > 0) {
     const bokAngleDeg = Math.atan2(bokVertSpan, bokSectionW) * 180 / Math.PI;
     if (bokAngleDeg < 20 || bokAngleDeg > 60) {
-      warnings.push(`Угол раскосины бокового щита ${Math.round(bokAngleDeg)}° вне рекомендуемого диапазона 20-60° — требуется консультация с конструктором.`);
+      warnings.push(`Угол раскосины бокового щита ${Math.round(bokAngleDeg)}° вне 20–60° — нужна консультация конструктора.`);
     }
   }
 
@@ -378,21 +378,21 @@ function computeGost10198I3(input) {
   const t40Display = optimizeSizes ? t40 + 2 : t40;
 
   if (torecFloors === 2 && !torecHasRaskosina) {
-    warnings.push('Щит торцевой (2 этажа, без раскосины): чертёж приблизительный — использован чертёж одного этажа.');
+    warnings.push('Щит торцевой (2 этажа, без раскосины): чертёж приблизительный — показан чертёж одного этажа.');
   }
 
   if (roundUpToAvailable.state.exceeded) {
-    warnings.push(`Расчётная толщина хотя бы одной детали превышает максимальную из «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — занижать толщину недопустимо, использовано расчётное значение по ГОСТ (потребуется пиломатериал большей толщины, чем отмечено «в наличии»).`);
+    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
 
   Object.values(belowGost).forEach(b => {
-    warnings.push(`${b.label}: введено вручную ${b.value} мм — меньше расчётного по ГОСТ (${Math.round(b.gostValue * 100) / 100} мм). Использовано введённое значение.`);
+    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) — использовано введённое значение.`);
   });
 
   // Только на экране - warnings в печать не попадают вообще (фронтенд не
   // включает их в buildPrintHtml(), бэкенд-фронтенд наследует ту же вёрстку).
   if (overridesApplied > 0) {
-    warnings.push('В расчёте использованы значения толщины, введённые вручную в таблице, а не расчётные по ГОСТ — чертежи ниже могут не точно отражать эти изменения.');
+    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ — чертежи ниже могут их не точно отражать.');
   }
 
   const result = {
