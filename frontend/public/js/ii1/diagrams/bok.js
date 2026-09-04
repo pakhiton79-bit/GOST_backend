@@ -19,6 +19,7 @@ function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, f
 }
 
 const BOK_IMG_1FLOOR_2POSTS_B64 = "/images/bok_ii1_1floor_2posts.jpg"; // 1 раскосина
+const BOK_IMG_1FLOOR_3POSTS_B64 = "/images/bok_ii1_1floor_3posts.jpg"; // 2 раскосины
 
 const BOK_VARIANTS = {
   1: {
@@ -41,6 +42,30 @@ const BOK_VARIANTS = {
             {type:'line', x1:1020, y1:15, x2:1277, y2:16},
             {type:'line', x1:1180, y1:17, x2:1180, y2:84},
             {type:'single', x1:1008, y1:-158, x2:1179, y2:52, lx:1006, ly:-166, text:longbeamVal+' мм'}
+          );
+        }
+        return records;
+      }
+    },
+    // «3 стойки» (2 раскосины) - по разметке пользователя.
+    3: { img: BOK_IMG_1FLOOR_3POSTS_B64, IW: 1456, IH: 601,
+      records: function(longbeamVal, lengthVal, skinVal, heightVal) {
+        const records = [];
+        records.push(
+          {type:'line', x1:1448, y1:526, x2:1448, y2:688},
+          {type:'line', x1:8, y1:690, x2:8, y2:525},
+          {type:'double', x1:8, y1:664, x2:1447, y2:664, lx:728, ly:664, text:lengthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:1382, y1:593, x2:1553, y2:593},
+          {type:'line', x1:1383, y1:60, x2:1560, y2:60},
+          {type:'double', x1:1513, y1:60, x2:1513, y2:591, lx:1513, ly:326, text:heightVal+' мм', vertical:true}
+        );
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:1381, y1:8, x2:1560, y2:8},
+            {type:'line', x1:1530, y1:59, x2:1530, y2:8},
+            {type:'single', x1:1350, y1:-113, x2:1530, y2:41, lx:1440, ly:-36, text:longbeamVal+' мм'}
           );
         }
         return records;
