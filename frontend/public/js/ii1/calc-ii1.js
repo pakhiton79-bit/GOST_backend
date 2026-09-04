@@ -99,11 +99,17 @@ async function calculate(){
   // реального вылета подписей за рамку по горизонтали), поэтому одного
   // --dk недостаточно, чтобы подписи не выглядели явно крупнее, чем на
   // остальных чертежах.
+  // data-size-group="ii1-panels" на обоих слотах ниже - синхронизирует их
+  // итоговый масштаб (см. reserveScaleGroups в js/common-print.js): у
+  // Щита торцевого и бокового собственный вылет подписей за рамку фото
+  // отличается от случая к случаю (то у одного заметнее, то у другого),
+  // поэтому без синхронизации они могли получаться заметно разного размера
+  // при одинаковом входе - по репорту пользователя со скриншотом.
   let tablesHtml = '';
   tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.t_stojka, calc.skin.value, calc.W + calc.t_stojka*2, calc.k9Base) + `</div>` + renderSection('', calc.dno) + `</div>`;
   tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.t32Display, calc.sideFrameDisplay, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
-  tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, calc.W + calc.t_stojka*2, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, 260, 0.8) + `</div>` + renderSection('', calc.endPanel) + `</div>`;
-  tablesHtml += `<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.skin.value, calc.panelHeightFull, 100 + calc.bokFrame.len, 260, 0.8) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
+  tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="ii1-panels">` + diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, calc.W + calc.t_stojka*2, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, 260, 0.8) + `</div>` + renderSection('', calc.endPanel) + `</div>`;
+  tablesHtml += `<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="ii1-panels">` + diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.skin.value, calc.panelHeightFull, 100 + calc.bokFrame.len, 260, 0.8) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));

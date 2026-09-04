@@ -93,21 +93,7 @@ function printBox(){
 // увеличивает scrollWidth и потому не ловится проверкой fits() в
 // fitPrintAreaToOnePage - страница «влезала» при замере, а печатала обрезанной.
 function reserveDiagramOverflow(printArea){
-  printArea.querySelectorAll('.diagram-slot').forEach(slot=>{
-    // margin-left сбрасываем ДО проверки на wrap - иначе у пустого слота
-    // (напр. «Общий вид ящика» у типа II-1, где фото ещё нет - см.
-    // buildPrintHtml в src/ii1/calc.js) остаётся CSS-отступ по умолчанию
-    // (#printArea .diagram-slot{margin-left:calc(var(--pk)*44px)}), а у
-    // остальных слотов (где wrap есть) он явно обнулён ниже - из-за этого
-    // левый край таблицы сразу после ТАКОГО слота (напр. сводная таблица
-    // «Внутренние размеры груза»/«Итог») не совпадал с левым краем таблиц
-    // деталей у остальных узлов, и вдобавок разъезжался на разную величину
-    // от расчёта к расчёту (отступ масштабируется через --pk) - по репорту
-    // пользователя.
-    slot.style.marginLeft = '0px';
-    const wrap = slot.querySelector('.diagram-wrap');
-    if(!wrap) return;
-
+  function processSlot(slot, wrap, forcedScale){
     slot.style.paddingTop = '0px';
     slot.style.paddingBottom = '0px';
     wrap.style.marginLeft = '0px';
@@ -184,15 +170,25 @@ function reserveDiagramOverflow(printArea){
     const slotWidth = slot.getBoundingClientRect().width;
     const fullWidth = wrap.getBoundingClientRect().width;
     wrap.style.setProperty('--dk', '1');
+    // forcedScale (см. reserveScaleGroups в reserveDiagramOverflowScreen выше)
+    // пропускает поиск и сразу применяет заданный извне масштаб - второй
+    // проход, когда парный чертёж (data-size-group) требует более сильного
+    // сжатия, чем нашлось бы для этого чертежа самостоятельно.
     let scale = 1;
-    for(let i = 0; i < 8; i++){
-      const mi = measure();
-      const rightGap = Math.max(0, Math.ceil(mi.right - mi.box.right)) + SAFETY_PAD;
-      const usedWidth = leftGap0 + mi.box.width + rightGap;
-      if(usedWidth <= slotWidth || scale <= 0.3) break;
-      scale = Math.max(0.3, scale * (slotWidth - 4 - leftGap0) / (mi.box.width + rightGap));
+    if(forcedScale != null){
+      scale = forcedScale;
       wrap.style.width = Math.round(fullWidth * scale) + 'px';
       wrap.style.setProperty('--dk', scale.toFixed(3));
+    } else {
+      for(let i = 0; i < 8; i++){
+        const mi = measure();
+        const rightGap = Math.max(0, Math.ceil(mi.right - mi.box.right)) + SAFETY_PAD;
+        const usedWidth = leftGap0 + mi.box.width + rightGap;
+        if(usedWidth <= slotWidth || scale <= 0.3) break;
+        scale = Math.max(0.3, scale * (slotWidth - 4 - leftGap0) / (mi.box.width + rightGap));
+        wrap.style.width = Math.round(fullWidth * scale) + 'px';
+        wrap.style.setProperty('--dk', scale.toFixed(3));
+      }
     }
 
     // Центрируем САМУ КАРТИНКУ (а не весь охват вместе с вылетающими подписями)
@@ -212,7 +208,30 @@ function reserveDiagramOverflow(printArea){
     const maxMargin = Math.max(leftGap, slotWidth - m.box.width - rightGap);
     const marginLeft = Math.min(Math.max(idealCenter, leftGap), maxMargin);
     wrap.style.marginLeft = marginLeft + 'px';
+
+    return scale;
+  }
+
+  const processed = [];
+  printArea.querySelectorAll('.diagram-slot').forEach(slot=>{
+    // margin-left сбрасываем ДО проверки на wrap - иначе у пустого слота
+    // (напр. «Общий вид ящика» у типа II-1, где фото ещё нет - см.
+    // buildPrintHtml в src/ii1/calc.js) остаётся CSS-отступ по умолчанию
+    // (#printArea .diagram-slot{margin-left:calc(var(--pk)*44px)}), а у
+    // остальных слотов (где wrap есть) он явно обнулён ниже - из-за этого
+    // левый край таблицы сразу после ТАКОГО слота (напр. сводная таблица
+    // «Внутренние размеры груза»/«Итог») не совпадал с левым краем таблиц
+    // деталей у остальных узлов, и вдобавок разъезжался на разную величину
+    // от расчёта к расчёту (отступ масштабируется через --pk) - по репорту
+    // пользователя.
+    slot.style.marginLeft = '0px';
+    const wrap = slot.querySelector('.diagram-wrap');
+    if(!wrap) return;
+    const scale = processSlot(slot, wrap, null);
+    processed.push({slot, wrap, scale});
   });
+
+  reserveScaleGroups(processed, processSlot);
 }
 
 // Экранный аналог reserveDiagramOverflow() выше. На экране .spec-row-diagram
@@ -228,11 +247,35 @@ function reserveDiagramOverflow(printArea){
 // --dk) пропорционально уменьшается, пока не впишется в фиксированную ширину
 // слота.
 const DIAGRAM_SLOT_BUDGET = 300; // соответствует .diagram-slot{width:300px}
-function reserveDiagramOverflowScreen(container){
-  container.querySelectorAll('.diagram-slot').forEach(slot=>{
-    const wrap = slot.querySelector('.diagram-wrap');
-    if(!wrap) return;
+// data-size-group на .diagram-slot (проставляется в HTML, см. напр. calc-ii1.js
+// типа II-1 у Щита торцевого/бокового) - чертежи одной группы должны
+// получаться одинакового итогового размера. Собственный вылет подписей за
+// рамку у КАЖДОГО чертежа свой (у одного заметный, у другого почти нулевой),
+// поэтому естественный (без синхронизации) масштаб --dk у них может сильно
+// отличаться - тогда парные чертежи получались заметно разного размера,
+// хотя должны выглядеть одинаково - по репорту пользователя со скриншотом.
+// reserveScaleGroups() ниже выравнивает это ПОСЛЕ основного прохода: все
+// чертежи группы приводятся к МЕНЬШЕМУ из естественных масштабов участников.
+function reserveScaleGroups(processed, applyScale){
+  const groups = {};
+  processed.forEach(p=>{
+    const g = p.slot.dataset.sizeGroup;
+    if(!g) return;
+    (groups[g] = groups[g] || []).push(p);
+  });
+  Object.values(groups).forEach(members=>{
+    if(members.length < 2) return;
+    const minScale = Math.min(...members.map(m=>m.scale));
+    members.forEach(m=>{
+      if(m.scale > minScale + 1e-6){
+        applyScale(m.slot, m.wrap, minScale);
+      }
+    });
+  });
+}
 
+function reserveDiagramOverflowScreen(container){
+  function processSlot(slot, wrap, forcedScale){
     const baseWidth = parseFloat(wrap.dataset.baseWidth) || parseFloat(getComputedStyle(wrap).width) || 260;
 
     function measure(){
@@ -301,15 +344,25 @@ function reserveDiagramOverflowScreen(container){
     // вместо этого уменьшаем масштаб чертежа, пока правый край не впишется в
     // фиксированную ширину слота. Несколько итераций, т.к. подписи имеют
     // фиксированный (не масштабируемый до конца пропорционально) отступ.
+    // forcedScale (см. reserveScaleGroups выше) пропускает этот поиск и сразу
+    // применяет заданный извне масштаб - используется вторым проходом, когда
+    // парный чертёж (data-size-group) требует более сильного сжатия, чем
+    // нашлось бы для этого чертежа самостоятельно.
     let scale = 1;
-    for(let i = 0; i < 8; i++){
-      const m = measure();
-      const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
-      const usedWidth = leftGap0 + m.box.width + rightGap;
-      if(usedWidth <= DIAGRAM_SLOT_BUDGET || scale <= 0.3) break;
-      scale = Math.max(0.3, scale * (DIAGRAM_SLOT_BUDGET - 4 - leftGap0) / (m.box.width + rightGap));
+    if(forcedScale != null){
+      scale = forcedScale;
       wrap.style.width = Math.round(baseWidth * scale) + 'px';
       wrap.style.setProperty('--dk', scale.toFixed(3));
+    } else {
+      for(let i = 0; i < 8; i++){
+        const m = measure();
+        const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
+        const usedWidth = leftGap0 + m.box.width + rightGap;
+        if(usedWidth <= DIAGRAM_SLOT_BUDGET || scale <= 0.3) break;
+        scale = Math.max(0.3, scale * (DIAGRAM_SLOT_BUDGET - 4 - leftGap0) / (m.box.width + rightGap));
+        wrap.style.width = Math.round(baseWidth * scale) + 'px';
+        wrap.style.setProperty('--dk', scale.toFixed(3));
+      }
     }
 
     const m = measure();
@@ -336,7 +389,19 @@ function reserveDiagramOverflowScreen(container){
     wrap.style.marginTop = topGap + 'px';
     wrap.style.marginBottom = bottomGap + 'px';
     wrap.style.marginLeft = marginLeft + 'px';
+
+    return scale;
+  }
+
+  const processed = [];
+  container.querySelectorAll('.diagram-slot').forEach(slot=>{
+    const wrap = slot.querySelector('.diagram-wrap');
+    if(!wrap) return;
+    const scale = processSlot(slot, wrap, null);
+    processed.push({slot, wrap, scale});
   });
+
+  reserveScaleGroups(processed, processSlot);
 }
 
 // Подгонка под ровно один лист А4: сначала заполняем свободную высоту

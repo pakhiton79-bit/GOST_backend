@@ -66,10 +66,13 @@ const BOK_VARIANTS = {
           {type:'double', x1:1513, y1:60, x2:1513, y2:591, lx:1513, ly:326, text:heightVal+' мм', vertical:true}
         );
         if(longbeamVal > 0){
+          // lx/ly подписи исправлены (была опечатка в присланных координатах:
+          // ly:-36 сажала подпись на середину стрелки вместо её верхнего
+          // конца, x1/y1) - по репорту пользователя со скриншотом.
           records.push(
             {type:'line', x1:1381, y1:8, x2:1560, y2:8},
             {type:'line', x1:1530, y1:59, x2:1530, y2:8},
-            {type:'single', x1:1350, y1:-113, x2:1530, y2:41, lx:1440, ly:-36, text:longbeamVal+' мм'}
+            {type:'single', x1:1350, y1:-113, x2:1530, y2:41, lx:1335, ly:-133, text:longbeamVal+' мм'}
           );
         }
         return records;
