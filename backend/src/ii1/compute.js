@@ -471,7 +471,7 @@ function nearestTorecVariant(count, floors) {
 // Отражает набор готовых схем в frontend/public/js/ii1/diagrams/bok.js
 // (BOK_VARIANTS) - используется здесь ТОЛЬКО для текста предупреждения, тот
 // же принцип, что и у TOREC_VARIANT_OPTIONS выше.
-const BOK_VARIANT_OPTIONS = { 1: [2, 3] };
+const BOK_VARIANT_OPTIONS = { 1: [2, 3, 4] };
 function nearestBokVariant(count, floors) {
   const floorsAvailable = Object.keys(BOK_VARIANT_OPTIONS).map(Number);
   const bestFloors = floorsAvailable.includes(floors) ? floors

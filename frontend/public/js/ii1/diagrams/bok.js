@@ -20,6 +20,7 @@ function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, f
 
 const BOK_IMG_1FLOOR_2POSTS_B64 = "/images/bok_ii1_1floor_2posts.jpg"; // 1 раскосина
 const BOK_IMG_1FLOOR_3POSTS_B64 = "/images/bok_ii1_1floor_3posts.jpg"; // 2 раскосины
+const BOK_IMG_1FLOOR_4POSTS_B64 = "/images/bok_ii1_1floor_4posts.jpg"; // 3 раскосины
 
 const BOK_VARIANTS = {
   1: {
@@ -66,6 +67,35 @@ const BOK_VARIANTS = {
             {type:'line', x1:1381, y1:8, x2:1560, y2:8},
             {type:'line', x1:1530, y1:59, x2:1530, y2:8},
             {type:'single', x1:1350, y1:-113, x2:1530, y2:41, lx:1440, ly:-36, text:longbeamVal+' мм'}
+          );
+        }
+        return records;
+      }
+    },
+    // «4 стойки» (3 раскосины) - геометрия снята с самого фото (без готовой
+    // пользовательской разметки, замерена по пиксельным границам рамки/стоек),
+    // группы высоты/продольного бруса взяты из TOREC_VARIANTS[1][4]
+    // (torec_ii1_1floor_4posts.jpg, 2222x644 - тот же масштаб, что и у этого
+    // фото 2220x646). См. подробный комментарий в src/ii1/diagrams.js
+    // исходного репозитория.
+    4: { img: BOK_IMG_1FLOOR_4POSTS_B64, IW: 2220, IH: 646,
+      records: function(longbeamVal, lengthVal, skinVal, heightVal) {
+        const records = [];
+        records.push(
+          {type:'line', x1:6, y1:562, x2:6, y2:802},
+          {type:'line', x1:2211, y1:562, x2:2211, y2:802},
+          {type:'double', x1:6, y1:743, x2:2211, y2:743, lx:1108, ly:801, text:lengthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:2069, y1:636, x2:2369, y2:635},
+          {type:'line', x1:2063, y1:66, x2:2365, y2:64},
+          {type:'double', x1:2316, y1:64, x2:2317, y2:636, lx:2324, ly:346, text:heightVal+' мм', vertical:true}
+        );
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:2062, y1:10, x2:2364, y2:6},
+            {type:'line', x1:2275, y1:7, x2:2277, y2:65},
+            {type:'single', x1:2022, y1:-120, x2:2278, y2:36, lx:2008, ly:-132, text:longbeamVal+' мм'}
           );
         }
         return records;
