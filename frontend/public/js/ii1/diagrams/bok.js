@@ -11,11 +11,11 @@
 // - высота щита БЕЗ бруса крышки (ширина стойки*2 + длина стойки) =
 //   panelHeightFull при floors=1 (heightVal) - та же величина, что и у
 //   Щита торцевого (общий H и panelHeightFull для обоих щитов).
-function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride){
+function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale){
   const variant = nearestBokVariant(count, floors);
   const v = BOK_VARIANTS[variant.floors][variant.count];
   const records = v.records(Math.round(longbeamVal), Math.round(lengthVal), Math.round(skinVal), Math.round(heightVal), Math.round(floorHeightVal));
-  return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW));
+  return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
 
 const BOK_IMG_1FLOOR_2POSTS_B64 = "/images/bok_ii1_1floor_2posts.jpg"; // 1 раскосина

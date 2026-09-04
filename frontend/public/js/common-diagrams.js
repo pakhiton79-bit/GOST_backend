@@ -38,7 +38,17 @@ function photoStrokeScale(imgNaturalWidth){
 const DIAGRAM_DEFAULT_WIDTH = 260;
 const DIAGRAM_MAX_HEIGHT = 240;
 
-function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale){
+// labelScale — необязательный доп. множитель размера подписей (шрифт, отступы,
+// белая плашка), НЕЗАВИСИМЫЙ от --dk (авто-сжатие чертежа под ширину слота,
+// см. reserveDiagramOverflow[Screen]() в src/common-print.js). --dk реагирует
+// только на фактический вылет конкретных подписей за пределы фото и поэтому
+// непредсказуем (у одних чертежей срабатывает сильно, у других почти не
+// срабатывает, в зависимости от того, где именно на фото расположены подписи) -
+// для чертежей, где нужно НАДЁЖНО и одинаково уменьшить подписи независимо от
+// конкретных входных размеров груза (torец/бок типа II-1 - см. js/ii1/
+// diagrams/torec.js, bok.js), используется этот явный множитель вместо/в
+// дополнение к --dk.
+function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, labelScale){
   const scale = strokeScale || 1;
   const lineWidth = (1.5*scale).toFixed(2);
   let shapes = '';
@@ -74,7 +84,8 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale){
       w = Math.round(DIAGRAM_MAX_HEIGHT * IW / IH);
     }
   }
-  const sizeStyle = ` style="width:${w}px;flex-basis:${w}px"`;
+  const lkStyle = labelScale ? `--lk:${labelScale};` : '';
+  const sizeStyle = ` style="width:${w}px;flex-basis:${w}px;${lkStyle}"`;
   // data-base-width дублирует исходную (авторскую, до любых экранных/печатных
   // подгонок) ширину как атрибут, а не только инлайн-стиль - печать (см.
   // printBox() в src/common-print.js) читает именно его, а не style.width:

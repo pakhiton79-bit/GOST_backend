@@ -22,11 +22,11 @@
 // стойки*3 + длина стойки*2 = panelHeightFull при floors=2), плюс
 // добавляется своя группа E (floorHeightVal = ширина стойки + длина
 // стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
-function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride){
+function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale){
   const variant = nearestTorecVariant(count, floors);
   const v = TOREC_VARIANTS[variant.floors][variant.count];
   const records = v.records(Math.round(longbeamVal), Math.round(widthVal), Math.round(skinVal), Math.round(heightVal), Math.round(floorHeightVal));
-  return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW));
+  return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
 
 const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 раскосина
