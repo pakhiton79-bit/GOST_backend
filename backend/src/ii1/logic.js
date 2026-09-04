@@ -91,7 +91,46 @@ function longBeamSection(crossBeamAxisMm, roundBoardWidths, axisSpacingMm) {
   return { t: row.t[colIdx], w, exceeded };
 }
 
+// Продольные брусья ТОРЦА И БОКА (в таблице деталей - "Горизонтальный брус",
+// не путать с продольным брусом КРЫШКИ выше - по уточнению пользователя, это
+// два разных объекта с разными параметрами из разных таблиц источника) - по
+// массе груза и расстоянию между осями поперечных брусьев крышки (общая
+// таблица на оба щита). Примечание источника: при расстоянии между осями
+// поперечных брусьев крышки МЕНЕЕ 500мм толщина снижается на одну градацию
+// по сравнению со значением при 500мм - по уточнению пользователя, градация
+// берётся по тому же ряду номиналов, что и в самой этой таблице (25→32→40→
+// 50→60→75→100), а затем результат всё равно проходит обычное округление
+// "в наличии" (roundUpToAvailable), как и любая другая толщина.
+const T_WALLBEAM_CROSS = [500, 600, 700, 800, 900, 1000];
+const WALLBEAM_GRADES = [25, 32, 40, 50, 60, 75, 100];
+const TABLE_WALLBEAM = [
+  { maxMass: 500, t: [25, 25, 25, 25, 25, 25] },
+  { maxMass: 1000, t: [25, 25, 25, 25, 32, 32] },
+  { maxMass: 2000, t: [32, 32, 40, 40, 40, 40] },
+  { maxMass: 4000, t: [40, 50, 50, 50, 50, 50] },
+  { maxMass: 6000, t: [50, 60, 60, 60, 60, 75] },
+  { maxMass: 8000, t: [60, 60, 75, 75, 75, 100] },
+  { maxMass: 10000, t: [75, 75, 75, 100, 100, 100] },
+  { maxMass: 12000, t: [75, 75, 100, 100, 100, 100] },
+  { maxMass: 14000, t: [75, 100, 100, 100, 100, 100] },
+  { maxMass: 16000, t: [75, 100, 100, 100, 100, 100] },
+  { maxMass: 20000, t: [100, 100, 100, 100, 100, 100] },
+];
+function wallBeamSection(mass, crossBeamAxisMm) {
+  let exceeded = false;
+  let row = TABLE_WALLBEAM.find(r => mass <= r.maxMass);
+  if (!row) { row = TABLE_WALLBEAM[TABLE_WALLBEAM.length - 1]; exceeded = true; }
+  let colIdx = T_WALLBEAM_CROSS.findIndex(v => crossBeamAxisMm <= v);
+  if (colIdx === -1) { colIdx = T_WALLBEAM_CROSS.length - 1; exceeded = true; }
+  let t = row.t[colIdx];
+  if (crossBeamAxisMm < T_WALLBEAM_CROSS[0]) {
+    const gi = WALLBEAM_GRADES.indexOf(t);
+    if (gi > 0) t = WALLBEAM_GRADES[gi - 1];
+  }
+  return { t, w: 100, exceeded };
+}
+
 module.exports = {
   skinThickness, stojkaSection, endBeamSection,
-  minCountBySpan, clearGapBySpan, longBeamSection,
+  minCountBySpan, clearGapBySpan, longBeamSection, wallBeamSection,
 };

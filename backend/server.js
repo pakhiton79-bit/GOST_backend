@@ -46,7 +46,7 @@ const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Va
 // II-1: skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina каскадные
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
 // изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
-const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
+const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11', 'tWallbeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
   const result = {};
   if (!obj || typeof obj !== 'object') return result;
