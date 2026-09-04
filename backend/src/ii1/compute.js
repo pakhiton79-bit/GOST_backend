@@ -12,7 +12,7 @@ const { crossBeamThickness } = require('../i3/data/table14');
 const { selectSkid19, minSkidsByWidth162 } = require('../i3/data/table19');
 const {
   skinThickness, stojkaSection, endBeamSection,
-  minCountBySpan, clearGapBySpan, longBeamSection, wallBeamSection,
+  minCountBySpan, clearGapBySpan, longBeamSection,
 } = require('./logic');
 
 // input: {L,W,H,MASS,fasteningType,solidRigidBase,removeFloorBoards,
@@ -258,19 +258,6 @@ function computeGost10198II1(input) {
   // --- Общая высота панели (щита) на 1 этаж, без опоры снизу (полоза/доски дна) ---
   const panelHeightFull = H + floorBoardT + t_longbeam;
 
-  // Продольные брусья торца/бока (в таблице деталей - "Горизонтальный брус",
-  // не путать с продольным брусом крышки выше - это разные объекты с
-  // разными параметрами из разных таблиц источника, по уточнению
-  // пользователя) - общая таблица масса×шаг осей поперечных брусьев крышки
-  // (crossBeamAxis - та же величина, что и у продольного бруса крышки).
-  const crossBeamAxis = (L + w21) / (crossBeamCount + 1);
-  const wallBeam = wallBeamSection(MASS, crossBeamAxis);
-  const t_wallbeam = ov('tWallbeam', roundUpToAvailable(wallBeam.t), 'Толщина горизонтального бруса торца/бока');
-  const wallbeamExceeded = wallBeam.exceeded;
-  if (wallbeamExceeded) {
-    warnings.push('Масса или шаг осей поперечных брусьев крышки вне табл. продольных брусьев торца/бока — сечение принято по крайнему значению.');
-  }
-
   // Вспомогательная функция: считает число стоек по каркасу щита (см.
   // подробный комментарий в src/ii1/calc.js исходного репозитория).
   function buildFrame(fillspace, panelH) {
@@ -343,7 +330,7 @@ function computeGost10198II1(input) {
   const t_raskosina = ov('tRaskosina', roundUpToAvailable(t_stojka * 2 / 3), 'Толщина раскосины'), w_raskosina = 100;
 
   const t30 = t_stojka, w30 = 100, k30 = torecFrame.len, l30 = torecFrame.count * torecFrame.floors;
-  const t31 = t_wallbeam, w31 = 100, k31 = W + t_stojka * 2, l31 = torecFrame.floors + 1;
+  const t31 = t_stojka, w31 = 100, k31 = W + t_stojka * 2, l31 = torecFrame.floors + 1;
   const k33 = Math.sqrt(Math.pow(torecFrame.sectionW, 2) + Math.pow(torecFrame.len, 2));
   const l33 = torecFrame.hasRaskosina ? (torecFrame.count - 1) * torecFrame.floors : 0;
 
@@ -365,7 +352,7 @@ function computeGost10198II1(input) {
 
   const endPanel = [
     { name: 'Стойка', t: t30, w: w30, l: k30, qty: l30, overrideKey: 'tStojka' },
-    { name: 'Горизонтальный брус', t: t31, w: w31, l: k31, qty: l31, overrideKey: 'tWallbeam' },
+    { name: 'Горизонтальный брус', t: t31, w: w31, l: k31, qty: l31 },
   ];
   if (torecFrame.hasRaskosina) endPanel.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k33, qty: l33, overrideKey: 'tRaskosina' });
   if (l32 > 0) endPanel.push({ name: 'Доска', t: t32, w: w32, l: k32, qty: l32 });
@@ -379,7 +366,7 @@ function computeGost10198II1(input) {
 
   // --- ЩИТ БОКОВОЙ (расчёт на 1 щит, далее удвоение) ---
   const t40 = t_stojka, w40 = 100, k40 = bokFrame.len, l40 = bokFrame.count * bokFrame.floors;
-  const t43 = t_wallbeam, w43 = 100, k43 = L, l43 = bokFrame.floors === 2 ? 1 : 0;
+  const t43 = t_stojka, w43 = 100, k43 = L, l43 = bokFrame.floors === 2 ? 1 : 0;
   const k42 = Math.sqrt(Math.pow(bokFrame.sectionW, 2) + Math.pow(bokFrame.len, 2));
   const l42 = bokFrame.hasRaskosina ? (bokFrame.count - 1) * bokFrame.floors : 0;
 
@@ -405,7 +392,7 @@ function computeGost10198II1(input) {
   const bokovoy = [
     { name: 'Стойка', t: t40, w: w40, l: k40, qty: l40 },
   ];
-  if (l43 > 0) bokovoy.push({ name: 'Горизонтальный брус', t: t43, w: w43, l: k43, qty: l43, overrideKey: 'tWallbeam' });
+  if (l43 > 0) bokovoy.push({ name: 'Горизонтальный брус', t: t43, w: w43, l: k43, qty: l43 });
   if (bokFrame.hasRaskosina) bokovoy.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k42, qty: l42 });
   bokovoy.push({ name: 'Опорная планка', t: t_opora, w: w_opora, l: k_opora, qty: l_opora });
   if (l41 > 0) bokovoy.push({ name: 'Доска', t: t41, w: w41, l: k41, qty: l41 });
