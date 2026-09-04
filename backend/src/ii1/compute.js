@@ -321,6 +321,10 @@ function computeGost10198II1(input) {
   if (!torecVariant.exact) {
     warnings.push(`Щит торцевой: чертёж — ближайшая готовая схема (${torecVariant.count} стойки/${torecVariant.floors} эт.) вместо расчётной (${torecFrame.count} стоек/${torecFrame.floors} эт.); точное количество см. в таблице ниже.`);
   }
+  const bokVariant = nearestBokVariant(bokFrame.count, bokFrame.floors);
+  if (!bokVariant.exact) {
+    warnings.push(`Щит боковой: чертёж — ближайшая готовая схема (${bokVariant.count} стойки/${bokVariant.floors} эт.) вместо расчётной (${bokFrame.count} стоек/${bokFrame.floors} эт.); точное количество см. в таблице ниже.`);
+  }
 
   // --- ЩИТ ТОРЦЕВОЙ (расчёт на 1 щит, далее удвоение) ---
   const t_raskosina = ov('tRaskosina', roundUpToAvailable(t_stojka * 2 / 3), 'Толщина раскосины'), w_raskosina = 100;
@@ -421,8 +425,8 @@ function computeGost10198II1(input) {
   const result = {
     warnings, dno, kryshka, endPanel, bokovoy,
     outerL, outerW, outerH, totalVolume, normaVremeni,
-    // Параметры для чертежей (Дно/Крышка/Щит торцевой - готовы, Щит боковой -
-    // пока заглушка, см. frontend/public/js/ii1/*).
+    // Параметры для чертежей (Дно/Крышка/Щит торцевой/Щит боковой - см.
+    // frontend/public/js/ii1/*).
     k9Base, W, L, H, t_stojka, skin, t21, t_longbeam, lidLayout,
     torecFrame, bokFrame, panelHeightFull,
     crossBeamCount, longbeamCount, t32Display, edgeDistCross, sideFrameDisplay,
@@ -460,6 +464,19 @@ function nearestTorecVariant(count, floors) {
   const bestFloors = floorsAvailable.includes(floors) ? floors
     : floorsAvailable.reduce((a, b) => Math.abs(b - floors) < Math.abs(a - floors) ? b : a);
   const countOptions = TOREC_VARIANT_OPTIONS[bestFloors];
+  const bestCount = countOptions.reduce((a, b) => Math.abs(b - count) < Math.abs(a - count) ? b : a);
+  return { count: bestCount, floors: bestFloors, exact: bestCount === count && bestFloors === floors };
+}
+
+// Отражает набор готовых схем в frontend/public/js/ii1/diagrams/bok.js
+// (BOK_VARIANTS) - используется здесь ТОЛЬКО для текста предупреждения, тот
+// же принцип, что и у TOREC_VARIANT_OPTIONS выше.
+const BOK_VARIANT_OPTIONS = { 1: [2] };
+function nearestBokVariant(count, floors) {
+  const floorsAvailable = Object.keys(BOK_VARIANT_OPTIONS).map(Number);
+  const bestFloors = floorsAvailable.includes(floors) ? floors
+    : floorsAvailable.reduce((a, b) => Math.abs(b - floors) < Math.abs(a - floors) ? b : a);
+  const countOptions = BOK_VARIANT_OPTIONS[bestFloors];
   const bestCount = countOptions.reduce((a, b) => Math.abs(b - count) < Math.abs(a - count) ? b : a);
   return { count: bestCount, floors: bestFloors, exact: bestCount === count && bestFloors === floors };
 }
