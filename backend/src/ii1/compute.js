@@ -202,6 +202,9 @@ function computeGost10198II1(input) {
     });
   }
   const endBeam = endBeamSection(MASS);
+  if (endBeam.exceeded) {
+    warnings.push('Масса вне диапазона п.1.6.8 (≤20000 кг) — сечение торцового бруса дна принято по крайнему значению.');
+  }
   const t11 = roundUpToAvailable(endBeam.h), w11 = endBeam.w, k11 = W, l11 = 2;
   const t11Display = ov('t11', t11, 'Толщина торцового бруса дна');
   dno.push({ name: 'Торцовый брус дна', t: t11Display, w: w11, l: k11, qty: l11, overrideKey: 't11' });
