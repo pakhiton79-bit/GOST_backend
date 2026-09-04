@@ -97,7 +97,6 @@
 
 <script>
 const REVIEW_BADGE = 'Требует проверки';
-const NOT_READY_BADGE = 'Ещё не готово';
 const TYPES = [
   {
     name: 'Тип I-1',
@@ -115,15 +114,10 @@ const TYPES = [
     badge: REVIEW_BADGE
   },
   {
-    // Чертёж бокового щита ещё не готов (фото не прислано) - как и на
-    // фронтенде (src/launcher/types-10198-91.js), плашка ярче обычной
-    // "Требует проверки" (badgeDanger), т.к. ни разу не было полной сверки с
-    // реальными чертежами.
     name: 'Тип II-1',
     file: 'ii1.html',
     image: '/images/box_ii1.png',
-    badge: NOT_READY_BADGE,
-    badgeDanger: true
+    badge: REVIEW_BADGE
   }
 ];
 
