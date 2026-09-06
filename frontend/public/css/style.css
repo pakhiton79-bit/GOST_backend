@@ -565,10 +565,12 @@
   }
   .thickness-checkbox-list{
     display:grid;
-    /* Список стандартных толщин короткий (14 значений) - просто в 2 столбца,
-       заполнение по столбцам сверху вниз. */
+    /* Список стандартных толщин короткий (до 16 значений - у типов I-3/II-1,
+       у I-1 их 14) - просто в 2 столбца, заполнение по столбцам сверху вниз.
+       8 строк даёт ровно 2 столбца при 16 значениях (иначе, при 7 строках,
+       16 значений уходили бы в 3-й столбец) - по замечанию пользователя. */
     grid-auto-flow:column;
-    grid-template-rows:repeat(7,auto);
+    grid-template-rows:repeat(8,auto);
     grid-auto-columns:1fr;
     gap:5px 12px;
   }
@@ -586,7 +588,7 @@
   }
   .thickness-checkbox-list input{margin:0;accent-color:var(--accent2);}
   @media screen and (max-width:640px){
-    .thickness-checkbox-list{grid-template-rows:repeat(14,auto);}
+    .thickness-checkbox-list{grid-template-rows:repeat(16,auto);}
   }
   .fastening-option-list{
     display:flex;
