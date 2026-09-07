@@ -394,6 +394,12 @@
     justify-content:center;
     transition:none;
   }
+  /* .modal-close - это <button>, а у обычной кнопки есть общий button:hover
+     {background:var(--accent-hover)} (тёмно-коричневая заливка CTA) - у него
+     специфичность (element+pseudo-class) выше, чем у одного класса
+     .modal-close, поэтому он перебивал transparent на hover. Явный hover
+     здесь нужен не для эффекта, а чтобы погасить чужой. */
+  .modal-close:hover{background:transparent;}
   .modal-field{margin-bottom:20px;}
   .modal-field:last-child{margin-bottom:0;}
   .modal-field label{
