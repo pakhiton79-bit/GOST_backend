@@ -374,6 +374,8 @@
     color:var(--ink);
     padding-right:24px;
   }
+  /* Без hover-эффекта и transition (по замечанию пользователя) - крестик
+     не меняет цвет и не анимируется при наведении. */
   .modal-close{
     position:absolute;
     top:14px;
@@ -390,8 +392,8 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    transition:none;
   }
-  .modal-close:hover{color:var(--accent2);}
   .modal-field{margin-bottom:20px;}
   .modal-field:last-child{margin-bottom:0;}
   .modal-field label{
