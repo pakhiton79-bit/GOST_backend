@@ -319,13 +319,16 @@ function reserveDiagramOverflowScreen(container){
     slot.style.width = '';
     slot.style.flexBasis = '';
 
-    // Левый вылет резервируем отступом СРАЗУ, до расчёта масштаба по правому
-    // краю: margin-left сдвигает весь чертёж (и его правый край вместе с ним)
-    // вправо внутри фиксированного по ширине слота, поэтому бюджет по правому
-    // краю ниже должен считаться уже с учётом этого сдвига - иначе при
-    // одновременном вылете подписей и слева, и справа (как на «Щит боковой»)
-    // margin-left, добавленный ПОСЛЕ проверки масштаба, мог вытолкнуть чертёж
-    // за пределы слота и наложить подпись на соседнюю таблицу деталей.
+    // Бюджет ширины - РЕАЛЬНАЯ ширина слота, а не жёсткая DIAGRAM_SLOT_BUDGET
+    // (соответствует .diagram-slot{width:300px} только на десктопе). На узких
+    // экранах (см. #boardTables .diagram-slot{width:100%!important} в
+    // style.css, ≤700px) слот сжимается вместе с картой и может оказаться
+    // заметно у́же 300px - при фиксированном бюджете чертёж считал, что места
+    // больше, чем есть на самом деле, и подписи/стрелки вылезали за пределы
+    // экрана целиком, а не только за пределы своего слота - по репорту
+    // пользователя.
+    const slotBudget = slot.getBoundingClientRect().width || DIAGRAM_SLOT_BUDGET;
+
     // SAFETY_PAD - небольшой запас (не только впритык до края слота), иначе
     // при вылете подписи почти на весь бюджет слота (напр. «Щит торцевой»
     // схема «3 укосины» типа II-1 - у неё рамка щита на фото занимает
@@ -336,14 +339,16 @@ function reserveDiagramOverflowScreen(container){
     // по репорту пользователя.
     const SAFETY_PAD = 6;
 
-    const m0 = measure();
-    const leftGap0 = Math.max(0, Math.ceil(m0.box.left - m0.left)) + SAFETY_PAD;
-    wrap.style.marginLeft = leftGap0 + 'px';
-
-    // Правый вылет не резервируем отступом (это сдвинуло бы таблицу деталей) -
-    // вместо этого уменьшаем масштаб чертежа, пока правый край не впишется в
-    // фиксированную ширину слота. Несколько итераций, т.к. подписи имеют
-    // фиксированный (не масштабируемый до конца пропорционально) отступ.
+    // Масштаб подбираем ПО ОБОИМ вылетам (левому и правому) СРАЗУ, замеряя
+    // их заново на каждой итерации (margin-left временно обнуляется перед
+    // замером) - а не резервируя левый вылет один раз при полном масштабе,
+    // как было раньше. При жёстко зарезервированном (не пересчитываемом)
+    // левом отступе на узком слоте (см. slotBudget выше) уменьшение самого
+    // чертежа не уменьшало фактически занятое место - отступ, посчитанный
+    // ДО сжатия, оставался прежним, и правый край подписи (напр. у «Крышки»)
+    // всё равно вылезал за пределы экрана - по репорту пользователя. Здесь
+    // же оба вылета пересчитываются на каждой итерации и уменьшаются вместе
+    // с масштабом (позиции подписей заданы в процентах от ширины чертежа).
     // forcedScale (см. reserveScaleGroups выше) пропускает этот поиск и сразу
     // применяет заданный извне масштаб - используется вторым проходом, когда
     // парный чертёж (data-size-group) требует более сильного сжатия, чем
@@ -355,16 +360,19 @@ function reserveDiagramOverflowScreen(container){
       wrap.style.setProperty('--dk', scale.toFixed(3));
     } else {
       for(let i = 0; i < 8; i++){
+        wrap.style.marginLeft = '0px';
         const m = measure();
-        const rightGap = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
-        const usedWidth = leftGap0 + m.box.width + rightGap;
-        if(usedWidth <= DIAGRAM_SLOT_BUDGET || scale <= 0.3) break;
-        scale = Math.max(0.3, scale * (DIAGRAM_SLOT_BUDGET - 4 - leftGap0) / (m.box.width + rightGap));
+        const leftOverflow = Math.max(0, Math.ceil(m.box.left - m.left)) + SAFETY_PAD;
+        const rightOverflow = Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD;
+        const usedWidth = leftOverflow + m.box.width + rightOverflow;
+        if(usedWidth <= slotBudget || scale <= 0.3) break;
+        scale = Math.max(0.3, scale * (slotBudget - 4) / (m.box.width + leftOverflow + rightOverflow));
         wrap.style.width = Math.round(baseWidth * scale) + 'px';
         wrap.style.setProperty('--dk', scale.toFixed(3));
       }
     }
 
+    wrap.style.marginLeft = '0px';
     const m = measure();
     const topGap = Math.max(0, Math.ceil(m.box.top - m.top));
     const bottomGap = Math.max(0, Math.ceil(m.bottom - m.box.bottom));
@@ -382,8 +390,8 @@ function reserveDiagramOverflowScreen(container){
     // (leftGap) и вылет справа (rightGap, чтобы не наехать на таблицу) - если
     // картинка узкая, а вылет большой и несимметричный, эти границы важнее
     // идеальной центровки.
-    const idealCenter = (DIAGRAM_SLOT_BUDGET - m.box.width) / 2;
-    const maxMargin = Math.max(leftGap, DIAGRAM_SLOT_BUDGET - m.box.width - rightGap);
+    const idealCenter = (slotBudget - m.box.width) / 2;
+    const maxMargin = Math.max(leftGap, slotBudget - m.box.width - rightGap);
     const marginLeft = Math.min(Math.max(idealCenter, leftGap), maxMargin);
 
     wrap.style.marginTop = topGap + 'px';

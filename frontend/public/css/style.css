@@ -472,8 +472,18 @@
       width:100% !important;
       flex-basis:auto !important;
     }
+    /* width НЕ !important (в отличие от .diagram-slot выше) - её должен
+       уметь перебить inline-стиль, который на каждый расчёт проставляет
+       reserveDiagramOverflowScreen() (см. js/common-print.js), сжимая
+       чертёж, если подписи/стрелки не помещаются в реальную (узкую на
+       телефоне) ширину слота. С !important инлайн-сжатие никогда не
+       применялось - чертёж всегда рендерился на всю ширину до 240px, и
+       подписи вылезали за пределы экрана целиком - по репорту пользователя.
+       100%/max-width:240px остаются как запасное значение до первого
+       расчёта (пока JS ещё не отработал) и на случай, если JS-стиль вдруг
+       не проставлен. */
     #boardTables .diagram-wrap{
-      width:100% !important;
+      width:100%;
       flex-basis:auto !important;
       max-width:240px;
       margin:0 auto;
@@ -507,7 +517,49 @@
        и так защищала бы печать, но скоуп к #boardTables делает это верным
        по построению, а не по случайному стечению specificity. */
     #boardTables th, #boardTables td{padding:7px 6px;font-size:12.5px;}
-    #boardTables th{font-size:10px;}
+    /* letter-spacing/overflow-wrap - у узких числовых колонок (16.5% от и
+       без того узкой карточки) заголовки типа "ТОЛЩИНА"/"ШИРИНА" не
+       умещаются в одну строку даже при уменьшенном шрифте (10px) - без
+       переноса браузер не ломает слово (в русском нет пробелов внутри
+       "ТОЛЩИНА"), поэтому оно просто выходило за границу своей ячейки и
+       наезжало на соседний заголовок ("ТОЛЩИНАШИРИНА" слитно) - по репорту
+       пользователя. overflow-wrap:break-word переносит длинное слово на
+       вторую строку внутри своей же колонки вместо налезания на соседнюю.
+       letter-spacing:0 убирает межбуквенный интервал (нужен только на
+       просторных экранах) - экономит ещё немного ширины. */
+    /* white-space:normal перебивает th.num{white-space:nowrap} (см. выше -
+       правило задумано для значений вроде "1088", не для заголовков) -
+       иначе оно же запрещает перенос и у самого заголовка, сводя
+       overflow-wrap:break-word ни к чему (по спецификации/поведению
+       браузеров nowrap отменяет любые точки переноса, включая те, что даёт
+       overflow-wrap). */
+    #boardTables th{font-size:10px;overflow-wrap:break-word;white-space:normal;letter-spacing:0;line-height:1.25;}
+  }
+
+  /* ============ Экран слишком узкий - только фон и надпись ============ */
+  /* Ниже этой ширины интерфейс уже не удаётся показать читаемо, даже с
+     переносом заголовков таблицы (см. 480px выше) - вместо сломанного вида
+     показываем только фон и короткое сообщение, по просьбе пользователя.
+     #tooNarrow - разметка добавлена в конец <body> отдельно в каждом HTML
+     (i1.html/i3-skid.html/i3-floor.html/ii1.html), сосед .wrap, а не внутри
+     него - скрыт по умолчанию, виден только через этот медиа-запрос. В
+     печати не появляется в принципе - печатный <style media="print"> прячет
+     все body>* кроме #printArea независимо от ширины экрана. */
+  #tooNarrow{display:none;}
+  @media screen and (max-width:259px){
+    .wrap{display:none !important;}
+    #tooNarrow{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      min-height:100vh;
+      padding:24px;
+      text-align:center;
+      color:var(--ink-soft);
+      font-family:'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size:14px;
+      line-height:1.5;
+    }
   }
 
   /* ============ Фильтр толщин пиломатериала "в наличии" ============ */
