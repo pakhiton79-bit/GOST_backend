@@ -340,7 +340,11 @@
     align-items:center;
     justify-content:center;
   }
-  .time-settings-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+  /* Ховер - заливка var(--accent) + белая иконка, тот же приём, что и у
+     основной кнопки/CTA (button{background:var(--accent);color:#fff})
+     - по замечанию пользователя ("шестерёнка становится белой по версии
+     нашего дизайна"), а не просто окрашенная обводка/иконка, как раньше. */
+  .time-settings-btn:hover{background:var(--accent);border-color:var(--accent);color:#ffffff;}
 
   .modal-overlay{
     position:fixed;
@@ -399,10 +403,10 @@
   }
   .modal-slider-row{display:flex;align-items:center;gap:10px;}
   /* accent-color - тот же приём, что и у чекбоксов/радио на странице
-     (.thickness-checkbox-list/.fastening-option-list input) - без него
-     ползунок красился в дефолтный синий браузера, не в акцентный цвет
-     сайта. */
-  .modal-slider-row input[type="range"]{flex:1;min-width:0;accent-color:var(--accent2);}
+     (.thickness-checkbox-list/.fastening-option-list input), но var(--accent)
+     (тёмный umber, как у кнопок), а не var(--accent2) - по замечанию
+     пользователя ("сделай ползунки более тёмными, как кнопки"). */
+  .modal-slider-row input[type="range"]{flex:1;min-width:0;accent-color:var(--accent);}
   .modal-slider-row input[type="number"]{
     width:64px;
     flex:0 0 auto;
