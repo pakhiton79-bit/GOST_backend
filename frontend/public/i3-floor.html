@@ -182,18 +182,16 @@
       <button type="button" class="modal-close" onclick="onTimeSettingsClose()" aria-label="Закрыть">✕</button>
       <h3>Настройки нормы времени</h3>
       <div class="modal-field">
-        <label for="baseProductivityInput">Базовая производительность, м³/ч</label>
+        <label id="baseProductivityLabel" for="baseProductivityInput">Базовая производительность, м³/ч</label>
         <div class="modal-slider-row">
-          <input type="range" id="baseProductivitySlider" min="0.03" max="0.09" step="0.001" list="baseProductivityMarks" oninput="onBaseProductivitySliderInput()">
-          <datalist id="baseProductivityMarks"></datalist>
+          <div class="jump-slider" id="baseProductivitySlider" aria-labelledby="baseProductivityLabel"></div>
           <input type="number" id="baseProductivityInput" step="0.01" min="0.01" oninput="onBaseProductivityInputChange()">
         </div>
       </div>
       <div class="modal-field">
-        <label for="timeCoeffInput">Коэффициент времени</label>
+        <label id="timeCoeffLabel" for="timeCoeffInput">Коэффициент времени</label>
         <div class="modal-slider-row">
-          <input type="range" id="timeCoeffSlider" min="0.5" max="3" step="0.01" list="timeCoeffMarks" oninput="onTimeCoeffSliderInput()">
-          <datalist id="timeCoeffMarks"></datalist>
+          <div class="jump-slider" id="timeCoeffSlider" aria-labelledby="timeCoeffLabel"></div>
           <input type="number" id="timeCoeffInput" step="0.01" min="0.01" oninput="onTimeCoeffInputChange()">
         </div>
       </div>
