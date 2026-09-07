@@ -398,7 +398,11 @@
     margin-bottom:10px;
   }
   .modal-slider-row{display:flex;align-items:center;gap:10px;}
-  .modal-slider-row input[type="range"]{flex:1;min-width:0;}
+  /* accent-color - тот же приём, что и у чекбоксов/радио на странице
+     (.thickness-checkbox-list/.fastening-option-list input) - без него
+     ползунок красился в дефолтный синий браузера, не в акцентный цвет
+     сайта. */
+  .modal-slider-row input[type="range"]{flex:1;min-width:0;accent-color:var(--accent2);}
   .modal-slider-row input[type="number"]{
     width:64px;
     flex:0 0 auto;

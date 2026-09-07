@@ -13,7 +13,7 @@
 // входными данными, и итоговое normaVremeni приходит уже оттуда (calc.normaVremeni).
 const TIME_SETTINGS_PRODUCTIVITY_STEPS = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09];
 const TIME_SETTINGS_COEFF_STEPS = [0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0];
-const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.2 };
+const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.0 };
 
 // totalVolume последнего расчёта - запоминается при каждом вызове
 // computeNormaVremeni() (используется только для recalcFromTable(), см.

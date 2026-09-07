@@ -494,3 +494,25 @@ function applyDiagramWidths(scaleBox, pk){
     wrap.style.flexBasis = 'auto';
   });
 }
+
+// Масштаб/отступы чертежей (reserveDiagramOverflowScreen выше) подбираются
+// один раз, сразу после calculate() - при живом изменении размера уже
+// открытой страницы (сузили окно браузера, не перезагружая её) они
+// оставались прежними, подобранными под старую ширину слота, и снова
+// вылезали за его пределы - по репорту пользователя ("при сужении экрана
+// ничего не перестраивается"). Сама таблица ИТОГ и #tooNarrow сделаны на
+// чистом CSS (grid/media query) и реагируют на resize без JS - здесь
+// пересчёта требуют только чертежи. offsetParent === null - пропускаем
+// пересчёт, если #boardTables сейчас не отображается (например, .wrap
+// скрыт в print-режиме или им уже подменён #tooNarrow) - там
+// getBoundingClientRect() дал бы нулевые размеры и испортил масштаб.
+let _resizeReflowTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(_resizeReflowTimer);
+  _resizeReflowTimer = setTimeout(()=>{
+    const boardTablesEl = document.getElementById('boardTables');
+    if(boardTablesEl && boardTablesEl.children.length && boardTablesEl.offsetParent !== null){
+      reserveDiagramOverflowScreen(boardTablesEl);
+    }
+  }, 150);
+});

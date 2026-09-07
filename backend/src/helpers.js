@@ -25,7 +25,7 @@ const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 12
 // frontend/public/js/common-timesettings.js) и приходят в теле запроса к
 // /api/*/calculate - здесь только валидируются (при отсутствии/некорректном
 // значении используются те же значения по умолчанию, что и на клиенте).
-const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.2 };
+const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.0 };
 function computeNormaVremeni(totalVolume, baseProductivity, timeCoeff) {
   const bp = Number.isFinite(baseProductivity) && baseProductivity > 0 ? baseProductivity : TIME_SETTINGS_DEFAULTS.baseProductivity;
   const tc = Number.isFinite(timeCoeff) && timeCoeff > 0 ? timeCoeff : TIME_SETTINGS_DEFAULTS.timeCoeff;
