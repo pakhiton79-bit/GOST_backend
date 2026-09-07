@@ -5,7 +5,7 @@
 // тот же характер порта, что и у ../i1/compute.js/../i3/compute.js).
 // Общие с типом I-3 таблицы/формулы переиспользуются напрямую из ../i3
 // (см. вводный комментарий в ./logic.js).
-const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField } = require('../helpers');
+const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { subfloorThicknessRaw, polozSection165, floorBoardThicknessNew } = require('../i3/sections');
 const { floorBoardThickness } = require('../i3/data/table4');
 const { crossBeamThickness } = require('../i3/data/table14');
@@ -17,11 +17,12 @@ const {
 
 // input: {L,W,H,MASS,fasteningType,solidRigidBase,removeFloorBoards,
 //         removeSkidBoards,forkliftLoading,roundBoardWidths,lidLayout,
-//         optimizeSizes,availableThicknesses,manualOverrides}.
+//         optimizeSizes,availableThicknesses,manualOverrides,
+//         baseProductivity,timeCoeff}.
 function computeGost10198II1(input) {
   const { L, W, H, MASS, fasteningType, solidRigidBase, removeFloorBoards,
     removeSkidBoards, forkliftLoading, roundBoardWidths, lidLayout,
-    optimizeSizes } = input;
+    optimizeSizes, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -409,7 +410,7 @@ function computeGost10198II1(input) {
 
   // --- Итоговый расход пиломатериала ---
   const totalVolume = volDno + volKryshka + 2 * volTorPanel + 2 * volBokPanel;
-  const normaVremeni = roundup(totalVolume * 800 / 60 * 1.2, 1);
+  const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
 
   const outerL = k9Base;
 

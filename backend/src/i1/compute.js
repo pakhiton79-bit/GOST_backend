@@ -3,12 +3,12 @@
 // вводный комментарий в ../i3/compute.js о характере отличий порта: только
 // избавление от модульного глобального состояния toлщин "в наличии", методика
 // расчёта не менялась).
-const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField } = require('../helpers');
+const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses,manualOverrides}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -202,7 +202,7 @@ function computeGost10198I1(input) {
   const volBok = bokovoy.reduce((s, r) => s + vol(r.t, r.w, r.l, r.qty), 0);
   const volTorec = torec.reduce((s, r) => s + vol(r.t, r.w, r.l, r.qty), 0);
   const totalVolume = volDno + volKryshka + 2 * volBok + 2 * volTorec;
-  const normaVremeni = roundup(totalVolume * 800 / 60 * 1.2, 1);
+  const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
 
   if (plankQty > 4) {
     warnings.push(`Планки: чертёж — макс. 4 (расчётных ${plankQty}); точное количество см. в таблице ниже.`);

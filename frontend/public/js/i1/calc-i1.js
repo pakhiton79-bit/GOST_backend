@@ -42,6 +42,7 @@ async function calculate(){
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     availableThicknesses,
     manualOverrides,
+    ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
   };
 
   let calc;
@@ -61,6 +62,7 @@ async function calculate(){
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
+  setTimeSettingsLastVolume(calc.totalVolume);
 
   function renderSection(title, rows){
     let html = title ? `<div class="part-title">${title}</div>` : '';
@@ -120,7 +122,7 @@ function recalcFromTable(){
     const qty = parseFloat(tr.querySelector('[data-role="qty"]').textContent.replace(',','.')) || 0;
     totalVolume += (t/1000)*(w/1000)*(l/1000)*qty;
   });
-  const normaVremeni = Math.ceil(totalVolume*800/60*1.2*10 - 1e-9)/10;
+  const normaVremeni = computeNormaVremeni(totalVolume, TIME_SETTINGS_STORAGE_KEY);
   document.getElementById('outVolume').innerHTML = `${totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outTime').innerHTML = `${normaVremeni} <span>ч</span>`;
 }
@@ -222,3 +224,4 @@ function buildPrintHtml(){
 }
 
 document.getElementById('boxView').src = BOX_I1_IMG_B64;
+initTimeSettings(TIME_SETTINGS_STORAGE_KEY);

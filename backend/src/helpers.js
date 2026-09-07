@@ -19,6 +19,19 @@ function vol(t, w, l, qty) { // m3, dims in mm
 // "в наличии" возможно только до одного из этих значений.
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200];
 
+// Норма времени = объём пиломатериала (м³) / базовая производительность
+// (м³/ч) × коэффициент времени. Оба параметра настраиваются шестерёнкой у
+// плитки "Норма времени" на клиенте (localStorage, см.
+// frontend/public/js/common-timesettings.js) и приходят в теле запроса к
+// /api/*/calculate - здесь только валидируются (при отсутствии/некорректном
+// значении используются те же значения по умолчанию, что и на клиенте).
+const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.2 };
+function computeNormaVremeni(totalVolume, baseProductivity, timeCoeff) {
+  const bp = Number.isFinite(baseProductivity) && baseProductivity > 0 ? baseProductivity : TIME_SETTINGS_DEFAULTS.baseProductivity;
+  const tc = Number.isFinite(timeCoeff) && timeCoeff > 0 ? timeCoeff : TIME_SETTINGS_DEFAULTS.timeCoeff;
+  return roundup((totalVolume / bp) * tc, 1);
+}
+
 // fillBoards: заполняет пространство `space` (мм) досками шириной 100мм по максимуму,
 // а остаток (если есть) - 1-2 дополнительными досками шириной 75-99мм (могут быть разной
 // ширины - выбираются сами, для полного заполнения пространства). Если остаток < 75мм,
@@ -123,4 +136,6 @@ module.exports = {
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
   findNegativeField,
+  computeNormaVremeni,
+  TIME_SETTINGS_DEFAULTS,
 };

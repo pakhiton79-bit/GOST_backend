@@ -17,7 +17,7 @@
 //     ранней недоделанной версии разделения "расчёт/рендер" - его результат
 //     нигде не использовался (calculate() в src/app.js делает то же самое ещё
 //     раз, уже пользуясь этим), поэтому в чистый расчёт он не входит.
-const { roundup, ceilInt, vol, fillBoards, makeRoundUpToAvailable, findNegativeField } = require('../helpers');
+const { roundup, ceilInt, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const {
   subfloorThicknessRaw, wallThickness, polozSection165, selectSkid19, minSkidsByWidth162,
   endBeamSection, floorBoardThicknessNew, floorBoardThickness,
@@ -25,13 +25,14 @@ const {
 } = require('./tables');
 
 // input: {variant, L,W,H,MASS,optimizeSizes,removeFloorBoards,removeSkidBoards,
-//         roundBoardWidths,solidRigidBase,forkliftLoading,availableThicknesses}.
+//         roundBoardWidths,solidRigidBase,forkliftLoading,availableThicknesses,
+//         baseProductivity,timeCoeff}.
 // variant: 'skid' (крепление за полозья, GOST10198_91POLOZIA) или
 //          'floor_boards' (крепление к доскам дна, GOST10198_91DOSKI_DNA).
 function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
-    roundBoardWidths, solidRigidBase, forkliftLoading,
+    roundBoardWidths, solidRigidBase, forkliftLoading, baseProductivity, timeCoeff,
   } = input;
   const availableThicknesses = input.availableThicknesses || [];
 
@@ -372,7 +373,7 @@ function computeGost10198I3(input) {
 
   // --- Итоговый расход пиломатериала ---
   const totalVolume = volDno + volKryshka + 2 * volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) + 2 * volBokPanel;
-  const normaVremeni = roundup(totalVolume * 800 / 60 * 1.2, 1);
+  const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
 
   const torecNoRaskosinaDiagram = !torecHasRaskosina && (H <= 600 || W > 600);
   const t40Display = optimizeSizes ? t40 + 2 : t40;

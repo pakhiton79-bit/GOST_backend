@@ -17,6 +17,9 @@ const THICKNESS_STORAGE_KEY = 'silvan-gost10198-t1-k3-available-thickness';
 // наличии" было невозможно (тот же диапазон уже был у типа II-1,
 // использующего ту же таблицу).
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
+// Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
+// для этого типа ящика (см. js/common-timesettings.js).
+const TIME_SETTINGS_STORAGE_KEY = 'silvan-gost10198-t1-k3-time-settings';
 
 function loadAvailableThicknesses(){
   try{
@@ -243,6 +246,7 @@ async function calculate(){
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     availableThicknesses,
     manualOverrides,
+    ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
   };
 
   let calc;
@@ -262,6 +266,7 @@ async function calculate(){
   document.getElementById('outDims').innerHTML = `${calc.outerL} × ${calc.outerW} × ${calc.outerH} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
+  setTimeSettingsLastVolume(calc.totalVolume);
 
   function renderSection(title, rows){
     let html = title ? `<div class="part-title">${title}</div>` : '';
@@ -323,7 +328,7 @@ function recalcFromTable(){
     const qty = parseFloat(tr.querySelector('[data-role="qty"]').textContent.replace(',','.')) || 0;
     totalVolume += (t/1000)*(w/1000)*(l/1000)*qty;
   });
-  const normaVremeni = Math.ceil(totalVolume*800/60*1.2*10 - 1e-9)/10;
+  const normaVremeni = computeNormaVremeni(totalVolume, TIME_SETTINGS_STORAGE_KEY);
   document.getElementById('outVolume').innerHTML = `${totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outTime').innerHTML = `${normaVremeni} <span>ч</span>`;
 }
@@ -430,3 +435,4 @@ function buildPrintHtml(){
 document.getElementById('boxView').src = BOX_IMG_B64;
 
 applyStateFromUrl();
+initTimeSettings(TIME_SETTINGS_STORAGE_KEY);

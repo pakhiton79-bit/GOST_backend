@@ -6,6 +6,9 @@
 // (собирается в тело запроса к /api/i1/calculate).
 const THICKNESS_STORAGE_KEY = 'silvan-gost10198-i1-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200];
+// Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
+// для этого типа ящика (см. js/common-timesettings.js).
+const TIME_SETTINGS_STORAGE_KEY = 'silvan-gost10198-i1-time-settings';
 
 function loadAvailableThicknesses(){
   try{

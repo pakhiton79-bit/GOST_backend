@@ -73,6 +73,8 @@ app.post('/api/i3/calculate', (req, res) => {
     forkliftLoading: !!b.forkliftLoading,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    timeCoeff: toNum(b.timeCoeff),
   };
   res.json(computeGost10198I3(input));
 });
@@ -86,6 +88,8 @@ app.post('/api/i1/calculate', (req, res) => {
     roundBoardWidths: !!b.roundBoardWidths,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    timeCoeff: toNum(b.timeCoeff),
   };
   res.json(computeGost10198I1(input));
 });
@@ -110,6 +114,8 @@ app.post('/api/ii1/calculate', (req, res) => {
     forkliftLoading: !!b.forkliftLoading,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses, II1_AVAILABLE_THICKNESS_OPTIONS),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    timeCoeff: toNum(b.timeCoeff),
   };
   res.json(computeGost10198II1(input));
 });

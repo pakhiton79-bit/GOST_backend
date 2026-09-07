@@ -132,8 +132,9 @@
             <div class="label">Расход пиломатериала</div>
             <div class="value" id="outVolume">— <span>м³</span></div>
           </div>
-          <div>
+          <div class="time-tile">
             <div class="label">Норма времени</div>
+            <button type="button" class="time-settings-btn" id="timeSettingsBtn" onclick="onTimeSettingsOpen()" aria-label="Настройки нормы времени" title="Настройки нормы времени">⚙</button>
             <div class="value" id="outTime">— <span>ч</span></div>
           </div>
         </div>
@@ -152,6 +153,27 @@
 
     <div class="disclaimer" style="margin-top:20px;">Калькулятор может ошибаться. Проверяйте результаты перед использованием в производстве.</div>
   </div>
+
+  <div class="modal-overlay" id="timeSettingsOverlay" onclick="onTimeSettingsOverlayClick(event)" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close" onclick="onTimeSettingsClose()" aria-label="Закрыть">✕</button>
+      <h3>Настройки нормы времени</h3>
+      <div class="modal-field">
+        <label for="baseProductivityInput">Базовая производительность, м³/ч</label>
+        <div class="modal-slider-row">
+          <input type="range" id="baseProductivitySlider" min="0" max="6" step="1" oninput="onBaseProductivitySliderInput()">
+          <input type="number" id="baseProductivityInput" step="0.01" min="0.01" oninput="onBaseProductivityInputChange()">
+        </div>
+      </div>
+      <div class="modal-field">
+        <label for="timeCoeffInput">Коэффициент времени</label>
+        <div class="modal-slider-row">
+          <input type="range" id="timeCoeffSlider" min="0" max="6" step="1" oninput="onTimeCoeffSliderInput()">
+          <input type="number" id="timeCoeffInput" step="0.01" min="0.01" oninput="onTimeCoeffInputChange()">
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="tooNarrow">Экран слишком узкий для отображения калькулятора.<br>Разверните окно или используйте устройство с более широким экраном.</div>
@@ -163,6 +185,7 @@
 <script src="/js/i1/diagrams/bokovoy.js"></script>
 <script src="/js/i1/diagrams/kryshka-dno.js"></script>
 <script src="/js/common-print.js"></script>
+<script src="/js/common-timesettings.js"></script>
 <script src="/js/i1/ui.js"></script>
 <script src="/js/i1/calc-i1.js"></script>
 </body>

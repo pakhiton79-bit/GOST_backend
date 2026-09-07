@@ -319,6 +319,97 @@
     .summary{grid-template-columns:1fr;}
   }
 
+  /* ============ Шестерёнка настроек нормы времени ============ */
+  .time-tile{position:relative;}
+  .time-settings-btn{
+    position:absolute;
+    top:12px;
+    right:12px;
+    width:26px;
+    height:26px;
+    padding:0;
+    margin:0;
+    border:1px solid var(--rule);
+    border-radius:8px;
+    background:#ffffff;
+    color:var(--ink-soft);
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .time-settings-btn:hover{border-color:var(--accent2);color:var(--accent2);}
+
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(9,17,53,.45);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:100;
+  }
+  .modal-overlay[hidden]{display:none;}
+  .modal-box{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:14px;
+    box-shadow:var(--shadow-lg);
+    padding:28px;
+    max-width:380px;
+    width:100%;
+  }
+  .modal-box h3{
+    margin:0 0 20px;
+    font-size:16px;
+    font-weight:600;
+    color:var(--ink);
+    padding-right:24px;
+  }
+  .modal-close{
+    position:absolute;
+    top:14px;
+    right:14px;
+    width:28px;
+    height:28px;
+    padding:0;
+    margin:0;
+    border:none;
+    background:transparent;
+    color:var(--ink-soft);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .modal-close:hover{color:var(--accent2);}
+  .modal-field{margin-bottom:20px;}
+  .modal-field:last-child{margin-bottom:0;}
+  .modal-field label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .modal-slider-row{display:flex;align-items:center;gap:10px;}
+  .modal-slider-row input[type="range"]{flex:1;min-width:0;}
+  .modal-slider-row input[type="number"]{
+    width:64px;
+    flex:0 0 auto;
+    padding:6px 8px;
+    border:1px solid var(--border-input);
+    border-radius:6px;
+    font-family:inherit;
+    font-size:13px;
+    color:var(--ink);
+  }
+
   table{
     width:100%;
     table-layout:fixed;
