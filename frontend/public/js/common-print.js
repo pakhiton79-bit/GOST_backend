@@ -55,14 +55,12 @@ function setCalcStatus(state){
   });
 }
 
-function printBox(){
-  if(document.getElementById('results').style.display !== 'block'){
-    alert('Сначала выполните расчёт — нажмите «Рассчитать».');
-    return;
-  }
-
-  const printArea = document.getElementById('printArea');
-  const scaleBox  = document.getElementById('printScale');
+// Собирает содержимое #printArea из текущих результатов и проставляет
+// data-base-width у чертежей (см. комментарий ниже, откуда он был раньше) -
+// общая часть для printBox() (см. ниже) и для подстраховки на случай печати
+// НЕ через кнопку (см. beforeprint в самом низу файла).
+function buildAndSizePrintArea(){
+  const scaleBox = document.getElementById('printScale');
   scaleBox.innerHTML = buildPrintHtml();
 
   // Чертежи имеют разный собственный масштаб (у торца он меньше, чтобы не
@@ -80,6 +78,16 @@ function printBox(){
       wrap.dataset.baseWidth = parseFloat(wrap.style.width) || 260;
     }
   });
+}
+
+function printBox(){
+  if(document.getElementById('results').style.display !== 'block'){
+    alert('Сначала выполните расчёт — нажмите «Рассчитать».');
+    return;
+  }
+
+  buildAndSizePrintArea();
+  const scaleBox = document.getElementById('printScale');
 
   // Важно: сразу после innerHTML браузер мог ещё не декодировать вставленные
   // <img> (чертежи, общий вид ящика, водяной знак) — их scrollHeight в этот
@@ -91,10 +99,28 @@ function printBox(){
   const ready = images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
 
   Promise.all(ready).then(()=>{
-    fitPrintAreaToOnePage(printArea);
+    fitPrintAreaToOnePage(document.getElementById('printArea'));
     window.print();
   });
 }
+
+// Подстраховка на случай печати НЕ через кнопку «Печать»/«Скачать PDF»
+// (Ctrl+P или пункт меню браузера «Печать»): без этого #printArea оставался
+// либо пустым, либо с содержимым от прошлого расчёта под другой размер окна -
+// window.print() в printBox() выше сам вызывает 'beforeprint', но кто-то
+// может напечатать и напрямую, минуя printBox() - тогда сборка/подгонка
+// страницы вообще не запускалась, и печать выходила необрезанной/наехавшей
+// (подписи чертежей без зарезервированного места, остаток высоты листа не
+// распределён) - по репорту пользователя ("нажал на клавишу... всё сползло").
+// Событие 'beforeprint' не ждёт промисов, поэтому здесь - без async decode():
+// картинки в #boardTables (тот же src, что и в клоне) уже отрисованы на
+// экране к этому моменту, decode() для них практически мгновенен.
+window.addEventListener('beforeprint', ()=>{
+  const results = document.getElementById('results');
+  if(!results || results.style.display !== 'block') return;
+  buildAndSizePrintArea();
+  fitPrintAreaToOnePage(document.getElementById('printArea'));
+});
 
 // Подписи размеров и стрелки нарисованы ЗА пределами прямоугольника картинки
 // (по замерам — до ~70px ниже и ~28px выше, у некоторых чертежей и заметно
