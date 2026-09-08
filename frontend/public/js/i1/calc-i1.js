@@ -211,7 +211,7 @@ function buildPrintHtml(){
           <h2>Итог</h2>
           <table class="print-plain-table">
             <tr><td class="k">Наружные размеры, мм</td><td>${outDimsText}</td></tr>
-            <tr><td class="k">Расход пиломатериала</td><td>${volumeText}</td></tr>
+            <tr><td class="k">Расход пило&shy;материала</td><td>${volumeText}</td></tr>
             <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
           </table>
         </div>

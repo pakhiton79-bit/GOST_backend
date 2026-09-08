@@ -104,6 +104,119 @@ function printBox(){
   });
 }
 
+// Стрелки/линии размеров на чертежах (записи с x1/y1/x2/y2 в records, см.
+// renderDiagram() в js/common-diagrams.js) - живой <svg class="diagram-arrows">
+// поверх картинки. html2canvas рисует SVG заметно хуже основного HTML: не
+// подхватывает внешние CSS-правила его потомков (см. #printArea
+// .diagram-arrows line{stroke-width:calc(var(--pk)*var(--dk)*3px)!important;}
+// в style.css - при обычной печати оно делает стрелки заметно толще, чем на
+// экране) И теряет/обрывает часть самих линий (в т.ч. те, что по задумуке
+// выходят за пределы viewBox чертежа - overflow:visible, подписи специально
+// вынесены за рамку фото) - в PDF стрелки получались частично отсутствующими
+// или как на экране тонкими - по репорту пользователя ("не перенеслись либо
+// с косяками, не те толщины"). Лечится не попыткой подстроиться под html2canvas
+// (у него это давняя, так и не исправленная слабость SVG-рендера), а тем, что
+// КАЖДЫЙ <svg class="diagram-arrows"> перед съёмкой заменяется на обычный
+// <img>, отрисованный из него самим браузером (см. rasterizeDiagramArrows
+// ниже) - html2canvas после этого рисует уже готовую растровую картинку
+// (что он умеет надёжно, как и все остальные чертежи-фото), а не сырой SVG.
+function bakeDiagramArrowStrokeWidths(printArea){
+  const scaleBox = document.getElementById('printScale');
+  const pk = parseFloat(getComputedStyle(scaleBox).getPropertyValue('--pk')) || 1;
+  printArea.querySelectorAll('.diagram-wrap').forEach(wrap=>{
+    const dk = parseFloat(getComputedStyle(wrap).getPropertyValue('--dk')) || 1;
+    const strokeWidth = (pk * dk * 3).toFixed(2);
+    wrap.querySelectorAll('.diagram-arrows line').forEach(line=>{
+      line.setAttribute('stroke-width', strokeWidth);
+    });
+  });
+}
+
+// Заменяет каждый живой <svg class="diagram-arrows"> на <img>, отрисованный
+// вручную через Canvas 2D (а не через <img src="data:image/svg+xml,...">,
+// как в первой версии этой правки) - тот подход клипал часть линий: подписи
+// на чертежах нарочно вынесены ЗА пределы viewBox (см. reserveDiagramOverflow
+// в этом же файле), на экране/при обычной печати это держится на
+// overflow:visible у живого SVG, но растровая картинка не может «вылезать»
+// за собственные границы - при рендере в отдельный <img> всё, что было за
+// пределами viewBox, обрезалось. Здесь координаты линий/наконечников (уже
+// с запечёнными правильными stroke-width - см. bakeDiagramArrowStrokeWidths
+// выше) читаются прямо из DOM и рисуются на canvas, размер которого заранее
+// считается по фактическому охвату ВСЕХ фигур (включая те, что за пределами
+// viewBox) - обрезки нет в принципе, независимо от того, насколько далеко
+// вылетают подписи у конкретного чертежа.
+function rasterizeDiagramArrows(printArea){
+  const svgs = Array.from(printArea.querySelectorAll('svg.diagram-arrows'));
+  const loads = svgs.map(svg => new Promise(resolve => {
+    const wrap = svg.closest('.diagram-wrap');
+    const vb = svg.viewBox.baseVal;
+    const lines = Array.from(svg.querySelectorAll('line'));
+    const polygons = Array.from(svg.querySelectorAll('polygon'));
+
+    let minX = 0, minY = 0, maxX = vb.width, maxY = vb.height;
+    const extend = (x, y) => {
+      minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+      minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    };
+    lines.forEach(l=>{
+      extend(parseFloat(l.getAttribute('x1')), parseFloat(l.getAttribute('y1')));
+      extend(parseFloat(l.getAttribute('x2')), parseFloat(l.getAttribute('y2')));
+    });
+    polygons.forEach(p=>{
+      p.getAttribute('points').trim().split(/\s+/).forEach(pair=>{
+        const [x, y] = pair.split(',').map(Number);
+        extend(x, y);
+      });
+    });
+    const pad = 6; // запас на саму толщину линии вокруг крайних точек
+    minX -= pad; minY -= pad; maxX += pad; maxY += pad;
+
+    const wrapRect = wrap.getBoundingClientRect();
+    const scaleX = wrapRect.width / vb.width;
+    const scaleY = wrapRect.height / vb.height;
+    const dpr = 2; // тот же множитель, что у scale:2 в html2canvas ниже - чёткие линии
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.ceil((maxX - minX) * scaleX * dpr));
+    canvas.height = Math.max(1, Math.ceil((maxY - minY) * scaleY * dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.scale(scaleX * dpr, scaleY * dpr);
+    ctx.translate(-minX, -minY);
+
+    lines.forEach(l=>{
+      ctx.beginPath();
+      ctx.moveTo(parseFloat(l.getAttribute('x1')), parseFloat(l.getAttribute('y1')));
+      ctx.lineTo(parseFloat(l.getAttribute('x2')), parseFloat(l.getAttribute('y2')));
+      ctx.strokeStyle = l.getAttribute('stroke') || '#8A4B26';
+      ctx.lineWidth = parseFloat(l.getAttribute('stroke-width')) || 1;
+      ctx.stroke();
+    });
+    polygons.forEach(p=>{
+      const pts = p.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number));
+      ctx.beginPath();
+      pts.forEach(([x, y], i)=>{ i===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+      ctx.closePath();
+      ctx.fillStyle = p.getAttribute('fill') || '#8A4B26';
+      ctx.fill();
+    });
+
+    const img = document.createElement('img');
+    img.className = 'diagram-arrows';
+    img.alt = '';
+    img.style.position = 'absolute';
+    img.style.left = (minX * scaleX) + 'px';
+    img.style.top = (minY * scaleY) + 'px';
+    img.style.width = ((maxX - minX) * scaleX) + 'px';
+    img.style.height = ((maxY - minY) * scaleY) + 'px';
+    img.style.pointerEvents = 'none';
+    img.onload = resolve;
+    img.onerror = resolve;
+    img.src = canvas.toDataURL('image/png');
+    svg.replaceWith(img);
+  }));
+  return Promise.all(loads);
+}
+
 // «Скачать PDF» - настоящее скачивание файла, БЕЗ системного диалога печати
 // (который открывает printBox() выше) - по просьбе пользователя. Без
 // сторонней библиотеки это невозможно: у веб-страницы нет API для сохранения
@@ -138,6 +251,10 @@ function downloadPdf(){
   Promise.all(ready).then(()=>{
     const printArea = document.getElementById('printArea');
     fitPrintAreaToOnePage(printArea);
+    bakeDiagramArrowStrokeWidths(printArea);
+    return rasterizeDiagramArrows(printArea);
+  }).then(()=>{
+    const printArea = document.getElementById('printArea');
     // Масштаб 2x - иначе текст/тонкие линии чертежей на растровой картинке
     // внутри PDF выглядят размыто (#printArea отрисован под экранный DPI 1x).
     return window.html2canvas(printArea, {
