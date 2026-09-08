@@ -147,7 +147,7 @@
       <span class="calc-error" id="calcError"><span class="mark mark-error"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>Расчёт не проведён</span>
     </span>
     <button class="print-btn btn-secondary" onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5V2.5h7v3"/><rect x="3" y="5.5" width="10" height="5" rx="0.8"/><path d="M4.5 9.5v4h7v-4"/><line x1="6" y1="11.5" x2="10" y2="11.5"/></svg>Печать</button>
-    <button class="print-btn btn-secondary" onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v6.5"/><path d="M5 6.5 8 9.5 11 6.5"/><path d="M3.5 12.5h9"/></svg>Скачать PDF</button>
+    <button class="print-btn btn-secondary" onclick="downloadPdf()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v6.5"/><path d="M5 6.5 8 9.5 11 6.5"/><path d="M3.5 12.5h9"/></svg>Скачать PDF</button>
     <div class="error" id="err"></div>
   </div>
 
@@ -220,6 +220,8 @@
 <script src="/js/ii1/diagrams/kryshka.js"></script>
 <script src="/js/ii1/diagrams/torec.js"></script>
 <script src="/js/ii1/diagrams/bok.js"></script>
+<script src="/js/vendor/html2canvas.min.js"></script>
+<script src="/js/vendor/jspdf.umd.min.js"></script>
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
 <script src="/js/ii1/ui.js"></script>

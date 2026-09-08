@@ -104,6 +104,72 @@ function printBox(){
   });
 }
 
+// «Скачать PDF» - настоящее скачивание файла, БЕЗ системного диалога печати
+// (который открывает printBox() выше) - по просьбе пользователя. Без
+// сторонней библиотеки это невозможно: у веб-страницы нет API для сохранения
+// файла на диск в обход диалога печати. html2canvas рисует уже собранный и
+// подогнанный под лист #printArea в канвас, jsPDF оборачивает картинку в
+// настоящий PDF-файл и сохраняет его через doc.save() - это вызывает обычное
+// скачивание браузером (как клик по <a download>), а не печать.
+// #printArea в обычном состоянии (см. #printArea в style.css) спрятан
+// исключительно через opacity:0 (position:fixed;left:0;top:0, БЕЗ
+// display:none) - его внутренняя вёрстка (flex-ряды чертёж/таблица и т.п.)
+// не привязана к @media print и потому уже выглядит правильно даже сейчас;
+// единственное, что нужно html2canvas - принудительно поднять opacity до 1
+// на время съёмки. Это делается ТОЛЬКО в клоне документа (аргумент onclone),
+// который html2canvas рендерит в скрытом iframe - сама страница пользователя
+// ни на миг не меняется, поэтому никакого мелькания макета печати на экране
+// не возникает.
+function downloadPdf(){
+  if(document.getElementById('results').style.display !== 'block'){
+    alert('Сначала выполните расчёт — нажмите «Рассчитать».');
+    return;
+  }
+  if(!window.html2canvas || !(window.jspdf && window.jspdf.jsPDF)){
+    alert('Не удалось подготовить PDF. Попробуйте обновить страницу или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
+    return;
+  }
+
+  buildAndSizePrintArea();
+  const scaleBox = document.getElementById('printScale');
+  const images = Array.from(scaleBox.querySelectorAll('img'));
+  const ready = images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
+
+  Promise.all(ready).then(()=>{
+    const printArea = document.getElementById('printArea');
+    fitPrintAreaToOnePage(printArea);
+    // Масштаб 2x - иначе текст/тонкие линии чертежей на растровой картинке
+    // внутри PDF выглядят размыто (#printArea отрисован под экранный DPI 1x).
+    return window.html2canvas(printArea, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      onclone: (clonedDoc, clonedEl) => {
+        clonedEl.style.opacity = '1';
+        clonedEl.style.position = 'static';
+        clonedEl.style.left = 'auto';
+        clonedEl.style.top = 'auto';
+        clonedEl.style.pointerEvents = 'auto';
+      }
+    });
+  }).then(canvas => {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const m = PRINT_PAGE.marginMM;
+    const w = PRINT_PAGE.wMM - 2 * m;
+    const h = PRINT_PAGE.hMM - 2 * m;
+    // JPEG, а не PNG: страница содержит фото-чертежи (сами по себе JPEG,
+    // см. IMG_PLACEHOLDER/photostroke в diagrams) - пересжатые в PNG canvas
+    // они распухали в разы (12+ МБ на один лист) без заметного выигрыша в
+    // качестве. При 0.92 файл на порядок легче, а текст/линии остаются
+    // чёткими для печатной документации такого рода.
+    doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, w, h);
+    doc.save('gost-10198-91-raschet.pdf');
+  }).catch(() => {
+    alert('Не удалось создать PDF-файл. Попробуйте ещё раз или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
+  });
+}
+
 // Подстраховка на случай печати НЕ через кнопку «Печать»/«Скачать PDF»
 // (Ctrl+P или пункт меню браузера «Печать»): без этого #printArea оставался
 // либо пустым, либо с содержимым от прошлого расчёта под другой размер окна -
