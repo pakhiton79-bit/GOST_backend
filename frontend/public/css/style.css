@@ -2,11 +2,15 @@
     /* Палитра и токены — "бумажная обсерватория" (см. превью-артефакт,
        одобренный пользователем): почти ахроматичный холст + два оттенка
        коричневого вместо синих акцентов референса. --accent (Umber) -
-       ТОЛЬКО заливка основной кнопки/CTA; --accent2 (Amber) - все остальные
-       акцентные касания (фокус, ссылки, чекбоксы, hover-обводки, eyebrow) -
-       та же роль, что у Cobalt Surface/Electric Blue в референсе. Тени
-       убраны везде (--shadow-sm/--shadow-lg = none) - элевация через
-       обводки-волоски и тонировку фона, не через box-shadow.
+       основной акцентный цвет везде (заливка CTA-кнопки и все остальные
+       акцентные касания - фокус, ссылки, чекбоксы, hover-обводки, eyebrow) -
+       по замечанию пользователя ("минимизируем количество коричневого, но
+       более светлого цвета, используем тёмный коричневый вместо него").
+       --accent2 (Amber, более светлый) оставлен как токен, но в разметке
+       почти не используется - тот же смысл, что у Cobalt Surface/Electric
+       Blue в референсе, раньше был у него. Тени убраны везде
+       (--shadow-sm/--shadow-lg = none) - элевация через обводки-волоски и
+       тонировку фона, не через box-shadow.
        Text/border palette (Midnight Ink/Slate/Frost Border) - как в самом
        референсе, без изменений (правки пользователя касались только фонов и
        синих акцентов, не текста/обводок). */
@@ -58,7 +62,7 @@
     color:var(--ink-soft);
     text-decoration:none;
   }
-  .top-nav a:hover{color:var(--accent2);}
+  .top-nav a:hover{color:var(--accent);}
 
   header{
     border-bottom:1px solid var(--rule);
@@ -71,7 +75,7 @@
     font-weight:600;
     letter-spacing:.1em;
     text-transform:uppercase;
-    color:var(--accent2);
+    color:var(--accent);
     margin-bottom:8px;
   }
   h1{
@@ -149,9 +153,9 @@
     margin:0;
   }
   input[type=number]:focus{
-    outline:2px solid var(--accent2);
+    outline:2px solid var(--accent);
     outline-offset:2px;
-    border-color:var(--accent2);
+    border-color:var(--accent);
   }
   select{
     width:100%;
@@ -164,9 +168,9 @@
     color:var(--ink);
   }
   select:focus{
-    outline:2px solid var(--accent2);
+    outline:2px solid var(--accent);
     outline-offset:2px;
-    border-color:var(--accent2);
+    border-color:var(--accent);
   }
 
   .comment-field{
@@ -184,9 +188,9 @@
     box-sizing:border-box;
   }
   .comment-field:focus{
-    outline:2px solid var(--accent2);
+    outline:2px solid var(--accent);
     outline-offset:2px;
-    border-color:var(--accent2);
+    border-color:var(--accent);
   }
   .comment-field::placeholder{
     color:var(--ink-soft);
@@ -440,7 +444,7 @@
     outline:none;
   }
   .jump-slider:focus-visible .jump-slider-thumb{
-    outline:2px solid var(--accent2);
+    outline:2px solid var(--accent);
     outline-offset:2px;
   }
   .jump-slider-track{
@@ -525,14 +529,14 @@
   .spec-table:last-child{margin-bottom:0;}
   .editable-cell{
     cursor:text;
-    border-bottom:1px dashed var(--accent2);
+    border-bottom:1px dashed var(--accent);
     border-radius:4px;
   }
   .editable-cell:hover{background:var(--accent-wash);}
   .editable-cell:focus{
     outline:none;
     background:var(--accent-wash);
-    border-bottom:1px solid var(--accent2);
+    border-bottom:1px solid var(--accent);
   }
 
   .part-title{
@@ -752,7 +756,7 @@
     cursor:pointer;
     text-align:left;
   }
-  .thickness-dropdown-btn:hover{background:#ffffff;border-color:var(--accent2);}
+  .thickness-dropdown-btn:hover{background:#ffffff;border-color:var(--accent);}
   .thickness-dropdown-btn span:first-child{
     overflow:hidden;
     text-overflow:ellipsis;
@@ -810,7 +814,7 @@
     margin:0;
     cursor:pointer;
   }
-  .thickness-checkbox-list input{margin:0;accent-color:var(--accent2);}
+  .thickness-checkbox-list input{margin:0;accent-color:var(--accent);}
   @media screen and (max-width:640px){
     .thickness-checkbox-list{grid-template-rows:repeat(16,auto);}
   }
@@ -831,7 +835,7 @@
     margin:0;
     cursor:pointer;
   }
-  .fastening-option-list input{margin-top:3px;flex:0 0 auto;accent-color:var(--accent2);}
+  .fastening-option-list input{margin-top:3px;flex:0 0 auto;accent-color:var(--accent);}
   .fastening-option-disabled{opacity:.45;cursor:not-allowed !important;}
   .fastening-option-disabled input{cursor:not-allowed !important;}
   .fastening-option-list .option-hint{
