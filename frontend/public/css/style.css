@@ -505,12 +505,23 @@
     border-bottom:1px solid var(--rule);
   }
   th{
-    background:var(--table-header-bg);
-    color:var(--ink-soft);
     text-transform:uppercase;
     font-size:11px;
     letter-spacing:.05em;
     font-weight:600;
+  }
+  /* Фон/текст - только на экране (не в @page печати): #printArea .spec-table
+     th переопределяет цвет текста на тёмный (#36394A, см. ниже), т.к. это
+     отдельная печатная вёрстка на белом листе - тёмный фон с тёмным текстом
+     там читался бы плохо, а печатных стилей на background у неё никогда не
+     было (сознательно, лист остаётся белым). Фон - var(--accent) (тёмный
+     umber, тот же акцент, что и везде на сайте) вместо var(--table-header-bg)
+     - по замечанию пользователя ("цвета заглавий таблиц... тоже сделай
+     таким"). Токен --table-header-bg пока не удалён (см. :root) - только
+     не используется здесь. Текст - белый, а не ink-soft (тёмный на тёмном
+     фоне не читался бы). */
+  @media screen{
+    th{background:var(--accent);color:#ffffff;}
   }
   th.num{text-align:right;}
   td.num{text-align:right;}
@@ -544,10 +555,15 @@
   }
   .part-title:first-child{margin-top:0;}
 
+  /* Фон - var(--accent) вместо var(--warn-wash) - по замечанию
+     пользователя ("...и фона уведомлений тоже сделай таким"). Токен
+     --warn-wash пока не удалён (см. :root) - только не используется здесь.
+     Текст - белый (ink-soft на тёмном фоне не читался бы), полоса слева -
+     по-прежнему var(--warn) (цвет предупреждения не трогали). */
   .note{
     font-size:13px;
-    color:var(--ink-soft);
-    background:var(--warn-wash);
+    color:#ffffff;
+    background:var(--accent);
     border-left:3px solid var(--warn);
     border-radius:0 10px 10px 0;
     padding:14px 16px;
