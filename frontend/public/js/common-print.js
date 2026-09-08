@@ -38,6 +38,23 @@ const PRINT_PAGE = { wMM:210, hMM:297, marginMM:8, pxPerMM:96/25.4 };
 // и их шрифт удаётся поднять до 20px.
 const PRINT_DIAGRAM_FACTOR = 0.885;
 
+// Три взаимоисключающих статуса расчёта рядом с кнопками «Рассчитать»/
+// «Печать» (#calcCheck/#calcOutdated/#calcError в разметке, см. calc-status
+// в style.css) - .active переключает видимость (visibility, не display,
+// чтобы ширина обёртки не менялась - см. .calc-status в style.css).
+// state: 'check' (успешно посчитано), 'outdated' (результаты на экране
+// устарели - вход поменялся после расчёта), 'error' (расчёт заблокирован -
+// сервер вернул calc.error, или не удалось связаться с сервером) или
+// null/любое другое значение - все три скрыты (до первого расчёта, либо
+// только что открытая пустая форма).
+function setCalcStatus(state){
+  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError'};
+  Object.keys(ids).forEach(key=>{
+    const el = document.getElementById(ids[key]);
+    if(el) el.classList.toggle('active', key === state);
+  });
+}
+
 function printBox(){
   if(document.getElementById('results').style.display !== 'block'){
     alert('Сначала выполните расчёт — нажмите «Рассчитать».');

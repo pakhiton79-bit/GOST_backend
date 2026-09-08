@@ -220,38 +220,50 @@
   }
   .btn-secondary:hover{background:var(--secondary-hover);}
 
-  .calc-outdated{
-    display:none;
-    align-items:center;
+  /* Обёртка вокруг трёх взаимоисключающих статусов расчёта (calcCheck/
+     calcOutdated/calcError - JS переключает между ними класс .active, см.
+     setCalcStatus() в common-print.js). Все три - в одной grid-ячейке
+     (stacking) и visibility:hidden вместо display:none, когда не активны -
+     в отличие от display:none, visibility:hidden всё равно занимает место
+     в раскладке, поэтому ширина обёртки всегда равна ширине самого
+     широкого из трёх текстов, даже когда ни один не показан (до первого
+     расчёта) - кнопка «Печать» не «прыгает» вправо после первого расчёта,
+     то же расстояние зарезервировано с самого начала - по замечанию
+     пользователя. */
+  .calc-status{
+    position:relative;
+    display:inline-grid;
     margin-left:14px;
-    color:var(--warn);
+    vertical-align:middle;
+  }
+  .calc-status > span{
+    grid-column:1;
+    grid-row:1;
+    display:inline-flex;
+    align-items:center;
     font-family:inherit;
     font-size:14px;
     font-weight:600;
-    vertical-align:middle;
+    white-space:nowrap;
+    visibility:hidden;
   }
+  .calc-status > span.active{visibility:visible;}
 
-  .calc-check{
-    display:none;
-    align-items:center;
-    margin-left:14px;
-    color:var(--ok);
-    font-family:inherit;
-    font-size:14px;
-    font-weight:600;
-    vertical-align:middle;
-  }
-  .calc-check .mark{
+  .calc-outdated{color:var(--warn);}
+  .calc-check{color:var(--ok);}
+  .calc-error{color:var(--error);}
+  .calc-check .mark, .calc-error .mark{
     display:inline-block;
     width:20px;height:20px;
     line-height:20px;
     text-align:center;
     border-radius:50%;
-    background:var(--ok);
     color:#fff;
     font-weight:700;
     margin-right:6px;
   }
+  .calc-check .mark{background:var(--ok);}
+  .calc-error .mark{background:var(--error);}
 
   .print-btn{
     margin-top:20px;

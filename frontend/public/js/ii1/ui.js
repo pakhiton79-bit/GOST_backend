@@ -39,10 +39,8 @@ function buildThicknessCheckboxList(){
 // галочки показываем краткую подсказку "устарело" (см. #calcOutdated в
 // frontend/public/ii1.html) - до первого расчёта её показывать нечего.
 function invalidateCalc(){
-  document.getElementById('calcCheck').style.display = 'none';
-  const outdated = document.getElementById('calcOutdated');
   const results = document.getElementById('results');
-  if(outdated) outdated.style.display = (results && results.style.display === 'block') ? 'inline-flex' : 'none';
+  setCalcStatus(results && results.style.display === 'block' ? 'outdated' : null);
 }
 
 function onThicknessCheckboxChange(el){

@@ -110,9 +110,13 @@
 
   <div class="card action-card">
     <button onclick="calculate()">Рассчитать</button>
-    <span class="calc-check" id="calcCheck"><span class="mark">&#10003;</span>Расчёт выполнен</span>
-    <span class="calc-outdated" id="calcOutdated">⚠ Нажмите «Рассчитать»</span>
+    <span class="calc-status">
+      <span class="calc-check" id="calcCheck"><span class="mark">&#10003;</span>Расчёт выполнен</span>
+      <span class="calc-outdated" id="calcOutdated">⚠ Нажмите «Рассчитать»</span>
+      <span class="calc-error" id="calcError"><span class="mark mark-error">&#10007;</span>Расчёт не проведён</span>
+    </span>
     <button class="print-btn btn-secondary" onclick="printBox()">🖨 Печать</button>
+    <button class="print-btn btn-secondary" onclick="printBox()">⬇ Скачать PDF</button>
     <div class="error" id="err"></div>
   </div>
 

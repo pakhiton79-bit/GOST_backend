@@ -29,8 +29,7 @@ async function calculate(){
   const errEl = document.getElementById('err');
   errEl.textContent = '';
   const manualOverrides = readManualOverrides();
-  document.getElementById('calcCheck').style.display = 'none';
-  document.getElementById('calcOutdated').style.display = 'none';
+  setCalcStatus(null);
 
   const removeFloorBoardsEl = document.getElementById('removeFloorBoards');
   const input = {
@@ -61,9 +60,10 @@ async function calculate(){
     calc = await resp.json();
   }catch(e){
     errEl.textContent = 'Не удалось связаться с сервером расчёта. Проверьте соединение и повторите.';
+    setCalcStatus('error');
     return;
   }
-  if(calc.error){ errEl.textContent = calc.error; return; }
+  if(calc.error){ errEl.textContent = calc.error; setCalcStatus('error'); return; }
 
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
@@ -128,7 +128,7 @@ async function calculate(){
   warningsEl.style.display = calc.warnings.length ? 'block' : 'none';
 
   document.getElementById('results').style.display = 'block';
-  document.getElementById('calcCheck').style.display = 'inline-flex';
+  setCalcStatus('check');
 }
 
 ['L','W','H','M'].forEach(id=>{
