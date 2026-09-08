@@ -120,12 +120,19 @@ function printBox(){
 // <img>, отрисованный из него самим браузером (см. rasterizeDiagramArrows
 // ниже) - html2canvas после этого рисует уже готовую растровую картинку
 // (что он умеет надёжно, как и все остальные чертежи-фото), а не сырой SVG.
+// PDF_ARROW_STROKE_FACTOR - множитель поверх обычного печатного stroke-width
+// (var(--pk)*var(--dk)*3px, см. #printArea .diagram-arrows line в style.css).
+// В PDF стрелки всё равно оставались еле заметными даже после исправления
+// самого механизма переноса - по репорту пользователя ("слишком тонкие,
+// их не видно") - поэтому здесь заведомо толще, чем при обычной печати,
+// а не просто "как при печати".
+const PDF_ARROW_STROKE_FACTOR = 4;
 function bakeDiagramArrowStrokeWidths(printArea){
   const scaleBox = document.getElementById('printScale');
   const pk = parseFloat(getComputedStyle(scaleBox).getPropertyValue('--pk')) || 1;
   printArea.querySelectorAll('.diagram-wrap').forEach(wrap=>{
     const dk = parseFloat(getComputedStyle(wrap).getPropertyValue('--dk')) || 1;
-    const strokeWidth = (pk * dk * 3).toFixed(2);
+    const strokeWidth = (pk * dk * 3 * PDF_ARROW_STROKE_FACTOR).toFixed(2);
     wrap.querySelectorAll('.diagram-arrows line').forEach(line=>{
       line.setAttribute('stroke-width', strokeWidth);
     });
