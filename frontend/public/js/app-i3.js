@@ -4,10 +4,11 @@
 // выполнялся локально в браузере, здесь - на сервере (POST /api/i3/calculate,
 // см. backend/server.js) - calculate() поэтому стала асинхронной, остальная
 // логика (чтение полей, отрисовка таблиц/чертежей, печать) не менялась.
-// I3_VARIANT ('skid' | 'floor_boards') задаётся инлайн-скриптом в самой HTML
-// странице до подключения этого файла - см. i3-skid.html/i3-floor.html
-// (замена двум раздельным файлам GOST10198_91POLOZIA.html/DOSKI_DNA.html,
-// собиравшимся build.py из общего шаблона).
+// Способ крепления груза (за полозья / к доскам дна, variant в теле запроса)
+// - runtime-переключатель на одной странице (i3-skid.html), тем же приёмом,
+// что и в типе II-1 (см. fasteningType в js/ii1/ui.js/calc-ii1.js) - раньше
+// это были две отдельные страницы (i3-skid.html/i3-floor.html) с переходом
+// через URL (switchFastening), см. git-историю.
 
 // ============ Фильтр толщин пиломатериала "в наличии" ============
 const THICKNESS_STORAGE_KEY = 'silvan-gost10198-t1-k3-available-thickness';
@@ -114,16 +115,23 @@ const FASTENING_LABELS = {
   frame:          'Крепление на металлической или деревянной раме'
 };
 
-let fasteningType = window.I3_VARIANT;
+let fasteningType = 'skid';
+try{
+  const saved = localStorage.getItem(FASTENING_STORAGE_KEY);
+  if(saved === 'skid' || saved === 'floor_boards') fasteningType = saved;
+}catch(e){}
 
 function onFasteningTypeChange(el){
   fasteningType = el.value;
-  saveFasteningType();
-  updateFasteningSummary();
-  invalidateCalc();
-}
-function saveFasteningType(){
   try{ localStorage.setItem(FASTENING_STORAGE_KEY, fasteningType); }catch(e){}
+  updateFasteningSummary();
+  // «Убрать доски дна» есть только у варианта «за полозья» - при креплении
+  // к доскам дна убирать их нельзя (они и есть точка крепления).
+  document.getElementById('removeFloorBoardsRow').style.display = fasteningType === 'skid' ? '' : 'none';
+  if(fasteningType !== 'skid'){
+    document.getElementById('removeFloorBoards').checked = false;
+  }
+  invalidateCalc();
 }
 
 function updateFasteningSummary(){
@@ -135,41 +143,8 @@ function toggleFasteningDropdown(){
   document.getElementById('fasteningDropdownPanel').classList.toggle('open');
 }
 
-// «За полозья» и «к доскам дна» - две отдельные страницы (i3-skid.html /
-// i3-floor.html), как и в исходном репозитории (там - два отдельных собранных
-// файла) - переключение передаёт текущие введённые значения через URL.
-function switchFastening(targetFile, targetType){
-  try{ localStorage.setItem(FASTENING_STORAGE_KEY, targetType); }catch(e){}
-
-  const params = new URLSearchParams();
-  ['L','W','H','M'].forEach(id=>{
-    const v = document.getElementById(id).value;
-    if(v) params.set(id, v);
-  });
-  ['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el && el.checked) params.set(id, '1');
-  });
-  const qs = params.toString();
-  window.location.href = targetFile + (qs ? '?' + qs : '');
-}
-
-function applyStateFromUrl(){
-  const params = new URLSearchParams(window.location.search);
-  if(![...params.keys()].length) return;
-  ['L','W','H','M'].forEach(id=>{
-    const v = params.get(id);
-    if(v !== null) document.getElementById(id).value = v;
-  });
-  ['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards'].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el && params.get(id) === '1') el.checked = true;
-  });
-  history.replaceState(null, '', window.location.pathname);
-  calculate();
-}
-
 updateFasteningSummary();
+document.getElementById('removeFloorBoardsRow').style.display = fasteningType === 'skid' ? '' : 'none';
 
 function onSkidForkliftExclusive(el){
   if(el.checked){
@@ -185,11 +160,9 @@ function onSkidForkliftExclusive(el){
 // свой набор ключей localStorage для этой комплектации ящика (t1-k3), чтобы
 // выбор не «утекал» между калькуляторами разных типов. По просьбе
 // пользователя: все чекбоксы опций должны запоминаться между заходами, как
-// уже давно работает для толщин "в наличии" и способа крепления. Общий и
-// для i3-skid.html, и для i3-floor.html (I3_VARIANT - обе страницы грузят
-// этот же файл) - у них уже общий FASTENING_STORAGE_KEY, поэтому здесь
-// логично то же самое: переключение "за полозья"/"к доскам дна" не должно
-// сбрасывать остальные опции.
+// уже давно работает для толщин "в наличии" и способа крепления -
+// переключение "за полозья"/"к доскам дна" не должно сбрасывать остальные
+// опции.
 const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-t1-k3-opt-';
 function persistCheckbox(id){
   const el = document.getElementById(id);
@@ -228,15 +201,16 @@ async function calculate(){
   const manualOverrides = readManualOverrides();
   setCalcStatus(null);
 
-  const removeFloorBoardsEl = document.getElementById('removeFloorBoards');
   const input = {
-    variant: window.I3_VARIANT,
+    variant: fasteningType,
     L: parseFloat(document.getElementById('L').value),
     W: parseFloat(document.getElementById('W').value),
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
     optimizeSizes: document.getElementById('optimizeSizes').checked,
-    removeFloorBoards: removeFloorBoardsEl ? removeFloorBoardsEl.checked : false,
+    // «Убрать доски дна» скрыта (см. onFasteningTypeChange), когда крепление
+    // не «за полозья» - checked там уже сброшен в false, читаем как обычно.
+    removeFloorBoards: document.getElementById('removeFloorBoards').checked,
     removeSkidBoards: document.getElementById('removeSkidBoards').checked,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     solidRigidBase: document.getElementById('solidRigidBase').checked,
@@ -432,5 +406,4 @@ function buildPrintHtml(){
 
 document.getElementById('boxView').src = BOX_IMG_B64;
 
-applyStateFromUrl();
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);

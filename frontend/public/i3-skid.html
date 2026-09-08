@@ -86,8 +86,8 @@
             <input type="radio" name="fasteningType" value="skid" checked onchange="onFasteningTypeChange(this)">
             <span>Крепление за полозья</span>
           </label>
-          <label onclick="switchFastening('i3-floor.html', 'floor_boards'); return false;">
-            <input type="radio" name="fasteningType" value="floor_boards" onclick="switchFastening('i3-floor.html', 'floor_boards'); return false;">
+          <label>
+            <input type="radio" name="fasteningType" value="floor_boards" onchange="onFasteningTypeChange(this)">
             <span>Крепление к доскам дна</span>
           </label>
           <label class="fastening-option-disabled">
@@ -110,7 +110,7 @@
         <input type="checkbox" id="optimizeSizes">
         <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм</span></span>
       </label>
-      <label>
+      <label id="removeFloorBoardsRow">
         <input type="checkbox" id="removeFloorBoards">
         <span>Убрать доски дна</span>
       </label>
@@ -211,7 +211,6 @@
 
 <div id="printArea"><div id="printScale"></div></div>
 
-<script>window.I3_VARIANT = 'skid';</script>
 <script src="/js/common-diagrams.js"></script>
 <script src="/js/diagrams/dno.js"></script>
 <script src="/js/diagrams/kryshka.js"></script>

@@ -106,10 +106,6 @@ const TYPES = [
   {
     name: 'Тип I-3',
     file: 'i3-skid.html',
-    fasteningFiles: {
-      skid: 'i3-skid.html',
-      floor_boards: 'i3-floor.html'
-    },
     image: '/images/box.png',
     badge: REVIEW_BADGE
   },
@@ -122,20 +118,12 @@ const TYPES = [
 ];
 
 (function(){
-  const FASTENING_STORAGE_KEY = 'silvan-gost10198-t1-k3-fastening-type';
-  function resolveFile(t){
-    if(!t.fasteningFiles) return t.file;
-    let saved = null;
-    try{ saved = localStorage.getItem(FASTENING_STORAGE_KEY); }catch(e){}
-    return (saved && t.fasteningFiles[saved]) || t.file;
-  }
-
   const root = document.getElementById('types');
   let html = '';
   TYPES.forEach(t => {
     const badgeClass = 'type-badge' + (t.badgeDanger ? ' type-badge-danger' : t.badgeOk ? ' type-badge-ok' : '');
     const badge = t.badge ? `<span class="${badgeClass}">${t.badge}</span>` : '';
-    html += `<a class="type-card" href="${resolveFile(t)}">
+    html += `<a class="type-card" href="${t.file}">
       ${badge}
       <div class="type-info"><h3>${t.name}</h3></div>
       <div class="type-image"><img src="${t.image}" alt="${t.name}"></div>
