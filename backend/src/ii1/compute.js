@@ -370,7 +370,11 @@ function computeGost10198II1(input) {
 
   // --- ЩИТ БОКОВОЙ (расчёт на 1 щит, далее удвоение) ---
   const t40 = t_stojka, w40 = 100, k40 = bokFrame.len, l40 = bokFrame.count * bokFrame.floors;
-  const t43 = t_stojka, w43 = 100, k43 = L, l43 = bokFrame.floors === 2 ? 1 : 0;
+  // l43 - как и у торца (l31 = floors+1 выше): минимум 2 бруса при 1 этаже
+  // (верх+низ рамы), 3 при 2 этажах - по уточнению пользователя (раньше
+  // ошибочно был только 1 брус-разделитель между этажами при floors===2,
+  // и 0 при 1 этаже - брус пропадал из таблицы деталей).
+  const t43 = t_stojka, w43 = 100, k43 = L, l43 = bokFrame.floors + 1;
   const k42 = Math.sqrt(Math.pow(bokFrame.sectionW, 2) + Math.pow(bokFrame.len, 2));
   const l42 = bokFrame.hasRaskosina ? (bokFrame.count - 1) * bokFrame.floors : 0;
 
