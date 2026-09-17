@@ -120,17 +120,12 @@ function printBox(){
 // <img>, отрисованный из него самим браузером (см. rasterizeDiagramArrows
 // ниже) - html2canvas после этого рисует уже готовую растровую картинку
 // (что он умеет надёжно, как и все остальные чертежи-фото), а не сырой SVG.
-// PDF_ARROW_STROKE_FACTOR - множитель поверх базового печатного stroke-width
-// (var(--pk)*var(--dk)*3px - тот же базовый множитель 3px, что и у #printArea
-// .diagram-arrows line в style.css, где он теперь тоже умножается на 4 -
-// раньше здесь стрелки были заведомо толще, чем при обычной печати, теперь
-// после аналогичной правки в style.css оба пути (обычная печать и «Скачать
-// PDF») дают одинаковую итоговую толщину). Наконечники (полигоны-треугольники)
-// раньше вообще не утолщались ни в одном из двух путей - в PDF выглядели
-// непропорционально маленькими на фоне уже потолстевшей линии - по репорту
-// пользователя ("не забудь увеличить также наконечники"): stroke того же
-// цвета, что и заливка, "утолщает" видимый силуэт без изменения опорных
-// координат (см. применение в rasterizeDiagramArrows ниже).
+// PDF_ARROW_STROKE_FACTOR - множитель поверх обычного печатного stroke-width
+// (var(--pk)*var(--dk)*3px, см. #printArea .diagram-arrows line в style.css).
+// В PDF стрелки всё равно оставались еле заметными даже после исправления
+// самого механизма переноса - по репорту пользователя ("слишком тонкие,
+// их не видно") - поэтому здесь заведомо толще, чем при обычной печати,
+// а не просто "как при печати".
 const PDF_ARROW_STROKE_FACTOR = 4;
 function bakeDiagramArrowStrokeWidths(printArea){
   const scaleBox = document.getElementById('printScale');
@@ -140,10 +135,6 @@ function bakeDiagramArrowStrokeWidths(printArea){
     const strokeWidth = (pk * dk * 3 * PDF_ARROW_STROKE_FACTOR).toFixed(2);
     wrap.querySelectorAll('.diagram-arrows line').forEach(line=>{
       line.setAttribute('stroke-width', strokeWidth);
-    });
-    wrap.querySelectorAll('.diagram-arrows polygon').forEach(polygon=>{
-      polygon.setAttribute('stroke', polygon.getAttribute('fill') || '#8A4B26');
-      polygon.setAttribute('stroke-width', strokeWidth);
     });
   });
 }
@@ -214,16 +205,6 @@ function rasterizeDiagramArrows(printArea){
       ctx.closePath();
       ctx.fillStyle = p.getAttribute('fill') || '#8A4B26';
       ctx.fill();
-      // Обводка того же цвета "утолщает" наконечник (stroke-width запечён в
-      // bakeDiagramArrowStrokeWidths выше) - без неё треугольник оставался
-      // мелким на фоне уже потолстевшей линии, см. комментарий там же.
-      const headStroke = parseFloat(p.getAttribute('stroke-width'));
-      if(headStroke){
-        ctx.strokeStyle = p.getAttribute('stroke') || ctx.fillStyle;
-        ctx.lineWidth = headStroke;
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-      }
     });
 
     const img = document.createElement('img');
