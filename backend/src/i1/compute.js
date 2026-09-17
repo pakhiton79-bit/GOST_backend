@@ -71,7 +71,9 @@ function computeGost10198I1(input) {
     if (beltGapHit === undefined) break;
     const stepped = stepDownGrade(wallRaw);
     if (stepped === wallRaw) break;
-    warnings.push(`Шаг планок ${Math.round(beltGapHit)} мм (400–500) — толщина досок/планок/раскосов снижена на градацию (${wallRaw}→${stepped} мм).`);
+    // Снижение градации по правилу 400-500мм - штатное поведение,
+    // предусмотренное самим ГОСТом (не отклонение/проблема) - предупреждение
+    // не выводим (по указанию пользователя).
     wallRaw = stepped;
   }
   const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw), 'Толщина досок/планок/раскосов') };
