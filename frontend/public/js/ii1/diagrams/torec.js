@@ -61,8 +61,8 @@ const TOREC_VARIANTS = {
         );
         records.push(
           {type:'line', x1:879, y1:80, x2:1285, y2:80},
-          {type:'line', x1:879, y1:696, x2:1285, y2:696},
-          {type:'double', x1:1225, y1:80, x2:1225, y2:696, lx:1236, ly:388, text:heightVal+' мм', vertical:true}
+          {type:'line', x1:915, y1:785, x2:1298, y2:786},
+          {type:'double', x1:1198, y1:79, x2:1202, y2:782, lx:1200, ly:431, text:heightVal+' мм', vertical:true}
         );
         return records;
       }
