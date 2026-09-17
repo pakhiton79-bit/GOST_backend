@@ -476,9 +476,11 @@ function nearestTorecVariant(count, floors) {
   return { count: bestCount, floors: bestFloors, exact: bestCount === count && bestFloors === floors };
 }
 
-// Отражает набор готовых схем в frontend/public/js/ii1/diagrams/bok.js
-// (BOK_VARIANTS) - используется здесь ТОЛЬКО для текста предупреждения, тот
-// же принцип, что и у TOREC_VARIANT_OPTIONS выше.
+// Чертёж бокового щита переиспользует те же готовые схемы, что и торец (см.
+// frontend/public/js/ii1/diagrams/bok.js - своих фото у бока больше нет,
+// diagramBok() берёт их из TOREC_VARIANTS) - отсюда тот же набор опций, что
+// и у TOREC_VARIANT_OPTIONS выше. Используется здесь ТОЛЬКО для текста
+// предупреждения, сам чертёж рисуется на клиенте.
 const BOK_VARIANT_OPTIONS = { 1: [2, 3, 4], 2: [2, 3, 4] };
 function nearestBokVariant(count, floors) {
   const floorsAvailable = Object.keys(BOK_VARIANT_OPTIONS).map(Number);
