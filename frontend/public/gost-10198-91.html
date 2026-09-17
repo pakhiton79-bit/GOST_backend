@@ -39,9 +39,8 @@
     box-shadow:0 1px 3px rgba(0,0,0,.15);
     pointer-events:none;
   }
-  /* Отдельный тип (сейчас II-1) ещё не проверен на чертежах вовсе - плашка
-     ярче обычной "Требует проверки", чтобы выделяться сильнее (см. badgeDanger
-     в TYPES ниже). */
+  /* Более яркий (красный) вариант обычной жёлтой плашки - для типа, который
+     ещё не проверен на чертежах вовсе (см. badgeDanger в TYPES ниже). */
   .type-badge-danger{
     background:var(--error);
   }
@@ -96,7 +95,6 @@
 </div>
 
 <script>
-const REVIEW_BADGE = 'Требует проверки';
 const TYPES = [
   {
     name: 'Тип I-1',
@@ -106,14 +104,12 @@ const TYPES = [
   {
     name: 'Тип I-3',
     file: 'i3-skid.html',
-    image: '/images/box.png',
-    badge: REVIEW_BADGE
+    image: '/images/box.png'
   },
   {
     name: 'Тип II-1',
     file: 'ii1.html',
-    image: '/images/box_ii1.png',
-    badge: REVIEW_BADGE
+    image: '/images/box_ii1.png'
   }
 ];
 
