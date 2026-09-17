@@ -1000,7 +1000,23 @@
      страницу): его выставляет reserveDiagramOverflow() в src/common-print.js,
      когда конкретному чертежу требуется сжатие, чтобы вылетающие за картинку
      подписи (см. reserveDiagramOverflow) не налезали на соседнюю таблицу. */
-  #printArea .diagram-arrows line{stroke-width:calc(var(--pk)*var(--dk)*3px) !important;}
+  /* Базовый множитель поднят 3px -> 12px (в 4 раза) - линии стрелок были
+     почти не видны при обычной печати (не через «Скачать PDF», у которой
+     уже был свой отдельный PDF_ARROW_STROKE_FACTOR=4 - см. common-print.js,
+     bakeDiagramArrowStrokeWidths - тот же итоговый множитель, 3*4=12,
+     теперь совпадает с этим правилом) - по репорту пользователя. */
+  #printArea .diagram-arrows line{stroke-width:calc(var(--pk)*var(--dk)*12px) !important;}
+  /* Наконечники стрелок (полигоны-треугольники) сами по себе не толще линии -
+     их размер запечён в координатах при генерации под экранный масштаб и
+     печатью не увеличивался вовсе (в отличие от линий выше, для них не было
+     никакого print-правила) - при печати выглядели непропорционально
+     маленькими по сравнению с потолстевшей линией. stroke того же цвета,
+     что и заливка, "утолщает" видимый силуэт треугольника на ту же
+     величину, что и линию, не трогая его опорные координаты (сама вершина
+     остаётся на месте стыка со линией) - по репорту пользователя ("не
+     забудь увеличить также наконечники"). round-соединение - чтобы обводка
+     не давала острых шипов по углам треугольника. */
+  #printArea .diagram-arrows polygon{stroke:#8A4B26;stroke-width:calc(var(--pk)*var(--dk)*12px) !important;stroke-linejoin:round;}
   #printArea .diagram-labels{position:absolute;inset:0;pointer-events:none;}
   #printArea .diagram-label{
     position:absolute;transform:translate(-50%,-50%);background:#fff;
