@@ -4,11 +4,11 @@
 // здесь больше не нужны (расчёт и связанное предупреждение теперь на
 // сервере, см. js/ii1/calc-ii1.js), availableThicknesses остаётся клиентским
 // состоянием (собирается в тело запроса к /api/ii1/calculate).
-const THICKNESS_STORAGE_KEY = 'silvan-gost10198-ii1-available-thickness';
+const THICKNESS_STORAGE_KEY = 'gost10198-ii1-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 // Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
 // для этого типа ящика (см. js/common-timesettings.js).
-const TIME_SETTINGS_STORAGE_KEY = 'silvan-gost10198-ii1-time-settings';
+const TIME_SETTINGS_STORAGE_KEY = 'gost10198-ii1-time-settings';
 
 function loadAvailableThicknesses(){
   try{
@@ -103,7 +103,7 @@ updateThicknessSummary();
 // файлами (в I-3 - разные файлы из-за разной толщины доски дна), а простой
 // переключатель на одной странице - доска дна пересчитывается на лету через
 // параметр fasteningType в теле запроса к /api/ii1/calculate.
-const FASTENING_STORAGE_KEY = 'silvan-gost10198-ii1-fastening-type';
+const FASTENING_STORAGE_KEY = 'gost10198-ii1-fastening-type';
 const FASTENING_LABELS = {
   skid:         'Крепление за полозья',
   floor_boards: 'Крепление к доскам дна'
@@ -155,7 +155,7 @@ function onSkidForkliftExclusive(el){
 // просьбе пользователя: все чекбоксы/переключатели опций должны запоминаться
 // между заходами, как уже давно работает для толщин "в наличии" и способа
 // крепления.
-const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-ii1-opt-';
+const OPTIONS_STORAGE_PREFIX = 'gost10198-ii1-opt-';
 function persistCheckbox(id){
   const el = document.getElementById(id);
   if(!el) return;

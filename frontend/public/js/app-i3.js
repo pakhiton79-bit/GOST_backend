@@ -11,7 +11,7 @@
 // через URL (switchFastening), см. git-историю.
 
 // ============ Фильтр толщин пиломатериала "в наличии" ============
-const THICKNESS_STORAGE_KEY = 'silvan-gost10198-t1-k3-available-thickness';
+const THICKNESS_STORAGE_KEY = 'gost10198-t1-k3-available-thickness';
 // 225 и 250 - добавлены по замечанию пользователя: Табл. 19 (подбор сечения
 // полоза, см. selectSkid19) при тяжёлых грузах (ближе к 20000 кг) требует
 // сечений до 225×250 мм - без этих значений отметить такую толщину "в
@@ -20,7 +20,7 @@ const THICKNESS_STORAGE_KEY = 'silvan-gost10198-t1-k3-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 // Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
 // для этого типа ящика (см. js/common-timesettings.js).
-const TIME_SETTINGS_STORAGE_KEY = 'silvan-gost10198-t1-k3-time-settings';
+const TIME_SETTINGS_STORAGE_KEY = 'gost10198-t1-k3-time-settings';
 
 function loadAvailableThicknesses(){
   try{
@@ -107,7 +107,7 @@ buildThicknessCheckboxList();
 updateThicknessSummary();
 
 // ============ Тип крепления груза (сечение полоза) ============
-const FASTENING_STORAGE_KEY = 'silvan-gost10198-t1-k3-fastening-type';
+const FASTENING_STORAGE_KEY = 'gost10198-t1-k3-fastening-type';
 const FASTENING_LABELS = {
   skid:           'Крепление за полозья',
   floor_boards:   'Крепление к доскам дна',
@@ -163,7 +163,7 @@ function onSkidForkliftExclusive(el){
 // уже давно работает для толщин "в наличии" и способа крепления -
 // переключение "за полозья"/"к доскам дна" не должно сбрасывать остальные
 // опции.
-const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-t1-k3-opt-';
+const OPTIONS_STORAGE_PREFIX = 'gost10198-t1-k3-opt-';
 function persistCheckbox(id){
   const el = document.getElementById(id);
   if(!el) return;

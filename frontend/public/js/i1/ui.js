@@ -4,11 +4,11 @@
 // больше не нужен (расчёт и связанное предупреждение теперь на сервере, см.
 // js/i1/calc-i1.js), availableThicknesses остаётся клиентским состоянием
 // (собирается в тело запроса к /api/i1/calculate).
-const THICKNESS_STORAGE_KEY = 'silvan-gost10198-i1-available-thickness';
+const THICKNESS_STORAGE_KEY = 'gost10198-i1-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200];
 // Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
 // для этого типа ящика (см. js/common-timesettings.js).
-const TIME_SETTINGS_STORAGE_KEY = 'silvan-gost10198-i1-time-settings';
+const TIME_SETTINGS_STORAGE_KEY = 'gost10198-i1-time-settings';
 
 function loadAvailableThicknesses(){
   try{
@@ -127,7 +127,7 @@ function toggleSkidThicknessDropdown(){
 // калькуляторами разных типов. По просьбе пользователя: все чекбоксы/
 // переключатели опций должны запоминаться между заходами, как уже давно
 // работает для толщин "в наличии".
-const OPTIONS_STORAGE_PREFIX = 'silvan-gost10198-i1-opt-';
+const OPTIONS_STORAGE_PREFIX = 'gost10198-i1-opt-';
 function persistCheckbox(id, onRestore){
   const el = document.getElementById(id);
   if(!el) return;

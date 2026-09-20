@@ -193,6 +193,11 @@ function computeGost10198II1(input) {
   if (subfloorForkliftFail) {
     warnings.push(`Погрузка погрузчиком требует ≥300 мм у подполозной доски (сейчас ${Math.round(k10)} мм).`);
   }
+  // k10<=0 (типичный признак того, что длина и ширина перепутаны местами) -
+  // не блокирующая ошибка, но показывать в таблице "0 мм" как настоящий
+  // размер детали нельзя - вместо чисел выводится ⚠.
+  const subfloorInvalidLength = k10 <= 0;
+  const subfloorShowWarnSymbol = subfloorInvalidLength || subfloorForkliftFail;
 
   // --- ДНО ---
   const dno = [];
@@ -201,11 +206,11 @@ function computeGost10198II1(input) {
   if (!removeSkidBoards) {
     dno.push({
       name: 'Подполозная доска',
-      t: subfloorForkliftFail ? '⚠' : t10,
-      w: subfloorForkliftFail ? '⚠' : w10,
-      l: subfloorForkliftFail ? '⚠' : k10,
-      qty: subfloorForkliftFail ? '⚠' : l10,
-      overrideKey: subfloorForkliftFail ? null : 't10',
+      t: subfloorShowWarnSymbol ? '⚠' : t10,
+      w: subfloorShowWarnSymbol ? '⚠' : w10,
+      l: subfloorShowWarnSymbol ? '⚠' : k10,
+      qty: subfloorShowWarnSymbol ? '⚠' : l10,
+      overrideKey: subfloorShowWarnSymbol ? null : 't10',
     });
   }
   const endBeam = endBeamSection(MASS);
