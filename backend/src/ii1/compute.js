@@ -59,6 +59,12 @@ function computeGost10198II1(input) {
   if (MASS > 20000) {
     warnings.push('Масса груза вне диапазона типа II-1 (≤20000 кг) — расчёт продолжен по крайнему значению.');
   }
+  // ГОСТ 10198-91 в целом (п.1.1) распространяется на грузы массой от 200 до
+  // 20000 кг - верхняя граница уже проверена выше (совпадает с максимумом
+  // самого типа II-1), а нижняя (200 кг) раньше не проверялась вовсе.
+  if (MASS < 200) {
+    warnings.push(`Масса груза ${MASS} кг менее 200 кг — вне области распространения ГОСТ 10198-91 в целом (200–20000 кг). Расчёт продолжен, но результат нужно перепроверить.`);
+  }
 
   const skin = { value: ov('skinValue', roundUpToAvailable(skinThickness(MASS)), 'Толщина обшивки (доска крышки)') };
 
@@ -215,7 +221,8 @@ function computeGost10198II1(input) {
   if (!removeFloorBoards) {
     if (l12 > 0) dno.push({ name: 'Доска дна', t: t12, w: w12, l: k12, qty: l12, overrideKey: 'floorBoardT' });
     fbDno.extra.forEach((e, i) => {
-      dno.push({ name: 'Доска дна (дополнительная) ' + (i + 1), t: t12, w: e.width, l: k12, qty: e.qty });
+      const suffix = fbDno.extra.length > 1 ? ' ' + (i + 1) : '';
+      dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: k12, qty: e.qty });
     });
     if (fbDno.warn) {
       warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -249,7 +256,8 @@ function computeGost10198II1(input) {
   const t20 = skin.value, w20 = 100, l20 = fbKryshka.mainQty, k20 = lidBoardLen;
   if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: t20, w: w20, l: k20, qty: l20, overrideKey: 'skinValue' });
   fbKryshka.extra.forEach((e, i) => {
-    kryshka.push({ name: 'Доска крышки (дополнительная) ' + (i + 1), t: t20, w: e.width, l: k20, qty: e.qty });
+    const suffix = fbKryshka.extra.length > 1 ? ' ' + (i + 1) : '';
+    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: t20, w: e.width, l: k20, qty: e.qty });
   });
   if (fbKryshka.warn) {
     warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -361,7 +369,8 @@ function computeGost10198II1(input) {
   if (torecFrame.hasRaskosina) endPanel.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k33, qty: l33, overrideKey: 'tRaskosina' });
   if (l32 > 0) endPanel.push({ name: 'Доска', t: t32, w: w32, l: k32, qty: l32 });
   fbTorec.extra.forEach((e, i) => {
-    endPanel.push({ name: 'Доска (дополнительная) ' + (i + 1), t: t32, w: e.width, l: k32, qty: e.qty * torecFrame.floors });
+    const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
+    endPanel.push({ name: 'Доска (дополнительная)' + suffix, t: t32, w: e.width, l: k32, qty: e.qty * torecFrame.floors });
   });
 
   const volTorPanel = vol(t30, w30, k30, l30) + vol(t31, w31, k31, l31)
@@ -405,7 +414,8 @@ function computeGost10198II1(input) {
   bokovoy.push({ name: 'Опорная планка', t: t_opora, w: w_opora, l: k_opora, qty: l_opora });
   if (l41 > 0) bokovoy.push({ name: 'Доска', t: t41, w: w41, l: k41, qty: l41 });
   fbBok.extra.forEach((e, i) => {
-    bokovoy.push({ name: 'Доска (дополнительная) ' + (i + 1), t: t41, w: e.width, l: k41, qty: e.qty * bokFrame.floors });
+    const suffix = fbBok.extra.length > 1 ? ' ' + (i + 1) : '';
+    bokovoy.push({ name: 'Доска (дополнительная)' + suffix, t: t41, w: e.width, l: k41, qty: e.qty * bokFrame.floors });
   });
 
   const volBokPanel = vol(t40, w40, k40, l40) + vol(t43, w43, k43, l43)
@@ -441,7 +451,10 @@ function computeGost10198II1(input) {
   };
   const negField = findNegativeField(result, '');
   if (negField) {
-    return { error: `Расчёт дал отрицательное значение (${negField}) — результат недостоверен, проверьте входные данные.` };
+    // negField - внутренний путь до поля, только для отладки в консоли -
+    // пользователю техническое имя переменной не показываем.
+    console.warn('Расчёт дал отрицательное значение:', negField);
+    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей — рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }

@@ -61,9 +61,18 @@ async function calculate(){
   }catch(e){
     errEl.textContent = 'Не удалось связаться с сервером расчёта. Проверьте соединение и повторите.';
     setCalcStatus('error');
+    document.getElementById('results').style.display = 'none';
     return;
   }
-  if(calc.error){ errEl.textContent = calc.error; setCalcStatus('error'); return; }
+  if(calc.error){
+    errEl.textContent = calc.error;
+    setCalcStatus('error');
+    // Прячем «Итог» и спецификацию целиком - иначе на экране остаются
+    // цифры прошлого успешного расчёта рядом с текстом ошибки (по указанию
+    // пользователя).
+    document.getElementById('results').style.display = 'none';
+    return;
+  }
 
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;

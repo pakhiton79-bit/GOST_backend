@@ -120,7 +120,8 @@ function computeGost10198I1(input) {
   const w12 = 100, l12 = fbDno.mainQty;
   if (l12 > 0) dno.push({ name: 'Доска дна', t: wall.value, w: w12, l: kLen, qty: l12, overrideKey: 'wallValue' });
   fbDno.extra.forEach((e, i) => {
-    dno.push({ name: 'Доска дна (дополнительная) ' + (i + 1), t: wall.value, w: e.width, l: kLen, qty: e.qty });
+    const suffix = fbDno.extra.length > 1 ? ' ' + (i + 1) : '';
+    dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty });
   });
 
   // --- КРЫШКА ---
@@ -132,7 +133,8 @@ function computeGost10198I1(input) {
   const w20 = 100, l20 = fbKryshka.mainQty;
   if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: wall.value, w: w20, l: kLen, qty: l20 });
   fbKryshka.extra.forEach((e, i) => {
-    kryshka.push({ name: 'Доска крышки (дополнительная) ' + (i + 1), t: wall.value, w: e.width, l: kLen, qty: e.qty });
+    const suffix = fbKryshka.extra.length > 1 ? ' ' + (i + 1) : '';
+    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty });
   });
 
   // --- БОКОВОЙ ЩИТ (расчёт на 1 щит, далее удвоение) ---
@@ -143,7 +145,8 @@ function computeGost10198I1(input) {
   const w41 = 100, l41 = fbBok.mainQty;
   if (l41 > 0) bokovoy.push({ name: 'Доска бокового щита', t: wall.value, w: w41, l: kLen, qty: l41 });
   fbBok.extra.forEach((e, i) => {
-    bokovoy.push({ name: 'Доска бокового щита (дополнительная) ' + (i + 1), t: wall.value, w: e.width, l: kLen, qty: e.qty });
+    const suffix = fbBok.extra.length > 1 ? ' ' + (i + 1) : '';
+    bokovoy.push({ name: 'Доска бокового щита (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty });
   });
 
   // --- ТОРЕЦ (расчёт на 1 щит, далее удвоение) ---
@@ -154,7 +157,8 @@ function computeGost10198I1(input) {
   const w31 = 100, l31 = fbTorec.mainQty;
   if (l31 > 0) torec.push({ name: 'Доска торцевого щита', t: wall.value, w: w31, l: W, qty: l31 });
   fbTorec.extra.forEach((e, i) => {
-    torec.push({ name: 'Доска торцевого щита (дополнительная) ' + (i + 1), t: wall.value, w: e.width, l: W, qty: e.qty });
+    const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
+    torec.push({ name: 'Доска торцевого щита (дополнительная)' + suffix, t: wall.value, w: e.width, l: W, qty: e.qty });
   });
 
   // --- Раскосина (укосина) ---
@@ -229,7 +233,10 @@ function computeGost10198I1(input) {
   };
   const negField = findNegativeField(result, '');
   if (negField) {
-    return { error: `Расчёт дал отрицательное значение (${negField}) — результат недостоверен, проверьте входные данные.` };
+    // negField - внутренний путь до поля, только для отладки в консоли -
+    // пользователю техническое имя переменной не показываем.
+    console.warn('Расчёт дал отрицательное значение:', negField);
+    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей — рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }
