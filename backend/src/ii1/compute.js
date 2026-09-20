@@ -193,11 +193,14 @@ function computeGost10198II1(input) {
   if (subfloorForkliftFail) {
     warnings.push(`Погрузка погрузчиком требует ≥300 мм у подполозной доски (сейчас ${Math.round(k10)} мм).`);
   }
-  // k10<=0 (типичный признак того, что длина и ширина перепутаны местами) -
-  // не блокирующая ошибка, но показывать в таблице "0 мм" как настоящий
-  // размер детали нельзя - вместо чисел выводится ⚠.
+  // Толщина/ширина/количество всегда считаются и показываются как обычно -
+  // от длины они не зависят и сами по себе верны; в таблице ⚠ ставится
+  // ТОЛЬКО в колонке длины - либо когда k10<=0 (типичный признак того, что
+  // длина и ширина перепутаны местами; findNegativeField не ловит ровно 0,
+  // только отрицательные), либо когда включена "Погрузка
+  // авто/электропогрузчиком" и требование ≥300мм не выполняется.
   const subfloorInvalidLength = k10 <= 0;
-  const subfloorShowWarnSymbol = subfloorInvalidLength || subfloorForkliftFail;
+  const subfloorLengthWarn = subfloorInvalidLength || subfloorForkliftFail;
 
   // --- ДНО ---
   const dno = [];
@@ -206,11 +209,11 @@ function computeGost10198II1(input) {
   if (!removeSkidBoards) {
     dno.push({
       name: 'Подполозная доска',
-      t: subfloorShowWarnSymbol ? '⚠' : t10,
-      w: subfloorShowWarnSymbol ? '⚠' : w10,
-      l: subfloorShowWarnSymbol ? '⚠' : k10,
-      qty: subfloorShowWarnSymbol ? '⚠' : l10,
-      overrideKey: subfloorShowWarnSymbol ? null : 't10',
+      t: t10,
+      w: w10,
+      l: subfloorLengthWarn ? '⚠' : k10,
+      qty: l10,
+      overrideKey: 't10',
     });
   }
   const endBeam = endBeamSection(MASS);
