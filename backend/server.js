@@ -86,6 +86,7 @@ app.post('/api/i1/calculate', (req, res) => {
     skidEnabled: !!b.skidEnabled,
     skidThicknessRaw: toNum(b.skidThicknessRaw),
     roundBoardWidths: !!b.roundBoardWidths,
+    removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),

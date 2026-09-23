@@ -6,9 +6,9 @@
 const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -171,19 +171,28 @@ function computeGost10198I1(input) {
     const torecRaskosinaLen = Math.sqrt(torecLegH * torecLegH + torecLegW * torecLegW);
     torec.push({ name: 'Раскосина', t: wall.value, w: 100, l: torecRaskosinaLen, qty: 1 });
 
+    // Раскосины крышки и дна можно убрать отдельной галочкой
+    // (removeLidBottomRaskosina) - раскосины торца и бокового щита эта
+    // галочка не затрагивает.
     const raskosinaQty = plankQty - 1;
     if (raskosinaQty > 0) {
       const bokRaskosinaLen = Math.sqrt(H * H + plankGap * plankGap);
       bokovoy.push({ name: 'Раскосина', t: wall.value, w: 100, l: bokRaskosinaLen, qty: raskosinaQty });
 
-      const kryshkaRaskosinaLen = Math.sqrt(kPlankaKryshka * kPlankaKryshka + plankGap * plankGap);
-      kryshka.push({ name: 'Раскосина', t: wall.value, w: 100, l: kryshkaRaskosinaLen, qty: raskosinaQty });
+      if (!removeLidBottomRaskosina) {
+        const kryshkaRaskosinaLen = Math.sqrt(kPlankaKryshka * kPlankaKryshka + plankGap * plankGap);
+        kryshka.push({ name: 'Раскосина', t: wall.value, w: 100, l: kryshkaRaskosinaLen, qty: raskosinaQty });
 
-      const dnoLegW = W + wall.value * 2;
-      const dnoRaskosinaLen = Math.sqrt(dnoLegW * dnoLegW + plankGap * plankGap);
-      dno.push({ name: 'Раскосина', t: wall.value, w: 100, l: dnoRaskosinaLen, qty: raskosinaQty });
+        const dnoLegW = W + wall.value * 2;
+        const dnoRaskosinaLen = Math.sqrt(dnoLegW * dnoLegW + plankGap * plankGap);
+        dno.push({ name: 'Раскосина', t: wall.value, w: 100, l: dnoRaskosinaLen, qty: raskosinaQty });
+      }
     }
   }
+  // Флаг для чертежей крышки/дна - в отличие от raskosinaNeeded (общее
+  // условие ГОСТа), учитывает ещё и галочку "Убрать раскосины крышки и
+  // дна". Чертежи торца/бокового щита по-прежнему используют raskosinaNeeded.
+  const kryshkaDnoHasRaskosina = raskosinaNeeded && !removeLidBottomRaskosina;
 
   // --- Наружные размеры ---
   // Формула по уточнению пользователя (тот же фикс, что и в src/i1/calc.js
@@ -229,7 +238,7 @@ function computeGost10198I1(input) {
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni,
-    dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kPlankaKryshka, H, W, wall,
+    dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, kPlankaKryshka, H, W, wall,
   };
   const negField = findNegativeField(result, '');
   if (negField) {

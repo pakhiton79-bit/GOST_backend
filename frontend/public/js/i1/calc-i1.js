@@ -39,6 +39,7 @@ async function calculate(){
     skidEnabled: document.getElementById('skidEnabled').checked,
     skidThicknessRaw: skidThicknessValue,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
+    removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
     availableThicknesses,
     manualOverrides,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
@@ -92,8 +93,8 @@ async function calculate(){
   }
 
   let tablesHtml = '';
-  tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.dnoWidth, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.dno) + `</div>`;
-  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.kPlankaKryshka, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
+  tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.dnoWidth, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.dno) + `</div>`;
+  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.kPlankaKryshka, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
   tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.torec) + `</div>`;
   tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
   const boardTablesEl = document.getElementById('boardTables');
