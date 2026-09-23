@@ -186,7 +186,19 @@ let plankLayoutValue = null;
 // null, используется запасной центр по умолчанию (см. ниже).
 let lastStandardPlankCount = null;
 let lastStandardPlankGap = null;
+let lastKLen = null; // длина доски последнего успешного расчёта - см. plankGapMax() ниже
 let plankCountSlider = null, plankGapSlider = null;
+
+// Верхний предел поля "расстояние между краями поясов планок" - больше
+// длины самой доски отступ быть не может (по указанию пользователя: раньше
+// поле позволяло ввести сколь угодно большое/бесконечное значение). Пока
+// расчёт ни разу не проводился (lastKLen ещё не известен) - берётся
+// заведомо большой запасной предел, только чтобы отсечь явно бессмысленный
+// ввод (не Infinity и т.п.), а не для точного физического ограничения.
+const PLANK_GAP_FALLBACK_MAX = 20000;
+function plankGapMax(){
+  return lastKLen || PLANK_GAP_FALLBACK_MAX;
+}
 
 function plankCountSteps(center){
   center = Math.max(2, Math.round(center));
@@ -195,9 +207,10 @@ function plankCountSteps(center){
   return Array.from(new Set(steps)).sort((a,b)=>a-b);
 }
 function plankGapSteps(center){
-  center = Math.max(1, Math.round(center));
+  const max = plankGapMax();
+  center = Math.min(max, Math.max(1, Math.round(center)));
   const steps = [];
-  for(let i=-3;i<=3;i++) steps.push(Math.max(1, center+i*50));
+  for(let i=-3;i<=3;i++) steps.push(Math.min(max, Math.max(1, center+i*50)));
   return Array.from(new Set(steps)).sort((a,b)=>a-b);
 }
 
@@ -254,9 +267,11 @@ function onPlankLayoutCheckboxChange(mode){
     document.getElementById('plankCountInput').value = center;
     rebuildPlankSlider('count', center, center);
   } else if(plankLayoutMode === 'gap'){
-    const center = Math.round(lastStandardPlankGap || 400);
+    const gapInput = document.getElementById('plankGapInput');
+    gapInput.max = plankGapMax();
+    const center = Math.min(plankGapMax(), Math.round(lastStandardPlankGap || 400));
     plankLayoutValue = center;
-    document.getElementById('plankGapInput').value = center;
+    gapInput.value = center;
     rebuildPlankSlider('gap', center, center);
   }
   savePlankLayout();
@@ -272,8 +287,11 @@ function onPlankCountInputChange(){
   invalidateCalc();
 }
 function onPlankGapInputChange(){
-  const v = parseFloat(String(document.getElementById('plankGapInput').value).replace(',','.'));
-  if(!(v>0)) return;
+  const gapInput = document.getElementById('plankGapInput');
+  const raw = parseFloat(String(gapInput.value).replace(',','.'));
+  if(!(raw>0)) return;
+  const v = Math.min(plankGapMax(), raw);
+  if(v !== raw) gapInput.value = v; // подрезали до предела - отражаем в поле
   plankLayoutValue = v;
   if(plankGapSlider) plankGapSlider.setValue(v);
   savePlankLayout();
@@ -287,10 +305,12 @@ function onPlankGapInputChange(){
 (function initPlankLayoutFromStorage(){
   const saved = loadPlankLayout();
   if(!saved.mode) return;
+  if(saved.mode === 'gap') saved.value = Math.min(plankGapMax(), saved.value);
   document.getElementById(saved.mode === 'count' ? 'customPlankCount' : 'customPlankGap').checked = true;
   plankLayoutMode = saved.mode;
   plankLayoutValue = saved.value;
   document.getElementById(saved.mode === 'count' ? 'plankCountRow' : 'plankGapRow').style.display = '';
+  if(saved.mode === 'gap') document.getElementById('plankGapInput').max = plankGapMax();
   document.getElementById(saved.mode === 'count' ? 'plankCountInput' : 'plankGapInput').value = saved.value;
   rebuildPlankSlider(saved.mode, saved.value, saved.value);
 })();

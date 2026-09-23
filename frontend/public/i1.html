@@ -121,12 +121,12 @@
       </div>
       <label>
         <input type="checkbox" id="customPlankGap" onchange="onPlankLayoutCheckboxChange('gap')">
-        <span>Настроить расстояние между краями поясов планок<span class="option-hint">Можно выбрать любое значение</span></span>
+        <span>Настроить расстояние между краями поясов планок<span class="option-hint">Можно выбрать любое значение, не больше длины доски</span></span>
       </label>
       <div id="plankGapRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="plankGapSlider"></div>
-          <input type="number" id="plankGapInput" step="1" min="1" oninput="onPlankGapInputChange()">
+          <input type="number" id="plankGapInput" step="1" min="1" max="20000" oninput="onPlankGapInputChange()">
         </div>
       </div>
     </div>

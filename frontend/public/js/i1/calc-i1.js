@@ -75,6 +75,20 @@ async function calculate(){
   // (см. js/i1/ui.js) - обновляются при каждом успешном расчёте.
   lastStandardPlankCount = calc.standardPlankCount;
   lastStandardPlankGap = calc.standardPlankGap;
+  // Длина доски - верхний предел поля "расстояние между краями поясов
+  // планок" (plankGapMax() в ui.js, по указанию пользователя: больше длины
+  // доски отступ быть не может). Если уже введённое значение теперь выше
+  // нового предела (доска стала короче после пересчёта) - подрезаем и поле,
+  // и слайдер, чтобы не остаться с "зависшим" недостижимым значением.
+  lastKLen = calc.kLen;
+  if(plankLayoutMode === 'gap' && plankLayoutValue > lastKLen){
+    plankLayoutValue = lastKLen;
+    const gapInput = document.getElementById('plankGapInput');
+    gapInput.max = lastKLen;
+    gapInput.value = lastKLen;
+    rebuildPlankSlider('gap', lastKLen, lastKLen);
+    savePlankLayout();
+  }
 
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
