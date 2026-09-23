@@ -6,9 +6,9 @@
 const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -47,7 +47,11 @@ function computeGost10198I1(input) {
 
   const density = packingDensity(MASS, L, W, H);
 
-  const raskosinaNeeded = H >= 1000 || L > 5000 || density > 3;
+  // Галочка "Добавить раскосины" (addRaskosina, по запросу пользователя) -
+  // добавляет раскосины на все детали независимо от условий ГОСТ ниже (ещё
+  // один источник true в общем условии). Не конфликтует с
+  // removeLidBottomRaskosina - см. kryshkaDnoHasRaskosina ниже.
+  const raskosinaNeeded = addRaskosina || H >= 1000 || L > 5000 || density > 3;
 
   const horizPlankaLen = W - 200;
   if (horizPlankaLen < 0) {

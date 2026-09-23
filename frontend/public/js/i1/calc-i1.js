@@ -40,6 +40,7 @@ async function calculate(){
     skidThicknessRaw: skidThicknessValue,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
+    addRaskosina: document.getElementById('addRaskosina').checked,
     plankLayoutMode,
     plankLayoutValue,
     availableThicknesses,

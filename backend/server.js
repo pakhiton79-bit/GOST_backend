@@ -87,6 +87,7 @@ app.post('/api/i1/calculate', (req, res) => {
     skidThicknessRaw: toNum(b.skidThicknessRaw),
     roundBoardWidths: !!b.roundBoardWidths,
     removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
+    addRaskosina: !!b.addRaskosina,
     plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
     plankLayoutValue: toNum(b.plankLayoutValue),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
