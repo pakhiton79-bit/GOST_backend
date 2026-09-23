@@ -16,17 +16,22 @@ const BOK_I1_4R_IMG_B64 = "/images/bok_i1_4planks_3raskosina.jpg"; // натур
 // выступающей) вертикальной линии по краям щита; p1L - центр левого края
 // первой планки; topY/botY - y верхней/нижней линии рамки щита.
 //
+// p1R/p2L - центр правого края первой планки и левого края второй планки
+// (найдены по пиксельным данным самих фото - анализ построчного скана
+// тёмных пикселей) - нужны для скобки "расстояние между соседними
+// планками" (по запросу пользователя, см. diagramBokPhoto ниже).
+//
 // Эти же 6 фото и эта же калибровка переиспользуются для Крышки и Дна (по
 // указанию пользователя, см. kryshka-dno.js) - у всех трёх деталей
 // (Бок/Крышка/Дно) общая раскладка поясов планок (единый plankCount,
 // единый edgeDist), поэтому отдельных фото под крышку/дно больше не нужно.
 const BOK_I1_GEOM = {
-  '0_2': {img: BOK_I1_2_IMG_B64,  IW:1178, IH:876, stubL:71.5, p1L:207.5, stubR:1123.5, topY:68.5, botY:786.5},
-  '0_3': {img: BOK_I1_3_IMG_B64,  IW:1807, IH:884, stubL:55.5, p1L:190.5, stubR:1752.5, topY:73.5, botY:792.5},
-  '0_4': {img: BOK_I1_4_IMG_B64,  IW:2208, IH:834, stubL:73.5, p1L:193.5, stubR:2153.5, topY:90.5, botY:728.5},
-  '1_2': {img: BOK_I1_2R_IMG_B64, IW:1141, IH:891, stubL:32.5, p1L:168.5, stubR:1084.5, topY:89.5, botY:807.5},
-  '1_3': {img: BOK_I1_3R_IMG_B64, IW:1812, IH:909, stubL:66.5, p1L:201.5, stubR:1763.5, topY:95.5, botY:814.5},
-  '1_4': {img: BOK_I1_4R_IMG_B64, IW:2212, IH:790, stubL:68.5, p1L:188.5, stubR:2148.5, topY:69.5, botY:707.5},
+  '0_2': {img: BOK_I1_2_IMG_B64,  IW:1178, IH:876, stubL:71.5, p1L:207.5, p1R:341.5, p2L:853.5, stubR:1123.5, topY:68.5, botY:786.5},
+  '0_3': {img: BOK_I1_3_IMG_B64,  IW:1807, IH:884, stubL:55.5, p1L:190.5, p1R:324.5, p2L:836.5, stubR:1752.5, topY:73.5, botY:792.5},
+  '0_4': {img: BOK_I1_4_IMG_B64,  IW:2208, IH:834, stubL:73.5, p1L:193.5, p1R:312.5, p2L:767.5, stubR:2153.5, topY:90.5, botY:728.5},
+  '1_2': {img: BOK_I1_2R_IMG_B64, IW:1141, IH:891, stubL:32.5, p1L:168.5, p1R:302,   p2L:814,   stubR:1084.5, topY:89.5, botY:807.5},
+  '1_3': {img: BOK_I1_3R_IMG_B64, IW:1812, IH:909, stubL:66.5, p1L:201.5, p1R:335,   p2L:847,   stubR:1763.5, topY:95.5, botY:814.5},
+  '1_4': {img: BOK_I1_4R_IMG_B64, IW:2212, IH:790, stubL:68.5, p1L:188.5, p1R:307,   p2L:762,   stubR:2148.5, topY:69.5, botY:707.5},
 };
 
 // Чертёж по фото бокового щита - общий для Бока/Крышки/Дна (по уточнению
@@ -38,7 +43,7 @@ const BOK_I1_GEOM = {
 // заголовок чертежа ("Щит боковой"/"Крышка"/"Дно").
 function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, boardLenVal, partTitle){
   const IW = g.IW, IH = g.IH, topY = g.topY, botY = g.botY;
-  const stubL = g.stubL, p1L = g.p1L, stubR = g.stubR;
+  const stubL = g.stubL, p1L = g.p1L, p1R = g.p1R, p2L = g.p2L, stubR = g.stubR;
 
   // Стрелка вертикального размера - у правого внешнего края щита (stubR, а
   // не у последней планки - там она уходила бы слишком далеко вправо, через
@@ -57,6 +62,18 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, boardLenVal, partTitle){
   // секции.
   const thickTargetY = topY*0.67;
   const thickTailX = p1L - 0.03*IW, thickTailY = topLineY;
+
+  // Двойная стрелка "расстояние между соседними планками" (между кромками
+  // 1-го и 2-го пояса, по запросу пользователя) - в открытом поле между
+  // рамкой щита и стрелкой длины доски сверху (там ничего нет, кроме
+  // угловых засечек у stubL/stubR - см. records ниже). Значение численно
+  // равно edgeVal - при раскладке "максимально равномерно" (см. plankCount
+  // в logic.js) отступ от края и зазор между соседними планками совпадают
+  // по построению, но подписываются отдельно - для наглядности у самих
+  // планок на фото, а не только у крайнего отступа.
+  const gapSpan = topY - topLineY;
+  const gapArrowY = topY - 0.5*gapSpan;
+  const gapMidX = (p1R+p2L)/2;
 
   // Скобка "отступ от края до крайней планки" - в поле под фото (снимки
   // содержат запас по высоте под рамкой щита специально под эту скобку).
@@ -77,6 +94,10 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, boardLenVal, partTitle){
     {type:'double', x1:dblArrowX, y1:topY, x2:dblArrowX, y2:botY, lx:dblArrowX+7, ly:(topY+botY)/2, text: dim+' мм', vertical:true},
 
     {type:'single', x1:thickTailX, y1:thickTailY, x2:p1L, y2:thickTargetY, lx:thickTailX, ly:thickTailY+20, text: plankT+' мм'},
+
+    {type:'line', x1:p1R, y1:topY, x2:p1R, y2:gapArrowY},
+    {type:'line', x1:p2L, y1:topY, x2:p2L, y2:gapArrowY},
+    {type:'double', x1:p1R, y1:gapArrowY, x2:p2L, y2:gapArrowY, lx:gapMidX, ly:gapArrowY-14, text: edge+' мм'},
 
     {type:'line', x1:stubL, y1:bracketYStart, x2:stubL, y2:bracketYEnd},
     {type:'line', x1:p1L, y1:bracketYStart, x2:p1L, y2:bracketYEnd},
