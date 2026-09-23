@@ -40,6 +40,8 @@ async function calculate(){
     skidThicknessRaw: skidThicknessValue,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
+    plankLayoutMode,
+    plankLayoutValue,
     availableThicknesses,
     manualOverrides,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
@@ -68,6 +70,11 @@ async function calculate(){
     document.getElementById('results').style.display = 'none';
     return;
   }
+  // "Стандартные" (штатные) число/шаг поясов планок - центр ползунков у
+  // галочек "Настроить число поясов"/"Настроить расстояние между поясами"
+  // (см. js/i1/ui.js) - обновляются при каждом успешном расчёте.
+  lastStandardPlankCount = calc.standardPlankCount;
+  lastStandardPlankGap = calc.standardPlankGap;
 
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;

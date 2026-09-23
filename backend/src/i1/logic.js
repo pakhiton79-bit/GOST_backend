@@ -23,7 +23,26 @@ function stepDownGrade(v) {
 // Количество планок (боковой щит / крышка / дно): 2 крайние на расстоянии
 // boardLen/6 от каждого края, промежуточные - так, чтобы зазор между
 // соседними планками не превышал 700мм.
-function plankCount(boardLen) {
+//
+// override (галочки "Настроить число поясов планок"/"Настроить расстояние
+// между краями поясов планок" в UI, по запросу пользователя) - при активном
+// override отступ от края меняется на фиксированный: wallValue*2 (толщина
+// доски торца + толщина вертикальной планки торца, каждая = wallValue) -
+// вместо штатного boardLen/6. Число поясов тогда либо берётся как есть
+// (override.mode==='count', целое, минимум 2), либо считается так же, как
+// штатное правило ≤700мм, но с заданным пользователем зазором вместо 700
+// (override.mode==='gap', зазор может быть и больше 700мм - сознательное
+// отклонение от рекомендации ГОСТа, по указанию пользователя).
+function plankCount(boardLen, wallValue, override) {
+  if (override) {
+    const edgeDist = wallValue * 2;
+    const middle = boardLen - edgeDist * 2;
+    if (middle < 0) return { count: null, edgeDist, middle };
+    const count = override.mode === 'count'
+      ? Math.max(2, Math.round(override.value))
+      : Math.max(2, Math.ceil(middle / override.value - 1e-9) + 1);
+    return { count, edgeDist, middle };
+  }
   const edgeDist = boardLen / 6;
   const middle = boardLen - edgeDist * 2;
   if (middle < 0) return { count: null, edgeDist, middle };

@@ -6,9 +6,9 @@
 const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -46,7 +46,6 @@ function computeGost10198I1(input) {
   }
 
   const density = packingDensity(MASS, L, W, H);
-  let wallRaw = wallThicknessI1(density);
 
   const raskosinaNeeded = H >= 1000 || L > 5000 || density > 3;
 
@@ -55,27 +54,55 @@ function computeGost10198I1(input) {
     return { error: `Ширина груза ${W} мм недостаточна для двух вертикальных планок торца (по 100мм) — расчёт не выполняется.` };
   }
 
-  let kLen, plank, plankQty, plankGap;
-  for (let i = 0; i < 4; i++) {
-    kLen = L + wallRaw * 4;
-
-    plank = plankCount(kLen);
-    if (plank.count === null) {
-      return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок (по 1/6 с каждого края) — расчёт не выполняется.` };
+  // Раскладка поясов планок (plankCount) по умолчанию штатная - см. logic.js.
+  // По галочкам "Настроить число поясов"/"Настроить расстояние между краями
+  // поясов" (plankLayoutMode: 'count'|'gap', по запросу пользователя)
+  // пользователь может задать своё значение - тогда отступ от края тоже
+  // меняется (см. комментарий у plankCount в logic.js). Правило 400-500мм
+  // работает как обычно в обоих случаях - переопределяется только САМА
+  // раскладка (число/шаг), а не то, следим ли мы за попаданием зазора в
+  // 400-500мм.
+  function stabilizePlankLayout(override, wallStart) {
+    let w = wallStart, kLen, plank, plankQty, plankGap;
+    for (let i = 0; i < 4; i++) {
+      kLen = L + w * 4;
+      plank = plankCount(kLen, w, override);
+      if (plank.count === null) {
+        return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.` };
+      }
+      plankQty = plank.count;
+      plankGap = plank.middle / (plankQty - 1);
+      const beltGaps = [plankGap, horizPlankaLen, H - 200];
+      const beltGapHit = beltGaps.find(g => g >= 400 && g <= 500);
+      if (beltGapHit === undefined) break;
+      const stepped = stepDownGrade(w);
+      if (stepped === w) break;
+      // Снижение градации по правилу 400-500мм - штатное поведение,
+      // предусмотренное самим ГОСТом (не отклонение/проблема) - предупреждение
+      // не выводим (по указанию пользователя).
+      w = stepped;
     }
-    plankQty = plank.count;
-    plankGap = plank.middle / (plankQty - 1);
-
-    const beltGaps = [plankGap, horizPlankaLen, H - 200];
-    const beltGapHit = beltGaps.find(g => g >= 400 && g <= 500);
-    if (beltGapHit === undefined) break;
-    const stepped = stepDownGrade(wallRaw);
-    if (stepped === wallRaw) break;
-    // Снижение градации по правилу 400-500мм - штатное поведение,
-    // предусмотренное самим ГОСТом (не отклонение/проблема) - предупреждение
-    // не выводим (по указанию пользователя).
-    wallRaw = stepped;
+    return { wallRaw: w, kLen, plank, plankQty, plankGap };
   }
+
+  const plankOverride = (plankLayoutMode === 'count' || plankLayoutMode === 'gap')
+    ? { mode: plankLayoutMode, value: plankLayoutValue }
+    : null;
+
+  // Стандартная (штатная, без ручных настроек) раскладка - считается всегда,
+  // независимо от галочек, только чтобы показать "текущее стандартное
+  // значение" в ползунках обеих новых галочек на клиенте.
+  const standardPass = stabilizePlankLayout(null, wallThicknessI1(density));
+  if (standardPass.error) return { error: standardPass.error };
+  const standardWallValue = roundUpToAvailable(standardPass.wallRaw);
+  const standardFinalPlank = plankCount(L + standardWallValue * 4, standardWallValue, null);
+  const standardPlankCount = standardFinalPlank.count;
+  const standardPlankGap = standardFinalPlank.count > 1 ? standardFinalPlank.middle / (standardFinalPlank.count - 1) : 0;
+
+  const mainPass = plankOverride ? stabilizePlankLayout(plankOverride, wallThicknessI1(density)) : standardPass;
+  if (mainPass.error) return { error: mainPass.error };
+  let { wallRaw, kLen, plank, plankQty, plankGap } = mainPass;
+
   const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw), 'Толщина досок/планок/раскосов') };
 
   // kLen/plank/plankQty/plankGap выше посчитаны по wallRaw (толщине ДО
@@ -88,9 +115,9 @@ function computeGost10198I1(input) {
   // (не округлённым) зазорам, здесь только синхронизируем геометрию с
   // итоговым материалом.
   kLen = L + wall.value * 4;
-  plank = plankCount(kLen);
+  plank = plankCount(kLen, wall.value, plankOverride);
   if (plank.count === null) {
-    return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок (по 1/6 с каждого края) — расчёт не выполняется.` };
+    return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.` };
   }
   plankQty = plank.count;
   plankGap = plank.middle / (plankQty - 1);
@@ -239,6 +266,7 @@ function computeGost10198I1(input) {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, kPlankaKryshka, H, W, wall,
+    standardPlankCount, standardPlankGap,
   };
   const negField = findNegativeField(result, '');
   if (negField) {

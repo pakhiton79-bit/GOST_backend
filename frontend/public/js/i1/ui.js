@@ -162,3 +162,135 @@ document.querySelectorAll('input[name="skidThickness"]').forEach(el=>{
 });
 
 updateSkidThicknessSummary();
+
+// ============ Настройка раскладки поясов планок ============
+// Две взаимоисключающие галочки - "Настроить число поясов планок" и
+// "Настроить расстояние между краями поясов планок" (по запросу
+// пользователя). При включении одной из них под ней появляется ползунок -
+// тот же виджет createJumpSlider(), что и у нормы времени (см.
+// common-timesettings.js), плюс поле для ручного ввода любого значения
+// (в т.ч. вне диапазона ползунка - например, расстояние можно поставить и
+// больше 700мм, осознанно отклонившись от рекомендации ГОСТа). По центру
+// ползунка при открытии - "стандартное" (штатное автоматическое) значение
+// для текущих входных данных, с шагом 50мм (расстояние) или 1 (число
+// поясов) в каждую сторону; "стандартное" значение обновляется при каждом
+// успешном расчёте (см. calculate() в calc-i1.js), но сам ползунок
+// перестраивается только в момент включения галочки - чтобы уже выбранное
+// пользователем значение не сбрасывалось само по себе при пересчёте.
+const PLANK_LAYOUT_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'plankLayout';
+let plankLayoutMode = null; // null | 'count' | 'gap'
+let plankLayoutValue = null;
+// "Стандартные" (штатные автоматические) значения для центра ползунков -
+// заполняются из calc.standardPlankCount/standardPlankGap при каждом
+// успешном расчёте (см. calculate() в calc-i1.js). До первого расчёта -
+// null, используется запасной центр по умолчанию (см. ниже).
+let lastStandardPlankCount = null;
+let lastStandardPlankGap = null;
+let plankCountSlider = null, plankGapSlider = null;
+
+function plankCountSteps(center){
+  center = Math.max(2, Math.round(center));
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(Math.max(2, center+i));
+  return Array.from(new Set(steps)).sort((a,b)=>a-b);
+}
+function plankGapSteps(center){
+  center = Math.max(1, Math.round(center));
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(Math.max(1, center+i*50));
+  return Array.from(new Set(steps)).sort((a,b)=>a-b);
+}
+
+function savePlankLayout(){
+  try{ localStorage.setItem(PLANK_LAYOUT_STORAGE_KEY, JSON.stringify({mode: plankLayoutMode, value: plankLayoutValue})); }catch(e){}
+}
+function loadPlankLayout(){
+  try{
+    const raw = localStorage.getItem(PLANK_LAYOUT_STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if((parsed.mode === 'count' || parsed.mode === 'gap') && parsed.value > 0) return parsed;
+    }
+  }catch(e){}
+  return {mode:null, value:null};
+}
+
+// Пересобирает нужный ползунок (createJumpSlider каждый раз строит разметку
+// заново - готового способа сменить набор шагов у уже созданного ползунка
+// нет) с шагами вокруг center и выставляет value как текущее положение.
+function rebuildPlankSlider(mode, center, value){
+  if(mode === 'count'){
+    plankCountSlider = createJumpSlider(document.getElementById('plankCountSlider'), plankCountSteps(center), v=>{
+      plankLayoutValue = v;
+      document.getElementById('plankCountInput').value = v;
+      savePlankLayout();
+      invalidateCalc();
+    });
+    plankCountSlider.setValue(value);
+  } else {
+    plankGapSlider = createJumpSlider(document.getElementById('plankGapSlider'), plankGapSteps(center), v=>{
+      plankLayoutValue = v;
+      document.getElementById('plankGapInput').value = v;
+      savePlankLayout();
+      invalidateCalc();
+    });
+    plankGapSlider.setValue(value);
+  }
+}
+
+function onPlankLayoutCheckboxChange(mode){
+  const countEl = document.getElementById('customPlankCount');
+  const gapEl = document.getElementById('customPlankGap');
+  if(mode === 'count' && countEl.checked) gapEl.checked = false;
+  if(mode === 'gap' && gapEl.checked) countEl.checked = false;
+
+  plankLayoutMode = countEl.checked ? 'count' : gapEl.checked ? 'gap' : null;
+  document.getElementById('plankCountRow').style.display = plankLayoutMode==='count' ? '' : 'none';
+  document.getElementById('plankGapRow').style.display = plankLayoutMode==='gap' ? '' : 'none';
+
+  if(plankLayoutMode === 'count'){
+    const center = lastStandardPlankCount || 4;
+    plankLayoutValue = center;
+    document.getElementById('plankCountInput').value = center;
+    rebuildPlankSlider('count', center, center);
+  } else if(plankLayoutMode === 'gap'){
+    const center = Math.round(lastStandardPlankGap || 400);
+    plankLayoutValue = center;
+    document.getElementById('plankGapInput').value = center;
+    rebuildPlankSlider('gap', center, center);
+  }
+  savePlankLayout();
+  invalidateCalc();
+}
+
+function onPlankCountInputChange(){
+  const v = parseInt(document.getElementById('plankCountInput').value, 10);
+  if(!(v>=2)) return;
+  plankLayoutValue = v;
+  if(plankCountSlider) plankCountSlider.setValue(v);
+  savePlankLayout();
+  invalidateCalc();
+}
+function onPlankGapInputChange(){
+  const v = parseFloat(String(document.getElementById('plankGapInput').value).replace(',','.'));
+  if(!(v>0)) return;
+  plankLayoutValue = v;
+  if(plankGapSlider) plankGapSlider.setValue(v);
+  savePlankLayout();
+  invalidateCalc();
+}
+
+// Восстановление сохранённого состояния при открытии страницы - "стандартное"
+// значение центра ещё неизвестно (расчёт не проводился), поэтому ползунок
+// строится вокруг самого сохранённого значения (см. комментарий у
+// PLANK_LAYOUT_STORAGE_KEY выше).
+(function initPlankLayoutFromStorage(){
+  const saved = loadPlankLayout();
+  if(!saved.mode) return;
+  document.getElementById(saved.mode === 'count' ? 'customPlankCount' : 'customPlankGap').checked = true;
+  plankLayoutMode = saved.mode;
+  plankLayoutValue = saved.value;
+  document.getElementById(saved.mode === 'count' ? 'plankCountRow' : 'plankGapRow').style.display = '';
+  document.getElementById(saved.mode === 'count' ? 'plankCountInput' : 'plankGapInput').value = saved.value;
+  rebuildPlankSlider(saved.mode, saved.value, saved.value);
+})();
