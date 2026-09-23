@@ -6,6 +6,11 @@
 const { roundup, vol, fillBoards, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('./logic');
 
+// Плотность древесины для перевода объёма пиломатериала (м³) в массу
+// ящика (кг) - по уточнению пользователя, типовое значение для сухой
+// сосны/ели.
+const WOOD_DENSITY_KG_M3 = 500;
+
 // input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
   const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
@@ -249,6 +254,10 @@ function computeGost10198I1(input) {
   const volTorec = torec.reduce((s, r) => s + vol(r.t, r.w, r.l, r.qty), 0);
   const totalVolume = volDno + volKryshka + 2 * volBok + 2 * volTorec;
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
+  // Масса ящика (тары, без груза) - объём пиломатериала × плотность
+  // древесины (по уточнению пользователя: 500 кг/м³, типовое значение для
+  // сухой сосны/ели).
+  const crateMass = totalVolume * WOOD_DENSITY_KG_M3;
 
   if (plankQty > 4) {
     warnings.push(`Планки: чертёж — макс. 4 (расчётных ${plankQty}); точное количество см. в таблице ниже.`);
@@ -268,7 +277,7 @@ function computeGost10198I1(input) {
 
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
-    outerL, outerW, outerH, totalVolume, normaVremeni,
+    outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
     dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, kPlankaKryshka, H, W, wall,
     standardPlankCount, standardPlankGap,
   };

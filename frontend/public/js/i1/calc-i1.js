@@ -7,6 +7,13 @@
 // BOX_I1_IMG_B64 - см. js/i1/diagrams.js (общий вид ящика, используется и на
 // самом сайте, и в печати).
 
+// Плотность древесины для перевода объёма пиломатериала (м³) в массу
+// ящика (кг) - по уточнению пользователя, типовое значение для сухой
+// сосны/ели. Сервер (compute.js) уже возвращает готовую calc.crateMass,
+// но recalcFromTable() ниже пересчитывает объём чисто на клиенте (без
+// обращения к серверу), поэтому нужна своя копия константы.
+const WOOD_DENSITY_KG_M3 = 500;
+
 // Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
 // читается ДО того, как calculate() эту таблицу перерисует, и отправляется
 // на сервер вместе с остальными входными данными (см. computeGost10198I1/
@@ -93,6 +100,7 @@ async function calculate(){
 
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
+  document.getElementById('outMass').innerHTML = `${Math.round(calc.crateMass)} <span>кг</span>`;
   document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
   setTimeSettingsLastVolume(calc.totalVolume);
 
@@ -156,6 +164,7 @@ function recalcFromTable(){
   });
   const normaVremeni = computeNormaVremeni(totalVolume, TIME_SETTINGS_STORAGE_KEY);
   document.getElementById('outVolume').innerHTML = `${totalVolume.toFixed(3)} <span>м³</span>`;
+  document.getElementById('outMass').innerHTML = `${Math.round(totalVolume * WOOD_DENSITY_KG_M3)} <span>кг</span>`;
   document.getElementById('outTime').innerHTML = `${normaVremeni} <span>ч</span>`;
 }
 
@@ -177,6 +186,7 @@ function buildPrintHtml(){
 
   const outDimsText = document.getElementById('outDims').textContent.trim();
   const volumeText  = document.getElementById('outVolume').textContent.trim();
+  const massText    = document.getElementById('outMass').textContent.trim();
   const timeText    = document.getElementById('outTime').textContent.trim();
 
   const clone = document.getElementById('boardTables').cloneNode(true);
@@ -244,6 +254,7 @@ function buildPrintHtml(){
           <table class="print-plain-table">
             <tr><td class="k">Наружные размеры, мм</td><td>${outDimsText}</td></tr>
             <tr><td class="k">Расход пило&shy;материала</td><td>${volumeText}</td></tr>
+            <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
             <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
           </table>
         </div>
