@@ -23,11 +23,6 @@ function sanitizeThicknesses(arr, options) {
   const allowed = options || AVAILABLE_THICKNESS_OPTIONS;
   return arr.filter(v => allowed.includes(v)).sort((a, b) => a - b);
 }
-// II-1 (frontend/public/js/ii1/ui.js) допускает более крупные толщины, чем
-// I-1/I-3 (до 250мм - нужны для сечений полозьев/торцового бруса дна по
-// Табл.19 при больших массах) - не общий AVAILABLE_THICKNESS_OPTIONS.
-const II1_AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
-
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : NaN;
@@ -116,7 +111,7 @@ app.post('/api/ii1/calculate', (req, res) => {
     roundBoardWidths: !!b.roundBoardWidths,
     solidRigidBase: !!b.solidRigidBase,
     forkliftLoading: !!b.forkliftLoading,
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses, II1_AVAILABLE_THICKNESS_OPTIONS),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),
     timeCoeff: toNum(b.timeCoeff),
