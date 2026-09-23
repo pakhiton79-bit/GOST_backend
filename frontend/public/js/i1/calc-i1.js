@@ -103,7 +103,12 @@ async function calculate(){
   tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.dnoWidth, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.dno) + `</div>`;
   tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.kPlankaKryshka, calc.kLen, calc.plank.edgeDist, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
   tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.torec) + `</div>`;
-  tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
+  // 2-й аргумент diagramBokovoy (подпись у выступающего верхнего угла на фото) -
+  // толщина доски крышки + толщина планки крышки (по уточнению пользователя:
+  // раньше по ошибке показывалась одна толщина wall.value, а не сумма обеих
+  // деталей крышки, которые там физически видны) - у типа I-1 обе толщины
+  // равны wall.value, отсюда wall.value*2.
+  tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBokovoy(calc.H, calc.wall.value*2, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
