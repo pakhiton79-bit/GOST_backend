@@ -162,7 +162,7 @@ function computeGost10198I1(input) {
 
   // --- КРЫШКА ---
   const kryshka = [];
-  const kPlankaKryshka = W + wall.value * 2;
+  const kPlankaKryshka = W + wall.value * 4; // ширина груза + (толщина доски бок.щита + толщина планки бок.щита)*2
   kryshka.push({ name: 'Планка', t: wall.value, w: 100, l: kPlankaKryshka, qty: plankQty });
   const spanKryshka = W + wall.value * 2;
   const fbKryshka = fillBoards(spanKryshka, roundBoardWidths);
