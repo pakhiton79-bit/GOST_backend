@@ -48,7 +48,9 @@ function plankCount(boardLen, wallValue, override) {
     const count = override.mode === 'count'
       ? Math.max(2, Math.round(override.value))
       : Math.max(2, Math.ceil(boardLen / override.value - 1e-9) - 1);
-    const edgeDist = boardLen / (count + 1);
+    // Отступ от края - до целого мм (по запросу пользователя): цех режет
+    // доски не в долях миллиметра, а сама раскладка и так уже приближение.
+    const edgeDist = Math.round(boardLen / (count + 1));
     const middle = boardLen - edgeDist * 2;
     if (edgeDist < minEdgeDist) return { count: null, edgeDist, middle };
     return { count, edgeDist, middle };
