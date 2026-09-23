@@ -10,11 +10,16 @@ const BOK_I1_4R_IMG_B64 = "/images/bok_i1_4planks_3raskosina.jpg"; // натур
 // Калибровка по разметке, присланной пользователем для bok_i1_2planks.jpg
 // (records с линиями/стрелками для варианта "2 планки, без раскосины") -
 // перенесена на остальные 5 фото по аналогии (те же 4 группы стрелок:
-// высота груза, толщина планки, отступ от края до крайней планки, длина
-// доски), координаты которых у каждого фото свои: IW/IH - натуральный размер
-// фото; stubL/stubR - центр крайней (не выступающей) вертикальной линии по
-// краям щита; p1L - центр левого края первой планки; topY/botY - y верхней/
-// нижней линии рамки щита.
+// вертикальный размер, толщина у выступающего угла, отступ от края до
+// крайней планки, длина доски), координаты которых у каждого фото свои:
+// IW/IH - натуральный размер фото; stubL/stubR - центр крайней (не
+// выступающей) вертикальной линии по краям щита; p1L - центр левого края
+// первой планки; topY/botY - y верхней/нижней линии рамки щита.
+//
+// Эти же 6 фото и эта же калибровка переиспользуются для Крышки и Дна (по
+// указанию пользователя, см. kryshka-dno.js) - у всех трёх деталей
+// (Бок/Крышка/Дно) общая раскладка поясов планок (единый plankCount,
+// единый edgeDist), поэтому отдельных фото под крышку/дно больше не нужно.
 const BOK_I1_GEOM = {
   '0_2': {img: BOK_I1_2_IMG_B64,  IW:1178, IH:876, stubL:71.5, p1L:207.5, stubR:1123.5, topY:68.5, botY:786.5},
   '0_3': {img: BOK_I1_3_IMG_B64,  IW:1807, IH:884, stubL:55.5, p1L:190.5, stubR:1752.5, topY:73.5, botY:792.5},
@@ -24,25 +29,32 @@ const BOK_I1_GEOM = {
   '1_4': {img: BOK_I1_4R_IMG_B64, IW:2212, IH:790, stubL:68.5, p1L:188.5, stubR:2148.5, topY:69.5, botY:707.5},
 };
 
-function diagramBokovoyPhoto(g, heightVal, plankTVal, edgeVal, boardLenVal){
+// Чертёж по фото бокового щита - общий для Бока/Крышки/Дна (по уточнению
+// пользователя): dimVal - вертикальный размер на фото (у Бока - высота
+// груза H, у Крышки/Дна - ширина груза с учётом толщин стенок, см. вызовы
+// в js/i1/calc-i1.js); plankTVal - толщина у выступающего верхнего левого
+// угла первой планки (одна и та же для всех трёх - calc.wall.value, у
+// типа I-1 единая толщина всех досок/планок/раскосов); partTitle -
+// заголовок чертежа ("Щит боковой"/"Крышка"/"Дно").
+function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, boardLenVal, partTitle){
   const IW = g.IW, IH = g.IH, topY = g.topY, botY = g.botY;
   const stubL = g.stubL, p1L = g.p1L, stubR = g.stubR;
 
-  // Стрелка высоты груза - у правого внешнего края щита (stubR, а не у
-  // последней планки - там она уходила бы слишком далеко вправо, через
+  // Стрелка вертикального размера - у правого внешнего края щита (stubR, а
+  // не у последней планки - там она уходила бы слишком далеко вправо, через
   // весь правый торцевой обрез щита), с небольшим отступом за кадр.
   const extOffset = 0.09*IW;
-  const heightFarX = stubR + extOffset;
+  const dimFarX = stubR + extOffset;
   const dblArrowX = stubR + extOffset*0.55;
 
   // Стрелка длины доски - над фото, от края до края щита.
   const topLineY = -0.10*IH;
 
-  // Стрелка толщины планки - указывает на выступающий верхний левый угол
-  // первой планки; идёт сверху, в той же зоне, что и стрелка длины доски
-  // (а не слева от кадра, как раньше) - иначе под неё резервируется
-  // большой отступ слева, и весь чертёж визуально уезжает вправо от
-  // заголовка секции.
+  // Стрелка толщины - указывает на выступающий верхний левый угол первой
+  // планки; идёт сверху, в той же зоне, что и стрелка длины доски (а не
+  // слева от кадра, как раньше) - иначе под неё резервируется большой
+  // отступ слева, и весь чертёж визуально уезжает вправо от заголовка
+  // секции.
   const thickTargetY = topY*0.67;
   const thickTailX = p1L - 0.03*IW, thickTailY = topLineY;
 
@@ -54,15 +66,15 @@ function diagramBokovoyPhoto(g, heightVal, plankTVal, edgeVal, boardLenVal){
   const edgeTailX = 0.420*IW, edgeTailY = 1.17*IH;
   const edgeLabelX = 0.497*IW, edgeLabelY = 1.194*IH;
 
-  const height = Math.round(heightVal);
+  const dim = Math.round(dimVal);
   const plankT = Math.round(plankTVal);
   const edge = Math.round(edgeVal);
   const boardLen = Math.round(boardLenVal);
 
   const records = [
-    {type:'line', x1:stubR, y1:topY, x2:heightFarX, y2:topY},
-    {type:'line', x1:stubR, y1:botY, x2:heightFarX, y2:botY},
-    {type:'double', x1:dblArrowX, y1:topY, x2:dblArrowX, y2:botY, lx:dblArrowX+7, ly:(topY+botY)/2, text: height+' мм', vertical:true},
+    {type:'line', x1:stubR, y1:topY, x2:dimFarX, y2:topY},
+    {type:'line', x1:stubR, y1:botY, x2:dimFarX, y2:botY},
+    {type:'double', x1:dblArrowX, y1:topY, x2:dblArrowX, y2:botY, lx:dblArrowX+7, ly:(topY+botY)/2, text: dim+' мм', vertical:true},
 
     {type:'single', x1:thickTailX, y1:thickTailY, x2:p1L, y2:thickTargetY, lx:thickTailX, ly:thickTailY+20, text: plankT+' мм'},
 
@@ -76,16 +88,19 @@ function diagramBokovoyPhoto(g, heightVal, plankTVal, edgeVal, boardLenVal){
     {type:'double', x1:stubL, y1:topLineY, x2:stubR, y2:topLineY, lx:(stubL+stubR)/2, ly:topLineY-10, text: boardLen+' мм'}
   ];
 
-  return renderDiagram(g.img, 'Щит боковой - схема расположения деталей', IW, IH, records, null, photoStrokeScale(IW));
+  return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, null, photoStrokeScale(IW));
 }
 
-function diagramBokovoy(heightVal, plankTVal, edgeVal, boardLenVal, plankQty, hasRaskosinaVal){
-  // Фото есть только для 2-4 планок; для большего числа планок показываем
-  // чертёж с максимальным доступным (4) - предупреждение выводится отдельно
-  // на вызывающей стороне (см. js/i1/calc-i1.js).
+// Фото есть только для 2-4 планок; для большего числа планок показываем
+// чертёж с максимальным доступным (4) - предупреждение выводится отдельно
+// на вызывающей стороне (см. js/i1/calc-i1.js).
+function bokGeomKey(plankQty, hasRaskosinaVal){
   let n = plankQty;
   if(n < 2) n = 2;
   if(n > 4) n = 4;
-  const key = (hasRaskosinaVal ? '1' : '0') + '_' + n;
-  return diagramBokovoyPhoto(BOK_I1_GEOM[key], heightVal, plankTVal, edgeVal, boardLenVal);
+  return (hasRaskosinaVal ? '1' : '0') + '_' + n;
+}
+
+function diagramBokovoy(heightVal, plankTVal, edgeVal, boardLenVal, plankQty, hasRaskosinaVal){
+  return diagramBokPhoto(BOK_I1_GEOM[bokGeomKey(plankQty, hasRaskosinaVal)], heightVal, plankTVal, edgeVal, boardLenVal, 'Щит боковой');
 }
