@@ -300,13 +300,16 @@ function computeGost10198I1(input) {
   // (выводится "… мм × 2" под всеми элементами, см. calculate() в frontend/public/js/i1/calc-i1.js). В объём
   // пиломатериала, массу ящика и норму времени не входит - это не
   // пиломатериал. У типа I-1 доски бока и крышки - одной толщины wall.value.
-  const endTapeLength = addEndTape ? Math.ceil((W + wall.value * 2) + (H + wall.value * 2) - 1e-9) : null;
+  // Строка отдельного раздела endTape (а не одно число) - чтобы на неё
+  // распространялся общий механизм ручных правок таблицы (tableEdits,
+  // withTableEdits в server.js с множителем раздела 0 - в объём не входит).
+  const endTape = addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil((W + wall.value * 2) + (H + wall.value * 2) - 1e-9), qty: 2 }] : [];
 
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
     dnoWidth, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
-    standardPlankCount, standardPlankGap, endTapeLength,
+    standardPlankCount, standardPlankGap, endTape,
   };
   const negField = findNegativeField(result, '');
   if (negField) {

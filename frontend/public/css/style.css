@@ -586,7 +586,8 @@
      обработчик input у #boardTables и editedAttr в common-print.js) -
      тёмно-коричневым текстом, по указанию пользователя; только на сайте:
      скоуп #boardTables не пересекается с печатной областью (#printArea). */
-  #boardTables td[data-user-edited="true"]{color:var(--manual-ink);}
+  /* + светло-коричневая заливка всей ячейки (по указанию пользователя). */
+  #boardTables td[data-user-edited="true"]{color:var(--manual-ink);background:var(--accent-wash);}
   .editable-cell:focus{
     outline:none;
     background:var(--accent-wash);
@@ -603,6 +604,11 @@
   /* Лента обшивки торцов (I-1) - табличка 1×1 на всю ширину под всеми
      элементами, см. calculate() в src/i1/calc.js. */
   .spec-table.tape-table{margin-top:22px;}
+  /* Подписи вокруг числа - не редактируются и не входят в textContent
+     ячейки (там только длина - её читает readTableEdits). Действуют и в
+     печати (#printArea). */
+  .tape-table td::before{content:'Обшивочная лента ';}
+  .tape-table td::after{content:' мм × 2';}
 
   .note{
     font-size:13px;
