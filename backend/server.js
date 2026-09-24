@@ -104,6 +104,7 @@ app.post('/api/i1/calculate', (req, res) => {
     removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
     addRaskosina: !!b.addRaskosina,
     xRaskosina: !!b.xRaskosina,
+    addEndTape: !!b.addEndTape,
     plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
     plankLayoutValue: toNum(b.plankLayoutValue),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),

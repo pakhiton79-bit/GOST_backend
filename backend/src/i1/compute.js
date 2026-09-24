@@ -13,7 +13,7 @@ const WOOD_DENSITY_KG_M3 = 500;
 
 // input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,xRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -294,11 +294,19 @@ function computeGost10198I1(input) {
     warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ — чертежи ниже могут их не точно отражать.');
   }
 
+  // Лента обшивки торцов (галочка «Добавить ленту обшивки торцов», по
+  // указанию пользователя): длина одной ленты = (ширина груза + толщина
+  // доски бока*2) + (высота груза + толщина доски крышки*2); лент 2
+  // (выводится "… мм × 2" под всеми элементами, см. calculate() в frontend/public/js/i1/calc-i1.js). В объём
+  // пиломатериала, массу ящика и норму времени не входит - это не
+  // пиломатериал. У типа I-1 доски бока и крышки - одной толщины wall.value.
+  const endTapeLength = addEndTape ? Math.ceil((W + wall.value * 2) + (H + wall.value * 2) - 1e-9) : null;
+
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
     dnoWidth, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
-    standardPlankCount, standardPlankGap,
+    standardPlankCount, standardPlankGap, endTapeLength,
   };
   const negField = findNegativeField(result, '');
   if (negField) {

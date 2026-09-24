@@ -43,6 +43,7 @@ async function calculate(){
     removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
+    addEndTape: document.getElementById('addEndTape').checked,
     plankLayoutMode,
     plankLayoutValue,
     availableThicknesses,
@@ -126,6 +127,12 @@ async function calculate(){
   tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramKryshka(calc.kPlankaKryshka, calc.wall.value, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.kryshka, 'kryshka') + `</div>`;
   tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.torec, 'torec') + `</div>`;
   tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.bokovoy, 'bokovoy') + `</div>`;
+  // Лента обшивки торцов - одной строкой под всеми элементами и чертежами
+  // (по указанию пользователя), попадает и в печать/PDF (buildPrintHtml
+  // берёт содержимое #boardTables целиком).
+  if(calc.endTapeLength){
+    tablesHtml += `<div class="part-title">Обшивочная лента ${calc.endTapeLength} мм × 2</div>`;
+  }
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
