@@ -20,7 +20,9 @@ function stepDownGrade(v) {
   return v;
 }
 
-// Количество и раскладка поясов планок (боковой щит / крышка / дно) - пояса
+// Количество и раскладка поясов планок (боковой щит / крышка / дно). Все
+// расстояния - ЧЕСТНЫЕ, от края доски/кромки планки до кромки соседней
+// планки (ширина планки учтена). При ручном КОЛИЧЕСТВЕ поясов пояса
 // (включая крайние) распределяются МАКСИМАЛЬНО РАВНОМЕРНО по всей длине
 // доски: отступ от края до крайнего пояса равен зазору между соседними
 // поясами (тот же приём, что у поперечных брусьев крышки в типе II-1) -
@@ -31,14 +33,16 @@ function stepDownGrade(v) {
 // крайних отступа + (count-1) зазоров между планками), каждый =
 // (boardLen - count*PLANK_WIDTH)/(count+1).
 //
-// Штатное правило ГОСТ (override не задан) - минимальное число поясов, при
-// котором этот равномерный шаг не превышает GOST_MAX_PLANK_GAP=700мм:
-// реализовано как частный случай override.mode==='gap' с
-// override.value=700 (предыдущая версия использовала отдельную формулу
-// "boardLen/6 отступ + не более 700мм в середине", которая на коротких
-// досках (~1000-1100мм) завышала число поясов до 3 вместо правильных 2 -
-// при 2 поясах равномерный шаг уже укладывается в 700мм, лишний пояс был
-// не нужен).
+// Штатное правило ГОСТ (override не задан, по уточнению пользователя):
+// отступ от края доски до КРОМКИ крайнего пояса = 1/6 длины доски (она же
+// наружная длина ящика), округлённая вверх до целого мм, но не более
+// GOST_MAX_EDGE_DIST=1000мм; между двумя крайними поясами - минимальное
+// число промежуточных, при котором зазор между кромками соседних поясов
+// (с учётом ширины самих планок) не превышает GOST_MAX_PLANK_GAP=700мм,
+// промежуточные расставлены равномерно. (Прежние версии: сначала 1/6 без
+// учёта ширины планки - на доске ~1000-1100мм давало лишний 3-й пояс;
+// затем равномерная раскладка всех поясов с зазором <=700мм - отступ от
+// края тогда не был 1/6.)
 //
 // override (галочки "Настроить число поясов планок"/"Настроить расстояние
 // между краями поясов планок" в UI) - override.mode==='count': заданное
@@ -61,9 +65,21 @@ function stepDownGrade(v) {
 // для такого числа поясов недостаточно (см. compute.js - жёсткий блок).
 const PLANK_WIDTH = 100;
 const GOST_MAX_PLANK_GAP = 700;
+const GOST_MAX_EDGE_DIST = 1000;
 function plankCount(boardLen, wallValue, override) {
-  const eff = override || { mode: 'gap', value: GOST_MAX_PLANK_GAP };
   const minEdgeDist = wallValue * 2;
+  if (!override) {
+    // Штатное правило ГОСТ - см. комментарий выше.
+    const edgeDist = Math.min(Math.ceil(boardLen / 6 - 1e-9), GOST_MAX_EDGE_DIST);
+    const span = boardLen - edgeDist * 2 - 2 * PLANK_WIDTH; // между крайними поясами
+    if (span < 0) return { count: null, edgeDist, middle: boardLen - edgeDist * 2 - 2 * PLANK_WIDTH };
+    const inner = Math.max(0, Math.ceil((span - GOST_MAX_PLANK_GAP) / (GOST_MAX_PLANK_GAP + PLANK_WIDTH) - 1e-9));
+    const count = inner + 2;
+    const middle = boardLen - edgeDist * 2 - count * PLANK_WIDTH;
+    if (edgeDist < minEdgeDist) return { count: null, edgeDist, middle };
+    return { count, edgeDist, middle };
+  }
+  const eff = override;
   const count = eff.mode === 'count'
     ? Math.max(2, Math.round(eff.value))
     // Минимальное n, при котором (boardLen - n*PLANK_WIDTH)/(n+1) <= value
