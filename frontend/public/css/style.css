@@ -25,6 +25,7 @@
     --accent: #8A4B26;
     --accent-hover: #6E3B1C;
     --accent-wash: #F1E4D8;
+    --manual-ink: #5A2A10; /* тёмно-коричневый - значения, введённые вручную (см. #boardTables td[data-user-edited]) */
     --ok: #2E7D32;
     --warn: #B7791F;
     --warn-wash: #FBF3E4;
@@ -581,6 +582,11 @@
     border-radius:4px;
   }
   .editable-cell:hover{background:var(--accent-wash);}
+  /* Значения, введённые вручную в таблице деталей (data-user-edited, см.
+     обработчик input у #boardTables и editedAttr в common-print.js) -
+     тёмно-коричневым текстом, по указанию пользователя; только на сайте:
+     скоуп #boardTables не пересекается с печатной областью (#printArea). */
+  #boardTables td[data-user-edited="true"]{color:var(--manual-ink);}
   .editable-cell:focus{
     outline:none;
     background:var(--accent-wash);

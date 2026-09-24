@@ -235,6 +235,6 @@ function nearestKryshkaVariant(longbeamCount, crossBeamCount){
 function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal){
   const variant = nearestKryshkaVariant(longbeamCount, crossBeamCount);
   const v = KRYSHKA_VARIANTS[variant.longbeamCount + '_' + variant.crossBeamCount];
-  const records = v.records(Math.round(torecBoardVal), Math.round(sideFrameVal), Math.round(widthVal), Math.round(lengthVal), Math.round(edgeDistVal));
+  const records = v.records(dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal));
   return renderDiagram(v.img, 'Крышка - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW));
 }

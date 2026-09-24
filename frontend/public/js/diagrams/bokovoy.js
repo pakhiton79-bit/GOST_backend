@@ -22,10 +22,10 @@ const BOKOVOY_2FL_4P_IMG_B64 = "/images/bokovoy_2fl_6r.jpg"; // натураль
 
 function diagramBokovoy2Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 2 планки, без раскосины (натуральный размер 855×713).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:732, y1:22, x2:947, y2:22},
@@ -48,10 +48,10 @@ function diagramBokovoy2Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy2Planks1Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 2 планки, 1 раскосина (натуральный размер 874×733).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:746, y1:29, x2:961, y2:28},
@@ -74,10 +74,10 @@ function diagramBokovoy2Planks1Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy3Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 3 планки, без раскосины (натуральный размер 1390×752).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:1239, y1:36, x2:1454, y2:36},
@@ -100,10 +100,10 @@ function diagramBokovoy3Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy3Planks2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 3 планки, 2 раскосины (натуральный размер 1418×781).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:1272, y1:71, x2:1487, y2:71},
@@ -126,10 +126,10 @@ function diagramBokovoy3Planks2Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy4Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 4 планки, без раскосины (натуральный размер 1900×778).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:1751, y1:49, x2:1977, y2:49},
@@ -152,10 +152,10 @@ function diagramBokovoy4Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
   // Фото-чертёж: 4 планки, 3 раскосины (натуральный размер 1877×746).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
 
   const records = [
     {type:'line', x1:1737, y1:25, x2:1963, y2:25},
@@ -189,12 +189,12 @@ function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy2Floors2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
   // Фото-чертёж: 2 этажа, 2 планки, 2 раскосины (натуральный размер 966×1361).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
-  const valUpperSpan = Math.round(upperSpanVal);
-  const valLowerSpan = Math.round(upperSpanVal + midPlankWidthVal - overhangVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
+  const valUpperSpan = dimLabel(upperSpanVal);
+  const valLowerSpan = dimLabel(upperSpanVal + midPlankWidthVal - overhangVal);
 
   const records = [
     {type:'line', x1:805, y1:47, x2:1073, y2:47},
@@ -222,12 +222,12 @@ function diagramBokovoy2Floors2Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 
 function diagramBokovoy2Floors3Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
   // Фото-чертёж: 2 этажа, 3 планки, 4 раскосины (натуральный размер 1381×1326).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
-  const valUpperSpan = Math.round(upperSpanVal);
-  const valLowerSpan = Math.round(upperSpanVal + midPlankWidthVal - overhangVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
+  const valUpperSpan = dimLabel(upperSpanVal);
+  const valLowerSpan = dimLabel(upperSpanVal + midPlankWidthVal - overhangVal);
 
   const records = [
     {type:'line', x1:1236, y1:21, x2:1504, y2:21},
@@ -255,12 +255,12 @@ function diagramBokovoy2Floors3Planks(boardLenVal, overhangVal, edgeDistVal, hei
 
 function diagramBokovoy2Floors4Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
   // Фото-чертёж: 2 этажа, 4 планки, 6 раскосин (натуральный размер 1886×1338).
-  const valBoardLen = Math.round(boardLenVal);
-  const valOverhang = Math.round(overhangVal);
-  const valEdgeDist = Math.round(edgeDistVal);
-  const valHeight = Math.round(heightPlusFloorVal);
-  const valUpperSpan = Math.round(upperSpanVal);
-  const valLowerSpan = Math.round(upperSpanVal + midPlankWidthVal - overhangVal);
+  const valBoardLen = dimLabel(boardLenVal);
+  const valOverhang = dimLabel(overhangVal);
+  const valEdgeDist = dimLabel(edgeDistVal);
+  const valHeight = dimLabel(heightPlusFloorVal);
+  const valUpperSpan = dimLabel(upperSpanVal);
+  const valLowerSpan = dimLabel(upperSpanVal + midPlankWidthVal - overhangVal);
 
   const records = [
     {type:'line', x1:1737, y1:33, x2:2016, y2:33},

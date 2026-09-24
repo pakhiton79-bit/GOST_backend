@@ -38,6 +38,14 @@ function photoStrokeScale(imgNaturalWidth){
 const DIAGRAM_DEFAULT_WIDTH = 260;
 const DIAGRAM_MAX_HEIGHT = 240;
 
+// Подписи размеров на всех чертежах (все типы) - целые мм, с округлением
+// ВВЕРХ (по указанию пользователя: 697.4 -> 698). Допуск 1e-6 - чтобы
+// погрешность дробной арифметики (1000.0000000001) не превращала целое
+// значение в следующее.
+function dimLabel(v){
+  return Math.ceil(v - 1e-6);
+}
+
 // labelScale — необязательный доп. множитель размера подписей (шрифт, отступы,
 // белая плашка), НЕЗАВИСИМЫЙ от --dk (авто-сжатие чертежа под ширину слота,
 // см. reserveDiagramOverflow[Screen]() в src/common-print.js). --dk реагирует
@@ -126,8 +134,8 @@ function diagramPlaceholder(label){
 function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverride, imgOverride, strokeScaleOverride){
   // Фото-чертёж для варианта с 1 раскосиной (натуральный размер 1352×1158).
   // Подпись высоты — полная высота рамы щита = высота груза + толщина доски дна.
-  const val = Math.round(heightPlusT12Val);
-  const innerWidth = Math.round(innerWidthVal);
+  const val = dimLabel(heightPlusT12Val);
+  const innerWidth = dimLabel(innerWidthVal);
 
   const records = [
     {type:'line', x1:1111, y1:36, x2:1541, y2:32},
@@ -147,8 +155,8 @@ function diagramEndPanelNoRaskosina(heightPlusT12Val, widthVal, widthPxOverride,
   // досок торца без диагоналей. Натуральный размер фото 1354×1134.
   // Высота = высота груза + толщина доски дна (то же значение, которым заполняется
   // доска торца, см. fbTorec); ширина = ширина груза (совпадает с k32).
-  const val = Math.round(heightPlusT12Val);
-  const width = Math.round(widthVal);
+  const val = dimLabel(heightPlusT12Val);
+  const width = dimLabel(widthVal);
 
   const records = [
     {type:'line', x1:1122, y1:21, x2:1562, y2:19},

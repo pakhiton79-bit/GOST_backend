@@ -93,12 +93,11 @@ function i1StrokeScale(IW, widthPx){
   return photoStrokeScale(IW) * DIAGRAM_DEFAULT_WIDTH / widthPx;
 }
 
-// Расстояния на чертеже (между планками, от края) - до десятых мм: при
-// равномерной раскладке middle/(count-1) не всегда целое (отступ от края
-// округляется до целого мм), при ручном зазоре (он ставится ровно) отступ
-// от края - остаток пополам, может быть x.5мм (см. plankCount в logic.js).
+// Расстояния на чертеже (между планками, от края) - как и все подписи
+// размеров, целые мм с округлением вверх (dimLabel в common-diagrams.js):
+// middle/(count-1) и отступ при ручном зазоре бывают дробными.
 function fmtMm(v){
-  return String(Math.round(v*10)/10);
+  return String(dimLabel(v));
 }
 
 // Чертёж по фото бокового щита - общий для Бока/Крышки/Дна (по уточнению
@@ -157,9 +156,9 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
   const gapLabelY = IH + 14*px;
   const edgeLabelX = stubL + 34*px, edgeLabelY = IH + 42*px;
 
-  const dim = Math.round(dimVal);
-  const plankT = Math.round(plankTVal);
-  const boardLen = Math.round(boardLenVal);
+  const dim = dimLabel(dimVal);
+  const plankT = dimLabel(plankTVal);
+  const boardLen = dimLabel(boardLenVal);
 
   const records = [
     {type:'line', x1:stubR, y1:topY, x2:dimFarX, y2:topY},

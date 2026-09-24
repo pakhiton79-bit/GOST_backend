@@ -7,20 +7,20 @@ const KRYSHKA_2BEAMS_IMG_B64 = "/images/kryshka_2beams.jpg"; // натураль
 function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm){
   // Фото под 3 планки крышки (l19=3) - выбор чертежа крышки идёт по l19, см. diagramKryshka().
   // Длина крышки = длина груза + (толщина доски торца + толщина планки торца)*2 (см. k9Base).
-  const valLen        = Math.round(lengthMm + t30*2 + t32*2);
+  const valLen        = dimLabel(lengthMm + t30*2 + t32*2);
   // Ширина груза + толщина основной доски боковой стенки*2.
-  const valWidth       = Math.round(widthMm + t41*2);
+  const valWidth       = dimLabel(widthMm + t41*2);
   // Толщина вертикальной боковой планки (t40, планка бокового щита) - при
   // «Оптимизировать размеры» увеличена на 2мм (см. вызов в app-i3.js).
-  const valPlankaThick  = Math.round(t40);
+  const valPlankaThick  = dimLabel(t40);
   // Расстояние от крайней планки крышки до края крышки (edgeDistKryshka = min(L/6, 1000)).
-  const valEdgePlanka   = Math.round(edgeDistKryshkaMm);
+  const valEdgePlanka   = dimLabel(edgeDistKryshkaMm);
   // Расстояние от крайнего поперечного бруса до края крышки: из длины крышки вычитаем
   // суммарную ширину, занятую самими брусьями (количество × ширина бруса), остаток делим
   // поровну на «количество брусьев + 1» промежутков.
   const valEdgeBeam     = crossBeamQty > 0
-    ? Math.round((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
-    : Math.round(valLen);
+    ? dimLabel((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
+    : dimLabel(valLen);
   // Расстояние между соседними планками крышки (plankGapMm) на чертеже не
   // показываем - по замечанию пользователя, лишняя метка (не нужна помимо
   // остальных размеров крышки).
@@ -47,13 +47,13 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
 function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm){
   // Фото под 2 планки крышки (l19=2, натуральный размер 1157×839) - выбор чертежа
   // крышки идёт по l19, см. diagramKryshka().
-  const valLen      = Math.round(lengthMm + t30*2 + t32*2);
-  const valWidth    = Math.round(widthMm + t41*2);
-  const valPlankaThick = Math.round(t40);
-  const valEdgePlanka  = Math.round(edgeDistKryshkaMm);
+  const valLen      = dimLabel(lengthMm + t30*2 + t32*2);
+  const valWidth    = dimLabel(widthMm + t41*2);
+  const valPlankaThick = dimLabel(t40);
+  const valEdgePlanka  = dimLabel(edgeDistKryshkaMm);
   const valEdgeBeam    = crossBeamQty > 0
-    ? Math.round((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
-    : Math.round(valLen);
+    ? dimLabel((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
+    : dimLabel(valLen);
   // Расстояние между соседними планками крышки (plankGapMm) на чертеже не
   // показываем - по замечанию пользователя, лишняя метка (не нужна помимо
   // остальных размеров крышки, см. тот же фикс в diagramKryshkaDefault выше).

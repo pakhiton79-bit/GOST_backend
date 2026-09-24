@@ -10,8 +10,8 @@ const TOREC_2FLOORS_3_IMG_B64 = "/images/torec_2floors_3raskosina.jpg"; // на�
 
 function diagramEndPanel2Raskosina(heightPlusT12Val, planLenVal){
   // Фото-чертёж для варианта с 2 раскосинами (натуральный размер 1811×842).
-  const val = Math.round(heightPlusT12Val);           // полная высота рамы щита = высота груза + толщина доски дна
-  const planLen = Math.round(planLenVal);             // длина горизонтальной планки = ширина груза
+  const val = dimLabel(heightPlusT12Val);           // полная высота рамы щита = высота груза + толщина доски дна
+  const planLen = dimLabel(planLenVal);             // длина горизонтальной планки = ширина груза
 
   const records = [
     {type:'line', x1:24, y1:177, x2:23, y2:-122},
@@ -27,8 +27,8 @@ function diagramEndPanel2Raskosina(heightPlusT12Val, planLenVal){
 
 function diagramEndPanel3Raskosina(heightPlusT12Val, planLenVal){
   // Фото-чертёж для варианта с 3 раскосинами (натуральный размер 2476×802).
-  const val = Math.round(heightPlusT12Val);           // полная высота рамы щита = высота груза + толщина доски дна
-  const planLen = Math.round(planLenVal);             // длина горизонтальной планки = ширина груза
+  const val = dimLabel(heightPlusT12Val);           // полная высота рамы щита = высота груза + толщина доски дна
+  const planLen = dimLabel(planLenVal);             // длина горизонтальной планки = ширина груза
 
   const records = [
     {type:'line', x1:13, y1:636, x2:4, y2:964},
@@ -46,9 +46,9 @@ function diagramEndPanel2Floors1Raskosina(heightPlusT12Val, floorSpanVal, planLe
   // Фото-чертёж для варианта на 2 этажа, по 1 раскосине на этаж (натуральный размер
   // 695×1051). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (нижняя/средняя планка + вертикальная планка нижнего этажа).
-  const val = Math.round(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
-  const floorSpan = Math.round(floorSpanVal);
-  const planLen = Math.round(planLenVal);          // длина горизонтальной планки = ширина груза
+  const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
+  const floorSpan = dimLabel(floorSpanVal);
+  const planLen = dimLabel(planLenVal);          // длина горизонтальной планки = ширина груза
 
   const records = [
     {type:'line', x1:568, y1:34, x2:899, y2:34},
@@ -69,9 +69,9 @@ function diagramEndPanel2Floors2Raskosina(heightPlusT12Val, floorSpanVal, planLe
   // Фото-чертёж для варианта на 2 этажа, по 2 раскосины на этаж (натуральный размер
   // 1222×1044). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (та же величина, что и на чертеже с 1 раскосиной на этаж).
-  const val = Math.round(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
-  const floorSpan = Math.round(floorSpanVal);
-  const planLen = Math.round(planLenVal);          // длина горизонтальной планки = ширина груза
+  const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
+  const floorSpan = dimLabel(floorSpanVal);
+  const planLen = dimLabel(planLenVal);          // длина горизонтальной планки = ширина груза
 
   const records = [
     {type:'line', x1:1101, y1:26, x2:1425, y2:26},
@@ -92,9 +92,9 @@ function diagramEndPanel2Floors3Raskosina(heightPlusT12Val, floorSpanVal, planLe
   // Фото-чертёж для варианта на 2 этажа, по 3 раскосины на этаж (натуральный размер
   // 1757×1030). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (та же величина, что и на остальных чертежах 2 этажей).
-  const val = Math.round(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
-  const floorSpan = Math.round(floorSpanVal);
-  const planLen = Math.round(planLenVal);          // длина горизонтальной планки = ширина груза
+  const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
+  const floorSpan = dimLabel(floorSpanVal);
+  const planLen = dimLabel(planLenVal);          // длина горизонтальной планки = ширина груза
 
   const records = [
     {type:'line', x1:120, y1:568, x2:-163, y2:566},

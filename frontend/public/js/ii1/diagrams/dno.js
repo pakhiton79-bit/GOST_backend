@@ -11,8 +11,8 @@ const DNO_IW = 2008, DNO_IH = 1212;
 // Щита торцевого) - координаты из присланной пользователем разметки фото
 // dno_ii1.jpg (2008x1212).
 function diagramDno(stojkaVal, skinVal, skidWidthVal, outerLenVal){
-  const stojka = Math.round(stojkaVal), skin = Math.round(skinVal);
-  const skidWidth = Math.round(skidWidthVal), outerLen = Math.round(outerLenVal);
+  const stojka = dimLabel(stojkaVal), skin = dimLabel(skinVal);
+  const skidWidth = dimLabel(skidWidthVal), outerLen = dimLabel(outerLenVal);
   const records = [];
   records.push(
     {type:'line', x1:102, y1:676, x2:-85, y2:794},

@@ -5,10 +5,10 @@
 const DNO_IMG_B64 = "/images/dno.png"; // натуральный размер 385x197
 
 function diagramDno(skidLenMm, tBokDoska, outerWidthMm, tBokPlanka, tTorcaPlusPlanka){
-  const skidLen   = Math.round(skidLenMm);
-  const valBok    = Math.round(tBokDoska);
-  const valWidth  = Math.round(outerWidthMm - tBokPlanka*2);
-  const valTorca  = Math.round(tTorcaPlusPlanka);
+  const skidLen   = dimLabel(skidLenMm);
+  const valBok    = dimLabel(tBokDoska);
+  const valWidth  = dimLabel(outerWidthMm - tBokPlanka*2);
+  const valTorca  = dimLabel(tTorcaPlusPlanka);
 
   const records = [
     {type:'line', x1:1903, y1:434, x2:2067, y2:523},
