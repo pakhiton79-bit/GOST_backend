@@ -27,9 +27,9 @@ function computeGost10198I1(input) {
   // Ручной ввод толщины в таблице (клиент шлёт его в manualOverrides) -
   // подставляется вместо расчётного по ГОСТ значения везде, где оно дальше
   // используется (перенесено из src/i1/calc.js исходного репозитория без
-  // изменений методики). У типа I-1 два параметра: wall.value
-  // (толщина всех досок/планок/раскосов, ключ wallValue) и толщина полоза
-  // (ключ t9Value).
+  // изменений методики). У типа I-1 у каждой детали своя
+  // толщина (ключи tDnoPlanka…tTorRaskX, см. T ниже; по ГОСТ все = wall.value)
+  // плюс толщина полоза (ключ t9Value).
   const belowGost = {};
   let overridesApplied = 0;
   function ov(key, gostValue, label) {
@@ -122,7 +122,33 @@ function computeGost10198I1(input) {
   if (mainPass.error) return { error: mainPass.error };
   let { wallRaw, kLen, plank, plankQty, plankGap } = mainPass;
 
-  const wall = { value: ov('wallValue', roundUpToAvailable(wallRaw), 'Толщина досок/планок/раскосов') };
+  const wall = { value: roundUpToAvailable(wallRaw) };
+
+  // Толщины деталей по отдельности (по указанию пользователя): по ГОСТ все
+  // они = wall.value (единая толщина досок/планок/раскосов типа I-1), но
+  // ручная правка толщины в таблице меняет только свою деталь (доп. доски -
+  // вместе с основной доской своего элемента), а все формулы, где эта
+  // толщина участвует (наружные размеры, длины других деталей, отступ
+  // крайних планок), пересчитываются.
+  const T = {
+    dnoPlanka: ov('tDnoPlanka', wall.value, 'Толщина планки дна'),
+    dnoBoard: ov('tDnoBoard', wall.value, 'Толщина доски дна'),
+    dnoRask: ov('tDnoRask', wall.value, 'Толщина раскосины дна'),
+    dnoRaskX: ov('tDnoRaskX', wall.value, 'Толщина дополнительной раскосины дна'),
+    krPlanka: ov('tKrPlanka', wall.value, 'Толщина планки крышки'),
+    krBoard: ov('tKrBoard', wall.value, 'Толщина доски крышки'),
+    krRask: ov('tKrRask', wall.value, 'Толщина раскосины крышки'),
+    krRaskX: ov('tKrRaskX', wall.value, 'Толщина дополнительной раскосины крышки'),
+    bokPlanka: ov('tBokPlanka', wall.value, 'Толщина планки бокового щита'),
+    bokBoard: ov('tBokBoard', wall.value, 'Толщина доски бокового щита'),
+    bokRask: ov('tBokRask', wall.value, 'Толщина раскосины бокового щита'),
+    bokRaskX: ov('tBokRaskX', wall.value, 'Толщина дополнительной раскосины бокового щита'),
+    torVert: ov('tTorVert', wall.value, 'Толщина вертикальной планки торца'),
+    torHoriz: ov('tTorHoriz', wall.value, 'Толщина горизонтальной планки торца'),
+    torBoard: ov('tTorBoard', wall.value, 'Толщина доски торцевого щита'),
+    torRask: ov('tTorRask', wall.value, 'Толщина раскосины торца'),
+    torRaskX: ov('tTorRaskX', wall.value, 'Толщина дополнительной раскосины торца'),
+  };
 
   // kLen/plank/plankQty/plankGap выше посчитаны по wallRaw (толщине ДО
   // округления "в наличии") - пересчитываем под итоговую wall.value, чтобы
@@ -133,8 +159,8 @@ function computeGost10198I1(input) {
   // 400-500мм) не перезапускаем - решение о толщине уже принято по расчётным
   // (не округлённым) зазорам, здесь только синхронизируем геометрию с
   // итоговым материалом.
-  kLen = L + wall.value * 4;
-  plank = plankCount(kLen, wall.value, plankOverride);
+  kLen = L + (T.torVert + T.torBoard) * 2; // длина груза + (верт. планка торца + доска торца)*2
+  plank = plankCount(kLen, (T.torVert + T.torBoard) / 2, plankOverride); // мин. отступ = верт. планка торца + доска торца
   if (plank.count === null) {
     return { error: plankLayoutError(kLen, plankOverride) };
   }
@@ -157,58 +183,58 @@ function computeGost10198I1(input) {
       warnings.push(`Толщина полоза ${skidThicknessRaw} мм менее 50 — принято 50 мм.`);
     }
     const w9 = 100;
-    const k9 = W + wall.value * 2;
+    const k9 = W + T.bokBoard * 2; // ширина груза + толщина доски бокового щита*2
     dno.push({ name: 'Полоз', t: t9, w: w9, l: k9, qty: plankQty, overrideKey: 't9Value' });
     dnoWidth = k9;
   } else {
-    const kPlanka = W + wall.value * 4;
-    dno.push({ name: 'Планка', t: wall.value, w: 100, l: kPlanka, qty: plankQty, overrideKey: 'wallValue' });
+    const kPlanka = W + (T.bokBoard + T.bokPlanka) * 2; // ширина груза + (толщина доски бок.щита + толщина планки бок.щита)*2
+    dno.push({ name: 'Планка', t: T.dnoPlanka, w: 100, l: kPlanka, qty: plankQty, overrideKey: 'tDnoPlanka' });
     dnoWidth = kPlanka;
   }
-  const spanDno = W + wall.value * 2;
+  const spanDno = W + T.bokBoard * 2; // ширина груза + толщина доски бок.щита*2 (как у крышки)
   const fbDno = fillBoards(spanDno, roundBoardWidths);
   const w12 = 100, l12 = fbDno.mainQty;
-  if (l12 > 0) dno.push({ name: 'Доска дна', t: wall.value, w: w12, l: kLen, qty: l12, overrideKey: 'wallValue' });
+  if (l12 > 0) dno.push({ name: 'Доска дна', t: T.dnoBoard, w: w12, l: kLen, qty: l12, overrideKey: 'tDnoBoard' });
   fbDno.extra.forEach((e, i) => {
     const suffix = fbDno.extra.length > 1 ? ' ' + (i + 1) : '';
-    dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty, overrideKey: 'wallValue' });
+    dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: T.dnoBoard, w: e.width, l: kLen, qty: e.qty, overrideKey: 'tDnoBoard' });
   });
 
   // --- КРЫШКА ---
   const kryshka = [];
-  const kPlankaKryshka = W + wall.value * 4; // ширина груза + (толщина доски бок.щита + толщина планки бок.щита)*2
-  kryshka.push({ name: 'Планка', t: wall.value, w: 100, l: kPlankaKryshka, qty: plankQty, overrideKey: 'wallValue' });
-  const spanKryshka = W + wall.value * 2;
+  const kPlankaKryshka = W + (T.bokBoard + T.bokPlanka) * 2; // ширина груза + (толщина доски бок.щита + толщина планки бок.щита)*2
+  kryshka.push({ name: 'Планка', t: T.krPlanka, w: 100, l: kPlankaKryshka, qty: plankQty, overrideKey: 'tKrPlanka' });
+  const spanKryshka = W + T.bokBoard * 2; // ширина груза + толщина доски бок.щита*2
   const fbKryshka = fillBoards(spanKryshka, roundBoardWidths);
   const w20 = 100, l20 = fbKryshka.mainQty;
-  if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: wall.value, w: w20, l: kLen, qty: l20, overrideKey: 'wallValue' });
+  if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: T.krBoard, w: w20, l: kLen, qty: l20, overrideKey: 'tKrBoard' });
   fbKryshka.extra.forEach((e, i) => {
     const suffix = fbKryshka.extra.length > 1 ? ' ' + (i + 1) : '';
-    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty, overrideKey: 'wallValue' });
+    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: T.krBoard, w: e.width, l: kLen, qty: e.qty, overrideKey: 'tKrBoard' });
   });
 
   // --- БОКОВОЙ ЩИТ (расчёт на 1 щит, далее удвоение) ---
   const bokovoy = [];
-  const kPlankaBok = H + wall.value * 4;
-  bokovoy.push({ name: 'Планка', t: wall.value, w: 100, l: kPlankaBok, qty: plankQty, overrideKey: 'wallValue' });
+  const kPlankaBok = H + (T.krBoard + T.dnoBoard) * 2; // высота груза + (толщина доски крышки + толщина доски дна)*2
+  bokovoy.push({ name: 'Планка', t: T.bokPlanka, w: 100, l: kPlankaBok, qty: plankQty, overrideKey: 'tBokPlanka' });
   const fbBok = fillBoards(H, roundBoardWidths);
   const w41 = 100, l41 = fbBok.mainQty;
-  if (l41 > 0) bokovoy.push({ name: 'Доска бокового щита', t: wall.value, w: w41, l: kLen, qty: l41, overrideKey: 'wallValue' });
+  if (l41 > 0) bokovoy.push({ name: 'Доска бокового щита', t: T.bokBoard, w: w41, l: kLen, qty: l41, overrideKey: 'tBokBoard' });
   fbBok.extra.forEach((e, i) => {
     const suffix = fbBok.extra.length > 1 ? ' ' + (i + 1) : '';
-    bokovoy.push({ name: 'Доска бокового щита (дополнительная)' + suffix, t: wall.value, w: e.width, l: kLen, qty: e.qty, overrideKey: 'wallValue' });
+    bokovoy.push({ name: 'Доска бокового щита (дополнительная)' + suffix, t: T.bokBoard, w: e.width, l: kLen, qty: e.qty, overrideKey: 'tBokBoard' });
   });
 
   // --- ТОРЕЦ (расчёт на 1 щит, далее удвоение) ---
   const torec = [];
-  torec.push({ name: 'Вертикальная планка', t: wall.value, w: 100, l: H, qty: 2, overrideKey: 'wallValue' });
-  torec.push({ name: 'Горизонтальная планка', t: wall.value, w: 100, l: horizPlankaLen, qty: 2, overrideKey: 'wallValue' });
+  torec.push({ name: 'Вертикальная планка', t: T.torVert, w: 100, l: H, qty: 2, overrideKey: 'tTorVert' });
+  torec.push({ name: 'Горизонтальная планка', t: T.torHoriz, w: 100, l: horizPlankaLen, qty: 2, overrideKey: 'tTorHoriz' });
   const fbTorec = fillBoards(H, roundBoardWidths);
   const w31 = 100, l31 = fbTorec.mainQty;
-  if (l31 > 0) torec.push({ name: 'Доска торцевого щита', t: wall.value, w: w31, l: W, qty: l31, overrideKey: 'wallValue' });
+  if (l31 > 0) torec.push({ name: 'Доска торцевого щита', t: T.torBoard, w: w31, l: W, qty: l31, overrideKey: 'tTorBoard' });
   fbTorec.extra.forEach((e, i) => {
     const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
-    torec.push({ name: 'Доска торцевого щита (дополнительная)' + suffix, t: wall.value, w: e.width, l: W, qty: e.qty, overrideKey: 'wallValue' });
+    torec.push({ name: 'Доска торцевого щита (дополнительная)' + suffix, t: T.torBoard, w: e.width, l: W, qty: e.qty, overrideKey: 'tTorBoard' });
   });
 
   // --- Раскосина (укосина) ---
@@ -216,9 +242,9 @@ function computeGost10198I1(input) {
   // добавляется встречная из двух кусков, упирающихся в неё - кусков вдвое
   // больше, длина каждого = (длина обычной раскосины - её ширина)/2.
   const RASKOSINA_W = 100;
-  function pushXRaskosina(arr, len, qty) {
+  function pushXRaskosina(arr, len, qty, t, key) {
     if (!xRaskosina) return;
-    arr.push({ name: 'Раскосина (дополнительная)', t: wall.value, w: RASKOSINA_W, l: (len - RASKOSINA_W) / 2, qty: qty * 2, overrideKey: 'wallValue' });
+    arr.push({ name: 'Раскосина (дополнительная)', t: t, w: RASKOSINA_W, l: (len - RASKOSINA_W) / 2, qty: qty * 2, overrideKey: key });
   }
   if (raskosinaNeeded) {
     const torecLegH = H - 200;
@@ -227,8 +253,8 @@ function computeGost10198I1(input) {
       return { error: `Недостаточно места для раскосины торца (катеты должны быть >0, получено ${Math.round(torecLegH)}×${Math.round(torecLegW)} мм) — расчёт не выполняется.` };
     }
     const torecRaskosinaLen = Math.sqrt(torecLegH * torecLegH + torecLegW * torecLegW);
-    torec.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: torecRaskosinaLen, qty: 1, overrideKey: 'wallValue' });
-    pushXRaskosina(torec, torecRaskosinaLen, 1);
+    torec.push({ name: 'Раскосина', t: T.torRask, w: RASKOSINA_W, l: torecRaskosinaLen, qty: 1, overrideKey: 'tTorRask' });
+    pushXRaskosina(torec, torecRaskosinaLen, 1, T.torRaskX, 'tTorRaskX');
 
     // Раскосины крышки и дна можно убрать отдельной галочкой
     // (removeLidBottomRaskosina) - раскосины торца и бокового щита эта
@@ -236,18 +262,18 @@ function computeGost10198I1(input) {
     const raskosinaQty = plankQty - 1;
     if (raskosinaQty > 0) {
       const bokRaskosinaLen = Math.sqrt(H * H + plankGap * plankGap);
-      bokovoy.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: bokRaskosinaLen, qty: raskosinaQty, overrideKey: 'wallValue' });
-      pushXRaskosina(bokovoy, bokRaskosinaLen, raskosinaQty);
+      bokovoy.push({ name: 'Раскосина', t: T.bokRask, w: RASKOSINA_W, l: bokRaskosinaLen, qty: raskosinaQty, overrideKey: 'tBokRask' });
+      pushXRaskosina(bokovoy, bokRaskosinaLen, raskosinaQty, T.bokRaskX, 'tBokRaskX');
 
       if (!removeLidBottomRaskosina) {
         const kryshkaRaskosinaLen = Math.sqrt(kPlankaKryshka * kPlankaKryshka + plankGap * plankGap);
-        kryshka.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: kryshkaRaskosinaLen, qty: raskosinaQty, overrideKey: 'wallValue' });
-        pushXRaskosina(kryshka, kryshkaRaskosinaLen, raskosinaQty);
+        kryshka.push({ name: 'Раскосина', t: T.krRask, w: RASKOSINA_W, l: kryshkaRaskosinaLen, qty: raskosinaQty, overrideKey: 'tKrRask' });
+        pushXRaskosina(kryshka, kryshkaRaskosinaLen, raskosinaQty, T.krRaskX, 'tKrRaskX');
 
-        const dnoLegW = W + wall.value * 2;
+        const dnoLegW = W + T.bokBoard * 2; // ширина груза + толщина доски бок.щита*2 (как у крышки)
         const dnoRaskosinaLen = Math.sqrt(dnoLegW * dnoLegW + plankGap * plankGap);
-        dno.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: dnoRaskosinaLen, qty: raskosinaQty, overrideKey: 'wallValue' });
-        pushXRaskosina(dno, dnoRaskosinaLen, raskosinaQty);
+        dno.push({ name: 'Раскосина', t: T.dnoRask, w: RASKOSINA_W, l: dnoRaskosinaLen, qty: raskosinaQty, overrideKey: 'tDnoRask' });
+        pushXRaskosina(dno, dnoRaskosinaLen, raskosinaQty, T.dnoRaskX, 'tDnoRaskX');
       }
     }
   }
@@ -265,13 +291,12 @@ function computeGost10198I1(input) {
   // (толщина вертикальной планки торца + толщина доски торца)×2 + длина
   // груза; ширина = (толщина планки бока + толщина доски бока)×2 + ширина
   // груза. При полозе в опоре снизу - та же (неокруглённая) толщина, что и
-  // t9 выше; при планке - wall.value (планка правилу "в наличии" подчиняется
-  // как обычно). Остальные толщины в этих формулах у типа I-1 все общие
-  // (wall.value).
-  const bottomSupport = skidEnabled ? skidT : wall.value;
-  const outerH = bottomSupport + wall.value * 3 + H;
-  const outerW = W + wall.value * 4;
-  const outerL = L + wall.value * 4;
+  // t9 выше; при планке - толщина планки дна (планка правилу "в наличии"
+  // подчиняется как обычно). Каждая толщина - своей детали (T выше).
+  const bottomSupport = skidEnabled ? skidT : T.dnoPlanka;
+  const outerH = bottomSupport + T.dnoBoard + H + T.krBoard + T.krPlanka;
+  const outerW = W + (T.bokPlanka + T.bokBoard) * 2;
+  const outerL = L + (T.torVert + T.torBoard) * 2;
 
   // --- Итоговый расход пиломатериала ---
   const volDno = dno.reduce((s, r) => s + vol(r.t, r.w, r.l, r.qty), 0);
@@ -303,16 +328,19 @@ function computeGost10198I1(input) {
   // доски бока*2) + (высота груза + толщина доски крышки*2))*2; лент 2
   // (выводится "… мм × 2" под всеми элементами, см. calculate() в frontend/public/js/i1/calc-i1.js). В объём
   // пиломатериала, массу ящика и норму времени не входит - это не
-  // пиломатериал. У типа I-1 доски бока и крышки - одной толщины wall.value.
+  // пиломатериал. Толщины - доски бокового щита и доски крышки (T выше).
   // Строка отдельного раздела endTape (а не одно число) - чтобы на неё
   // распространялся общий механизм ручных правок таблицы (tableEdits,
   // withTableEdits в server.js с множителем раздела 0 - в объём не входит).
-  const endTape = addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + wall.value * 2) + (H + wall.value * 2)) * 2 - 1e-9), qty: 2 }] : [];
+  const endTape = addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + T.bokBoard * 2) + (H + T.krBoard * 2)) * 2 - 1e-9), qty: 2 }] : [];
 
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
     dnoWidth, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
+    // Толщина у выступающего угла первой планки на чертежах Дна/Крышки/Бока
+    // (своя у каждого щита: у дна - полоз либо планка дна).
+    drawPlankT: { dno: skidEnabled ? skidT : T.dnoPlanka, kryshka: T.krPlanka, bokovoy: T.bokPlanka },
     standardPlankCount, standardPlankGap, endTape,
   };
   const negField = findNegativeField(result, '');
