@@ -6,6 +6,14 @@ const BOK_I1_4_IMG_B64  = "/images/bok_i1_4planks.jpg"; // натуральны�
 const BOK_I1_2R_IMG_B64 = "/images/bok_i1_2planks_1raskosina.jpg"; // натуральный размер 1141x891 (2 планки, 1 раскосина)
 const BOK_I1_3R_IMG_B64 = "/images/bok_i1_3planks_2raskosina.jpg"; // натуральный размер 1812x909 (3 планки, 2 раскосины)
 const BOK_I1_4R_IMG_B64 = "/images/bok_i1_4planks_3raskosina.jpg"; // натуральный размер 2212x790 (4 планки, 3 раскосины)
+// X-образные раскосины (галочка xRaskosina) - те же картинки с отражённой
+// раскосиной, спрятанной под исходной; калибровка та же (сгенерированы из
+// исходных программно).
+const BOK_I1_X_IMG = {
+  '1_2': "/images/bok_i1_2planks_1raskosina_x.jpg",
+  '1_3': "/images/bok_i1_3planks_2raskosina_x.jpg",
+  '1_4': "/images/bok_i1_4planks_3raskosina_x.jpg",
+};
 
 // Калибровка по разметке, присланной пользователем для bok_i1_2planks.jpg
 // (records с линиями/стрелками для варианта "2 планки, без раскосины") -
@@ -122,6 +130,12 @@ function bokGeomKey(plankQty, hasRaskosinaVal){
   return (hasRaskosinaVal ? '1' : '0') + '_' + n;
 }
 
-function diagramBokovoy(heightVal, plankTVal, edgeVal, boardLenVal, plankQty, hasRaskosinaVal){
-  return diagramBokPhoto(BOK_I1_GEOM[bokGeomKey(plankQty, hasRaskosinaVal)], heightVal, plankTVal, edgeVal, boardLenVal, 'Щит боковой');
+function bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
+  const key = bokGeomKey(plankQty, hasRaskosinaVal);
+  const g = BOK_I1_GEOM[key];
+  return (xRaskosinaVal && BOK_I1_X_IMG[key]) ? Object.assign({}, g, {img: BOK_I1_X_IMG[key]}) : g;
+}
+
+function diagramBokovoy(heightVal, plankTVal, edgeVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal){
+  return diagramBokPhoto(bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, boardLenVal, 'Щит боковой');
 }

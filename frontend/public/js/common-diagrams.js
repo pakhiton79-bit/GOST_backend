@@ -121,7 +121,9 @@ function diagramPlaceholder(label){
 // Бок) - широкие "приземистые" фото совсем другой пропорции, и при том же
 // 210px торец на их фоне выглядел непропорционально крупным (само фото почти
 // квадратное) - там передаётся своё, меньшее значение.
-function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverride){
+// imgOverride - необязательная подмена картинки при той же калибровке
+// (тип I-1: X-образные раскосины, см. diagramTorec в js/i1/diagrams/torec.js).
+function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverride, imgOverride){
   // Фото-чертёж для варианта с 1 раскосиной (натуральный размер 1352×1158).
   // Подпись высоты — полная высота рамы щита = высота груза + толщина доски дна.
   const val = Math.round(heightPlusT12Val);
@@ -136,7 +138,7 @@ function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverr
     {type:'double', x1:30, y1:1275, x2:1330, y2:1277, lx:650, ly:1275, text: innerWidth+' мм'}
   ];
 
-  return renderDiagram(TOREC_1_IMG_B64, 'Щит торцевой (1 раскосина) - схема расположения деталей', 1352, 1158, records, widthPxOverride || 210, photoStrokeScale(1352));
+  return renderDiagram(imgOverride || TOREC_1_IMG_B64, 'Щит торцевой (1 раскосина) - схема расположения деталей', 1352, 1158, records, widthPxOverride || 210, photoStrokeScale(1352));
 }
 
 function diagramEndPanelNoRaskosina(heightPlusT12Val, widthVal, widthPxOverride){

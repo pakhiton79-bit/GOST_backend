@@ -48,6 +48,7 @@ async function calculate(){
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
     addRaskosina: document.getElementById('addRaskosina').checked,
+    xRaskosina: document.getElementById('xRaskosina').checked,
     plankLayoutMode,
     plankLayoutValue,
     availableThicknesses,
@@ -123,10 +124,10 @@ async function calculate(){
   }
 
   let tablesHtml = '';
-  tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.dnoWidth, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.dno) + `</div>`;
-  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.kPlankaKryshka, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
-  tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.torec) + `</div>`;
-  tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.raskosinaNeeded) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
+  tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.dnoWidth, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina) + `</div>` + renderSection('', calc.dno) + `</div>`;
+  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramKryshka(calc.kPlankaKryshka, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina) + `</div>` + renderSection('', calc.kryshka) + `</div>`;
+  tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina) + `</div>` + renderSection('', calc.torec) + `</div>`;
+  tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina) + `</div>` + renderSection('', calc.bokovoy) + `</div>`;
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));

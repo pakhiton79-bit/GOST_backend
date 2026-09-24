@@ -11,8 +11,13 @@
 const BOX_I1_IMG_B64 = "/images/box_i1.jpg";
 
 const I1_TOREC_WIDTH = 150;
-function diagramTorec(heightVal, widthVal, hasRaskosinaVal){
+// X-образные раскосины (галочка xRaskosina): та же картинка, где раскосина
+// отражена, а отражение спрятано под исходной доской (исходная целая,
+// встречная - из двух кусков). *_x сгенерированы из исходных программно -
+// калибровка стрелок та же.
+const TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
+function diagramTorec(heightVal, widthVal, hasRaskosinaVal, xRaskosinaVal){
   return hasRaskosinaVal
-    ? diagramEndPanel1Raskosina(heightVal, widthVal, I1_TOREC_WIDTH)
+    ? diagramEndPanel1Raskosina(heightVal, widthVal, I1_TOREC_WIDTH, xRaskosinaVal ? TOREC_1_X_IMG_B64 : undefined)
     : diagramEndPanelNoRaskosina(heightVal, widthVal, I1_TOREC_WIDTH);
 }

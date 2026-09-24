@@ -11,9 +11,9 @@ const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('
 // сосны/ели.
 const WOOD_DENSITY_KG_M3 = 500;
 
-// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
+// input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,xRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -198,6 +198,14 @@ function computeGost10198I1(input) {
   });
 
   // --- Раскосина (укосина) ---
+  // X-образные раскосины (галочка xRaskosina): к каждой обычной раскосине
+  // добавляется встречная из двух кусков, упирающихся в неё - кусков вдвое
+  // больше, длина каждого = (длина обычной раскосины - её ширина)/2.
+  const RASKOSINA_W = 100;
+  function pushXRaskosina(arr, len, qty) {
+    if (!xRaskosina) return;
+    arr.push({ name: 'Раскосина (дополнительная)', t: wall.value, w: RASKOSINA_W, l: (len - RASKOSINA_W) / 2, qty: qty * 2 });
+  }
   if (raskosinaNeeded) {
     const torecLegH = H - 200;
     const torecLegW = horizPlankaLen - 200;
@@ -205,7 +213,8 @@ function computeGost10198I1(input) {
       return { error: `Недостаточно места для раскосины торца (катеты должны быть >0, получено ${Math.round(torecLegH)}×${Math.round(torecLegW)} мм) — расчёт не выполняется.` };
     }
     const torecRaskosinaLen = Math.sqrt(torecLegH * torecLegH + torecLegW * torecLegW);
-    torec.push({ name: 'Раскосина', t: wall.value, w: 100, l: torecRaskosinaLen, qty: 1 });
+    torec.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: torecRaskosinaLen, qty: 1 });
+    pushXRaskosina(torec, torecRaskosinaLen, 1);
 
     // Раскосины крышки и дна можно убрать отдельной галочкой
     // (removeLidBottomRaskosina) - раскосины торца и бокового щита эта
@@ -213,15 +222,18 @@ function computeGost10198I1(input) {
     const raskosinaQty = plankQty - 1;
     if (raskosinaQty > 0) {
       const bokRaskosinaLen = Math.sqrt(H * H + plankGap * plankGap);
-      bokovoy.push({ name: 'Раскосина', t: wall.value, w: 100, l: bokRaskosinaLen, qty: raskosinaQty });
+      bokovoy.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: bokRaskosinaLen, qty: raskosinaQty });
+      pushXRaskosina(bokovoy, bokRaskosinaLen, raskosinaQty);
 
       if (!removeLidBottomRaskosina) {
         const kryshkaRaskosinaLen = Math.sqrt(kPlankaKryshka * kPlankaKryshka + plankGap * plankGap);
-        kryshka.push({ name: 'Раскосина', t: wall.value, w: 100, l: kryshkaRaskosinaLen, qty: raskosinaQty });
+        kryshka.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: kryshkaRaskosinaLen, qty: raskosinaQty });
+        pushXRaskosina(kryshka, kryshkaRaskosinaLen, raskosinaQty);
 
         const dnoLegW = W + wall.value * 2;
         const dnoRaskosinaLen = Math.sqrt(dnoLegW * dnoLegW + plankGap * plankGap);
-        dno.push({ name: 'Раскосина', t: wall.value, w: 100, l: dnoRaskosinaLen, qty: raskosinaQty });
+        dno.push({ name: 'Раскосина', t: wall.value, w: RASKOSINA_W, l: dnoRaskosinaLen, qty: raskosinaQty });
+        pushXRaskosina(dno, dnoRaskosinaLen, raskosinaQty);
       }
     }
   }
@@ -278,7 +290,7 @@ function computeGost10198I1(input) {
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
-    dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, kPlankaKryshka, H, W, wall,
+    dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
     standardPlankCount, standardPlankGap,
   };
   const negField = findNegativeField(result, '');
