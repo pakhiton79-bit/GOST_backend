@@ -81,8 +81,12 @@ function refuseAction(reason){
     }, 1500);
   }
 }
-// Печать/PDF разрешены только при актуальном успешном расчёте (статус
-// «Расчёт выполнен»). Возвращает true, если можно печатать.
+// Печать/PDF разрешены, если на экране есть результаты расчёта - даже если
+// после него меняли таблицу или параметры и не нажимали «Рассчитать» (по
+// указанию пользователя): печатается то, что на экране, без пересчёта и
+// без пометок. Нельзя только во время расчёта и когда результатов нет
+// (ещё не считали либо расчёт заблокирован ошибкой - блок #results скрыт).
+// Возвращает true, если можно печатать.
 function printAllowed(){
   if(printInProgress) return false; // уже готовится - повторное нажатие просто игнорируется
   if(calcInProgress){
@@ -90,9 +94,8 @@ function printAllowed(){
     return false;
   }
   const results = document.getElementById('results');
-  const check = document.getElementById('calcCheck');
-  if(!results || results.style.display !== 'block' || !check || !check.classList.contains('active')){
-    refuseAction('Печать недоступна: расчёт не выполнен или данные изменены — сначала нажмите «Рассчитать».');
+  if(!results || results.style.display !== 'block'){
+    refuseAction('Печать недоступна: нет результатов расчёта — сначала нажмите «Рассчитать».');
     return false;
   }
   return true;
