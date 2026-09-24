@@ -127,11 +127,13 @@ async function calculate(){
   tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramKryshka(calc.kPlankaKryshka, calc.wall.value, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.kryshka, 'kryshka') + `</div>`;
   tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.torec, 'torec') + `</div>`;
   tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-size-group="i1-panels">` + diagramBokovoy(calc.H, calc.wall.value, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, i1FramePx) + `</div>` + renderSection('', calc.bokovoy, 'bokovoy') + `</div>`;
-  // Лента обшивки торцов - одной строкой под всеми элементами и чертежами
-  // (по указанию пользователя), попадает и в печать/PDF (buildPrintHtml
-  // берёт содержимое #boardTables целиком).
+  // Лента обшивки торцов - под всеми элементами и чертежами, отдельной
+  // табличкой 1×1 на всю ширину (под чертежами и под таблицами деталей),
+  // текст целиком в одной ячейке (по указанию пользователя). Попадает и в
+  // печать/PDF (buildPrintHtml берёт содержимое #boardTables целиком). Без
+  // data-section - в ручные правки таблицы (readTableEdits) не входит.
   if(calc.endTapeLength){
-    tablesHtml += `<div class="part-title">Обшивочная лента ${calc.endTapeLength} мм × 2</div>`;
+    tablesHtml += `<div class="spec-table tape-table"><table><tbody><tr><td>Обшивочная лента ${calc.endTapeLength} мм × 2</td></tr></tbody></table></div>`;
   }
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;

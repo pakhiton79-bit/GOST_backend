@@ -600,6 +600,9 @@
     margin:22px 0 8px;
   }
   .part-title:first-child{margin-top:0;}
+  /* Лента обшивки торцов (I-1) - табличка 1×1 на всю ширину под всеми
+     элементами, см. calculate() в src/i1/calc.js. */
+  .spec-table.tape-table{margin-top:22px;}
 
   .note{
     font-size:13px;
@@ -997,6 +1000,10 @@
   }
   #printArea .spec-table th{color:#36394A;text-transform:uppercase;font-size:calc(var(--pk)*10px);letter-spacing:0;font-weight:700;}
   #printArea .spec-table td.num, #printArea .spec-table th.num{text-align:right;}
+  /* Табличка ленты обшивки торцов - одна ячейка на всю ширину (общие
+     правила выше задают первой колонке 48%). */
+  #printArea .spec-table.tape-table{margin-top:calc(var(--pk)*10px);}
+  #printArea .spec-table.tape-table td{width:100%;}
 
   #printArea .part-title{font-size:calc(var(--pk)*20px);font-weight:700;color:#8A4B26;margin:0 0 calc(var(--pk)*6px);}
 
