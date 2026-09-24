@@ -48,7 +48,7 @@ const PRINT_DIAGRAM_FACTOR = 0.885;
 // null/любое другое значение - все три скрыты (до первого расчёта, либо
 // только что открытая пустая форма).
 function setCalcStatus(state){
-  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError', loading:'calcLoading'};
+  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError', loading:'calcLoading', printing:'calcPrinting', pdf:'calcPdf'};
   Object.keys(ids).forEach(key=>{
     const el = document.getElementById(ids[key]);
     if(el) el.classList.toggle('active', key === state);
@@ -107,6 +107,31 @@ function waitImagesReady(scaleBox){
   const ready = Promise.all(images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()));
   return Promise.race([ready, new Promise(r => setTimeout(r, 3000))]);
 }
+// Индикатор подготовки печати/PDF (по указанию пользователя - как «Идёт
+// расчёт…»): статус 'printing' («Подготовка к печати…») или 'pdf'
+// («Создание PDF-файла…») со спиннером; кнопка «Рассчитать» на это время
+// недоступна. По окончании возвращается прежний статус (если за это время
+// его не сменили - напр. правкой параметров).
+function currentCalcStatus(){
+  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError', loading:'calcLoading', printing:'calcPrinting', pdf:'calcPdf'};
+  for(const k of Object.keys(ids)){ const el = document.getElementById(ids[k]); if(el && el.classList.contains('active')) return k; }
+  return null;
+}
+function beginPrintJob(kind){
+  printInProgress = true;
+  const prev = currentCalcStatus();
+  const btn = document.getElementById('calcBtn');
+  if(btn) btn.disabled = true;
+  setCalcStatus(kind);
+  // Кадр отрисовки - чтобы индикатор показался до тяжёлой сборки листа.
+  return new Promise(r => requestAnimationFrame(() => setTimeout(() => r(prev), 0)));
+}
+function endPrintJob(kind, prev){
+  printInProgress = false;
+  const btn = document.getElementById('calcBtn');
+  if(btn) btn.disabled = calcInProgress;
+  if(currentCalcStatus() === kind) setCalcStatus(prev);
+}
 function setCalcInProgress(v){
   calcInProgress = v;
   const btn = document.getElementById('calcBtn');
@@ -118,7 +143,7 @@ function setCalcInProgress(v){
 // перед расчётом - чтобы индикатор успел показаться и в статичной версии,
 // где расчёт синхронный.
 async function calculate(){
-  if(calcInProgress) return;
+  if(calcInProgress || printInProgress) return;
   setCalcInProgress(true);
   setCalcStatus('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -170,7 +195,7 @@ function updateResetButton(){
   if(btn) btn.hidden = !document.querySelector('#boardTables [data-user-edited="true"]');
 }
 function resetTableEdits(){
-  if(calcInProgress) return;
+  if(calcInProgress || printInProgress) return;
   document.querySelectorAll('#boardTables [data-user-edited]').forEach(el => el.removeAttribute('data-user-edited'));
   updateResetButton();
   calculate();
@@ -309,21 +334,21 @@ function buildAndSizePrintArea(){
 
 function printBox(){
   if(!printAllowed()) return;
-  printInProgress = true;
-
-  buildAndSizePrintArea();
-  const scaleBox = document.getElementById('printScale');
-
   // Важно: сразу после innerHTML браузер мог ещё не декодировать вставленные
   // <img> (чертежи, общий вид ящика, водяной знак) — их scrollHeight в этот
   // момент может быть занижен. Раньше это скрывалось запасом по высоте;
   // как только запас исчез (например, из-за добавленного комментария),
   // страница начала не помещаться на печати, хотя при замере «влезала».
   // Поэтому ждём decode() всех картинок и только потом меряем и подгоняем.
-  waitImagesReady(scaleBox).then(()=>{
+  let prev = null;
+  beginPrintJob('printing').then(p=>{
+    prev = p;
+    buildAndSizePrintArea();
+    return waitImagesReady(document.getElementById('printScale'));
+  }).then(()=>{
     fitPrintAreaToOnePage(document.getElementById('printArea'));
     window.print();
-  }).finally(()=>{ printInProgress = false; });
+  }).finally(()=>{ endPrintJob('printing', prev); });
 }
 
 // Стрелки/линии размеров на чертежах (записи с x1/y1/x2/y2 в records, см.
@@ -468,11 +493,12 @@ function downloadPdf(){
     refuseAction('Не удалось подготовить PDF. Обновите страницу или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
     return;
   }
-  printInProgress = true;
-
-  buildAndSizePrintArea();
-  const scaleBox = document.getElementById('printScale');
-  waitImagesReady(scaleBox).then(()=>{
+  let prev = null;
+  beginPrintJob('pdf').then(p=>{
+    prev = p;
+    buildAndSizePrintArea();
+    return waitImagesReady(document.getElementById('printScale'));
+  }).then(()=>{
     const printArea = document.getElementById('printArea');
     fitPrintAreaToOnePage(printArea);
     bakeDiagramArrowStrokeWidths(printArea);
@@ -508,7 +534,7 @@ function downloadPdf(){
     doc.save('gost-10198-91-raschet.pdf');
   }).catch(() => {
     refuseAction('Не удалось создать PDF-файл. Попробуйте ещё раз или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
-  }).finally(() => { printInProgress = false; });
+  }).finally(() => { endPrintJob('pdf', prev); });
 }
 
 // Подстраховка на случай печати НЕ через кнопку «Печать»/«Скачать PDF»

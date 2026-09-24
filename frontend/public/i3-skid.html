@@ -141,6 +141,8 @@
     <button type="button" class="btn-secondary reset-btn" id="resetEditsBtn" onclick="resetTableEdits()" hidden>Сбросить до стандартных значений</button>
     <span class="calc-status">
       <span class="calc-loading" id="calcLoading"><span class="spinner" aria-hidden="true"></span>Идёт расчёт…</span>
+      <span class="calc-loading" id="calcPrinting"><span class="spinner" aria-hidden="true"></span>Подготовка к печати…</span>
+      <span class="calc-loading" id="calcPdf"><span class="spinner" aria-hidden="true"></span>Создание PDF-файла…</span>
       <span class="calc-check" id="calcCheck"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Расчёт выполнен</span>
       <span class="calc-outdated" id="calcOutdated"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="8" y1="4" x2="8" y2="8.7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1.1" fill="#fff"/></svg></span>Нажмите «Рассчитать»</span>
       <span class="calc-error" id="calcError"><span class="mark mark-error"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>Расчёт не проведён</span>
