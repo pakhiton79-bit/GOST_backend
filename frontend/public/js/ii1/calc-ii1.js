@@ -157,7 +157,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
   if(e.target.classList.contains('editable-cell')){
     // Правка ячейки НЕ пересчитывает итоги сразу (по указанию пользователя) -
     // только помечает ячейку как исправленную и расчёт как устаревший
-    // ("Расчёт не проведён"); учтётся при нажатии "Рассчитать" - на сервере
+    // (подсказка «Нажмите «Рассчитать»»); учтётся при нажатии "Рассчитать" - на сервере
     // (толщина с data-override - через readManualOverrides(), остальное -
     // через readTableEdits(), см. common-print.js / withTableEdits в
     // backend/server.js).

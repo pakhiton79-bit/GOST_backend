@@ -106,18 +106,6 @@
         <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
       </label>
       <label>
-        <input type="checkbox" id="removeLidBottomRaskosina">
-        <span>Убрать раскосины крышки и дна<span class="option-hint">Раскосины торцевого и бокового щитов остаются как обычно</span></span>
-      </label>
-      <label>
-        <input type="checkbox" id="addRaskosina">
-        <span>Добавить раскосины<span class="option-hint">Раскосины появляются на всех деталях независимо от условий ГОСТ (высота/длина/плотность). Сочетается с галочкой «Убрать раскосины крышки и дна» — она по-прежнему снимает раскосины только с них</span></span>
-      </label>
-      <label>
-        <input type="checkbox" id="xRaskosina">
-        <span>X-образные раскосины<span class="option-hint">К каждой раскосине добавляется встречная из двух кусков — их вдвое больше, длина каждого = (длина раскосины − её ширина)/2</span></span>
-      </label>
-      <label>
         <input type="checkbox" id="customPlankCount" onchange="onPlankLayoutCheckboxChange('count')">
         <span>Настроить число поясов планок<span class="option-hint">Штатно — минимум поясов с шагом между ними не более 700 мм</span></span>
       </label>
@@ -129,7 +117,7 @@
       </div>
       <label>
         <input type="checkbox" id="customPlankGap" onchange="onPlankLayoutCheckboxChange('gap')">
-        <span>Настроить расстояние между краями поясов планок<span class="option-hint">Можно выбрать любое значение, не больше длины доски</span></span>
+        <span>Настроить расстояние между краями поясов планок</span>
       </label>
       <div id="plankGapRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
@@ -137,6 +125,18 @@
           <input type="number" id="plankGapInput" step="1" min="1" max="20000" oninput="onPlankGapInputChange()">
         </div>
       </div>
+      <label>
+        <input type="checkbox" id="addRaskosina">
+        <span>Добавить раскосины<span class="option-hint">Раскосины появляются на всех деталях независимо от условий ГОСТ</span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="xRaskosina">
+        <span>X-образные раскосины</span>
+      </label>
+      <label>
+        <input type="checkbox" id="removeLidBottomRaskosina">
+        <span>Убрать раскосины крышки и дна<span class="option-hint">Раскосины торцевого и бокового щитов остаются как обычно</span></span>
+      </label>
     </div>
   </div>
 
@@ -144,7 +144,7 @@
     <button onclick="calculate()">Рассчитать</button>
     <span class="calc-status">
       <span class="calc-check" id="calcCheck"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Расчёт выполнен</span>
-      <span class="calc-outdated" id="calcOutdated"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="8" y1="4" x2="8" y2="8.7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1.1" fill="#fff"/></svg></span>Расчёт не проведён</span>
+      <span class="calc-outdated" id="calcOutdated"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="8" y1="4" x2="8" y2="8.7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1.1" fill="#fff"/></svg></span>Нажмите «Рассчитать»</span>
       <span class="calc-error" id="calcError"><span class="mark mark-error"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>Расчёт не проведён</span>
     </span>
     <button class="print-btn btn-secondary" onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5V2.5h7v3"/><rect x="3" y="5.5" width="10" height="5" rx="0.8"/><path d="M4.5 9.5v4h7v-4"/><line x1="6" y1="11.5" x2="10" y2="11.5"/></svg>Печать</button>

@@ -150,7 +150,7 @@ function initTimeSettings(storageKey){
 
   // По указанию пользователя - настройки нормы времени, как и любые другие
   // параметры, применяются только по «Рассчитать» (на сервере): здесь только сохраняем их и помечаем расчёт как устаревший
-  // («Расчёт не проведён», см. invalidateCalc()).
+  // (подсказка «Нажмите «Рассчитать»», см. invalidateCalc()).
   function applySettings(next){
     saveTimeSettings(storageKey, next);
     if(typeof invalidateCalc === 'function') invalidateCalc();
