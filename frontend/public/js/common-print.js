@@ -133,8 +133,30 @@ async function calculate(){
     const check = document.getElementById('calcCheck'), errEl = document.getElementById('err');
     if(check && check.classList.contains('active') && errEl && lastRefusalText && errEl.textContent === lastRefusalText) errEl.textContent = '';
     lastRefusalText = '';
+    showManualEditsWarning();
     updateResetButton();
   }
+}
+// Предупреждение о ручных правках (по указанию пользователя): правки таблиц
+// сохраняются между расчётами и заменяют расчётные значения - после
+// успешного расчёта, если они есть, в общий блок предупреждений (#warningsTop,
+// только на экране) добавляется строка об этом; иначе после смены исходных
+// данных (напр. числа поясов планок) казалось бы, что «Рассчитать» ничего не
+// сделал - ручное значение в таблице оставалось прежним.
+const MANUAL_EDITS_WARNING = 'В таблицах есть ручные правки (выделены цветом) — они заменяют расчётные значения. Чтобы вернуть расчётные, нажмите «Сбросить до стандартных значений».';
+function showManualEditsWarning(){
+  const el = document.getElementById('warningsTop');
+  if(!el) return;
+  const old = el.querySelector('.manual-edits-warning');
+  if(old) old.remove();
+  const check = document.getElementById('calcCheck');
+  const hasEdits = !!document.querySelector('#boardTables [data-user-edited="true"]');
+  if(!hasEdits || !check || !check.classList.contains('active')) return;
+  if(!el.innerHTML.trim()){
+    el.innerHTML = '<div style="color:var(--warn);margin-bottom:10px;font-weight:700;">Внимание:</div>';
+  }
+  el.insertAdjacentHTML('beforeend', `<div class="manual-edits-warning" style="margin-bottom:8px;">⚠ ${MANUAL_EDITS_WARNING}</div>`);
+  el.style.display = 'block';
 }
 // Кнопка «Сбросить до стандартных значений» - видна, пока в таблицах есть
 // ручные правки; сбрасывает их все (толщины, размеры, количество, лента) и
