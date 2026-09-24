@@ -5,24 +5,15 @@
 // THICKNESS_STORAGE_KEY). Порт src/common-timesettings.js исходного
 // (фронтенд-only) репозитория pakhiton79-bit/GOST_10198-91 - отличие: там
 // computeNormaVremeni() и есть источник итогового значения нормы времени
-// (расчёт целиком в браузере), здесь тот же расчёт дублируется клиентом
-// только для мгновенного отклика на ползунки (ручные правки таблицы
-// деталей пересчитываются только на сервере, по «Рассчитать» - см.
-// withTableEdits в backend/server.js) - основной путь: baseProductivity/
-// timeCoeff уходят в теле запроса на сервер (POST /api/*/calculate,
-// computeNormaVremeni() в backend/src/helpers.js) вместе с остальными
-// входными данными, и итоговое normaVremeni приходит уже оттуда (calc.normaVremeni).
+// (расчёт целиком в браузере), здесь норма времени считается только на
+// сервере: baseProductivity/timeCoeff уходят в теле запроса (POST
+// /api/*/calculate, computeNormaVremeni() в backend/src/helpers.js) вместе
+// с остальными входными данными, и итоговое normaVremeni приходит уже
+// оттуда (calc.normaVremeni). Изменение настроек в шестерёнке только
+// сохраняет их и помечает расчёт как устаревший - см. applySettings ниже.
 const TIME_SETTINGS_PRODUCTIVITY_STEPS = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09];
 const TIME_SETTINGS_COEFF_STEPS = [0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0];
 const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.0 };
-
-// totalVolume последнего расчёта - запоминается при каждом вызове
-// computeNormaVremeni()/setTimeSettingsLastVolume(), чтобы при изменении
-// ползунков в уже открытой шестерёнке можно
-// было сразу пересчитать и обновить плитку, не заставляя пользователя
-// заново нажимать «Рассчитать» (полный пересчёт на сервере учтёт новые
-// настройки в любом случае при следующем нажатии).
-let _timeSettingsLastVolume = null;
 
 function loadTimeSettings(storageKey){
   try{
@@ -42,21 +33,6 @@ function loadTimeSettings(storageKey){
 
 function saveTimeSettings(storageKey, settings){
   try{ localStorage.setItem(storageKey, JSON.stringify(settings)); }catch(e){}
-}
-
-function computeNormaVremeni(totalVolume, storageKey){
-  _timeSettingsLastVolume = totalVolume;
-  const s = loadTimeSettings(storageKey);
-  return Math.ceil((totalVolume / s.baseProductivity) * s.timeCoeff * 10 - 1e-9) / 10;
-}
-
-// Основной путь расчёта (calculate() в calc-i1.js/calc-ii1.js/app-i3.js) не
-// проходит через computeNormaVremeni() выше (normaVremeni там уже приходит
-// готовым с сервера) - вызывается явно сразу после рендера outTime из
-// calc.normaVremeni, чтобы шестерёнка тоже могла мгновенно пересчитать
-// плитку при изменении ползунков, не дожидаясь повторного «Рассчитать».
-function setTimeSettingsLastVolume(totalVolume){
-  _timeSettingsLastVolume = totalVolume;
 }
 
 function timeSettingsNearestStepIndex(steps, value){
@@ -172,13 +148,12 @@ function initTimeSettings(storageKey){
   const tcSliderEl = document.getElementById('timeCoeffSlider');
   const tcInput = document.getElementById('timeCoeffInput');
 
+  // По указанию пользователя - настройки нормы времени, как и любые другие
+  // параметры, применяются только по «Рассчитать» (на сервере): здесь только сохраняем их и помечаем расчёт как устаревший
+  // («Расчёт не проведён», см. invalidateCalc()).
   function applySettings(next){
     saveTimeSettings(storageKey, next);
-    if(_timeSettingsLastVolume != null){
-      const val = computeNormaVremeni(_timeSettingsLastVolume, storageKey);
-      const el = document.getElementById('outTime');
-      if(el) el.innerHTML = `${val} <span>ч</span>`;
-    }
+    if(typeof invalidateCalc === 'function') invalidateCalc();
   }
 
   const bpSlider = createJumpSlider(bpSliderEl, TIME_SETTINGS_PRODUCTIVITY_STEPS, v=>{

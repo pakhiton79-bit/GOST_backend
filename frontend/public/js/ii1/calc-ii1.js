@@ -79,7 +79,6 @@ async function calculate(){
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
-  setTimeSettingsLastVolume(calc.totalVolume);
 
   // Все числовые значения в таблице - целые, округление вверх (не занижаем
   // размер/количество детали): толщина раскосины (t_stojka*2/3) и т.п. дают

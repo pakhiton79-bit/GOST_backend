@@ -121,8 +121,9 @@ function readTableEdits(){
 // комментария (в расчёт не входит, только в печать), таблица деталей
 // (#boardTables - у неё свой обработчик: помечает ячейку как исправленную
 // и так же вызывает invalidateCalc(), см. calculate() каждого типа) и окно
-// настроек нормы времени (применяется к уже готовому результату сразу, без
-// пересчёта - см. applySettings в common-timesettings.js).
+// настроек нормы времени (invalidateCalc() вызывает его applySettings в
+// common-timesettings.js - только при реальном сохранении корректного
+// значения).
 function onAnyParamChange(e){
   const t = e.target;
   if(!t || !t.matches || !t.matches('input, select, textarea')) return;
