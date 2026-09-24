@@ -197,12 +197,14 @@ function readManualOverrides(){
 }
 
 // ============ Вызов бэкенд-API и отрисовка результата ============
-async function calculate(){
+// Сам расчёт и рендер; кнопка «Рассчитать» вызывает общую обёртку
+// calculate() из common-print.js (индикатор «Идёт расчёт…», защита от
+// повторного запуска, блокировка печати на время расчёта).
+async function calculateNow(){
   const errEl = document.getElementById('err');
   errEl.textContent = '';
   const manualOverrides = readManualOverrides();
   const tableEdits = readTableEdits(); // см. common-print.js, учитываются на сервере
-  setCalcStatus(null);
 
   const input = {
     variant: fasteningType,
@@ -313,6 +315,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
     // через readTableEdits(), см. common-print.js / withTableEdits в
     // backend/server.js).
     e.target.setAttribute('data-user-edited', 'true');
+    updateResetButton();
     invalidateCalc();
   }
 });
@@ -374,7 +377,7 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 10198-91 тип I-3</h1>
+    <h1>ГОСТ 10198-91 тип I-3${boxNameHtml()}</h1>
     <div class="print-subtitle">Плотный дощатый ящик с полозьями</div>
 
     <div class="part-title">Общий вид ящика</div>

@@ -25,12 +25,14 @@ function readManualOverrides(){
   return overrides;
 }
 
-async function calculate(){
+// Сам расчёт и рендер; кнопка «Рассчитать» вызывает общую обёртку
+// calculate() из common-print.js (индикатор «Идёт расчёт…», защита от
+// повторного запуска, блокировка печати на время расчёта).
+async function calculateNow(){
   const errEl = document.getElementById('err');
   errEl.textContent = '';
   const manualOverrides = readManualOverrides();
   const tableEdits = readTableEdits(); // см. common-print.js, учитываются на сервере
-  setCalcStatus(null);
 
   const input = {
     L: parseFloat(document.getElementById('L').value),
@@ -131,14 +133,14 @@ async function calculate(){
   // табличкой 1×1 на всю ширину (под чертежами и под таблицами деталей), в
   // стиле таблиц деталей, без заголовка (по указанию пользователя). Попадает
   // и в печать/PDF (buildPrintHtml берёт содержимое #boardTables целиком).
-  // В ячейке - только само число (редактируется как остальные ячейки
-  // таблиц: пунктир, подсветка правки, учёт по «Рассчитать» через
-  // readTableEdits/applyTableEdits); подписи «Обшивочная лента» и «мм × 2»
-  // дорисовываются стилями (.tape-table td::before/::after в style.css) и
-  // в редактируемый текст не входят.
+  // Весь текст ячейки редактируется как свободный текст (по указанию
+  // пользователя - не только число, но и «мм» и т.п.): role 'text',
+  // учитывается по «Рассчитать» через readTableEdits/applyTableEdits и
+  // сохраняется, как остальные правки; пустая ячейка - расчётный текст.
   if(calc.endTape && calc.endTape.length){
     const tr = calc.endTape[0], tapeKeys = tableRowKeys(calc.endTape);
-    tablesHtml += `<div class="spec-table tape-table"><table data-section="endTape"><tbody><tr data-row-key="${escapeAttr(tapeKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="l"${editedAttr(tr, 'l')}>${Math.ceil(tr.l - 1e-9)}</td></tr></tbody></table></div>`;
+    const tapeText = (typeof tr.text === 'string') ? tr.text : `Обшивочная лента ${Math.ceil(tr.l - 1e-9)} мм × 2`;
+    tablesHtml += `<div class="spec-table tape-table"><table data-section="endTape"><tbody><tr data-row-key="${escapeAttr(tapeKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(tr, 'text')}>${escapeAttr(tapeText)}</td></tr></tbody></table></div>`;
   }
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
@@ -175,6 +177,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
     // через readTableEdits(), см. common-print.js / withTableEdits в
     // backend/server.js).
     e.target.setAttribute('data-user-edited', 'true');
+    updateResetButton();
     invalidateCalc();
   }
 });
@@ -235,7 +238,7 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 10198-91, тип I-1</h1>
+    <h1>ГОСТ 10198-91, тип I-1${boxNameHtml()}</h1>
 
     <div class="part-title">Общий вид ящика</div>
     <div class="spec-row-diagram">

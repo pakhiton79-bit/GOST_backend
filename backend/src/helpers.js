@@ -176,6 +176,8 @@ function applyTableEdits(calc, edits, sections) {
         r.edited[role] = true;
         changed = true;
       });
+      // role 'text' - свободный текст ячейки (лента обшивки торцов).
+      if (sec === 'endTape' && typeof e.text === 'string') { r.text = e.text; r.edited = r.edited || {}; r.edited.text = true; changed = true; }
       if (!changed) return;
       delta += (rowVol(r) - before) * sections[sec];
       applied++;
@@ -205,6 +207,7 @@ function sanitizeTableEdits(raw, sections) {
         if (!(role in e) || !Number.isFinite(v) || v < 0 || v > 1e6 || (v === 0 && role !== 'qty')) return;
         clean[role] = v;
       });
+      if (sec === 'endTape' && typeof e.text === 'string' && e.text.trim() && e.text.length <= 200) clean.text = e.text.trim();
       if (Object.keys(clean).length) {
         out[sec] = out[sec] || {};
         out[sec][key] = clean;

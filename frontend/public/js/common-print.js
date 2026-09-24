@@ -48,11 +48,114 @@ const PRINT_DIAGRAM_FACTOR = 0.885;
 // null/любое другое значение - все три скрыты (до первого расчёта, либо
 // только что открытая пустая форма).
 function setCalcStatus(state){
-  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError'};
+  const ids = {check:'calcCheck', outdated:'calcOutdated', error:'calcError', loading:'calcLoading'};
   Object.keys(ids).forEach(key=>{
     const el = document.getElementById(ids[key]);
     if(el) el.classList.toggle('active', key === state);
   });
+}
+
+// ============ Расчёт / печать: состояние и отказы ============
+// По указанию пользователя: если действие блокируется (печать/PDF без
+// актуального расчёта, во время расчёта, после ошибки) - ВСЕГДА красный
+// статус «Расчёт не проведён» и красный текст причины (#err), а не окно
+// браузера alert(). calcInProgress/printInProgress - защита от повторных
+// нажатий: раньше каждое нажатие «Печать»/«Скачать PDF» ставило в очередь
+// своё ожидание загрузки картинок, и потом открывалось сразу несколько
+// окон печати, а печать во время расчёта ломала вёрстку (по репорту
+// пользователя).
+let calcInProgress = false;
+let printInProgress = false;
+let lastRefusalText = '';
+function refuseAction(reason){
+  setCalcStatus('error');
+  const errEl = document.getElementById('err');
+  if(errEl) errEl.textContent = reason;
+  lastRefusalText = reason;
+  // Отказ во время расчёта (напр. «Печать» до ответа сервера) - красный
+  // статус виден 1.5 с, затем снова «Идёт расчёт…», если расчёт ещё идёт.
+  if(calcInProgress){
+    setTimeout(()=>{
+      const errSt = document.getElementById('calcError');
+      if(calcInProgress && errSt && errSt.classList.contains('active')) setCalcStatus('loading');
+    }, 1500);
+  }
+}
+// Печать/PDF разрешены только при актуальном успешном расчёте (статус
+// «Расчёт выполнен»). Возвращает true, если можно печатать.
+function printAllowed(){
+  if(printInProgress) return false; // уже готовится - повторное нажатие просто игнорируется
+  if(calcInProgress){
+    refuseAction('Идёт расчёт — дождитесь его окончания и повторите.');
+    return false;
+  }
+  const results = document.getElementById('results');
+  const check = document.getElementById('calcCheck');
+  if(!results || results.style.display !== 'block' || !check || !check.classList.contains('active')){
+    refuseAction('Печать недоступна: расчёт не выполнен или данные изменены — сначала нажмите «Рассчитать».');
+    return false;
+  }
+  return true;
+}
+// Ожидание загрузки картинок печатной области - не дольше 3 с (иначе
+// зависшее ожидание копило нажатия, см. выше).
+function waitImagesReady(scaleBox){
+  const images = Array.from(scaleBox.querySelectorAll('img'));
+  const ready = Promise.all(images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()));
+  return Promise.race([ready, new Promise(r => setTimeout(r, 3000))]);
+}
+function setCalcInProgress(v){
+  calcInProgress = v;
+  const btn = document.getElementById('calcBtn');
+  if(btn) btn.disabled = v;
+}
+// Общая обёртка кнопки «Рассчитать» (у каждого типа своя calculateNow() -
+// сам расчёт и рендер): индикатор «Идёт расчёт…», пока он идёт (по
+// указанию пользователя), и защита от повторного запуска. Кадр отрисовки
+// перед расчётом - чтобы индикатор успел показаться и в статичной версии,
+// где расчёт синхронный.
+async function calculate(){
+  if(calcInProgress) return;
+  setCalcInProgress(true);
+  setCalcStatus('loading');
+  await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+  try{
+    await calculateNow();
+  }catch(e){
+    console.error(e);
+    refuseAction('Не удалось выполнить расчёт. Проверьте введённые данные и повторите.');
+  }finally{
+    setCalcInProgress(false);
+    const loading = document.getElementById('calcLoading');
+    if(loading && loading.classList.contains('active')) setCalcStatus(null);
+    // Текст отказа, выданного во время расчёта (напр. «Идёт расчёт —
+    // дождитесь…»), после успешного расчёта уже неактуален.
+    const check = document.getElementById('calcCheck'), errEl = document.getElementById('err');
+    if(check && check.classList.contains('active') && errEl && lastRefusalText && errEl.textContent === lastRefusalText) errEl.textContent = '';
+    lastRefusalText = '';
+    updateResetButton();
+  }
+}
+// Кнопка «Сбросить до стандартных значений» - видна, пока в таблицах есть
+// ручные правки; сбрасывает их все (толщины, размеры, количество, лента) и
+// сразу пересчитывает (по указанию пользователя). Размеры груза и галочки
+// не трогает.
+function updateResetButton(){
+  const btn = document.getElementById('resetEditsBtn');
+  if(btn) btn.hidden = !document.querySelector('#boardTables [data-user-edited="true"]');
+}
+function resetTableEdits(){
+  if(calcInProgress) return;
+  document.querySelectorAll('#boardTables [data-user-edited]').forEach(el => el.removeAttribute('data-user-edited'));
+  updateResetButton();
+  calculate();
+}
+// Номер/название ящика (поле #boxName справа от заголовка) - в печать/PDF
+// справа от заголовка; пустое - ничего не выводится.
+function boxNameHtml(){
+  const el = document.getElementById('boxName');
+  const v = el ? el.value.trim() : '';
+  return v ? `<span class="print-box-name">${escapeAttr(v)}</span>` : '';
 }
 
 // ============ Ручные правки таблицы деталей ============
@@ -101,8 +204,16 @@ function readTableEdits(){
     const key = tr.dataset.rowKey;
     tr.querySelectorAll('td[data-user-edited="true"]:not([data-override])').forEach(td=>{
       const role = td.dataset.role;
-      const v = parseFloat(td.textContent.replace(',', '.'));
-      if(!TABLE_EDIT_ROLES.includes(role) || !Number.isFinite(v) || v < 0 || (v === 0 && role !== 'qty')) return;
+      // role 'text' - ячейка со свободным текстом (лента обшивки торцов:
+      // править можно весь текст, не только число); пустая - расчётное.
+      let v;
+      if(role === 'text'){
+        v = td.textContent.trim();
+        if(!v) return;
+      } else {
+        v = parseFloat(td.textContent.replace(',', '.'));
+        if(!TABLE_EDIT_ROLES.includes(role) || !Number.isFinite(v) || v < 0 || (v === 0 && role !== 'qty')) return;
+      }
       edits[sec] = edits[sec] || {};
       edits[sec][key] = edits[sec][key] || {};
       edits[sec][key][role] = v;
@@ -128,7 +239,7 @@ function readTableEdits(){
 function onAnyParamChange(e){
   const t = e.target;
   if(!t || !t.matches || !t.matches('input, select, textarea')) return;
-  if(t.id === 'userComment') return;
+  if(t.id === 'userComment' || t.id === 'boxName') return; // в расчёт не входят
   if(t.closest('#boardTables, #timeSettingsOverlay, #printArea')) return;
   if(typeof invalidateCalc === 'function') invalidateCalc();
 }
@@ -161,10 +272,8 @@ function buildAndSizePrintArea(){
 }
 
 function printBox(){
-  if(document.getElementById('results').style.display !== 'block'){
-    alert('Сначала выполните расчёт — нажмите «Рассчитать».');
-    return;
-  }
+  if(!printAllowed()) return;
+  printInProgress = true;
 
   buildAndSizePrintArea();
   const scaleBox = document.getElementById('printScale');
@@ -175,13 +284,10 @@ function printBox(){
   // как только запас исчез (например, из-за добавленного комментария),
   // страница начала не помещаться на печати, хотя при замере «влезала».
   // Поэтому ждём decode() всех картинок и только потом меряем и подгоняем.
-  const images = Array.from(scaleBox.querySelectorAll('img'));
-  const ready = images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
-
-  Promise.all(ready).then(()=>{
+  waitImagesReady(scaleBox).then(()=>{
     fitPrintAreaToOnePage(document.getElementById('printArea'));
     window.print();
-  });
+  }).finally(()=>{ printInProgress = false; });
 }
 
 // Стрелки/линии размеров на чертежах (записи с x1/y1/x2/y2 в records, см.
@@ -321,21 +427,16 @@ function rasterizeDiagramArrows(printArea){
 // ни на миг не меняется, поэтому никакого мелькания макета печати на экране
 // не возникает.
 function downloadPdf(){
-  if(document.getElementById('results').style.display !== 'block'){
-    alert('Сначала выполните расчёт — нажмите «Рассчитать».');
-    return;
-  }
+  if(!printAllowed()) return;
   if(!window.html2canvas || !(window.jspdf && window.jspdf.jsPDF)){
-    alert('Не удалось подготовить PDF. Попробуйте обновить страницу или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
+    refuseAction('Не удалось подготовить PDF. Обновите страницу или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
     return;
   }
+  printInProgress = true;
 
   buildAndSizePrintArea();
   const scaleBox = document.getElementById('printScale');
-  const images = Array.from(scaleBox.querySelectorAll('img'));
-  const ready = images.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve());
-
-  Promise.all(ready).then(()=>{
+  waitImagesReady(scaleBox).then(()=>{
     const printArea = document.getElementById('printArea');
     fitPrintAreaToOnePage(printArea);
     bakeDiagramArrowStrokeWidths(printArea);
@@ -370,8 +471,8 @@ function downloadPdf(){
     doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, w, h);
     doc.save('gost-10198-91-raschet.pdf');
   }).catch(() => {
-    alert('Не удалось создать PDF-файл. Попробуйте ещё раз или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
-  });
+    refuseAction('Не удалось создать PDF-файл. Попробуйте ещё раз или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
+  }).finally(() => { printInProgress = false; });
 }
 
 // Подстраховка на случай печати НЕ через кнопку «Печать»/«Скачать PDF»

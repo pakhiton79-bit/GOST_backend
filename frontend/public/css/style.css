@@ -45,7 +45,11 @@
     line-height:1.35;
     overflow-x:hidden;
   }
-  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 80px;}
+  /* 1080px (было 960px) - по указанию пользователя: при 960px заголовки
+     колонок таблиц деталей («ТОЛЩИНА» и т.п.) переносились на 2 строки;
+     1080px - наименьшая ширина, при которой они в одну строку во всех трёх
+     типах (замер). */
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
 
   /* Навигация «Назад» / «Главная» - вверху страниц выбора ГОСТа/типа и самих
      калькуляторов (везде, кроме самой стартовой страницы - там некуда). */
@@ -604,11 +608,53 @@
   /* Лента обшивки торцов (I-1) - табличка 1×1 на всю ширину под всеми
      элементами, см. calculate() в src/i1/calc.js. */
   .spec-table.tape-table{margin-top:22px;}
-  /* Подписи вокруг числа - не редактируются и не входят в textContent
-     ячейки (там только длина - её читает readTableEdits). Действуют и в
-     печати (#printArea). */
-  .tape-table td::before{content:'Обшивочная лента ';}
-  .tape-table td::after{content:' мм × 2';}
+
+  /* ===== Шапка калькулятора: заголовок + поле «Номер или название ящика»
+     (справа от заголовка, по указанию пользователя; в печать/PDF - справа
+     от заголовка, см. boxNameHtml в common-print.js). ===== */
+  header.title-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+  header.title-row h1{margin:0;}
+  .box-name-input{
+    flex:1 1 260px;
+    max-width:360px;
+    height:40px;
+    padding:0 12px;
+    font-family:inherit;
+    font-size:15px;
+    color:var(--ink);
+    background:var(--panel);
+    border:1px solid var(--border-input);
+    border-radius:10px;
+  }
+  .box-name-input:focus{outline:none;border-color:var(--accent);}
+
+  /* ===== Индикатор «Идёт расчёт…» (статус calcLoading) и кнопка сброса ===== */
+  .calc-loading{color:var(--accent);gap:8px;}
+  .calc-loading .spinner{
+    width:16px;height:16px;flex:0 0 16px;
+    border:2px solid var(--accent-wash);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:calc-spin .8s linear infinite;
+  }
+  @keyframes calc-spin{to{transform:rotate(360deg);}}
+  #calcBtn:disabled{opacity:.6;cursor:progress;}
+  /* Кнопка сброса - компактная, как кнопки печати, чтобы ряд действий
+     помещался в одну строку. */
+  .reset-btn{margin-left:12px;margin-top:0;padding:12px 18px;font-size:13px;}
+  /* «Печать» и «Скачать PDF» - одной неразрывной группой: если ряду не
+     хватает места, они переносятся вместе, а не по одной. */
+  .print-actions{display:inline-flex;gap:12px;white-space:nowrap;}
+  /* Ряд действий - гибкий: одинаковые промежутки, при нехватке места
+     группа печати переносится целиком и встаёт ровно под «Рассчитать»
+     (без сдвига от собственных отступов кнопок); текст ошибки (#err) -
+     отдельной строкой на всю ширину. */
+  .action-card{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}
+  .action-card > button, .action-card .print-btn, .action-card .reset-btn{margin:0;}
+  .action-card .calc-status{margin-left:2px;margin-right:2px;}
+  .action-card > .error{flex-basis:100%;margin-top:0;}
+  .action-card > .error:empty{display:none;}
+  .reset-btn[hidden]{display:none;}
 
   .note{
     font-size:13px;
@@ -985,6 +1031,7 @@
     line-height:1.4;
   }
   #printArea h1{font-size:calc(var(--pk)*24px);margin:0 0 6px;font-family:Georgia, serif;color:#8A4B26;font-weight:700;}
+  #printArea .print-box-name{margin-left:calc(var(--pk)*24px);color:#091135;}
   #printArea .print-subtitle{color:#36394A;margin-bottom:calc(var(--pk)*6px);font-size:calc(var(--pk)*16px);font-weight:700;}
 
   /* Внутренние размеры груза + Итог — в колонке справа от чертежа ящика (см. .print-summary-col) */
