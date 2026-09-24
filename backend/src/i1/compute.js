@@ -310,4 +310,4 @@ function computeGost10198I1(input) {
   return result;
 }
 
-module.exports = { computeGost10198I1 };
+module.exports = { computeGost10198I1, WOOD_DENSITY_KG_M3 };

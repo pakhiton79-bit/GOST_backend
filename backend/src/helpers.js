@@ -137,11 +137,91 @@ function findNegativeField(value, path) {
   return null;
 }
 
+// Ручные правки таблицы деталей (tableEdits) - подставляются в строки
+// результата после расчёта, итоговый объём корректируется на разницу
+// объёмов изменённых строк (с множителем раздела: щиты торцевой/боковой -
+// по 2 шт.). Та же логика, что и applyTableEdits в common-print.js
+// исходного (фронтенд) репозитория. Строка опознаётся ключом "название#
+// порядковый номер среди строк с тем же названием" (см. tableRowKeys).
+// Возвращает число изменённых строк.
+const TABLE_EDIT_ROLES = ['t', 'w', 'l', 'qty'];
+function tableRowKeys(rows) {
+  const occ = {};
+  return rows.map(r => {
+    const n = String(r.name);
+    const i = occ[n] || 0;
+    occ[n] = i + 1;
+    return n + '#' + i;
+  });
+}
+function applyTableEdits(calc, edits, sections) {
+  if (!edits || typeof edits !== 'object') return 0;
+  const num = v => { const x = parseFloat(v); return Number.isFinite(x) ? x : 0; };
+  const rowVol = r => num(r.t) * num(r.w) * num(r.l) / 1e9 * num(r.qty);
+  let applied = 0, delta = 0;
+  Object.keys(sections).forEach(sec => {
+    const rows = calc[sec], secEdits = edits[sec];
+    if (!Array.isArray(rows) || !secEdits) return;
+    const keys = tableRowKeys(rows);
+    rows.forEach((r, i) => {
+      const e = secEdits[keys[i]];
+      if (!e) return;
+      const before = rowVol(r);
+      let changed = false;
+      TABLE_EDIT_ROLES.forEach(role => {
+        if (!(role in e)) return;
+        if (role === 't' && r.overrideKey) return; // толщина - через manualOverrides
+        r[role] = e[role];
+        r.edited = r.edited || {};
+        r.edited[role] = true;
+        changed = true;
+      });
+      if (!changed) return;
+      delta += (rowVol(r) - before) * sections[sec];
+      applied++;
+    });
+  });
+  if (applied) calc.totalVolume += delta;
+  return applied;
+}
+
+// Проверка tableEdits из запроса: только известные разделы, ключ - строка
+// разумной длины, значения - конечные числа (размеры > 0, кол-во >= 0),
+// не больше 500 правок.
+function sanitizeTableEdits(raw, sections) {
+  const out = {};
+  if (!raw || typeof raw !== 'object') return out;
+  let count = 0;
+  Object.keys(sections).forEach(sec => {
+    const s = raw[sec];
+    if (!s || typeof s !== 'object') return;
+    Object.keys(s).forEach(key => {
+      if (typeof key !== 'string' || key.length > 200 || count >= 500) return;
+      const e = s[key];
+      if (!e || typeof e !== 'object') return;
+      const clean = {};
+      TABLE_EDIT_ROLES.forEach(role => {
+        const v = Number(e[role]);
+        if (!(role in e) || !Number.isFinite(v) || v < 0 || v > 1e6 || (v === 0 && role !== 'qty')) return;
+        clean[role] = v;
+      });
+      if (Object.keys(clean).length) {
+        out[sec] = out[sec] || {};
+        out[sec][key] = clean;
+        count++;
+      }
+    });
+  });
+  return out;
+}
+
 module.exports = {
   roundup, ceilInt, vol, fillBoards,
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
   findNegativeField,
   computeNormaVremeni,
+  applyTableEdits,
+  sanitizeTableEdits,
   TIME_SETTINGS_DEFAULTS,
 };

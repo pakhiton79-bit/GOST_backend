@@ -8,9 +8,29 @@ const path = require('path');
 const express = require('express');
 
 const { computeGost10198I3 } = require('./src/i3/compute');
-const { computeGost10198I1 } = require('./src/i1/compute');
+const { computeGost10198I1, WOOD_DENSITY_KG_M3 } = require('./src/i1/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
-const { AVAILABLE_THICKNESS_OPTIONS } = require('./src/helpers');
+const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
+
+// Разделы таблицы деталей и их множители в итоговом объёме (щиты
+// торцевой/боковой - по 2 шт.) - для ручных правок таблицы (tableEdits).
+const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 };
+const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 };
+const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 };
+
+// Ручные правки таблицы деталей (по указанию пользователя - учитываются
+// только при нажатии "Рассчитать", т.е. здесь, на сервере): подставляются в
+// строки результата, объём/норма времени (и масса ящика у I-1)
+// пересчитываются с их учётом.
+function withTableEdits(result, rawEdits, sections, input, extra) {
+  if (!result || result.error) return result;
+  const edits = sanitizeTableEdits(rawEdits, sections);
+  if (applyTableEdits(result, edits, sections)) {
+    result.normaVremeni = computeNormaVremeni(result.totalVolume, input.baseProductivity, input.timeCoeff);
+    if (extra) extra(result);
+  }
+  return result;
+}
 
 const app = express();
 app.use(express.json());
@@ -71,7 +91,7 @@ app.post('/api/i3/calculate', (req, res) => {
     baseProductivity: toNum(b.baseProductivity),
     timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(computeGost10198I3(input));
+  res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input));
 });
 
 app.post('/api/i1/calculate', (req, res) => {
@@ -91,7 +111,8 @@ app.post('/api/i1/calculate', (req, res) => {
     baseProductivity: toNum(b.baseProductivity),
     timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(computeGost10198I1(input));
+  res.json(withTableEdits(computeGost10198I1(input), b.tableEdits, I1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * WOOD_DENSITY_KG_M3; }));
 });
 
 app.post('/api/ii1/calculate', (req, res) => {
@@ -117,7 +138,7 @@ app.post('/api/ii1/calculate', (req, res) => {
     baseProductivity: toNum(b.baseProductivity),
     timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(computeGost10198II1(input));
+  res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input));
 });
 
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
