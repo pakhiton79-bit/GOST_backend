@@ -60,13 +60,19 @@ function plankCount(boardLen, wallValue, override) {
   const minEdgeDist = wallValue * 2;
   const count = eff.mode === 'count'
     ? Math.max(2, Math.round(eff.value))
-    : Math.max(2, Math.ceil(boardLen / eff.value - 1e-9) - 1);
+    // Минимальное n, при котором (boardLen - n*PLANK_WIDTH)/(n+1) <= value
+    // (зазор между КРОМКАМИ планок, а не шаг по осям): n >= (boardLen-value)/
+    // (value+PLANK_WIDTH). Раньше было ceil(boardLen/value)-1 - без учёта
+    // ширины планки, из-за чего местами добавлялся лишний пояс (напр. доска
+    // 2200мм: 3 пояса с зазором 475мм, хотя 2 пояса дают 667мм <= 700мм).
+    : Math.max(2, Math.ceil((boardLen - eff.value) / (eff.value + PLANK_WIDTH) - 1e-9));
   // Отступ от края - до целого мм: цех режет доски не в долях миллиметра,
   // а сама раскладка и так уже приближение.
   const edgeDist = Math.round((boardLen - count * PLANK_WIDTH) / (count + 1));
   // middle - остаток длины доски под (count-1) зазоров между планками
   // (после вычета обоих крайних отступов и тела всех планок); по
-  // построению middle/(count-1) = edgeDist (проверено алгебраически).
+  // построению middle/(count-1) ≈ edgeDist (±1мм - из-за округления
+  // edgeDist до целого мм; на чертежах подписывается именно middle/(count-1)).
   const middle = boardLen - edgeDist * 2 - count * PLANK_WIDTH;
   if (edgeDist < minEdgeDist) return { count: null, edgeDist, middle };
   return { count, edgeDist, middle };

@@ -290,7 +290,7 @@ function computeGost10198I1(input) {
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
     outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
-    dnoWidth, kLen, plank, plankQty, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
+    dnoWidth, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
     standardPlankCount, standardPlankGap,
   };
   const negField = findNegativeField(result, '');
