@@ -219,6 +219,17 @@ function editedAttr(row, role, manualOverrides){
   }
   return (row.edited && row.edited[role]) ? ' data-user-edited="true"' : '';
 }
+// Толщина в таблице деталей: правка ЛЮБОЙ строки меняет параметр ГОСТ, из
+// которого эта толщина берётся (data-override), поэтому все строки с тем же
+// параметром сразу получают то же значение (последняя правка побеждает).
+function syncOverrideCells(cell){
+  const key = cell && cell.getAttribute && cell.getAttribute('data-override');
+  if(!key) return;
+  const v = cell.textContent;
+  document.querySelectorAll(`#boardTables td[data-override="${key}"]`).forEach(td=>{
+    if(td !== cell){ td.textContent = v; td.setAttribute('data-user-edited', 'true'); }
+  });
+}
 function readTableEdits(){
   const edits = {};
   document.querySelectorAll('#boardTables table[data-section] tr[data-row-key]').forEach(tr=>{

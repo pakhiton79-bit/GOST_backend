@@ -163,7 +163,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
     // (толщина с data-override - через readManualOverrides(), остальное -
     // через readTableEdits(), см. common-print.js / withTableEdits в
     // backend/server.js).
-    e.target.setAttribute('data-user-edited', 'true');
+    e.target.setAttribute('data-user-edited', 'true'); syncOverrideCells(e.target);
     updateResetButton();
     invalidateCalc();
   }

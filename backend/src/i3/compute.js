@@ -211,7 +211,7 @@ function computeGost10198I3(input) {
     if (l12 > 0) dno.push({ name: 'Доска дна', t: t12, w: w12, l: k12, qty: l12, overrideKey: 't12Value' });
     fbDno.extra.forEach((e, i) => {
       const suffix = fbDno.extra.length > 1 ? ' ' + (i + 1) : '';
-      dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: k12, qty: e.qty });
+      dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: k12, qty: e.qty, overrideKey: 't12Value' });
     });
     if (fbDno.warn) {
       warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -243,17 +243,17 @@ function computeGost10198I3(input) {
   } else {
     l19 = ceilInt(middleKryshka / 1000) + 1;
   }
-  kryshka.push({ name: 'Планка', t: t19, w: w19, l: k19, qty: l19 });
+  kryshka.push({ name: 'Планка', t: t19, w: w19, l: k19, qty: l19, overrideKey: 'wallValue' });
 
   const bokSectionW = l19 > 1 ? middleKryshka / (l19 - 1) : 0;
 
   const t20 = wall.value, k20 = k9Base;
   const fbKryshka = fillBoards(W + wall.value * 2, roundBoardWidths);
   const w20 = 100, l20 = fbKryshka.mainQty;
-  if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: t20, w: w20, l: k20, qty: l20 });
+  if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: t20, w: w20, l: k20, qty: l20, overrideKey: 'wallValue' });
   fbKryshka.extra.forEach((e, i) => {
     const suffix = fbKryshka.extra.length > 1 ? ' ' + (i + 1) : '';
-    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: t20, w: e.width, l: k20, qty: e.qty });
+    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: t20, w: e.width, l: k20, qty: e.qty, overrideKey: 'wallValue' });
   });
   if (fbKryshka.warn) {
     warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -327,14 +327,14 @@ function computeGost10198I3(input) {
   }
 
   const endPanel = [
-    { name: 'Вертикальная планка', t: t30, w: w30, l: k30, qty: l30 },
-    { name: 'Горизонтальная планка', t: t31, w: w31, l: k31_, qty: l31 },
+    { name: 'Вертикальная планка', t: t30, w: w30, l: k30, qty: l30, overrideKey: 'wallValue' },
+    { name: 'Горизонтальная планка', t: t31, w: w31, l: k31_, qty: l31, overrideKey: 'wallValue' },
   ];
-  if (torecHasRaskosina) endPanel.push({ name: 'Раскосина', t: t33, w: w33, l: k33, qty: l33 });
-  if (l32 > 0) endPanel.push({ name: 'Доска торца', t: t32, w: w32, l: k32, qty: l32 });
+  if (torecHasRaskosina) endPanel.push({ name: 'Раскосина', t: t33, w: w33, l: k33, qty: l33, overrideKey: 'wallValue' });
+  if (l32 > 0) endPanel.push({ name: 'Доска торца', t: t32, w: w32, l: k32, qty: l32, overrideKey: 'wallValue' });
   fbTorec.extra.forEach((e, i) => {
     const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
-    endPanel.push({ name: 'Доска торца (дополнительная)' + suffix, t: t32, w: e.width, l: k32, qty: e.qty });
+    endPanel.push({ name: 'Доска торца (дополнительная)' + suffix, t: t32, w: e.width, l: k32, qty: e.qty, overrideKey: 'wallValue' });
   });
 
   // --- ЩИТ БОКОВОЙ (расчёт на 1 щит, далее удвоение) ---
@@ -380,15 +380,15 @@ function computeGost10198I3(input) {
     + vol(t42, w42, k42, l42) + vol(t43, w43, k43, l43);
 
   const bokovoy = [
-    { name: 'Вертикальная планка', t: t40, w: w40, l: k40, qty: l40 },
+    { name: 'Вертикальная планка', t: t40, w: w40, l: k40, qty: l40, overrideKey: 'wallValue' },
   ];
   if (l41 > 0) bokovoy.push({ name: 'Доска бока', t: t41, w: w41, l: k41, qty: l41, overrideKey: 'wallValue' });
   fbBok.extra.forEach((e, i) => {
     const suffix = fbBok.extra.length > 1 ? ' ' + (i + 1) : '';
-    bokovoy.push({ name: 'Доска бока (дополнительная)' + suffix, t: t41, w: e.width, l: k41, qty: e.qty });
+    bokovoy.push({ name: 'Доска бока (дополнительная)' + suffix, t: t41, w: e.width, l: k41, qty: e.qty, overrideKey: 'wallValue' });
   });
-  if (l43 > 0) bokovoy.push({ name: 'Горизонтальная планка', t: t43, w: w43, l: k43, qty: l43 });
-  if (bokHasRaskosina) bokovoy.push({ name: 'Раскосина', t: t42, w: w42, l: k42, qty: l42 });
+  if (l43 > 0) bokovoy.push({ name: 'Горизонтальная планка', t: t43, w: w43, l: k43, qty: l43, overrideKey: 'wallValue' });
+  if (bokHasRaskosina) bokovoy.push({ name: 'Раскосина', t: t42, w: w42, l: k42, qty: l42, overrideKey: 'wallValue' });
 
   // --- Итоговый расход пиломатериала ---
   const totalVolume = volDno + volKryshka + 2 * volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) + 2 * volBokPanel;

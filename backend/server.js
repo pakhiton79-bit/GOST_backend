@@ -53,7 +53,7 @@ function toNum(v) {
 // { ключ: число }. На входе в API оставляем только конечные положительные
 // числа под известными ключами - произвольные поля из тела запроса дальше в
 // расчёт не пропускаются.
-const I1_OVERRIDE_KEYS = ['wallValue'];
+const I1_OVERRIDE_KEYS = ['wallValue', 't9Value'];
 // I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
 // computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
 // изолированные (полное объяснение см. computeGost10198I3).

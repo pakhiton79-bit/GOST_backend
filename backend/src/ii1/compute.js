@@ -230,7 +230,7 @@ function computeGost10198II1(input) {
     if (l12 > 0) dno.push({ name: 'Доска дна', t: t12, w: w12, l: k12, qty: l12, overrideKey: 'floorBoardT' });
     fbDno.extra.forEach((e, i) => {
       const suffix = fbDno.extra.length > 1 ? ' ' + (i + 1) : '';
-      dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: k12, qty: e.qty });
+      dno.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: k12, qty: e.qty, overrideKey: 'floorBoardT' });
     });
     if (fbDno.warn) {
       warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -265,7 +265,7 @@ function computeGost10198II1(input) {
   if (l20 > 0) kryshka.push({ name: 'Доска крышки', t: t20, w: w20, l: k20, qty: l20, overrideKey: 'skinValue' });
   fbKryshka.extra.forEach((e, i) => {
     const suffix = fbKryshka.extra.length > 1 ? ' ' + (i + 1) : '';
-    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: t20, w: e.width, l: k20, qty: e.qty });
+    kryshka.push({ name: 'Доска крышки (дополнительная)' + suffix, t: t20, w: e.width, l: k20, qty: e.qty, overrideKey: 'skinValue' });
   });
   if (fbKryshka.warn) {
     warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
@@ -372,13 +372,13 @@ function computeGost10198II1(input) {
 
   const endPanel = [
     { name: 'Стойка', t: t30, w: w30, l: k30, qty: l30, overrideKey: 'tStojka' },
-    { name: 'Горизонтальный брус', t: t31, w: w31, l: k31, qty: l31 },
+    { name: 'Горизонтальный брус', t: t31, w: w31, l: k31, qty: l31, overrideKey: 'tStojka' },
   ];
   if (torecFrame.hasRaskosina) endPanel.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k33, qty: l33, overrideKey: 'tRaskosina' });
-  if (l32 > 0) endPanel.push({ name: 'Доска', t: t32, w: w32, l: k32, qty: l32 });
+  if (l32 > 0) endPanel.push({ name: 'Доска', t: t32, w: w32, l: k32, qty: l32, overrideKey: 'skinValue' });
   fbTorec.extra.forEach((e, i) => {
     const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
-    endPanel.push({ name: 'Доска (дополнительная)' + suffix, t: t32, w: e.width, l: k32, qty: e.qty * torecFrame.floors });
+    endPanel.push({ name: 'Доска (дополнительная)' + suffix, t: t32, w: e.width, l: k32, qty: e.qty * torecFrame.floors, overrideKey: 'skinValue' });
   });
 
   const volTorPanel = vol(t30, w30, k30, l30) + vol(t31, w31, k31, l31)
@@ -415,15 +415,15 @@ function computeGost10198II1(input) {
   }
 
   const bokovoy = [
-    { name: 'Стойка', t: t40, w: w40, l: k40, qty: l40 },
+    { name: 'Стойка', t: t40, w: w40, l: k40, qty: l40, overrideKey: 'tStojka' },
   ];
-  if (l43 > 0) bokovoy.push({ name: 'Горизонтальный брус', t: t43, w: w43, l: k43, qty: l43 });
-  if (bokFrame.hasRaskosina) bokovoy.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k42, qty: l42 });
-  bokovoy.push({ name: 'Опорная планка', t: t_opora, w: w_opora, l: k_opora, qty: l_opora });
-  if (l41 > 0) bokovoy.push({ name: 'Доска', t: t41, w: w41, l: k41, qty: l41 });
+  if (l43 > 0) bokovoy.push({ name: 'Горизонтальный брус', t: t43, w: w43, l: k43, qty: l43, overrideKey: 'tStojka' });
+  if (bokFrame.hasRaskosina) bokovoy.push({ name: 'Раскосина', t: t_raskosina, w: w_raskosina, l: k42, qty: l42, overrideKey: 'tRaskosina' });
+  bokovoy.push({ name: 'Опорная планка', t: t_opora, w: w_opora, l: k_opora, qty: l_opora, overrideKey: 'skinValue' });
+  if (l41 > 0) bokovoy.push({ name: 'Доска', t: t41, w: w41, l: k41, qty: l41, overrideKey: 'skinValue' });
   fbBok.extra.forEach((e, i) => {
     const suffix = fbBok.extra.length > 1 ? ' ' + (i + 1) : '';
-    bokovoy.push({ name: 'Доска (дополнительная)' + suffix, t: t41, w: e.width, l: k41, qty: e.qty * bokFrame.floors });
+    bokovoy.push({ name: 'Доска (дополнительная)' + suffix, t: t41, w: e.width, l: k41, qty: e.qty * bokFrame.floors, overrideKey: 'skinValue' });
   });
 
   const volBokPanel = vol(t40, w40, k40, l40) + vol(t43, w43, k43, l43)
