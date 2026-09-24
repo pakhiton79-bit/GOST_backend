@@ -271,9 +271,6 @@ function computeGost10198I1(input) {
   // сухой сосны/ели).
   const crateMass = totalVolume * WOOD_DENSITY_KG_M3;
 
-  if (plankQty > 4) {
-    warnings.push(`Планки: чертёж — макс. 4 (расчётных ${plankQty}); точное количество см. в таблице ниже.`);
-  }
 
   if (roundUpToAvailable.state.exceeded) {
     warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);

@@ -156,17 +156,68 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
   return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, widthPx, i1StrokeScale(IW, widthPx));
 }
 
-// Фото есть только для 2-4 планок; для большего числа планок показываем
-// чертёж с максимальным доступным (4) - предупреждение выводится отдельно
-// на вызывающей стороне (см. js/i1/calc-i1.js).
+// Чертёж для 5 и более поясов планок (по репорту пользователя: при ручной
+// настройке числа поясов/расстояния между ними часто выходит больше 4
+// поясов, а фото есть только для 2-4 - раньше в этом случае показывался
+// чертёж на 4 пояса, т.е. заведомо не тот вариант). Эти фото - простая
+// линейная графика (прямоугольники + диагонали), поэтому для N >= 5 чертёж
+// строится программно (SVG) в той же системе координат и с той же
+// геометрией, что и фото на 4 пояса (bok_i1_4planks.jpg, 2208x834): рамка
+// щита, выступ планок на 42px вверх/вниз, отступ крайней планки от края
+// щита 120px, ширина планки 119px, линии 6px. Полная ширина - как у фото на
+// 4 пояса, поэтому масштаб (высота рамки, см. I1_FRAME_PX) у всех вариантов
+// общий; планки/промежутки делят эту ширину (если на планку 119px
+// промежутки выходят уже 1.2 ширины планки - пропорционально сужаются и
+// планки). Раскосины - как на фото: во всех промежутках "/", в последнем -
+// "\"; X-образные - встречная раскосина рисуется ПОД исходной (исходная
+// целая, встречная - из кусков), как на *_x фото.
+const BOK_GEN = {IW:2208, IH:834, topY:90.5, botY:728.5, stubL:73.5, stubR:2153.5, plankTop:48.5, plankBot:770.5, edge:120, plankW:119, stroke:6};
+function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
+  const G = BOK_GEN;
+  const x0 = G.stubL + G.edge, x1 = G.stubR - G.edge;
+  let plankW = G.plankW;
+  let bay = (x1 - x0 - n*plankW)/(n-1);
+  if(bay < 1.2*plankW){
+    plankW = (x1 - x0)/(n + 1.2*(n-1));
+    bay = 1.2*plankW;
+  }
+  const px = i => x0 + i*(plankW + bay); // левый край i-й планки (с 0)
+  const T = 0.25*(G.botY - G.topY);        // толщина раскосины по вертикали
+  const f = v => v.toFixed(1);
+  const band = (l, r, rising) => rising
+    ? `<polygon points="${f(l)},${f(G.botY-T)} ${f(r)},${f(G.topY)} ${f(r)},${f(G.topY+T)} ${f(l)},${f(G.botY)}"/>`
+    : `<polygon points="${f(l)},${f(G.topY)} ${f(r)},${f(G.botY-T)} ${f(r)},${f(G.botY)} ${f(l)},${f(G.topY+T)}"/>`;
+  let shapes = `<rect x="${f(G.stubL)}" y="${f(G.topY)}" width="${f(G.stubR-G.stubL)}" height="${f(G.botY-G.topY)}"/>`;
+  if(hasRaskosinaVal){
+    for(let i=0; i<n-1; i++){
+      const l = px(i) + plankW, r = px(i+1);
+      const rising = i < n-2 || n === 2;
+      if(xRaskosinaVal) shapes += band(l, r, !rising);
+      shapes += band(l, r, rising);
+    }
+  }
+  for(let i=0; i<n; i++){
+    shapes += `<rect x="${f(px(i))}" y="${f(G.plankTop)}" width="${f(plankW)}" height="${f(G.plankBot-G.plankTop)}"/>`;
+  }
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${G.IH}" viewBox="0 0 ${G.IW} ${G.IH}">`
+    + `<rect width="100%" height="100%" fill="#fff"/>`
+    + `<g fill="#fff" stroke="#000" stroke-width="${G.stroke}" stroke-linejoin="miter">${shapes}</g></svg>`;
+  return {
+    img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
+    IW:G.IW, IH:G.IH, stubL:G.stubL, p1L:px(0), p1R:px(0)+plankW, p2L:px(1), stubR:G.stubR, topY:G.topY, botY:G.botY
+  };
+}
+
+// Фото есть только для 2-4 планок; для 5 и более - bokGeomGenerated() выше.
 function bokGeomKey(plankQty, hasRaskosinaVal){
   let n = plankQty;
   if(n < 2) n = 2;
-  if(n > 4) n = 4;
+  if(n > 4) n = 4; // 5+ поясов - bokGeomGenerated(), см. bokGeom() ниже
   return (hasRaskosinaVal ? '1' : '0') + '_' + n;
 }
 
 function bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
+  if(plankQty > 4) return bokGeomGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal);
   const key = bokGeomKey(plankQty, hasRaskosinaVal);
   const g = BOK_I1_GEOM[key];
   return (xRaskosinaVal && BOK_I1_X_IMG[key]) ? Object.assign({}, g, {img: BOK_I1_X_IMG[key]}) : g;
