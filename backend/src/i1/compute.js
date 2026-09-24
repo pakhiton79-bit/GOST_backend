@@ -63,6 +63,16 @@ function computeGost10198I1(input) {
     return { error: `Ширина груза ${W} мм недостаточна для двух вертикальных планок торца (по 100мм) — расчёт не выполняется.` };
   }
 
+  // Текст ошибки "планки не помещаются": при ручном зазоре (он ставится
+  // ровно, см. plankCount в logic.js) причина - сам зазор, пишем об этом
+  // прямо, а не только про длину доски.
+  function plankLayoutError(kLen, override) {
+    if (override && override.mode === 'gap') {
+      return `Расстояние между планками ${override.value} мм не помещается на доске ${Math.round(kLen)} мм (2 планки и отступы от края) — расчёт не выполняется.`;
+    }
+    return `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.`;
+  }
+
   // Раскладка поясов планок (plankCount) по умолчанию штатная - см. logic.js.
   // По галочкам "Настроить число поясов"/"Настроить расстояние между краями
   // поясов" (plankLayoutMode: 'count'|'gap', по запросу пользователя)
@@ -77,7 +87,7 @@ function computeGost10198I1(input) {
       kLen = L + w * 4;
       plank = plankCount(kLen, w, override);
       if (plank.count === null) {
-        return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.` };
+        return { error: plankLayoutError(kLen, override) };
       }
       plankQty = plank.count;
       plankGap = plank.middle / (plankQty - 1);
@@ -126,7 +136,7 @@ function computeGost10198I1(input) {
   kLen = L + wall.value * 4;
   plank = plankCount(kLen, wall.value, plankOverride);
   if (plank.count === null) {
-    return { error: `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.` };
+    return { error: plankLayoutError(kLen, plankOverride) };
   }
   plankQty = plank.count;
   plankGap = plank.middle / (plankQty - 1);

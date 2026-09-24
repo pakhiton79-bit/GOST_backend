@@ -45,18 +45,46 @@ const BOK_I1_GEOM = {
 // Единый масштаб всех чертежей I-1 (по запросу пользователя: раньше ширина
 // у всех была одна - 260px (торец - 150px), а высота рамки щита на фото
 // разная, поэтому Бок/Крышка/Дно на 2 планки выходили почти вдвое крупнее,
-// чем на 4, а торец - то крупнее, то мельче бока). Теперь ширина каждого
-// фото подбирается так, чтобы ВЫСОТА РАМКИ щита (topY..botY) на экране была
-// одинаковой - I1_FRAME_PX - у всех вариантов (2/3/4 планки, с раскосиной и
-// без) и у торца. Ширина планок на исходных фото тоже одинаковая (~120-134px
-// при одинаковой высоте рамки), поэтому планки/доски на всех чертежах
-// выглядят одного размера, а длина щита - пропорционально числу поясов.
+// чем на 4, а торец - то крупнее, то мельче бока). Ширина каждого фото
+// подбирается так, чтобы ВЫСОТА РАМКИ щита (topY..botY) на экране была у всех
+// чертежей расчёта одинаковой (framePx) - у Бока/Крышки/Дна и у Торца.
+// Ширина планок на исходных фото тоже одинаковая (~120-134px при одинаковой
+// высоте рамки), поэтому планки/доски на всех чертежах выглядят одного
+// размера, а длина щита - пропорционально числу поясов.
+//
+// framePx - максимально возможная (по уточнению пользователя: чертежи
+// должны занимать всё выделенное место, а не быть мелкими) - см.
+// i1PageFramePx(): берётся наибольшая высота рамки, при которой КАЖДЫЙ
+// чертёж расчёта помещается в слот (I1_MAX_W по ширине картинки,
+// I1_MAX_H по высоте). Упирается обычно в самый длинный чертёж (Бок/
+// Крышка/Дно) - остальные получаются в том же масштабе.
 // Слоты всех 4 чертежей объединены в data-size-group="i1-panels" (см.
-// js/i1/calc-i1.js): если какому-то чертежу не хватает места и он сжимается, так же
-// сжимаются и остальные - масштаб остаётся общим.
-const I1_FRAME_PX = 84;
-function i1DiagramWidth(IW, frameH){
-  return Math.round(I1_FRAME_PX * IW / frameH);
+// js/i1/calc-i1.js): если на узком экране какому-то чертежу всё же не хватает места
+// и он сжимается, так же сжимаются и остальные - масштаб остаётся общим.
+const I1_FRAME_PX = 84;   // запасное значение, если framePx не передан
+const I1_MAX_W = 290;     // ширина картинки: слот 340px минус вылет подписей
+const I1_MAX_H = 240;     // высота картинки
+const I1_TOREC_OVERFLOW = 1.16; // стрелка/подпись высоты торца - на 16% правее фото
+function i1DiagramWidth(IW, frameH, framePx){
+  return Math.round((framePx || I1_FRAME_PX) * IW / frameH);
+}
+function i1FrameFit(IW, IH, frameH, maxW){
+  return Math.min(maxW * frameH / IW, I1_MAX_H * frameH / IH);
+}
+// Размеры фото (без картинки) для числа поясов/наличия раскосины - те же
+// правила выбора, что и в bokGeom() ниже.
+function bokGeomDims(plankQty, hasRaskosinaVal){
+  return plankQty > 4 ? BOK_GEN : BOK_I1_GEOM[bokGeomKey(plankQty, hasRaskosinaVal)];
+}
+function i1PageFramePx(plankQty, bokHasRaskosina, kdHasRaskosina){
+  const fits = [bokHasRaskosina, kdHasRaskosina].map(r=>{
+    const g = bokGeomDims(plankQty, r);
+    return i1FrameFit(g.IW, g.IH, g.botY - g.topY, I1_MAX_W);
+  });
+  fits.push(bokHasRaskosina
+    ? i1FrameFit(1352, 1158, 1107, I1_MAX_W / I1_TOREC_OVERFLOW)
+    : i1FrameFit(1354, 1134, 1103, I1_MAX_W / I1_TOREC_OVERFLOW));
+  return Math.floor(Math.min(...fits));
 }
 // Толщина линий/стрелок на экране - как у обычного чертежа шириной
 // DIAGRAM_DEFAULT_WIDTH, независимо от того, насколько узким/широким вышел
@@ -65,9 +93,11 @@ function i1StrokeScale(IW, widthPx){
   return photoStrokeScale(IW) * DIAGRAM_DEFAULT_WIDTH / widthPx;
 }
 
-// Расстояние между соседними планками - до десятых мм (middle/(count-1) не
-// всегда целое: отступ от края округляется до целого мм, см. plankCount).
-function fmtGapMm(v){
+// Расстояния на чертеже (между планками, от края) - до десятых мм: при
+// равномерной раскладке middle/(count-1) не всегда целое (отступ от края
+// округляется до целого мм), при ручном зазоре (он ставится ровно) отступ
+// от края - остаток пополам, может быть x.5мм (см. plankCount в logic.js).
+function fmtMm(v){
   return String(Math.round(v*10)/10);
 }
 
@@ -84,13 +114,13 @@ function fmtGapMm(v){
 //
 // Все отступы подписей от рамки заданы в экранных пикселях (px - сколько
 // единиц фото приходится на 1px при базовой ширине чертежа), а не в долях
-// IW/IH, как раньше: при общем масштабе (см. I1_FRAME_PX) фото разной
+// IW/IH, как раньше: при общем масштабе (см. i1PageFramePx) фото разной
 // ширины рисуются с разным коэффициентом, и доли давали бы разные зазоры
 // между подписями на разных вариантах.
-function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTitle){
+function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTitle, framePx){
   const IW = g.IW, IH = g.IH, topY = g.topY, botY = g.botY;
   const stubL = g.stubL, p1L = g.p1L, p1R = g.p1R, p2L = g.p2L, stubR = g.stubR;
-  const widthPx = i1DiagramWidth(IW, botY - topY);
+  const widthPx = i1DiagramWidth(IW, botY - topY, framePx);
   const px = IW / widthPx;
 
   // Стрелка вертикального размера - у правого внешнего края щита (stubR, а
@@ -129,7 +159,6 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
 
   const dim = Math.round(dimVal);
   const plankT = Math.round(plankTVal);
-  const edge = Math.round(edgeVal);
   const boardLen = Math.round(boardLenVal);
 
   const records = [
@@ -145,12 +174,12 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
 
     {type:'line', x1:p1R, y1:bracketYStart, x2:p1R, y2:bracketYEnd},
     {type:'line', x1:p2L, y1:bracketYStart, x2:p2L, y2:bracketYEnd},
-    {type:'double', x1:p1R, y1:bracketY, x2:p2L, y2:bracketY, lx:gapMidX, ly:gapLabelY, text: fmtGapMm(gapVal)+' мм'},
+    {type:'double', x1:p1R, y1:bracketY, x2:p2L, y2:bracketY, lx:gapMidX, ly:gapLabelY, text: fmtMm(gapVal)+' мм'},
 
     {type:'line', x1:stubL, y1:bracketYStart, x2:stubL, y2:bracketYEnd},
     {type:'line', x1:p1L, y1:bracketYStart, x2:p1L, y2:bracketYEnd},
     {type:'line', x1:stubL, y1:bracketY, x2:p1L, y2:bracketY},
-    {type:'single', x1:edgeLabelX, y1:edgeLabelY, x2:bracketMidX, y2:bracketY, lx:edgeLabelX, ly:edgeLabelY, text: edge+' мм'}
+    {type:'single', x1:edgeLabelX, y1:edgeLabelY, x2:bracketMidX, y2:bracketY, lx:edgeLabelX, ly:edgeLabelY, text: fmtMm(edgeVal)+' мм'}
   ];
 
   return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, widthPx, i1StrokeScale(IW, widthPx));
@@ -223,6 +252,6 @@ function bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
   return (xRaskosinaVal && BOK_I1_X_IMG[key]) ? Object.assign({}, g, {img: BOK_I1_X_IMG[key]}) : g;
 }
 
-function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal){
-  return diagramBokPhoto(bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой');
+function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
+  return diagramBokPhoto(bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx);
 }

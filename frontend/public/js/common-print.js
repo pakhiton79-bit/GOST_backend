@@ -55,6 +55,27 @@ function setCalcStatus(state){
   });
 }
 
+// Общий слушатель "параметры изменились" (по указанию пользователя: при
+// изменении ЛЮБОГО параметра - цифры, галочки, радио, выпадающего списка
+// толщин и т.д. - должна появляться надпись "Расчёт не проведён"). Раньше
+// invalidateCalc() вызывался точечно из обработчиков отдельных полей, и
+// часть галочек (напр. "Добавить раскосины", "X-образные раскосины",
+// "Убрать раскосины крышки и дна") её не вызывала вовсе - после их
+// переключения старый результат выглядел актуальным. Исключения: поле
+// комментария (в расчёт не входит, только в печать), таблица деталей
+// (#boardTables - у неё свой обработчик с пересчётом итогов) и окно
+// настроек нормы времени (применяется к уже готовому результату сразу, без
+// пересчёта - см. applySettings в common-timesettings.js).
+function onAnyParamChange(e){
+  const t = e.target;
+  if(!t || !t.matches || !t.matches('input, select, textarea')) return;
+  if(t.id === 'userComment') return;
+  if(t.closest('#boardTables, #timeSettingsOverlay, #printArea')) return;
+  if(typeof invalidateCalc === 'function') invalidateCalc();
+}
+document.addEventListener('input', onAnyParamChange);
+document.addEventListener('change', onAnyParamChange);
+
 // Собирает содержимое #printArea из текущих результатов и проставляет
 // data-base-width у чертежей (см. комментарий ниже, откуда он был раньше) -
 // общая часть для printBox() (см. ниже) и для подстраховки на случай печати

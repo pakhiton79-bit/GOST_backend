@@ -47,8 +47,10 @@ function buildThicknessCheckboxList(){
 }
 
 function invalidateCalc(){
-  const results = document.getElementById('results');
-  setCalcStatus(results && results.style.display === 'block' ? 'outdated' : null);
+  // По указанию пользователя - при ЛЮБОМ изменении параметров (цифры,
+  // галочки, выпадающие списки...) сразу "Расчёт не проведён", в т.ч. и до
+  // первого расчёта (см. также общий слушатель в common-print.js).
+  setCalcStatus('outdated');
 }
 
 function onThicknessCheckboxChange(el){

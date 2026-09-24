@@ -6,7 +6,7 @@
 // (diagramPlaceholder/diagramEndPanel1Raskosina/diagramEndPanelNoRaskosina -
 // см. common-diagrams.js, должен быть подключён раньше). Ширина торца
 // подбирается так же, как у остальных чертежей I-1 - по общей высоте рамки
-// щита I1_FRAME_PX (см. i1DiagramWidth в bokovoy.js): высота рамки торца на
+// щита framePx (см. i1PageFramePx в bokovoy.js): высота рамки торца на
 // фото - 1107px (с раскосиной, 1352x1158) / 1103px (без раскосины,
 // 1354x1134), по концам стрелки вертикального размера.
 const BOX_I1_IMG_B64 = "/images/box_i1.jpg";
@@ -16,11 +16,11 @@ const BOX_I1_IMG_B64 = "/images/box_i1.jpg";
 // встречная - из двух кусков). *_x сгенерированы из исходных программно -
 // калибровка стрелок та же.
 const TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
-function diagramTorec(heightVal, widthVal, hasRaskosinaVal, xRaskosinaVal){
+function diagramTorec(heightVal, widthVal, hasRaskosinaVal, xRaskosinaVal, framePx){
   if(hasRaskosinaVal){
-    const w = i1DiagramWidth(1352, 1107);
+    const w = i1DiagramWidth(1352, 1107, framePx);
     return diagramEndPanel1Raskosina(heightVal, widthVal, w, xRaskosinaVal ? TOREC_1_X_IMG_B64 : undefined, i1StrokeScale(1352, w));
   }
-  const w = i1DiagramWidth(1354, 1103);
+  const w = i1DiagramWidth(1354, 1103, framePx);
   return diagramEndPanelNoRaskosina(heightVal, widthVal, w, i1StrokeScale(1354, w));
 }
