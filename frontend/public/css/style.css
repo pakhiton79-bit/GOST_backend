@@ -707,6 +707,14 @@
     width:340px;
     margin-left:12px;
   }
+  /* I-3/II-1 - тот же расширенный слот, что и у I-1 (по указанию
+     пользователя: чертежи занимают всё своё место, см. growDiagramToSlot
+     в common-print.js). */
+  #boardTables .diagram-slot{
+    flex-basis:340px;
+    width:340px;
+    margin-left:12px;
+  }
   .diagram-wrap{
     position:relative;
     flex:0 0 260px;
@@ -796,7 +804,8 @@
        размер - через --dk) оставались бы прежними и наезжали друг на
        друга. Сжатие по ширине экрана делает reserveDiagramOverflowScreen
        (вместе с подписями), каждый чертёж - независимо. */
-    #boardTables .diagram-slot[data-i1-panel] .diagram-wrap{
+    #boardTables .diagram-slot[data-i1-panel] .diagram-wrap,
+    #boardTables .diagram-slot .diagram-wrap{
       max-width:none;
     }
   }

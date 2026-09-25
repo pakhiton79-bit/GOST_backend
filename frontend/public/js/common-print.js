@@ -568,6 +568,50 @@ window.addEventListener('beforeprint', ()=>{
 // на 2 этажа), обрезалось бы уже на самой печати, т.к. вылет влево не
 // увеличивает scrollWidth и потому не ловится проверкой fits() в
 // fitPrintAreaToOnePage - страница «влезала» при замере, а печатала обрезанной.
+// Чертежи I-3/II-1 (по указанию пользователя, как у I-1): каждый чертёж
+// занимает всё своё место в слоте - если после подгонки по вылету подписей
+// место по ширине ещё остаётся, картинка увеличивается (подписи - прежнего
+// размера, --dk не растёт) до ширины слота, но не выше DIAGRAM_GROW_MAX_H
+// (та же предельная высота картинки, что и у чертежей I-1). Чертежи I-1
+// (data-i1-panel) уже рассчитаны на максимальный размер, общий вид ящика
+// (без стрелок) - не чертёж; их не трогаем.
+const DIAGRAM_GROW_MAX_H = 240;
+function diagramCanGrow(slot, wrap){
+  return !slot.hasAttribute('data-i1-panel') && !!wrap.querySelector('svg.diagram-arrows');
+}
+// При увеличении картинки линии SVG (толщина задана в единицах viewBox)
+// утолщались бы пропорционально - компенсируем, чтобы на экране они
+// оставались прежней толщины (в печати толщину задаёт CSS).
+function setDiagramStrokeGrowth(wrap, g){
+  wrap.querySelectorAll('svg.diagram-arrows line').forEach(l=>{
+    if(!l.dataset.sw0) l.dataset.sw0 = l.getAttribute('stroke-width') || '';
+    const sw0 = parseFloat(l.dataset.sw0);
+    if(sw0) l.setAttribute('stroke-width', String(sw0 / g));
+  });
+}
+// Общий подбор увеличения: widthOf(g) выставляет ширину, measureGaps()
+// возвращает {box, lo, ro} (картинка и вылеты слева/справа с запасом).
+function growDiagramToSlot(slotWidth, maxH, setWidth, measureGaps){
+  let g = 1;
+  for(let i = 0; i < 6; i++){
+    const m = measureGaps();
+    if(!m.box.width || !m.box.height) break;
+    const k = Math.min((slotWidth - 4 - m.lo - m.ro) / m.box.width, maxH / m.box.height);
+    const next = Math.max(1, g * k);
+    if(Math.abs(next - g) < 0.005) break;
+    g = next;
+    setWidth(g);
+  }
+  // Подстраховка: если после последнего шага охват всё же не влез - шаг назад.
+  for(let i = 0; i < 6 && g > 1; i++){
+    const m = measureGaps();
+    if(m.lo + m.box.width + m.ro <= slotWidth) break;
+    g = Math.max(1, g * (slotWidth - 4) / (m.lo + m.box.width + m.ro));
+    setWidth(g);
+  }
+  return g;
+}
+
 function reserveDiagramOverflow(printArea){
   function processSlot(slot, wrap, forcedScale){
     slot.style.paddingTop = '0px';
@@ -664,6 +708,22 @@ function reserveDiagramOverflow(printArea){
         scale = Math.max(0.3, scale * (slotWidth - 4 - leftGap0) / (mi.box.width + rightGap));
         wrap.style.width = Math.round(fullWidth * scale) + 'px';
         wrap.style.setProperty('--dk', scale.toFixed(3));
+      }
+      if(scale >= 1 && diagramCanGrow(slot, wrap)){
+        const pk = parseFloat(getComputedStyle(slot).getPropertyValue('--pk')) || 1;
+        const g = growDiagramToSlot(slotWidth, DIAGRAM_GROW_MAX_H * pk,
+          g => { wrap.style.width = Math.round(fullWidth * g) + 'px'; },
+          () => {
+            wrap.style.marginLeft = '0px';
+            const mi = measure();
+            return {box: mi.box, lo: Math.max(0, Math.ceil(mi.box.left - mi.left)) + SAFETY_PAD, ro: Math.max(0, Math.ceil(mi.right - mi.box.right)) + SAFETY_PAD};
+          });
+        if(g > 1){
+          // вертикальный вылет подписей - заново, под новый размер картинки
+          const mg = measure();
+          slot.style.paddingTop = Math.max(0, Math.ceil(mg.box.top - mg.top)) + 'px';
+          slot.style.paddingBottom = Math.max(0, Math.ceil(mg.bottom - mg.box.bottom)) + 'px';
+        }
       }
     }
 
@@ -846,6 +906,17 @@ function reserveDiagramOverflowScreen(container){
         wrap.style.width = Math.round(baseWidth * scale) + 'px';
         wrap.style.setProperty('--dk', scale.toFixed(3));
       }
+      let grow = 1;
+      if(scale >= 1 && diagramCanGrow(slot, wrap)){
+        grow = growDiagramToSlot(slotBudget, DIAGRAM_GROW_MAX_H,
+          g => { wrap.style.width = Math.round(baseWidth * g) + 'px'; },
+          () => {
+            wrap.style.marginLeft = '0px';
+            const m = measure();
+            return {box: m.box, lo: Math.max(0, Math.ceil(m.box.left - m.left)) + SAFETY_PAD, ro: Math.max(0, Math.ceil(m.right - m.box.right)) + SAFETY_PAD};
+          });
+      }
+      setDiagramStrokeGrowth(wrap, grow);
     }
 
     wrap.style.marginLeft = '0px';
