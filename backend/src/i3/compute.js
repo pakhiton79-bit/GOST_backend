@@ -307,9 +307,6 @@ function computeGost10198I3(input) {
     }
   }
   const torecHasRaskosina = H > 600 && W > 600 && !(torecSections === 1 && torecAngleDeg(1) > 60);
-  if (torecHasRaskosina && torecSections > 3 && !xRaskosina) { // X-вариант - генерируемый чертёж на любое число секций
-    warnings.push(`Щит торцевой: чертёж — макс. 3 секции (расчётных ${torecSections}, раскладка та же); точное количество см. в таблице ниже.`);
-  }
 
   const l30 = (torecSections + 1) * torecFloors;
 
