@@ -231,7 +231,10 @@ function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   if(hasRaskosinaVal){
     for(let i=0; i<n-1; i++){
       const l = px(i) + plankW, r = px(i+1);
-      const rising = i < n-2 || n === 2;
+      // Смена направления - посередине (по указанию пользователя): левая
+      // половина пролётов «/», правая «\»; при нечётном числе пролётов
+      // центральный - как левая половина (/ / / \ \).
+      const rising = i < Math.ceil((n-1)/2);
       if(xRaskosinaVal) shapes += band(l, r, !rising);
       shapes += band(l, r, rising);
     }
