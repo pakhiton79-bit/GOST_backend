@@ -86,6 +86,7 @@ app.post('/api/i3/calculate', (req, res) => {
     roundBoardWidths: !!b.roundBoardWidths,
     solidRigidBase: !!b.solidRigidBase,
     forkliftLoading: !!b.forkliftLoading,
+    xRaskosina: !!b.xRaskosina,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),

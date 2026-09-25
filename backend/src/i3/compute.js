@@ -34,7 +34,7 @@ const WOOD_DENSITY_KG_M3 = 500;
 function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
-    roundBoardWidths, solidRigidBase, forkliftLoading, baseProductivity, timeCoeff,
+    roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, baseProductivity, timeCoeff,
   } = input;
   const availableThicknesses = input.availableThicknesses || [];
 
@@ -307,7 +307,7 @@ function computeGost10198I3(input) {
     }
   }
   const torecHasRaskosina = H > 600 && W > 600 && !(torecSections === 1 && torecAngleDeg(1) > 60);
-  if (torecHasRaskosina && torecSections > 3) {
+  if (torecHasRaskosina && torecSections > 3 && !xRaskosina) { // X-вариант - генерируемый чертёж на любое число секций
     warnings.push(`Щит торцевой: чертёж — макс. 3 секции (расчётных ${torecSections}, раскладка та же); точное количество см. в таблице ниже.`);
   }
 
@@ -332,7 +332,13 @@ function computeGost10198I3(input) {
     { name: 'Вертикальная планка', t: t30, w: w30, l: k30, qty: l30, overrideKey: 'wallValue' },
     { name: 'Горизонтальная планка', t: t31, w: w31, l: k31_, qty: l31, overrideKey: 'wallValue' },
   ];
+  // X-образные раскосины (галочка xRaskosina, как у типа I-1, по запросу
+  // пользователя): к каждой раскосине добавляется встречная из 2 кусков,
+  // упирающихся в неё с двух сторон - длина куска = (длина раскосины - её
+  // ширина)/2, кол-во ×2; толщина та же. Входит в объём/массу/время.
+  const torecX = xRaskosina && torecHasRaskosina;
   if (torecHasRaskosina) endPanel.push({ name: 'Раскосина', t: t33, w: w33, l: k33, qty: l33, overrideKey: 'wallValue' });
+  if (torecX) endPanel.push({ name: 'Раскосина (дополнительная)', t: t33, w: w33, l: (k33 - w33) / 2, qty: l33 * 2, overrideKey: 'wallValue' });
   if (l32 > 0) endPanel.push({ name: 'Доска торца', t: t32, w: w32, l: k32, qty: l32, overrideKey: 'wallValue' });
   fbTorec.extra.forEach((e, i) => {
     const suffix = fbTorec.extra.length > 1 ? ' ' + (i + 1) : '';
@@ -377,9 +383,11 @@ function computeGost10198I3(input) {
     }
   }
 
+  const bokX = xRaskosina && bokHasRaskosina; // X-раскосины - см. torecX выше
   const volBokPanel = vol(t40, w40, k40, l40) + vol(t41, w41, k41, l41)
     + fbBok.extra.reduce((s, e) => s + vol(t41, e.width, k41, e.qty), 0)
-    + vol(t42, w42, k42, l42) + vol(t43, w43, k43, l43);
+    + vol(t42, w42, k42, l42) + vol(t43, w43, k43, l43)
+    + (bokX ? vol(t42, w42, (k42 - w42) / 2, l42 * 2) : 0);
 
   const bokovoy = [
     { name: 'Вертикальная планка', t: t40, w: w40, l: k40, qty: l40, overrideKey: 'wallValue' },
@@ -391,9 +399,10 @@ function computeGost10198I3(input) {
   });
   if (l43 > 0) bokovoy.push({ name: 'Горизонтальная планка', t: t43, w: w43, l: k43, qty: l43, overrideKey: 'wallValue' });
   if (bokHasRaskosina) bokovoy.push({ name: 'Раскосина', t: t42, w: w42, l: k42, qty: l42, overrideKey: 'wallValue' });
+  if (bokX) bokovoy.push({ name: 'Раскосина (дополнительная)', t: t42, w: w42, l: (k42 - w42) / 2, qty: l42 * 2, overrideKey: 'wallValue' });
 
   // --- Итоговый расход пиломатериала ---
-  const totalVolume = volDno + volKryshka + 2 * volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) + 2 * volBokPanel;
+  const totalVolume = volDno + volKryshka + 2 * (volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) + (torecX ? vol(t33, w33, (k33 - w33) / 2, l33 * 2) : 0)) + 2 * volBokPanel;
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
   // Масса ящика (тары, без груза) - объём пиломатериала × плотность
   // древесины 500 кг/м³ (как у типа I-1, по указанию пользователя).
@@ -426,7 +435,7 @@ function computeGost10198I3(input) {
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
     W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW,
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
-    H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43,
+    H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina,
   };
   const negField = findNegativeField(result, '');
   if (negField) {
