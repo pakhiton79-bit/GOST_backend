@@ -435,7 +435,7 @@ function computeGost10198I3(input) {
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
     W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW,
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
-    H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina,
+    H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina, t20,
   };
   const negField = findNegativeField(result, '');
   if (negField) {

@@ -76,7 +76,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
 }
 
 // --- Щит боковой: P планок (P-1 секций), 1 или 2 этажа ---
-function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankCount, floors, xMode, upperSpanVal, midPlankWidthVal, sectionWmm){
+function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankCount, floors, xMode, upperSpanVal, midPlankWidthVal, sectionWmm, lidBoardTVal){
   const P = Math.max(2, Math.round(plankCount)), F = floors === 2 ? 2 : 1;
   const PH = floors === 2 ? 1300 : 800, pw = 100, stub = 100, hp = 90;
   const ovh = 80;                                   // напуск планок ниже щита (на полоз)
@@ -102,13 +102,18 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
 
   const lastR = px(P-1) + pw;
   const IHp = PH + ovh; // (записи ниже - в координатах щита, затем сдвиг на up)
+  const k = IW / 260;   // единиц картинки на 1px при базовой ширине чертежа
   const records = [
     {type:'line', x1:IW, y1:0, x2:IW+215, y2:0},
     {type:'line', x1:IW, y1:PH, x2:IW+215, y2:PH},
     {type:'double', x1:IW+195, y1:0, x2:IW+195, y2:PH, lx:IW+207, ly:PH/2, text: dimLabel(heightPlusFloorVal)+' мм', vertical:true},
     {type:'line', x1:IW, y1:80, x2:IW, y2:-120},
     {type:'line', x1:0, y1:80, x2:0, y2:-120},
-    {type:'double', x1:0, y1:-95, x2:IW, y2:-95, lx:IW/2, ly:-101, text: dimLabel(boardLenVal)+' мм'},
+    {type:'double', x1:0, y1:-95, x2:IW, y2:-95, lx:Math.max(IW/2, px(0) + 150*k), ly:-101, text: dimLabel(boardLenVal)+' мм'},
+    // Стрелка к выступающему верхнему левому углу первой планки - толщина
+    // доски крышки (по указанию пользователя, как у чертежей типа I-1). У 2 этажей
+    // подпись на ряд выше - слева под ней вертикальная подпись верхнего этажа.
+    {type:'single', x1:px(0) - 12*k, y1:F === 2 ? -95 - 34*k : -95, x2:px(0), y2:-up*0.33, lx:px(0) - 12*k, ly:F === 2 ? -101 - 34*k : -101, text: dimLabel(lidBoardTVal)+' мм'},
     {type:'line', x1:lastR-260, y1:IHp, x2:IW+120, y2:IHp},
     {type:'line', x1:lastR, y1:PH, x2:lastR, y2:IHp},
     {type:'single', x1:lastR-200, y1:IHp+130, x2:lastR, y2:IHp-40, lx:lastR-202, ly:IHp+155, text: dimLabel(overhangVal)+' мм'},
