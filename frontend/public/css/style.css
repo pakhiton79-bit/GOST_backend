@@ -700,9 +700,9 @@
      планки) шире обычных 260px - слот расширен на 40px, из них 20px взяты у
      левого отступа слота, так что таблица деталей сужается всего на 20px.
      Скоуп #boardTables - печать не затрагивается (там свой слот, см.
-     #printArea .diagram-slot; чертежи группы i1-panels сжимаются там
-     одинаково - reserveScaleGroups в src/common-print.js). */
-  #boardTables .diagram-slot[data-size-group="i1-panels"]{
+     #printArea .diagram-slot; каждый чертёж I-1 - своего размера, без
+     общего масштаба). */
+  #boardTables .diagram-slot[data-i1-panel]{
     flex-basis:340px;
     width:340px;
     margin-left:12px;
@@ -791,12 +791,12 @@
       max-width:240px;
       margin:0 auto;
     }
-    /* I-1: чертежи в едином масштабе (см. i1-panels выше) - самый длинный
+    /* I-1: каждый чертёж максимального размера (см. data-i1-panel выше) - длинный
        шире 240px; max-width обрезал бы только картинку, а подписи (их
        размер - через --dk) оставались бы прежними и наезжали друг на
        друга. Сжатие по ширине экрана делает reserveDiagramOverflowScreen
-       (вместе с подписями), а группа i1-panels держит общий масштаб. */
-    #boardTables .diagram-slot[data-size-group="i1-panels"] .diagram-wrap{
+       (вместе с подписями), каждый чертёж - независимо. */
+    #boardTables .diagram-slot[data-i1-panel] .diagram-wrap{
       max-width:none;
     }
   }
@@ -1103,11 +1103,11 @@
     border:calc(var(--pk)*var(--dk)*var(--lk,1)*2px) solid #8A4B26;color:#091135;font-size:calc(var(--pk)*var(--dk)*var(--lk,1)*15px);font-weight:700;
     padding:calc(var(--pk)*var(--dk)*var(--lk,1)*2px) calc(var(--pk)*var(--dk)*var(--lk,1)*6px);white-space:nowrap;line-height:1.3;
   }
-  /* I-1 (i1-panels): в печати подписи относительно картинки крупнее, чем на
+  /* I-1 (data-i1-panel): в печати подписи относительно картинки крупнее, чем на
      экране (15px против 13px при ширине картинки x0.885) - на чертежах I-1
      подписи расставлены плотнее (в два ряда под фото, см. diagramBokPhoto в
      src/i1/diagrams.js), поэтому в печати они немного уменьшены. */
-  #printArea .diagram-slot[data-size-group="i1-panels"] .diagram-wrap{--lk:0.85;}
+  #printArea .diagram-slot[data-i1-panel] .diagram-wrap{--lk:0.85;}
   #printArea .diagram-label-vertical{
     transform:translate(-50%,-50%) rotate(-90deg);
   }

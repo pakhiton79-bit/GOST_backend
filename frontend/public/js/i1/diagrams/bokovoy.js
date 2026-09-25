@@ -58,9 +58,9 @@ const BOK_I1_GEOM = {
 // чертёж расчёта помещается в слот (I1_MAX_W по ширине картинки,
 // I1_MAX_H по высоте). Упирается обычно в самый длинный чертёж (Бок/
 // Крышка/Дно) - остальные получаются в том же масштабе.
-// Слоты всех 4 чертежей объединены в data-size-group="i1-panels" (см.
-// js/i1/calc-i1.js): если на узком экране какому-то чертежу всё же не хватает места
-// и он сжимается, так же сжимаются и остальные - масштаб остаётся общим.
+// Сейчас общий масштаб не используется: каждый чертёж получает свой
+// максимальный размер (i1PanelFramePx/i1TorecFramePx ниже, по указанию
+// пользователя) и на узком экране сжимается независимо от остальных.
 const I1_FRAME_PX = 84;   // запасное значение, если framePx не передан
 const I1_MAX_W = 290;     // ширина картинки: слот 340px минус вылет подписей
 const I1_MAX_H = 240;     // высота картинки
@@ -85,6 +85,18 @@ function i1PageFramePx(plankQty, bokHasRaskosina, kdHasRaskosina){
     ? i1FrameFit(1352, 1158, 1107, I1_MAX_W / I1_TOREC_OVERFLOW)
     : i1FrameFit(1354, 1134, 1103, I1_MAX_W / I1_TOREC_OVERFLOW));
   return Math.floor(Math.min(...fits));
+}
+// По указанию пользователя («каждый чертёж - на всё своё место») общий
+// масштаб отменён: высота рамки подбирается для КАЖДОГО чертежа отдельно -
+// максимальная, при которой именно он помещается в слот.
+function i1PanelFramePx(plankQty, hasRaskosina){
+  const g = bokGeomDims(plankQty, hasRaskosina);
+  return Math.floor(i1FrameFit(g.IW, g.IH, g.botY - g.topY, I1_MAX_W));
+}
+function i1TorecFramePx(hasRaskosina){
+  return Math.floor(hasRaskosina
+    ? i1FrameFit(1352, 1158, 1107, I1_MAX_W / I1_TOREC_OVERFLOW)
+    : i1FrameFit(1354, 1134, 1103, I1_MAX_W / I1_TOREC_OVERFLOW));
 }
 // Толщина линий/стрелок на экране - как у обычного чертежа шириной
 // DIAGRAM_DEFAULT_WIDTH, независимо от того, насколько узким/широким вышел
