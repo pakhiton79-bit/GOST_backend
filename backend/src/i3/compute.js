@@ -29,6 +29,8 @@ const {
 //         baseProductivity,timeCoeff}.
 // variant: 'skid' (крепление за полозья, GOST10198_91POLOZIA) или
 //          'floor_boards' (крепление к доскам дна, GOST10198_91DOSKI_DNA).
+// Плотность древесины для «Массы ящика» (как у типа I-1: 500 кг/м³).
+const WOOD_DENSITY_KG_M3 = 500;
 function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
@@ -393,6 +395,9 @@ function computeGost10198I3(input) {
   // --- Итоговый расход пиломатериала ---
   const totalVolume = volDno + volKryshka + 2 * volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l32, fbTorec, t33, w33, k33, l33) + 2 * volBokPanel;
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
+  // Масса ящика (тары, без груза) - объём пиломатериала × плотность
+  // древесины 500 кг/м³ (как у типа I-1, по указанию пользователя).
+  const crateMass = totalVolume * WOOD_DENSITY_KG_M3;
 
   const torecNoRaskosinaDiagram = !torecHasRaskosina && (H <= 600 || W > 600);
   const t40Display = optimizeSizes ? t40 + 2 : t40;
@@ -416,7 +421,7 @@ function computeGost10198I3(input) {
   }
 
   const result = {
-    warnings, dno, kryshka, endPanel, bokovoy,
+    warnings, dno, kryshka, endPanel, bokovoy, crateMass,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
     W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW,
@@ -439,4 +444,4 @@ function volTorPanelOf(t30, w30, k30, l30, t31, w31, k31_, l31, t32, w32, k32, l
     + vol(t33, w33, k33, l33);
 }
 
-module.exports = { computeGost10198I3 };
+module.exports = { computeGost10198I3, WOOD_DENSITY_KG_M3 };

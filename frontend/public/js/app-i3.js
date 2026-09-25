@@ -252,6 +252,7 @@ async function calculateNow(){
 
   document.getElementById('outDims').innerHTML = `${calc.outerL} × ${calc.outerW} × ${calc.outerH} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
+  document.getElementById('outMass').innerHTML = `${calc.crateMass.toFixed(1)} <span>кг</span>`;
   document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
 
   function renderSection(title, rows, sectionKey){
@@ -330,6 +331,7 @@ function buildPrintHtml(){
 
   const outDimsText = document.getElementById('outDims').textContent.trim();
   const volumeText  = document.getElementById('outVolume').textContent.trim();
+  const massText    = document.getElementById('outMass').textContent.trim();
   const timeText    = document.getElementById('outTime').textContent.trim();
 
   const clone = document.getElementById('boardTables').cloneNode(true);
@@ -398,6 +400,7 @@ function buildPrintHtml(){
           <table class="print-plain-table">
             <tr><td class="k">Наружные размеры, мм</td><td>${outDimsText}</td></tr>
             <tr><td class="k">Расход пило&shy;материала</td><td>${volumeText}</td></tr>
+            <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
             <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
           </table>
         </div>

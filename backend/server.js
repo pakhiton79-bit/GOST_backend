@@ -91,7 +91,8 @@ app.post('/api/i3/calculate', (req, res) => {
     baseProductivity: toNum(b.baseProductivity),
     timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input));
+  res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * WOOD_DENSITY_KG_M3; }));
 });
 
 app.post('/api/i1/calculate', (req, res) => {
