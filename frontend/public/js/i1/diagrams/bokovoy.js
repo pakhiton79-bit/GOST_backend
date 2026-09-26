@@ -222,11 +222,27 @@ function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
     bay = 1.2*plankW;
   }
   const px = i => x0 + i*(plankW + bay); // левый край i-й планки (с 0)
-  const T = 0.25*(G.botY - G.topY);        // толщина раскосины по вертикали
   const f = v => v.toFixed(1);
-  const band = (l, r, rising) => rising
-    ? `<polygon points="${f(l)},${f(G.botY-T)} ${f(r)},${f(G.topY)} ${f(r)},${f(G.topY+T)} ${f(l)},${f(G.botY)}"/>`
-    : `<polygon points="${f(l)},${f(G.topY)} ${f(r)},${f(G.botY-T)} ${f(r)},${f(G.botY)} ${f(l)},${f(G.topY+T)}"/>`;
+  // Раскосина - полоса шириной планки вдоль диагонали пролёта (из угла в
+  // угол), обрезанная по пролёту: её конец заходит в угол и примыкает и к
+  // планке, и к кромке щита (по указанию пользователя, как у типа I-3).
+  const band = (l, r, rising) => {
+    const top = G.topY, bot = G.botY, PW = plankW;
+    const x0 = l, y0 = rising ? bot : top, x1b = r, y1b = rising ? top : bot;
+    const len = Math.hypot(x1b-x0, y1b-y0), nx = -(y1b-y0)/len, ny = (x1b-x0)/len;
+    let poly = [[l,top],[r,top],[r,bot],[l,bot]];
+    [1, -1].forEach(sgn=>{
+      const d = p => sgn*(nx*(p[0]-x0) + ny*(p[1]-y0)) - PW/2;
+      const out = [];
+      for(let i=0; i<poly.length; i++){
+        const a = poly[i], b = poly[(i+1)%poly.length], da = d(a), db = d(b);
+        if(da <= 0) out.push(a);
+        if((da <= 0) !== (db <= 0)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
+      }
+      poly = out;
+    });
+    return `<polygon points="${poly.map(p=>f(p[0])+','+f(p[1])).join(' ')}"/>`;
+  };
   let shapes = `<rect x="${f(G.stubL)}" y="${f(G.topY)}" width="${f(G.stubR-G.stubL)}" height="${f(G.botY-G.topY)}"/>`;
   if(hasRaskosinaVal){
     for(let i=0; i<n-1; i++){

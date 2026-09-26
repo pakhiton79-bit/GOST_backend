@@ -10,12 +10,18 @@ const I3_TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
 function i3stroke(IW, IH){
   return (2 * Math.max(IW/290, IH/240)).toFixed(1);
 }
-function i3genSvg(IW, IH, shapes){
-  const stroke = i3stroke(IW, IH);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${IW}" height="${IH}" viewBox="0 0 ${IW} ${IH}">`
+// Картинка + подписи. Вокруг чертежа - поле на толщину линии: иначе крайние
+// линии рамы, лежащие ровно по краю картинки, обрезались бы наполовину и
+// выглядели тоньше остальных (по замечанию пользователя). Подписи сдвигаются
+// на то же поле.
+function i3render(title, IW, IH, shapes, records, join){
+  const stroke = i3stroke(IW, IH), m = Math.ceil(stroke);
+  const W2 = IW + 2*m, H2 = IH + 2*m;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W2}" height="${H2}" viewBox="0 0 ${W2} ${H2}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
-    + `<g fill="#fff" stroke="#000" stroke-width="${stroke}" stroke-linejoin="miter">${shapes}</g></svg>`;
-  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    + `<g transform="translate(${m},${m})" fill="#fff" stroke="#000" stroke-width="${stroke}" stroke-linejoin="${join || 'miter'}">${shapes}</g></svg>`;
+  records.forEach(r=>{ ['x1','x2','lx'].forEach(k=>{ if(typeof r[k]==='number') r[k] += m; }); ['y1','y2','ly'].forEach(k=>{ if(typeof r[k]==='number') r[k] += m; }); });
+  return renderDiagram('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), title, W2, H2, records, null, photoStrokeScale(W2));
 }
 const i3f = v => v.toFixed(1);
 function i3rect(x, y, w, h){ return `<rect x="${i3f(x)}" y="${i3f(y)}" width="${i3f(w)}" height="${i3f(h)}"/>`; }
@@ -27,13 +33,29 @@ function i3band(l, r, top, bot, rising, T){
 }
 // Раскосина той же ширины (поперёк), что и планки (PW): все детали щита по
 // 100 мм, поэтому и на чертеже они одной ширины (по указанию пользователя).
-// T - высота полосы по вертикали у стойки: T*w/sqrt(w²+(h-T)²) = PW.
+// Полоса шириной PW вдоль диагонали секции (из угла в угол), обрезанная по
+// прямоугольнику секции - поэтому конец раскосины заходит в угол и
+// примыкает сразу к обеим планкам: и к вертикальной, и к горизонтальной
+// (по указанию пользователя, как на фото-чертежах).
+function i3strip(l, r, top, bot, rising, PW){
+  const x0 = l, y0 = rising ? bot : top, x1 = r, y1 = rising ? top : bot;
+  const len = Math.hypot(x1-x0, y1-y0), nx = -(y1-y0)/len, ny = (x1-x0)/len;
+  let poly = [[l,top],[r,top],[r,bot],[l,bot]];
+  const clip = (sgn) => {                           // оставляем sgn*(n·(p-p0)) <= PW/2
+    const d = p => sgn*(nx*(p[0]-x0) + ny*(p[1]-y0)) - PW/2;
+    const out = [];
+    for(let i=0; i<poly.length; i++){
+      const a = poly[i], b = poly[(i+1)%poly.length], da = d(a), db = d(b);
+      if(da <= 0) out.push(a);
+      if((da <= 0) !== (db <= 0)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
+    }
+    poly = out;
+  };
+  clip(1); clip(-1);
+  return `<polygon points="${poly.map(p=>i3f(p[0])+','+i3f(p[1])).join(' ')}"/>`;
+}
 function i3cross(l, r, top, bot, rising, xMode, PW){
-  const w = r - l, h = bot - top;
-  let T = PW;
-  for(let i=0; i<30; i++) T = PW * Math.sqrt(w*w + (h-T)*(h-T)) / w;
-  T = Math.min(T, 0.6*h);
-  return (xMode ? i3band(l, r, top, bot, !rising, T) : '') + i3band(l, r, top, bot, rising, T);
+  return (xMode ? i3strip(l, r, top, bot, !rising, PW) : '') + i3strip(l, r, top, bot, rising, PW);
 }
 // Пропорция секции (ширина/высота) по реальным размерам, в разумных пределах.
 function i3aspect(realW, realH){
@@ -85,7 +107,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
     );
   }
   const title = `Щит торцевой (${F} эт., ${N} секц.${xMode ? ', X-раскосины' : ''}) - схема расположения деталей`;
-  return renderDiagram(i3genSvg(IW, IH, shapes), title, IW, IH, records, null, photoStrokeScale(IW));
+  return i3render(title, IW, IH, shapes, records);
 }
 
 // --- Щит боковой: P планок (P-1 секций), 1 или 2 этажа ---
@@ -156,7 +178,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
   }
   records.forEach(r=>{ ['y1','y2','ly'].forEach(k=>{ if(typeof r[k]==='number') r[k] += up; }); });
   const title = `Щит боковой (${F} эт., ${P} планок${hasBraces === false ? ', без раскосин' : xMode ? ', X-раскосины' : ''}) - схема расположения деталей`;
-  return renderDiagram(i3genSvg(IW, IH, shapes), title, IW, IH, records, null, photoStrokeScale(IW));
+  return i3render(title, IW, IH, shapes, records);
 }
 
 // --- Крышка: реальное число планок (l19) и поперечных брусьев (l21) ---
@@ -251,9 +273,5 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const tc = P2(u1, 0.95*Wv, up);
   records.push({type:'single', x1:tc[0]-260, y1:tc[1]-120, x2:tc[0], y2:tc[1], lx:tc[0]-290, ly:tc[1]-160, text: valPlankaThick+' мм'});
 
-  const stroke = i3stroke(IW, IH);
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${IW}" height="${IH}" viewBox="0 0 ${IW} ${IH}">`
-    + `<rect width="100%" height="100%" fill="#fff"/>`
-    + `<g fill="#fff" stroke="#000" stroke-width="${stroke}" stroke-linejoin="round">${shapes}</g></svg>`;
-  return renderDiagram('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), `Крышка (${P} планок) - схема расположения деталей`, IW, IH, records, null, photoStrokeScale(IW));
+  return i3render(`Крышка (${P} планок) - схема расположения деталей`, IW, IH, shapes, records, 'round');
 }
