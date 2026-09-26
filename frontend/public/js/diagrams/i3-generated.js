@@ -167,7 +167,8 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
     {type:'line', x1:IW, y1:PH, x2:IW+150*Math.max(1, k/4), y2:PH},
     {type:'line', x1:lastR, y1:IHp, x2:IW+150*Math.max(1, k/4), y2:IHp},
     {type:'line', x1:IW+100*Math.max(1, k/4), y1:PH, x2:IW+100*Math.max(1, k/4), y2:IHp},
-    {type:'single', x1:IW+100*Math.max(1, k/4), y1:IHp+14*k, x2:IW+100*Math.max(1, k/4), y2:(PH+IHp)/2, lx:IW+100*Math.max(1, k/4), ly:IHp+18*k, text: dimLabel(overhangVal)+' мм'},
+    // стрелка - под углом, от подписи (правее и ниже) в середину отрезка
+    {type:'single', x1:IW+100*Math.max(1, k/4) + 10*k, y1:IHp+14*k, x2:IW+100*Math.max(1, k/4), y2:(PH+IHp)/2, lx:IW+100*Math.max(1, k/4) + 10*k, ly:IHp+18*k, text: dimLabel(overhangVal)+' мм'},
     {type:'line', x1:px(0), y1:PH-60, x2:px(0), y2:IHp+90},
     {type:'line', x1:0, y1:PH-60, x2:0, y2:IHp+90},
     {type:'line', x1:0, y1:IHp+60, x2:px(0), y2:IHp+60},
