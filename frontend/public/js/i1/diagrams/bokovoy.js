@@ -212,6 +212,37 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
 // "\"; X-образные - встречная раскосина рисуется ПОД исходной (исходная
 // целая, встречная - из кусков), как на *_x фото.
 const BOK_GEN = {IW:2208, IH:834, topY:90.5, botY:728.5, stubL:73.5, stubR:2153.5, plankTop:48.5, plankBot:770.5, edge:120, plankW:119, stroke:6};
+// Раскосина - полоса шириной PW (как у планок) из угла в угол секции,
+// обрезанная по секции. hTop/hBot - есть ли у верхней/нижней кромки секции
+// горизонтальная планка (по указанию пользователя): если есть - конец
+// раскосины заходит в угол и примыкает и к вертикальной, и к горизонтальной
+// планке; если нет (кромка щита) - упирается только в вертикальную планку:
+// средняя линия смещена от угла на половину её высоты, и полоса касается
+// кромки лишь в самом углу.
+function braceStrip(l, r, top, bot, rising, PW, hTop, hBot, fmt){
+  const yL = rising ? bot : top, yR = rising ? top : bot;      // углы, куда идёт раскосина
+  const hL = rising ? hBot : hTop, hR = rising ? hTop : hBot;  // есть ли там гор. планка
+  const inL = rising ? -1 : 1, inR = rising ? 1 : -1;          // направление "внутрь" по y
+  let T = PW, x0, y0, x1, y1;
+  for(let i=0; i<40; i++){
+    x0 = l; y0 = yL + (hL ? 0 : inL*T/2);
+    x1 = r; y1 = yR + (hR ? 0 : inR*T/2);
+    T = PW * Math.hypot(x1-x0, y1-y0) / (x1-x0);
+  }
+  const len = Math.hypot(x1-x0, y1-y0), nx = -(y1-y0)/len, ny = (x1-x0)/len;
+  let poly = [[l,top],[r,top],[r,bot],[l,bot]];
+  [1, -1].forEach(sgn=>{
+    const d = p => sgn*(nx*(p[0]-x0) + ny*(p[1]-y0)) - PW/2;
+    const out = [];
+    for(let i=0; i<poly.length; i++){
+      const a = poly[i], b = poly[(i+1)%poly.length], da = d(a), db = d(b);
+      if(da <= 1e-9) out.push(a);
+      if((da <= 1e-9) !== (db <= 1e-9)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
+    }
+    poly = out;
+  });
+  return `<polygon points="${poly.map(p=>fmt(p[0])+','+fmt(p[1])).join(' ')}"/>`;
+}
 function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   const G = BOK_GEN;
   const x0 = G.stubL + G.edge, x1 = G.stubR - G.edge;
@@ -223,26 +254,9 @@ function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   }
   const px = i => x0 + i*(plankW + bay); // левый край i-й планки (с 0)
   const f = v => v.toFixed(1);
-  // Раскосина - полоса шириной планки вдоль диагонали пролёта (из угла в
-  // угол), обрезанная по пролёту: её конец заходит в угол и примыкает и к
-  // планке, и к кромке щита (по указанию пользователя, как у типа I-3).
-  const band = (l, r, rising) => {
-    const top = G.topY, bot = G.botY, PW = plankW;
-    const x0 = l, y0 = rising ? bot : top, x1b = r, y1b = rising ? top : bot;
-    const len = Math.hypot(x1b-x0, y1b-y0), nx = -(y1b-y0)/len, ny = (x1b-x0)/len;
-    let poly = [[l,top],[r,top],[r,bot],[l,bot]];
-    [1, -1].forEach(sgn=>{
-      const d = p => sgn*(nx*(p[0]-x0) + ny*(p[1]-y0)) - PW/2;
-      const out = [];
-      for(let i=0; i<poly.length; i++){
-        const a = poly[i], b = poly[(i+1)%poly.length], da = d(a), db = d(b);
-        if(da <= 0) out.push(a);
-        if((da <= 0) !== (db <= 0)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
-      }
-      poly = out;
-    });
-    return `<polygon points="${poly.map(p=>f(p[0])+','+f(p[1])).join(' ')}"/>`;
-  };
+  // Раскосина - шириной планки; горизонтальных планок у щита нет, поэтому
+  // она упирается только в вертикальные планки (см. braceStrip ниже).
+  const band = (l, r, rising) => braceStrip(l, r, G.topY, G.botY, rising, plankW, false, false, f);
   let shapes = `<rect x="${f(G.stubL)}" y="${f(G.topY)}" width="${f(G.stubR-G.stubL)}" height="${f(G.botY-G.topY)}"/>`;
   if(hasRaskosinaVal){
     for(let i=0; i<n-1; i++){

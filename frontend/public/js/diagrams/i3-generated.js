@@ -31,31 +31,39 @@ function i3band(l, r, top, bot, rising, T){
     ? `<polygon points="${i3f(l)},${i3f(bot-T)} ${i3f(r)},${i3f(top)} ${i3f(r)},${i3f(top+T)} ${i3f(l)},${i3f(bot)}"/>`
     : `<polygon points="${i3f(l)},${i3f(top)} ${i3f(r)},${i3f(bot-T)} ${i3f(r)},${i3f(bot)} ${i3f(l)},${i3f(top+T)}"/>`;
 }
-// Раскосина той же ширины (поперёк), что и планки (PW): все детали щита по
-// 100 мм, поэтому и на чертеже они одной ширины (по указанию пользователя).
-// Полоса шириной PW вдоль диагонали секции (из угла в угол), обрезанная по
-// прямоугольнику секции - поэтому конец раскосины заходит в угол и
-// примыкает сразу к обеим планкам: и к вертикальной, и к горизонтальной
-// (по указанию пользователя, как на фото-чертежах).
-function i3strip(l, r, top, bot, rising, PW){
-  const x0 = l, y0 = rising ? bot : top, x1 = r, y1 = rising ? top : bot;
+// Раскосина - полоса шириной PW (как у планок) из угла в угол секции,
+// обрезанная по секции. hTop/hBot - есть ли у верхней/нижней кромки секции
+// горизонтальная планка (по указанию пользователя): если есть - конец
+// раскосины заходит в угол и примыкает и к вертикальной, и к горизонтальной
+// планке; если нет (кромка щита) - упирается только в вертикальную планку:
+// средняя линия смещена от угла на половину её высоты, и полоса касается
+// кромки лишь в самом углу.
+function braceStrip(l, r, top, bot, rising, PW, hTop, hBot, fmt){
+  const yL = rising ? bot : top, yR = rising ? top : bot;      // углы, куда идёт раскосина
+  const hL = rising ? hBot : hTop, hR = rising ? hTop : hBot;  // есть ли там гор. планка
+  const inL = rising ? -1 : 1, inR = rising ? 1 : -1;          // направление "внутрь" по y
+  let T = PW, x0, y0, x1, y1;
+  for(let i=0; i<40; i++){
+    x0 = l; y0 = yL + (hL ? 0 : inL*T/2);
+    x1 = r; y1 = yR + (hR ? 0 : inR*T/2);
+    T = PW * Math.hypot(x1-x0, y1-y0) / (x1-x0);
+  }
   const len = Math.hypot(x1-x0, y1-y0), nx = -(y1-y0)/len, ny = (x1-x0)/len;
   let poly = [[l,top],[r,top],[r,bot],[l,bot]];
-  const clip = (sgn) => {                           // оставляем sgn*(n·(p-p0)) <= PW/2
+  [1, -1].forEach(sgn=>{
     const d = p => sgn*(nx*(p[0]-x0) + ny*(p[1]-y0)) - PW/2;
     const out = [];
     for(let i=0; i<poly.length; i++){
       const a = poly[i], b = poly[(i+1)%poly.length], da = d(a), db = d(b);
-      if(da <= 0) out.push(a);
-      if((da <= 0) !== (db <= 0)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
+      if(da <= 1e-9) out.push(a);
+      if((da <= 1e-9) !== (db <= 1e-9)){ const t = da/(da-db); out.push([a[0]+t*(b[0]-a[0]), a[1]+t*(b[1]-a[1])]); }
     }
     poly = out;
-  };
-  clip(1); clip(-1);
-  return `<polygon points="${poly.map(p=>i3f(p[0])+','+i3f(p[1])).join(' ')}"/>`;
+  });
+  return `<polygon points="${poly.map(p=>fmt(p[0])+','+fmt(p[1])).join(' ')}"/>`;
 }
-function i3cross(l, r, top, bot, rising, xMode, PW){
-  return (xMode ? i3strip(l, r, top, bot, !rising, PW) : '') + i3strip(l, r, top, bot, rising, PW);
+function i3cross(l, r, top, bot, rising, xMode, PW, hTop, hBot){
+  return (xMode ? braceStrip(l, r, top, bot, !rising, PW, hTop, hBot, i3f) : '') + braceStrip(l, r, top, bot, rising, PW, hTop, hBot, i3f);
 }
 // Пропорция секции (ширина/высота) по реальным размерам, в разумных пределах.
 function i3aspect(realW, realH){
@@ -80,7 +88,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
     const upper = F === 2 && fl === 0;              // верхний этаж - зеркально нижнему
     for(let i=0; i<N; i++){
       const leftHalf = i < Math.ceil(N/2);
-      shapes += i3cross(vx(i)+vw, vx(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, vw);
+      shapes += i3cross(vx(i)+vw, vx(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, vw, true, true);
     }
   }
   for(let fl=0; fl<F; fl++){
@@ -132,7 +140,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
     const upper = F === 2 && fl === 0;
     for(let i=0; i<P-1; i++){
       const leftHalf = i < Math.ceil((P-1)/2);
-      shapes += i3cross(px(i)+pw, px(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, pw);
+      shapes += i3cross(px(i)+pw, px(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, pw, F === 2 && fl === 1, F === 2 && fl === 0);
     }
   }
   shapes += '</g>';
