@@ -25,8 +25,14 @@ function i3band(l, r, top, bot, rising, T){
     ? `<polygon points="${i3f(l)},${i3f(bot-T)} ${i3f(r)},${i3f(top)} ${i3f(r)},${i3f(top+T)} ${i3f(l)},${i3f(bot)}"/>`
     : `<polygon points="${i3f(l)},${i3f(top)} ${i3f(r)},${i3f(bot-T)} ${i3f(r)},${i3f(bot)} ${i3f(l)},${i3f(top+T)}"/>`;
 }
-function i3cross(l, r, top, bot, rising, xMode){
-  const T = Math.min(0.3*(bot-top), 0.3*(r-l)) ;
+// Раскосина той же ширины (поперёк), что и планки (PW): все детали щита по
+// 100 мм, поэтому и на чертеже они одной ширины (по указанию пользователя).
+// T - высота полосы по вертикали у стойки: T*w/sqrt(w²+(h-T)²) = PW.
+function i3cross(l, r, top, bot, rising, xMode, PW){
+  const w = r - l, h = bot - top;
+  let T = PW;
+  for(let i=0; i<30; i++) T = PW * Math.sqrt(w*w + (h-T)*(h-T)) / w;
+  T = Math.min(T, 0.6*h);
   return (xMode ? i3band(l, r, top, bot, !rising, T) : '') + i3band(l, r, top, bot, rising, T);
 }
 // Пропорция секции (ширина/высота) по реальным размерам, в разумных пределах.
@@ -40,7 +46,7 @@ function i3aspect(realW, realH){
 // floorSpan - (2 этажа) вертикальная планка этажа + ширина гор. планки.
 function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
   const N = Math.max(1, Math.round(sections)), F = floors === 2 ? 2 : 1;
-  const IH = F === 2 ? 1200 : 800, hp = F === 2 ? 90 : 110, vw = 90;
+  const IH = F === 2 ? 1200 : 800, hp = 90, vw = 90; // гор. и верт. планки - одной ширины
   const innerH = (IH - hp*(F+1)) / F;
   const realSecW = (Wmm - 100*(N+1)) / N, realInH = F === 2 ? (Htot - 300)/2 : Htot - 200;
   const sw = innerH * i3aspect(realSecW, realInH);
@@ -52,7 +58,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
     const upper = F === 2 && fl === 0;              // верхний этаж - зеркально нижнему
     for(let i=0; i<N; i++){
       const leftHalf = i < Math.ceil(N/2);
-      shapes += i3cross(vx(i)+vw, vx(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode);
+      shapes += i3cross(vx(i)+vw, vx(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, vw);
     }
   }
   for(let fl=0; fl<F; fl++){
@@ -85,7 +91,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
 // --- Щит боковой: P планок (P-1 секций), 1 или 2 этажа ---
 function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankCount, floors, xMode, upperSpanVal, midPlankWidthVal, sectionWmm, lidBoardTVal, hasBraces){
   const P = Math.max(2, Math.round(plankCount)), F = floors === 2 ? 2 : 1;
-  const PH = floors === 2 ? 1300 : 800, pw = 100, stub = 100, hp = 90;
+  const PH = floors === 2 ? 1300 : 800, pw = 100, stub = 100, hp = 100; // средняя планка - той же ширины
   const ovh = 80;                                   // напуск планок ниже щита (на полоз)
   const innerH = F === 2 ? (PH - hp)/2 : PH;
   const realInH = F === 2 ? (heightPlusFloorVal - (midPlankWidthVal||100))/2 : heightPlusFloorVal;
@@ -104,7 +110,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
     const upper = F === 2 && fl === 0;
     for(let i=0; i<P-1; i++){
       const leftHalf = i < Math.ceil((P-1)/2);
-      shapes += i3cross(px(i)+pw, px(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode);
+      shapes += i3cross(px(i)+pw, px(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, pw);
     }
   }
   shapes += '</g>';
@@ -171,7 +177,7 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   // но не шире, чем позволяет промежуток между соседними.
   const minGapU = P > 1 ? plankGapMm*k : Lu;
   const pw = Math.min(Math.max(100*k, 120), 0.55*minGapU);
-  const bw = Math.min(Math.max((crossBeamWidthMm||100)*k, 110), B > 0 ? 0.55*(Lu/(B+1)) : 110);
+  const bw = Math.min(pw, B > 0 ? 0.55*(Lu/(B+1)) : pw); // брусья - той же ширины, что и планки
   const up = [-8, -26], thick = [7, 20];            // подъём планок над крышкой, толщина крышки
   const pt = (u, v, d) => [u*eu[0] + v*ev[0] + (d?d[0]:0), u*eu[1] + v*ev[1] + (d?d[1]:0)];
   const polys = [];                                 // [точки] в порядке отрисовки
