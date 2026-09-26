@@ -161,9 +161,13 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
     // доски крышки (по указанию пользователя, как у чертежей типа I-1). У 2 этажей
     // подпись на ряд выше - слева под ней вертикальная подпись верхнего этажа.
     {type:'single', x1:px(0) - 12*k, y1:F === 2 ? -95 - 34*k : -95, x2:px(0), y2:-up*0.33, lx:px(0) - 12*k, ly:F === 2 ? -101 - 34*k : -101, text: dimLabel(lidBoardTVal)+' мм'},
-    {type:'line', x1:lastR-260, y1:IHp, x2:IW+120, y2:IHp},
-    {type:'line', x1:lastR, y1:PH, x2:lastR, y2:IHp},
-    {type:'single', x1:lastR-200, y1:IHp+130, x2:lastR, y2:IHp-40, lx:lastR-202, ly:IHp+155, text: dimLabel(overhangVal)+' мм'},
+    // Напуск: на сколько планки выступают ниже щита - выносные линии на уровне
+    // низа щита и низа планки справа от щита, между ними - размер, подпись
+    // под ним (по замечанию пользователя: раньше сноска уходила влево-вниз).
+    {type:'line', x1:IW, y1:PH, x2:IW+150*Math.max(1, k/4), y2:PH},
+    {type:'line', x1:lastR, y1:IHp, x2:IW+150*Math.max(1, k/4), y2:IHp},
+    {type:'line', x1:IW+100*Math.max(1, k/4), y1:PH, x2:IW+100*Math.max(1, k/4), y2:IHp},
+    {type:'single', x1:IW+100*Math.max(1, k/4), y1:IHp+14*k, x2:IW+100*Math.max(1, k/4), y2:(PH+IHp)/2, lx:IW+100*Math.max(1, k/4), ly:IHp+18*k, text: dimLabel(overhangVal)+' мм'},
     {type:'line', x1:px(0), y1:PH-60, x2:px(0), y2:IHp+90},
     {type:'line', x1:0, y1:PH-60, x2:0, y2:IHp+90},
     {type:'line', x1:0, y1:IHp+60, x2:px(0), y2:IHp+60},
