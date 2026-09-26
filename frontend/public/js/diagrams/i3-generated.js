@@ -1,10 +1,17 @@
 // ===== Генерируемые чертежи I-3 (X-образные раскосины, любое число секций) =====
 // Стиль - как у одобренных X-фото типа I-1: белые детали с чёрным контуром,
 // у креста основная раскосина сверху, встречная - под ней.
-// Толщина контура - пропорционально ширине картинки, чтобы на экране линии
-// выглядели одинаково и у узкого, и у широкого чертежа.
+// X-вариант торца на 1 этаж с 1 секцией - готовое фото (то же, что у типа I-1):
+// где фото есть, используем фото, генерируем только остальное.
+const I3_TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
+// Толщина контура - из расчёта ~2px на экране: чертёж вписывается в слот
+// (до ~290px по ширине и 240px по высоте), поэтому толщина в единицах
+// картинки зависит от того, во что он упирается.
+function i3stroke(IW, IH){
+  return (2 * Math.max(IW/290, IH/240)).toFixed(1);
+}
 function i3genSvg(IW, IH, shapes){
-  const stroke = Math.max(4, IW*0.0045).toFixed(1);
+  const stroke = i3stroke(IW, IH);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${IW}" height="${IH}" viewBox="0 0 ${IW} ${IH}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
     + `<g fill="#fff" stroke="#000" stroke-width="${stroke}" stroke-linejoin="miter">${shapes}</g></svg>`;
@@ -238,7 +245,7 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const tc = P2(u1, 0.95*Wv, up);
   records.push({type:'single', x1:tc[0]-260, y1:tc[1]-120, x2:tc[0], y2:tc[1], lx:tc[0]-290, ly:tc[1]-160, text: valPlankaThick+' мм'});
 
-  const stroke = Math.max(4, IW*0.0045).toFixed(1);
+  const stroke = i3stroke(IW, IH);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${IW}" height="${IH}" viewBox="0 0 ${IW} ${IH}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
     + `<g fill="#fff" stroke="#000" stroke-width="${stroke}" stroke-linejoin="round">${shapes}</g></svg>`;
