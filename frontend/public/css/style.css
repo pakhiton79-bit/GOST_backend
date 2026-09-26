@@ -679,7 +679,7 @@
 
   #results{display:none;}
   .error{color:var(--error);font-family:inherit;font-size:13px;font-weight:600;margin-top:12px;}
-  .error.hint{color:var(--ink-soft);font-weight:500;} /* подсказка «Дождитесь окончания расчёта» - не ошибка */
+  .error.hint{color:var(--warn);} /* подсказка «Дождитесь окончания расчёта» - не ошибка: жёлтый, как «Нажмите «Рассчитать»» */
 
   .spec-row-diagram{
     display:flex;
