@@ -246,7 +246,10 @@ function braceStrip(l, r, top, bot, rising, PW, hTop, hBot, fmt){
 function bokGeomGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   const G = BOK_GEN;
   const x0 = G.stubL + G.edge, x1 = G.stubR - G.edge;
-  let plankW = G.plankW;
+  // Сгенерированный чертёж (5+ планок): планки и раскосины уже, чем на фото
+  // (по указанию пользователя - на фото-ширине 119 они выглядели слишком
+  // широкими при большом числе планок).
+  let plankW = 85;
   let bay = (x1 - x0 - n*plankW)/(n-1);
   if(bay < 1.2*plankW){
     plankW = (x1 - x0)/(n + 1.2*(n-1));
