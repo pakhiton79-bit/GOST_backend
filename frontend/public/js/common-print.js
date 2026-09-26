@@ -68,6 +68,7 @@ let calcInProgress = false;
 let printInProgress = false;
 let lastRefusalText = '';
 function refuseAction(reason){
+  clearCalcHint();
   setCalcStatus('error');
   const errEl = document.getElementById('err');
   if(errEl) errEl.textContent = reason;
@@ -87,10 +88,33 @@ function refuseAction(reason){
 // без пометок. Нельзя только во время расчёта и когда результатов нет
 // (ещё не считали либо расчёт заблокирован ошибкой - блок #results скрыт).
 // Возвращает true, если можно печатать.
+// Нейтральная (не красная) подсказка в #err - на 2.5 с, статус не меняет.
+let calcHintTimer = null;
+function showCalcHint(text){
+  const errEl = document.getElementById('err');
+  if(!errEl) return;
+  errEl.textContent = text;
+  errEl.dataset.hintText = text;
+  errEl.classList.add('hint');
+  clearTimeout(calcHintTimer);
+  calcHintTimer = setTimeout(clearCalcHint, 2500);
+}
+function clearCalcHint(){
+  const errEl = document.getElementById('err');
+  clearTimeout(calcHintTimer);
+  if(!errEl || !errEl.classList.contains('hint')) return;
+  errEl.classList.remove('hint');
+  // текст стираем, только если это всё ещё сама подсказка (а не ошибка
+  // расчёта, успевшая её заменить)
+  if(errEl.textContent === errEl.dataset.hintText) errEl.textContent = '';
+}
 function printAllowed(){
   if(printInProgress) return false; // уже готовится - повторное нажатие просто игнорируется
   if(calcInProgress){
-    refuseAction('Идёт расчёт — дождитесь его окончания и повторите.');
+    // Во время расчёта - не отказ (статус остаётся «Идёт расчёт…», без
+    // красного «Расчёт не проведён» - по указанию пользователя), а только
+    // короткая нейтральная подсказка под кнопками.
+    showCalcHint('Дождитесь окончания расчёта.');
     return false;
   }
   const results = document.getElementById('results');
@@ -154,6 +178,7 @@ async function calculate(){
     refuseAction('Не удалось выполнить расчёт. Проверьте введённые данные и повторите.');
   }finally{
     setCalcInProgress(false);
+    clearCalcHint();
     const loading = document.getElementById('calcLoading');
     if(loading && loading.classList.contains('active')) setCalcStatus(null);
     // Текст отказа, выданного во время расчёта (напр. «Идёт расчёт —
