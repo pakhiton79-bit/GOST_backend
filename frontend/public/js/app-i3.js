@@ -337,6 +337,63 @@ function onPlankGapInputChange(){
   rebuildPlankSlider(saved.mode, saved.value, saved.value);
 })();
 
+// ============ Расстояние между поперечными брусьями крышки ============
+// Галочка «Настроить расстояние между краями поперечных брусьев крышки» (по
+// указанию пользователя): вместо штатных 800 мм - своё значение: ползунок
+// 500-1100 мм с шагом 100 мм вокруг штатных 800 (тот же виджет, что у поясов
+// планок) + поле для любого значения. Расстановка - по тому же правилу
+// (зазор ровно заданный, число брусьев - максимальное при минимальном
+// отступе, остаток пополам), см. l21 в расчёте.
+const BEAM_GAP_STANDARD = 800;
+const BEAM_GAP_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'beamGap';
+let beamGapValue = null; // null - штатные 800 мм
+function beamGapSteps(){
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(BEAM_GAP_STANDARD + i*100);
+  return steps;
+}
+function saveBeamGap(){
+  try{ localStorage.setItem(BEAM_GAP_STORAGE_KEY, beamGapValue === null ? '' : String(beamGapValue)); }catch(e){}
+}
+const beamGapSlider = createJumpSlider(document.getElementById('beamGapSlider'), beamGapSteps(), v=>{
+  beamGapValue = v;
+  document.getElementById('beamGapInput').value = v;
+  saveBeamGap();
+  invalidateCalc();
+});
+function setBeamGapUI(v){
+  document.getElementById('beamGapInput').value = v;
+  beamGapSlider.setValue(v);
+}
+function onBeamGapCheckboxChange(){
+  const on = document.getElementById('customBeamGap').checked;
+  document.getElementById('beamGapRow').style.display = on ? '' : 'none';
+  beamGapValue = on ? BEAM_GAP_STANDARD : null;
+  setBeamGapUI(BEAM_GAP_STANDARD);
+  saveBeamGap();
+  invalidateCalc();
+}
+function onBeamGapInputChange(){
+  const v = parseFloat(String(document.getElementById('beamGapInput').value).replace(',', '.'));
+  if(!(v > 0)) return;
+  beamGapValue = v;
+  beamGapSlider.setValue(v);
+  saveBeamGap();
+  invalidateCalc();
+}
+(function initBeamGapFromStorage(){
+  let saved = null;
+  try{ const raw = localStorage.getItem(BEAM_GAP_STORAGE_KEY); if(raw) saved = parseFloat(raw); }catch(e){}
+  if(saved > 0){
+    beamGapValue = saved;
+    document.getElementById('customBeamGap').checked = true;
+    document.getElementById('beamGapRow').style.display = '';
+    setBeamGapUI(saved);
+  } else {
+    setBeamGapUI(BEAM_GAP_STANDARD);
+  }
+})();
+
 // Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
 // читается ДО того, как calculate() эту таблицу перерисует, и отправляется
 // на сервер вместе с остальными входными данными (см. computeGost10198I3/
@@ -378,6 +435,7 @@ function buildCalcInput(){
     xRaskosina: document.getElementById('xRaskosina').checked,
     plankLayoutMode,
     plankLayoutValue,
+    beamGapValue,
     availableThicknesses,
     manualOverrides,
     tableEdits,

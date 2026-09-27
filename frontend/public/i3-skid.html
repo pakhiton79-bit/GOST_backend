@@ -152,6 +152,16 @@
         </div>
       </div>
       <label>
+        <input type="checkbox" id="customBeamGap" onchange="onBeamGapCheckboxChange()">
+        <span>Настроить расстояние между краями поперечных брусьев крышки<span class="option-hint">Штатно — 800 мм</span></span>
+      </label>
+      <div id="beamGapRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="beamGapSlider"></div>
+          <input type="number" id="beamGapInput" step="1" min="1" max="20000" oninput="onBeamGapInputChange()">
+        </div>
+      </div>
+      <label>
         <input type="checkbox" id="xRaskosina">
         <span>X-образные раскосины</span>
       </label>

@@ -35,7 +35,7 @@ function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
     roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, baseProductivity, timeCoeff, woodDensity,
-    plankLayoutMode, plankLayoutValue,
+    plankLayoutMode, plankLayoutValue, beamGapValue,
   } = input;
   const availableThicknesses = input.availableThicknesses || [];
 
@@ -315,9 +315,11 @@ function computeGost10198I3(input) {
   // кромками соседних брусьев - ровно 800 мм, число брусьев - максимальное, при
   // котором отступ от края крышки до кромки крайнего бруса не меньше (толщина
   // вертикальной планки торца + толщина доски торца); остаток длины крышки -
-  // поровну на оба отступа (максимально равномерно).
+  // поровну на оба отступа (максимально равномерно). Зазор можно задать своим
+  // (галочка «Настроить расстояние между краями поперечных брусьев крышки»,
+  // beamGapValue).
   const t21 = ov('t21Value', roundUpToAvailable(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки'), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0);
-  const I3_BEAM_GAP = 800, beamMinEdge = t_planka_torca + t_doska_torca;
+  const I3_BEAM_GAP = beamGapValue > 0 ? beamGapValue : 800, beamMinEdge = t_planka_torca + t_doska_torca;
   const l21 = Math.max(1, Math.floor((k9Base - 2 * beamMinEdge + I3_BEAM_GAP) / (w21 + I3_BEAM_GAP) + 1e-9));
   const beamEdgeDist = (k9Base - l21 * w21 - (l21 - 1) * I3_BEAM_GAP) / 2;
   kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21, overrideKey: 't21Value' });
