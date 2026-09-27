@@ -277,13 +277,15 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const pxU = Math.max((maxX - minX)/290, (maxY - minY)/240);
   const D = P2(0,0,thick), C = P2(Lu,0,thick), Bk = P2(Lu,Wv);
   const records = [];
-  // Ряды размеров перед крышкой (от кромки наружу): 1 - отступ крайней
-  // планки, 2 - зазор между поперечными брусьями (подпись - над стрелкой, в
-  // свободном месте между рядами), 3 - длина крышки. Отступ крайнего бруса -
-  // на самой крышке (см. ниже), поэтому длина придвинута ближе к чертежу (по
-  // указанию пользователя).
-  const rowNear = 190, rowBeam = rowNear + 45*pxU;
-  const dOff = B > 1 ? rowBeam + 28*pxU : rowNear + 30*pxU;
+  // Ряды размеров перед крышкой (от кромки наружу, по указанию пользователя -
+  // как можно ближе к чертежу): 1 - отступ крайней планки (у левого конца) и
+  // зазор между поперечными брусьями (в середине, подпись - справа на
+  // продолжении стрелки), 2 - длина крышки. Отступ крайнего бруса - на самой
+  // крышке (см. ниже).
+  // концы планок выступают перед кромкой на ~155 ед.; подписи ряда (высотой
+  // ~22px) не должны на них наезжать
+  const rowNear = 155 + 15*pxU;
+  const dOff = rowNear + 30*pxU;
   const d1 = off(D, nfront, dOff), d2 = off(C, nfront, dOff);
   records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,dOff+40)[0], y2:off(D,nfront,dOff+40)[1]});
   records.push({type:'line', x1:C[0], y1:C[1], x2:off(C,nfront,dOff+40)[0], y2:off(C,nfront,dOff+40)[1]});
@@ -333,8 +335,8 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   // соседних брусьев. Выносные линии - от передних углов самих брусьев,
   // отступ - на самой крышке, на середине её глубины: от левого края крышки до
   // кромки первого бруса, подпись - левее крышки на продолжении стрелки (по
-  // указанию пользователя); зазор - во втором ряду перед крышкой, подпись над
-  // стрелкой.
+  // указанию пользователя); зазор - в первом ряду перед крышкой, подпись
+  // справа на продолжении стрелки.
   if(B > 0){
     const vB = 0.05*Wv;                              // передние торцы брусьев
     const beamDim = (uA, uB, fromA, fromB, row) => {
@@ -351,8 +353,11 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     records.push({type:'double', x1:ea[0], y1:ea[1], x2:eb[0], y2:eb[1], lx:lab[0], ly:lab[1], text: dimLabel(beamEdgeMm)+' мм'});
     if(B > 1){
       const gi = Math.floor((B-1)/2), ua = beamU(gi) + bw, ub = beamU(gi+1);
-      const [ga, gb] = beamDim(ua, ub, P2(ua, vB), P2(ub, vB), rowBeam);
-      const gl = off([(ga[0]+gb[0])/2, (ga[1]+gb[1])/2], nback, 22*pxU);
+      const [ga, gb] = beamDim(ua, ub, P2(ua, vB), P2(ub, vB), rowNear);
+      // подпись - справа на продолжении стрелки; стрелка идёт вверх-вправо, поэтому
+      // подпись опущена на столько же, чтобы не наезжать на концы планок
+      const gl = off(off(gb, nright, 42*pxU), nfront, 14*pxU), gEnd = off(gb, nright, 12*pxU);
+      records.push({type:'line', x1:gb[0], y1:gb[1], x2:gEnd[0], y2:gEnd[1]});
       records.push({type:'double', x1:ga[0], y1:ga[1], x2:gb[0], y2:gb[1], lx:gl[0], ly:gl[1], text: dimLabel(beamGapMm)+' мм'});
     }
   }
