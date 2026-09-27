@@ -270,13 +270,20 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const valEdgePlanka = dimLabel(edgeDistKryshkaMm);
   const valEdgeBeam = B > 0 ? dimLabel((dimLabel(lidLen) - B*crossBeamWidthMm) / (B + 1)) : dimLabel(lidLen);
   const off = (q, v, s) => [q[0] + v[0]*s, q[1] + v[1]*s];
-  const nfront = [-ev[0], -ev[1]], nright = eu, nback = ev;
+  const nfront = [-ev[0], -ev[1]], nright = eu, nback = ev, nleft = [-eu[0], -eu[1]];
+  // ~1px экрана в единицах чертежа (чертёж вписывается в ~290×240px) - чтобы
+  // подписи ставить рядом со стрелкой, а не поверх неё (по замечанию
+  // пользователя: подпись, накрывшая короткую стрелку, закрывает её концы и
+  // выносные линии - непонятно, что измерено).
+  const pxU = Math.max((maxX - minX)/290, (maxY - minY)/240);
   const D = P2(0,0,thick), C = P2(Lu,0,thick), Bk = P2(Lu,Wv);
   const records = [];
-  // длина - вдоль передней кромки, снаружи (за концами планок)
-  const d1 = off(D, nfront, 260), d2 = off(C, nfront, 260);
-  records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,300)[0], y2:off(D,nfront,300)[1]});
-  records.push({type:'line', x1:C[0], y1:C[1], x2:off(C,nfront,300)[0], y2:off(C,nfront,300)[1]});
+  // длина - вдоль передней кромки, снаружи (за концами планок и размером до
+  // первого бруса)
+  const dOff = 190 + 30*pxU;
+  const d1 = off(D, nfront, dOff), d2 = off(C, nfront, dOff);
+  records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,dOff+40)[0], y2:off(D,nfront,dOff+40)[1]});
+  records.push({type:'line', x1:C[0], y1:C[1], x2:off(C,nfront,dOff+40)[0], y2:off(C,nfront,dOff+40)[1]});
   records.push({type:'double', x1:d1[0], y1:d1[1], x2:d2[0], y2:d2[1], lx:(d1[0]+d2[0])/2, ly:(d1[1]+d2[1])/2, text: valLen+' мм'});
   // ширина - вдоль правой кромки, снаружи
   const Cr = P2(Lu,0), w1 = off(Cr, nright, 200), w2 = off(Bk, nright, 200);
@@ -285,31 +292,39 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   records.push({type:'double', x1:w1[0], y1:w1[1], x2:w2[0], y2:w2[1], lx:(w1[0]+w2[0])/2, ly:(w1[1]+w2[1])/2, text: valWidth+' мм'});
   // Размеры по концам планок за задней кромкой: выносные линии - от дальних
   // углов концов планок (и от угла крышки), размер - на 170 за кромкой.
-  const backDim = (uA, uB, fromA, fromB, text, dy) => {
+  const backDim = (uA, uB, fromA, fromB, text) => {
     const a = off(P2(uA, Wv), nback, 170), b = off(P2(uB, Wv), nback, 170);
     const ea = off(P2(uA, Wv), nback, 200), eb = off(P2(uB, Wv), nback, 200);
     records.push({type:'line', x1:fromA[0], y1:fromA[1], x2:ea[0], y2:ea[1]});
     records.push({type:'line', x1:fromB[0], y1:fromB[1], x2:eb[0], y2:eb[1]});
-    records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1], lx:(a[0]+b[0])/2, ly:(a[1]+b[1])/2 + dy, text});
+    const lab = off([(a[0]+b[0])/2, (a[1]+b[1])/2], nback, 26*pxU); // подпись - за стрелкой
+    records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1], lx:lab[0], ly:lab[1], text});
   };
   const tip = u => P2(u, 1.13*Wv, low);             // дальний угол конца планки
   // отступ крайней планки от края крышки - у правого конца
   const uLast = plankU(P-1) + pw;
-  backDim(uLast, Lu, tip(uLast), P2(Lu, Wv), valEdgePlanka+' мм', -40);
+  backDim(uLast, Lu, tip(uLast), P2(Lu, Wv), valEdgePlanka+' мм');
   // зазор между кромками соседних планок (по указанию пользователя, как у
   // типа I-1) - в средней секции, чтобы не наезжать на подпись отступа
   if(P > 1){
     const gi = Math.floor((P-1)/2);
     const ga = plankU(gi) + pw, gb = plankU(gi+1);
-    backDim(ga, gb, tip(ga), tip(gb), dimLabel(plankEdgeGapVal)+' мм', -40);
+    backDim(ga, gb, tip(ga), tip(gb), dimLabel(plankEdgeGapVal)+' мм');
   }
-  // отступ крайнего поперечного бруса - у левого конца, у передней кромки
-  // (по верху крышки, между кромкой и передними торцами брусьев)
+  // отступ крайнего поперечного бруса (он сверху, виден целиком) от левого
+  // края крышки: выносные линии - от левого переднего угла крышки и от
+  // переднего левого угла самого бруса, размер - перед крышкой, за концами
+  // планок; подпись - слева от стрелки, на её продолжении (по замечанию
+  // пользователя: раньше было непонятно, до бруса это или до планки).
   if(B > 0){
-    const b1 = P2(0, 0.025*Wv), b2 = P2(beamU(0), 0.025*Wv);
-    records.push({type:'double', x1:b1[0], y1:b1[1], x2:b2[0], y2:b2[1]});
-    const mid = [(b1[0]+b2[0])/2, (b1[1]+b2[1])/2];
-    records.push({type:'single', x1:mid[0]-150, y1:mid[1]+330, x2:mid[0], y2:mid[1], lx:mid[0]-160, ly:mid[1]+370, text: valEdgeBeam+' мм'});
+    const bu0 = beamU(0), bOff = 190;
+    const b1 = off(P2(0, 0, thick), nfront, bOff), b2 = off(P2(bu0, 0, thick), nfront, bOff);
+    const e2 = off(P2(bu0, 0, thick), nfront, bOff + 30);
+    records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,bOff+30)[0], y2:off(D,nfront,bOff+30)[1]});
+    records.push({type:'line', x1:P2(bu0, 0.05*Wv)[0], y1:P2(bu0, 0.05*Wv)[1], x2:e2[0], y2:e2[1]});
+    const lab = off(b1, nleft, 42*pxU), lineEnd = off(b1, nleft, 12*pxU);
+    records.push({type:'line', x1:b1[0], y1:b1[1], x2:lineEnd[0], y2:lineEnd[1]});
+    records.push({type:'double', x1:b1[0], y1:b1[1], x2:b2[0], y2:b2[1], lx:lab[0], ly:lab[1], text: valEdgeBeam+' мм'});
   }
   // толщина планки - сноска к дальнему левому углу конца первой планки
   const tc = tip(plankU(0));

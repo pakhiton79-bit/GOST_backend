@@ -42,7 +42,7 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
     {type:'single', x1:-51, y1:266, x2:263, y2:400, lx:-85, ly:225, text: valPlankaThick+' мм'},
     {type:'line', x1:273, y1:263, x2:195, y2:124},
     {type:'line', x1:567, y1:178, x2:489, y2:39},
-    {type:'double', x1:204, y1:141, x2:498, y2:56, lx:351, ly:92, text: valPlankGap+' мм'}
+    {type:'double', x1:204, y1:141, x2:498, y2:56, lx:276, ly:-35, text: valPlankGap+' мм'} // подпись - за стрелкой: стрелка короче подписи
   ];
 
   return renderDiagram(KRYSHKA_IMG_B64, 'Крышка - схема расположения деталей', 1718, 1274, records, null, photoStrokeScale(1718));
