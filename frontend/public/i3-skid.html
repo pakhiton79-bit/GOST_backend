@@ -108,26 +108,6 @@
     <h2>Дополнительные опции</h2>
     <div class="fastening-option-list">
       <label>
-        <input type="checkbox" id="optimizeSizes">
-        <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм</span></span>
-      </label>
-      <label id="removeFloorBoardsRow">
-        <input type="checkbox" id="removeFloorBoards">
-        <span>Убрать доски дна</span>
-      </label>
-      <label>
-        <input type="checkbox" id="removeSkidBoards" onchange="onSkidForkliftExclusive(this)">
-        <span>Убрать подполозные доски</span>
-      </label>
-      <label>
-        <input type="checkbox" id="forkliftLoading" onchange="onSkidForkliftExclusive(this)">
-        <span>Погрузка авто/электропогрузчиком</span>
-      </label>
-      <label>
-        <input type="checkbox" id="solidRigidBase">
-        <span>Сплошное жёсткое основание груза<span class="option-hint">Сечение полозьев — по п.1.6.5 (по массе груза), а не по Табл. 19</span></span>
-      </label>
-      <label>
         <input type="checkbox" id="roundBoardWidths">
         <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
       </label>
@@ -164,6 +144,26 @@
       <label>
         <input type="checkbox" id="xRaskosina">
         <span>X-образные раскосины</span>
+      </label>
+      <label>
+        <input type="checkbox" id="optimizeSizes">
+        <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм</span></span>
+      </label>
+      <label id="removeFloorBoardsRow">
+        <input type="checkbox" id="removeFloorBoards">
+        <span>Убрать доски дна</span>
+      </label>
+      <label>
+        <input type="checkbox" id="removeSkidBoards" onchange="onSkidForkliftExclusive(this)">
+        <span>Убрать подполозные доски</span>
+      </label>
+      <label>
+        <input type="checkbox" id="forkliftLoading" onchange="onSkidForkliftExclusive(this)">
+        <span>Погрузка авто/электропогрузчиком</span>
+      </label>
+      <label>
+        <input type="checkbox" id="solidRigidBase">
+        <span>Сплошное жёсткое основание груза<span class="option-hint">Сечение полозьев — по п.1.6.5 (по массе груза), а не по Табл. 19</span></span>
       </label>
     </div>
   </div>
