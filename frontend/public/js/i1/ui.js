@@ -34,7 +34,7 @@ function invalidateCalc(){
   // По указанию пользователя - при ЛЮБОМ изменении параметров (цифры,
   // галочки, выпадающие списки...) сразу подсказка «Нажмите «Рассчитать»», в т.ч. и до
   // первого расчёта (см. также общий слушатель в common-print.js).
-  setCalcStatus('outdated');
+  markCalcChanged(); // вернули как было - снова «Расчёт выполнен» (см. common-print.js)
 }
 
 function buildThicknessCheckboxList(){

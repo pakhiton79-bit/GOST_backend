@@ -141,6 +141,40 @@ function currentCalcStatus(){
   for(const k of Object.keys(ids)){ const el = document.getElementById(ids[k]); if(el && el.classList.contains('active')) return k; }
   return null;
 }
+// Снимок входных данных последнего успешного расчёта (по указанию
+// пользователя): если параметр изменили, а потом вернули как было, -
+// подсказка «Нажмите «Рассчитать»» снимается и снова показывается
+// «Расчёт выполнен». Сравниваются сами входные данные расчёта
+// (buildCalcInput() каждого типа) плюс правки таблиц, толщины «в наличии» и
+// настройки нормы времени - без пересчёта и без запросов к серверу.
+let calcStateSnapshot = null;
+function calcStateSignature(){
+  if(typeof buildCalcInput !== 'function') return null;
+  try{
+    const input = buildCalcInput();
+    // I-1: без галочек «Настроить число поясов / расстояние» значение
+    // ползунка в расчёт не идёт - не сравниваем его.
+    if(input && !input.plankLayoutMode && 'plankLayoutValue' in input) input.plankLayoutValue = null;
+    return JSON.stringify({
+      input,
+      tableEdits: readTableEdits(),
+      thicknesses: typeof availableThicknesses !== 'undefined' ? availableThicknesses : null,
+      time: typeof TIME_SETTINGS_STORAGE_KEY !== 'undefined' ? loadTimeSettings(TIME_SETTINGS_STORAGE_KEY) : null,
+    });
+  }catch(e){
+    return null;
+  }
+}
+// Вызывается из invalidateCalc() каждого типа при любом изменении параметров.
+function markCalcChanged(){
+  const st = currentCalcStatus();
+  if(calcStateSnapshot !== null && !calcInProgress && (st === 'outdated' || st === 'check')
+     && calcStateSignature() === calcStateSnapshot){
+    setCalcStatus('check');
+    return;
+  }
+  setCalcStatus('outdated');
+}
 function beginPrintJob(kind){
   printInProgress = true;
   const prev = currentCalcStatus();
@@ -188,6 +222,13 @@ async function calculate(){
     lastRefusalText = '';
     showManualEditsWarning();
     updateResetButton();
+    // Снимок - только после успешного расчёта (см. markCalcChanged()).
+    if(currentCalcStatus() === 'check'){
+      rememberCellOriginals();
+      calcStateSnapshot = calcStateSignature();
+    } else {
+      calcStateSnapshot = null;
+    }
   }
 }
 // Предупреждение о ручных правках (по указанию пользователя): правки таблиц
@@ -280,7 +321,26 @@ function syncOverrideCells(cell){
   if(!key) return;
   const v = cell.textContent;
   document.querySelectorAll(`#boardTables td[data-override="${key}"]`).forEach(td=>{
-    if(td !== cell){ td.textContent = v; td.setAttribute('data-user-edited', 'true'); }
+    if(td !== cell){ td.textContent = v; markCellEdited(td); }
+  });
+}
+// Пометка правки ячейки (по указанию пользователя): если значение вернули
+// к тому, что было показано после последнего расчёта, - пометка
+// возвращается к прежней (цвет правки снимается, если ячейка не была
+// исправлена и до этого). Исходные тексты запоминает rememberCellOriginals()
+// после каждого успешного расчёта (см. calculate()).
+function markCellEdited(cell){
+  if('origText' in cell.dataset && cell.textContent.trim() === cell.dataset.origText.trim()){
+    if(cell.dataset.origEdited) cell.setAttribute('data-user-edited', 'true');
+    else cell.removeAttribute('data-user-edited');
+    return;
+  }
+  cell.setAttribute('data-user-edited', 'true');
+}
+function rememberCellOriginals(){
+  document.querySelectorAll('#boardTables .editable-cell').forEach(td=>{
+    td.dataset.origText = td.textContent;
+    td.dataset.origEdited = td.getAttribute('data-user-edited') === 'true' ? '1' : '';
   });
 }
 function readTableEdits(){
