@@ -1123,7 +1123,7 @@
   }
 
   /* ============ Новая раскладка (body.layout-v2) - по указанию пользователя,
-     пока только на типе I-3 (пример для одобрения) ============
+     на всех типах (I-1, I-3, II-1) ============
      1) Одна колонка, как раньше; на узком экране панель с кнопкой
         «Рассчитать» прилипает к низу экрана; Enter в поле - расчёт.
      4) Поле, из-за которого расчёт заблокирован, - красная рамка (.field-error).
@@ -1159,7 +1159,7 @@
     .layout-v2 #boardTables .spec-table td{display:block;padding:2px 0;border:none;text-align:left;}
     .layout-v2 #boardTables .spec-table td:first-child{grid-column:1 / -1;width:auto;font-weight:700;padding-bottom:4px;}
     /* итог на телефоне - списком: подпись слева, значение справа */
-    .layout-v2 .summary.summary-4{grid-template-columns:1fr;}
+    .layout-v2 .summary, .layout-v2 .summary.summary-4{grid-template-columns:1fr;}
     .layout-v2 .summary > div > div{padding:0;}
     .layout-v2 .summary > div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;}
     .layout-v2 .summary > div.time-tile{padding-right:48px;}

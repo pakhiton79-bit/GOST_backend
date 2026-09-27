@@ -672,17 +672,6 @@ initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
   new MutationObserver(sync).observe(r, {attributes:true, attributeFilter:['style']});
   sync();
 })();
-// Enter в числовом поле ввода - «Рассчитать».
-(function enterToCalculate(){
-  const box = document.querySelector('.io-inputs');
-  if(!box) return;
-  box.addEventListener('keydown', e=>{
-    if(e.key !== 'Enter' || !e.target.matches('input[type="number"]')) return;
-    e.preventDefault();
-    e.target.blur();
-    calculate();
-  });
-})();
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки) - подсвечиваются
 // красной рамкой (см. highlightErrorFields в common-print.js).
 function errorFieldsFor(text){

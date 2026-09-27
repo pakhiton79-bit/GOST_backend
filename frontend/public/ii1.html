@@ -23,7 +23,7 @@
   }
 </style>
 </head>
-<body>
+<body class="layout-v2">
 <div class="wrap">
   <div class="top-nav">
     <a href="gost-10198-91.html">← Назад</a>
@@ -39,19 +39,19 @@
     <div class="inputs">
       <div>
         <label for="L">Длина</label>
-        <input type="number" id="L" min="1">
+        <input type="number" id="L" min="1" inputmode="decimal">
       </div>
       <div>
         <label for="W">Ширина</label>
-        <input type="number" id="W" min="1">
+        <input type="number" id="W" min="1" inputmode="decimal">
       </div>
       <div>
         <label for="H">Высота</label>
-        <input type="number" id="H" min="1">
+        <input type="number" id="H" min="1" inputmode="decimal">
       </div>
       <div>
         <label for="M">Масса груза, кг</label>
-        <input type="number" id="M" min="1">
+        <input type="number" id="M" min="1" inputmode="decimal">
       </div>
     </div>
   </div>
@@ -113,6 +113,17 @@
   <div class="card">
     <h2>Дополнительные опции</h2>
     <div class="fastening-option-list">
+      <div class="option-group-title">Доски</div>
+      <label>
+        <input type="checkbox" id="roundBoardWidths">
+        <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
+      </label>
+      <div class="option-group-title">Брусья крышки</div>
+      <label>
+        <input type="checkbox" id="optimizeSizes">
+        <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм; при поперечном расположении досок крышки — и продольного бруса тоже</span></span>
+      </label>
+      <div class="option-group-title">Дно и полозья</div>
       <label id="removeFloorBoardsRow">
         <input type="checkbox" id="removeFloorBoards">
         <span>Убрать доски дна</span>
@@ -128,14 +139,6 @@
       <label>
         <input type="checkbox" id="solidRigidBase">
         <span>Сплошное жёсткое основание груза<span class="option-hint">Сечение полозьев — по массе груза, а не по Табл. 19</span></span>
-      </label>
-      <label>
-        <input type="checkbox" id="roundBoardWidths">
-        <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
-      </label>
-      <label>
-        <input type="checkbox" id="optimizeSizes">
-        <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм; при поперечном расположении досок крышки — и продольного бруса тоже</span></span>
       </label>
     </div>
   </div>

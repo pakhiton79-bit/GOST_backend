@@ -263,3 +263,13 @@ function buildPrintHtml(){
 // Общий вид ящика показываем и на самом сайте, не только в печати.
 document.getElementById('boxView').src = BOX_II1_IMG_B64;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+
+// Поля, из-за которых расчёт заблокирован (по тексту ошибки) - подсвечиваются
+// красной рамкой (см. highlightErrorFields в common-print.js).
+function errorFieldsFor(text){
+  if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
+  if(/Ширина груза/.test(text)) return ['W'];
+  if(/Длина груза/.test(text)) return ['L'];
+  if(/высота груза/.test(text)) return ['H'];
+  return [];
+}

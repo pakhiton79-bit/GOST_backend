@@ -196,8 +196,8 @@ function markCalcChanged(){
   setCalcStatus('outdated');
 }
 // Подсветка поля, из-за которого расчёт заблокирован (по указанию пользователя):
-// тип объявляет errorFieldsFor(текст ошибки) -> id полей (пока только I-3);
-// у остальных типов функции нет - ничего не подсвечивается. Рамка снимается
+// тип объявляет errorFieldsFor(текст ошибки) -> id полей (I-1, I-3, II-1);
+// если функции нет - ничего не подсвечивается. Рамка снимается
 // при вводе в поле и при следующем расчёте.
 function highlightErrorFields(scroll){
   document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
@@ -210,6 +210,17 @@ function highlightErrorFields(scroll){
 }
 document.addEventListener('input', e=>{
   if(e.target.classList && e.target.classList.contains('field-error')) e.target.classList.remove('field-error');
+});
+// Enter в числовом поле параметров (не в таблице деталей и не в окнах
+// настроек) - «Рассчитать» (по указанию пользователя; страницы новой
+// раскладки - body.layout-v2).
+document.addEventListener('keydown', e=>{
+  if(e.key !== 'Enter' || !document.body.classList.contains('layout-v2')) return;
+  const t = e.target;
+  if(!t.matches || !t.matches('input[type="number"]') || t.closest('#boardTables, .modal-overlay, #printArea')) return;
+  e.preventDefault();
+  t.blur();
+  calculate();
 });
 function beginPrintJob(kind){
   printInProgress = true;
