@@ -734,3 +734,18 @@ function errorFieldsFor(text){
   handle.addEventListener('dblclick', ()=> apply(DEF, true));
   window.addEventListener('resize', ()=>{ if(grid.style.getPropertyValue('--io-side-w')) apply(current(), false); });
 })();
+
+// Высота блока колонок - до низа экрана (от его верха на странице): колонки
+// прокручиваются каждая сама (см. .io-grid в style.css), а страница целиком -
+// когда колонка докручена до конца.
+(function ioFitHeight(){
+  const grid = document.querySelector('.io-grid');
+  if(!grid) return;
+  function fit(){
+    if(window.innerWidth < 1100){ grid.style.removeProperty('--io-h'); return; }
+    const top = grid.getBoundingClientRect().top + window.scrollY;
+    grid.style.setProperty('--io-h', Math.max(480, window.innerHeight - top - 16) + 'px');
+  }
+  fit();
+  window.addEventListener('resize', fit);
+})();
