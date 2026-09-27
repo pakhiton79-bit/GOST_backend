@@ -34,10 +34,9 @@
     <input type="text" id="boxName" class="box-name-input" maxlength="100" placeholder="Номер или название ящика" aria-label="Номер или название ящика">
   </header>
 
-  <!-- Раскладка (по указанию пользователя, пример на I-3): на широком экране
-       слева - ввод, справа - «липкая» колонка с кнопкой «Рассчитать» и
-       итогом; спецификация - ниже на всю ширину (#resultsMore показывается
-       вместе с #results, см. syncResultsMore в app). -->
+  <!-- Обёртки .io-* только группируют разметку (одна колонка, как раньше);
+       спецификация и комментарий - в #resultsMore, показывается вместе с
+       #results (см. syncResultsMore в app). -->
   <div class="io-grid">
     <div class="io-inputs">
     <div class="card">
@@ -180,7 +179,6 @@
 
     <div class="disclaimer" style="margin:4px 2px 16px;">Чертежи схематичны и могут не отражать действительность.</div>
     </div>
-    <div class="io-resizer" role="separator" aria-orientation="vertical" aria-label="Ширина колонок" title="Потяните, чтобы изменить ширину колонок (двойной щелчок - по умолчанию)" tabindex="0"><span class="io-resizer-grip"></span></div>
     <div class="io-side">
     <div class="card action-card">
       <button id="calcBtn" onclick="calculate()">Рассчитать</button>

@@ -1124,11 +1124,8 @@
 
   /* ============ Новая раскладка (body.layout-v2) - по указанию пользователя,
      пока только на типе I-3 (пример для одобрения) ============
-     1) Широкий экран: слева ввод, справа колонка с кнопкой «Рассчитать»,
-        статусом и итогом (колонки прокручиваются независимо, разделитель
-        между ними двигается мышью); спецификация - ниже на всю ширину.
-        Узкий экран: всё в одну колонку, панель с кнопкой «Рассчитать»
-        прилипает к низу экрана, пока не дошли до неё.
+     1) Одна колонка, как раньше; на узком экране панель с кнопкой
+        «Рассчитать» прилипает к низу экрана; Enter в поле - расчёт.
      4) Поле, из-за которого расчёт заблокирован, - красная рамка (.field-error).
      9) Телефон: строки таблиц деталей - карточками. */
   #resultsMore{display:none;}
@@ -1140,57 +1137,15 @@
     .layout-v2 .field-error{border-color:var(--error) !important;box-shadow:0 0 0 3px rgba(194,59,44,.15);}
 
   }
-  /* Липкие колонка/панель: у body/html стоит overflow-x:hidden - это делает
-     body контейнером прокрутки, и position:sticky не работает; clip обрезает
-     так же, но контейнером прокрутки не делает. */
+  /* Липкая панель: у body/html стоит overflow-x:hidden - это делает body
+     контейнером прокрутки, и position:sticky не работает; clip обрезает так
+     же, но контейнером прокрутки не делает. */
   html:has(body.layout-v2), body.layout-v2{overflow-x:clip;}
-  @media screen and (min-width:1100px){
-    /* итог в правой колонке: картинка ящика сверху, плитки 2×2 на всю ширину */
-    .layout-v2 .io-side .summary-row{flex-direction:column;align-items:stretch;gap:16px;}
-    .layout-v2 .io-side .box-view{flex-basis:auto;width:100%;max-width:220px;margin:0 auto;}
-    .layout-v2 .io-side .summary .value{font-size:20px;}
-    .layout-v2 .io-side .summary > div{padding:14px 16px;}
-    .layout-v2 .io-side .summary > div > div{padding:0;}
-    .layout-v2 .io-side .box-view{max-width:170px;padding:8px;}
-    /* правую колонку растянули разделителем - итог снова в строку: картинка слева, плитки справа */
-    .layout-v2 .io-side{container-type:inline-size;}
-    /* левую колонку сузили - поля размеров по два в ряд */
-    .layout-v2 .io-inputs{container-type:inline-size;}
-    @container (max-width:660px){
-      .layout-v2 .io-inputs .inputs{grid-template-columns:repeat(2,1fr);}
-    }
-    @container (min-width:760px){
-      .layout-v2 .io-side .summary-row{flex-direction:row;align-items:center;}
-      .layout-v2 .io-side .box-view{flex:0 0 220px;width:220px;max-width:none;margin:0;}
-    }
-  }
-  /* 1) две колонки */
-  @media screen and (min-width:1100px){
-    .layout-v2 .wrap{max-width:1360px;}
-    /* ширина правой колонки - --io-side-w, меняется перетаскиванием
-       разделителя (.io-resizer, см. ioResizer в app) */
-    /* Колонки прокручиваются независимо (по указанию пользователя): крутится
-       та, над которой курсор; докрутили до конца - прокрутка переходит на
-       страницу, ниже - спецификация с чертежами. Высота блока колонок -
-       до низа экрана (--io-h, см. ioFitHeight в app). */
-    .layout-v2 .io-grid{display:grid;grid-template-columns:minmax(0,1fr) 24px var(--io-side-w,560px);gap:0;align-items:stretch;height:var(--io-h,calc(100vh - 32px));margin-bottom:24px;}
-    .layout-v2 .io-inputs, .layout-v2 .io-side{overflow-y:auto;min-height:0;overscroll-behavior:auto;scrollbar-width:thin;}
-    .layout-v2 .io-inputs > :last-child, .layout-v2 .io-side > :last-child{margin-bottom:0;}
-    /* разделитель - серая линия (как рамки уведомлений), без коричневого */
-    .layout-v2 .io-resizer{cursor:col-resize;position:relative;touch-action:none;outline:none;}
-    .layout-v2 .io-resizer::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;transform:translateX(-50%);background:var(--rule);transition:background .15s,width .15s;}
-    .layout-v2 .io-resizer:hover::before, .layout-v2 .io-resizer:focus-visible::before, body.io-resizing .io-resizer::before{width:2px;background:#AEB6C2;}
-    .layout-v2 .io-resizer-grip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);display:block;width:6px;height:40px;border-radius:3px;background:#CDD4DD;transition:background .15s;}
-    .layout-v2 .io-resizer:hover .io-resizer-grip, body.io-resizing .io-resizer-grip{background:#AEB6C2;}
-    body.io-resizing{cursor:col-resize;user-select:none;}
-    .layout-v2 .io-side .card{padding:24px;}
-  }
-  /* 1) узкий экран: панель с кнопкой прилипает к низу */
+  /* Одна колонка, как раньше (две колонки пользователь отменил): обёртки
+     .io-* только группируют разметку и на раскладку не влияют. */
+  .layout-v2 .io-grid, .layout-v2 .io-inputs, .layout-v2 .io-side{display:contents;}
+  /* 1) узкий экран: панель с кнопкой «Рассчитать» прилипает к низу, пока не дошли до неё */
   @media screen and (max-width:1099px){
-    /* колонки не нужны - их обёртки «растворяются», чтобы панель прилипала
-       к низу экрана относительно всей страницы, а не только своей колонки */
-    .layout-v2 .io-grid, .layout-v2 .io-inputs, .layout-v2 .io-side{display:contents;}
-    .layout-v2 .io-resizer{display:none;}
     .layout-v2 .action-card{position:sticky;bottom:0;z-index:20;box-shadow:0 -6px 18px rgba(9,17,53,.08);}
   }
   @media screen and (max-width:640px){
