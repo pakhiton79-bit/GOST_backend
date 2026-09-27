@@ -90,10 +90,10 @@ function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKry
 }
 
 function diagramKryshka(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm){
-  // Выбор чертежа крышки идёт по количеству планок крышки (l19), а не по числу
-  // поперечных брусьев: доступны 2 фото - под 2 планки и под 3. Для l19>3 показываем
-  // фото под 3 планки (расположение планок то же самое, просто на фото меньше
-  // планок, чем в реальном ящике) - как раньше делалось по числу брусьев.
+  // Фото крышки - 2 планки + 2 поперечных бруса и 3 планки + 3 бруса. Вызывается,
+  // только когда в ящике ровно такое сочетание (по указанию пользователя: число
+  // планок и брусьев может не совпадать - тогда вызывающий код берёт
+  // генерируемый чертёж diagramKryshkaGen).
   if(plankCount <= 2){
     return diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm);
   }

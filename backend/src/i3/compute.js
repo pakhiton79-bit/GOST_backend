@@ -322,6 +322,12 @@ function computeGost10198I3(input) {
   const I3_BEAM_GAP = beamGapValue > 0 ? beamGapValue : 800, beamMinEdge = t_planka_torca + t_doska_torca;
   const l21 = Math.max(1, Math.floor((k9Base - 2 * beamMinEdge + I3_BEAM_GAP) / (w21 + I3_BEAM_GAP) + 1e-9));
   const beamEdgeDist = (k9Base - l21 * w21 - (l21 - 1) * I3_BEAM_GAP) / 2;
+  // Свой зазор (галочка), при котором помещается только 1 брус, и зазор больше
+  // отступа этого бруса от края крышки - расчёт блокируется (по указанию
+  // пользователя: такой зазор не имеет смысла). Штатные 800 мм не блокируются.
+  if (beamGapValue > 0 && l21 === 1 && I3_BEAM_GAP > beamEdgeDist) {
+    return { error: `Расстояние между поперечными брусьями ${I3_BEAM_GAP} мм больше отступа единственного бруса от края крышки (${Math.round(beamEdgeDist)} мм) — расчёт не выполняется.` };
+  }
   kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21, overrideKey: 't21Value' });
 
   const volKryshka = vol(t19, w19, k19, l19) + vol(t20, w20, k20, l20) + vol(t21, w21, k21, l21)
