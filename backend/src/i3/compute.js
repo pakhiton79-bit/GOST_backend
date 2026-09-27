@@ -35,6 +35,7 @@ function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
     roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, baseProductivity, timeCoeff, woodDensity,
+    plankLayoutMode, plankLayoutValue,
   } = input;
   const availableThicknesses = input.availableThicknesses || [];
 
@@ -236,18 +237,58 @@ function computeGost10198I3(input) {
   const kryshka = [];
 
   const t19 = wall.value, w19 = 100, k19 = W + wall.value * 2;
-  const edgeDistKryshka = Math.min(k9Base / 6, 1000);
-  const middleKryshka = k9Base - edgeDistKryshka * 2;
-  let l19;
-  if (middleKryshka < 0) {
-    warnings.push(`Планка крышки: длины ${Math.round(k9Base)} мм не хватает на отступ — принят минимум (2 шт.).`);
-    l19 = 2;
-  } else {
-    l19 = ceilInt(middleKryshka / 1000) + 1;
+  // Раскладка поясов планок крышки (вертикальные планки бокового щита стоят
+  // по тем же местам) - по указанию пользователя, как в типе I-1.
+  // Штатно (ГОСТ): зазор между КРОМКАМИ соседних поясов (ширина планки 100 мм
+  // учитывается) - не более 700 мм; отступ от края крышки до кромки крайнего
+  // пояса - 1/6 длины, но не больше получившегося зазора (иначе пояса
+  // расставляются равномерно: отступ = зазору). Число поясов - минимальное,
+  // при котором это выполняется.
+  // По галочкам «Настроить число поясов / расстояние между краями поясов»
+  // (plankLayoutMode 'count'|'gap') - как в I-1 (см. plankCount в
+  // backend/src/i1/logic.js): заданное число - равномерно (отступ = зазору); заданный
+  // зазор - ровно он (может быть и больше 700 мм), остаток пополам на
+  // отступы, при слишком малом отступе убирается по поясу. Минимальный
+  // отступ при ручной раскладке - (толщина вертикальной планки торца +
+  // толщина доски торца)×2, как в I-1; меньше - расчёт блокируется.
+  const I3_PLANK_W = 100, I3_MAX_PLANK_GAP = 700;
+  function i3PlankLayout(len, override) {
+    if (!override) {
+      for (let n = 2; ; n++) {
+        let edge = len/6, gap = (len - 2*edge - n*I3_PLANK_W)/(n-1);
+        if (edge > gap) edge = gap = (len - n*I3_PLANK_W)/(n+1);
+        if (gap <= I3_MAX_PLANK_GAP || n >= 200) return { count: n, edgeDist: edge, gap };
+      }
+    }
+    const minEdge = (t_planka_torca + t_doska_torca)*2;
+    if (override.mode === 'gap') {
+      const edgeFor = k => (len - k*I3_PLANK_W - (k-1)*override.value)/2;
+      let n = Math.max(2, ceilInt((len - override.value)/(override.value + I3_PLANK_W)));
+      while (n > 2 && edgeFor(n) < minEdge) n--;
+      if (edgeFor(n) < minEdge) return { error: `Расстояние между планками ${override.value} мм не помещается на крышке ${Math.round(len)} мм (2 планки и отступы от края) — расчёт не выполняется.` };
+      return { count: n, edgeDist: edgeFor(n), gap: override.value };
+    }
+    const n = Math.max(2, Math.round(override.value));
+    const edge = Math.round((len - n*I3_PLANK_W)/(n+1)); // до целого мм - как в I-1
+    if (edge < minEdge) return { error: `Длина крышки ${Math.round(len)} мм недостаточна для отступа планок — расчёт не выполняется.` };
+    return { count: n, edgeDist: edge, gap: (len - 2 * edge - n * I3_PLANK_W) / (n - 1) };
   }
+  const plankOverride = (plankLayoutMode === 'count' || plankLayoutMode === 'gap') && plankLayoutValue > 0
+    ? { mode: plankLayoutMode, value: plankLayoutValue }
+    : null;
+  // Штатная раскладка считается всегда - её число/зазор стоят в центре
+  // ползунков галочек (см. calculateNow() в frontend/public/js/app-i3.js).
+  const standardLayout = i3PlankLayout(k9Base, null);
+  const plankLayout = plankOverride ? i3PlankLayout(k9Base, plankOverride) : standardLayout;
+  if (plankLayout.error) return { error: plankLayout.error };
+  const l19 = plankLayout.count, edgeDistKryshka = plankLayout.edgeDist, plankGap = plankLayout.gap;
   kryshka.push({ name: 'Планка', t: t19, w: w19, l: k19, qty: l19, overrideKey: 'wallValue' });
 
-  const bokSectionW = l19 > 1 ? middleKryshka / (l19 - 1) : 0;
+  // Шаг поясов по осям (зазор между кромками + ширина планки) - ширина секции
+  // бокового щита для раскосины (горизонтальный катет) и чертежей. Считается
+  // сразу здесь (не только в блоке «ЩИТ БОКОВОЙ» ниже), т.к. нужен также для
+  // чертежа крышки, который рендерится раньше.
+  const bokSectionW = l19 > 1 ? plankGap + I3_PLANK_W : 0;
 
   const t20 = wall.value, k20 = k9Base;
   const fbKryshka = fillBoards(W + wall.value * 2, roundBoardWidths);
@@ -432,7 +473,8 @@ function computeGost10198I3(input) {
     warnings, dno, kryshka, endPanel, bokovoy, crateMass, woodDensity: woodRho,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
-    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW,
+    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW, plankGap,
+    standardPlankCount: standardLayout.count, standardPlankGap: standardLayout.gap,
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
     H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina, t20,
   };

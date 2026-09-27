@@ -182,6 +182,161 @@ function persistCheckbox(id){
 }
 ['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards','xRaskosina'].forEach(persistCheckbox);
 
+// ============ Настройка раскладки поясов планок ============
+// Тот же блок, что и у типа I-1 (js/i1/ui.js) - по указанию
+// пользователя, «аналогично как у I-1». Стандартные значения и длина
+// крышки (предел зазора) обновляются в calculateNow() ниже.
+// Две взаимоисключающие галочки - "Настроить число поясов планок" и
+// "Настроить расстояние между краями поясов планок" (по запросу
+// пользователя). При включении одной из них под ней появляется ползунок -
+// тот же виджет createJumpSlider(), что и у нормы времени (см.
+// common-timesettings.js), плюс поле для ручного ввода любого значения
+// (в т.ч. вне диапазона ползунка - например, расстояние можно поставить и
+// больше 700мм, осознанно отклонившись от рекомендации ГОСТа). По центру
+// ползунка при открытии - "стандартное" (штатное автоматическое) значение
+// для текущих входных данных, с шагом 50мм (расстояние) или 1 (число
+// поясов) в каждую сторону; "стандартное" значение обновляется при каждом
+// успешном расчёте (см. calculate() в calc-i1.js), но сам ползунок
+// перестраивается только в момент включения галочки - чтобы уже выбранное
+// пользователем значение не сбрасывалось само по себе при пересчёте.
+const PLANK_LAYOUT_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'plankLayout';
+let plankLayoutMode = null; // null | 'count' | 'gap'
+let plankLayoutValue = null;
+// "Стандартные" (штатные автоматические) значения для центра ползунков -
+// заполняются из calc.standardPlankCount/standardPlankGap при каждом
+// успешном расчёте (см. calculate() в calc-i1.js). До первого расчёта -
+// null, используется запасной центр по умолчанию (см. ниже).
+let lastStandardPlankCount = null;
+let lastStandardPlankGap = null;
+let lastKLen = null; // длина доски последнего успешного расчёта - см. plankGapMax() ниже
+let plankCountSlider = null, plankGapSlider = null;
+
+// Верхний предел поля "расстояние между краями поясов планок" - больше
+// длины самой доски отступ быть не может (по указанию пользователя: раньше
+// поле позволяло ввести сколь угодно большое/бесконечное значение). Пока
+// расчёт ни разу не проводился (lastKLen ещё не известен) - берётся
+// заведомо большой запасной предел, только чтобы отсечь явно бессмысленный
+// ввод (не Infinity и т.п.), а не для точного физического ограничения.
+const PLANK_GAP_FALLBACK_MAX = 20000;
+function plankGapMax(){
+  return lastKLen || PLANK_GAP_FALLBACK_MAX;
+}
+
+function plankCountSteps(center){
+  center = Math.max(2, Math.round(center));
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(Math.max(2, center+i));
+  return Array.from(new Set(steps)).sort((a,b)=>a-b);
+}
+function plankGapSteps(center){
+  const max = plankGapMax();
+  center = Math.min(max, Math.max(1, Math.round(center)));
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(Math.min(max, Math.max(1, center+i*50)));
+  return Array.from(new Set(steps)).sort((a,b)=>a-b);
+}
+
+function savePlankLayout(){
+  try{ localStorage.setItem(PLANK_LAYOUT_STORAGE_KEY, JSON.stringify({mode: plankLayoutMode, value: plankLayoutValue})); }catch(e){}
+}
+function loadPlankLayout(){
+  try{
+    const raw = localStorage.getItem(PLANK_LAYOUT_STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if((parsed.mode === 'count' || parsed.mode === 'gap') && parsed.value > 0) return parsed;
+    }
+  }catch(e){}
+  return {mode:null, value:null};
+}
+
+// Пересобирает нужный ползунок (createJumpSlider каждый раз строит разметку
+// заново - готового способа сменить набор шагов у уже созданного ползунка
+// нет) с шагами вокруг center и выставляет value как текущее положение.
+function rebuildPlankSlider(mode, center, value){
+  if(mode === 'count'){
+    plankCountSlider = createJumpSlider(document.getElementById('plankCountSlider'), plankCountSteps(center), v=>{
+      plankLayoutValue = v;
+      document.getElementById('plankCountInput').value = v;
+      savePlankLayout();
+      invalidateCalc();
+    });
+    plankCountSlider.setValue(value);
+  } else {
+    plankGapSlider = createJumpSlider(document.getElementById('plankGapSlider'), plankGapSteps(center), v=>{
+      plankLayoutValue = v;
+      document.getElementById('plankGapInput').value = v;
+      savePlankLayout();
+      invalidateCalc();
+    });
+    plankGapSlider.setValue(value);
+  }
+}
+
+function onPlankLayoutCheckboxChange(mode){
+  const countEl = document.getElementById('customPlankCount');
+  const gapEl = document.getElementById('customPlankGap');
+  if(mode === 'count' && countEl.checked) gapEl.checked = false;
+  if(mode === 'gap' && gapEl.checked) countEl.checked = false;
+
+  plankLayoutMode = countEl.checked ? 'count' : gapEl.checked ? 'gap' : null;
+  document.getElementById('plankCountRow').style.display = plankLayoutMode==='count' ? '' : 'none';
+  document.getElementById('plankGapRow').style.display = plankLayoutMode==='gap' ? '' : 'none';
+
+  if(plankLayoutMode === 'count'){
+    const center = lastStandardPlankCount || 4;
+    plankLayoutValue = center;
+    document.getElementById('plankCountInput').value = center;
+    rebuildPlankSlider('count', center, center);
+  } else if(plankLayoutMode === 'gap'){
+    const gapInput = document.getElementById('plankGapInput');
+    gapInput.max = plankGapMax();
+    const center = Math.min(plankGapMax(), Math.round(lastStandardPlankGap || 400));
+    plankLayoutValue = center;
+    gapInput.value = center;
+    rebuildPlankSlider('gap', center, center);
+  }
+  savePlankLayout();
+  invalidateCalc();
+}
+
+function onPlankCountInputChange(){
+  const v = parseInt(document.getElementById('plankCountInput').value, 10);
+  if(!(v>=2)) return;
+  plankLayoutValue = v;
+  if(plankCountSlider) plankCountSlider.setValue(v);
+  savePlankLayout();
+  invalidateCalc();
+}
+function onPlankGapInputChange(){
+  const gapInput = document.getElementById('plankGapInput');
+  const raw = parseFloat(String(gapInput.value).replace(',','.'));
+  if(!(raw>0)) return;
+  const v = Math.min(plankGapMax(), raw);
+  if(v !== raw) gapInput.value = v; // подрезали до предела - отражаем в поле
+  plankLayoutValue = v;
+  if(plankGapSlider) plankGapSlider.setValue(v);
+  savePlankLayout();
+  invalidateCalc();
+}
+
+// Восстановление сохранённого состояния при открытии страницы - "стандартное"
+// значение центра ещё неизвестно (расчёт не проводился), поэтому ползунок
+// строится вокруг самого сохранённого значения (см. комментарий у
+// PLANK_LAYOUT_STORAGE_KEY выше).
+(function initPlankLayoutFromStorage(){
+  const saved = loadPlankLayout();
+  if(!saved.mode) return;
+  if(saved.mode === 'gap') saved.value = Math.min(plankGapMax(), saved.value);
+  document.getElementById(saved.mode === 'count' ? 'customPlankCount' : 'customPlankGap').checked = true;
+  plankLayoutMode = saved.mode;
+  plankLayoutValue = saved.value;
+  document.getElementById(saved.mode === 'count' ? 'plankCountRow' : 'plankGapRow').style.display = '';
+  if(saved.mode === 'gap') document.getElementById('plankGapInput').max = plankGapMax();
+  document.getElementById(saved.mode === 'count' ? 'plankCountInput' : 'plankGapInput').value = saved.value;
+  rebuildPlankSlider(saved.mode, saved.value, saved.value);
+})();
+
 // Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
 // читается ДО того, как calculate() эту таблицу перерисует, и отправляется
 // на сервер вместе с остальными входными данными (см. computeGost10198I3/
@@ -221,6 +376,8 @@ function buildCalcInput(){
     solidRigidBase: document.getElementById('solidRigidBase').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
+    plankLayoutMode,
+    plankLayoutValue,
     availableThicknesses,
     manualOverrides,
     tableEdits,
@@ -262,6 +419,23 @@ async function calculateNow(){
     return;
   }
 
+  // «Стандартные» (штатные) число/зазор поясов планок - центр ползунков у
+  // галочек «Настроить число поясов»/«Настроить расстояние между краями
+  // поясов» - обновляются при каждом успешном расчёте (как в I-1). Длина
+  // крышки - верхний предел зазора: если введённое значение теперь больше
+  // (ящик стал короче) - подрезаем поле и ползунок.
+  lastStandardPlankCount = calc.standardPlankCount;
+  lastStandardPlankGap = calc.standardPlankGap;
+  lastKLen = calc.k9Base;
+  if(plankLayoutMode === 'gap' && plankLayoutValue > lastKLen){
+    plankLayoutValue = lastKLen;
+    const gapInput = document.getElementById('plankGapInput');
+    gapInput.max = lastKLen;
+    gapInput.value = lastKLen;
+    rebuildPlankSlider('gap', lastKLen, lastKLen);
+    savePlankLayout();
+  }
+
   document.getElementById('outDims').innerHTML = `${calc.outerL} × ${calc.outerW} × ${calc.outerH} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outMass').innerHTML = `${calc.crateMass.toFixed(1)} <span>кг</span>`;
@@ -288,9 +462,9 @@ async function calculateNow(){
 
   let tablesHtml = '';
   tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot">` + diagramDno(calc.k9Base, calc.t41, calc.outerW, calc.t40, calc.torecFrameThickness) + `</div>` + renderSection('', calc.dno, 'dno') + `</div>`;
-  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + (calc.l19 > 3 ? diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW) : diagramKryshka(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW)) + `</div>` + renderSection('', calc.kryshka, 'kryshka') + `</div>`;
+  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot">` + (calc.l19 > 3 ? diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap) : diagramKryshka(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap)) + `</div>` + renderSection('', calc.kryshka, 'kryshka') + `</div>`;
   tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + ((calc.xRaskosina && calc.torecHasRaskosina && calc.torecFloors !== 2 && calc.torecSections <= 1) ? diagramEndPanel1Raskosina(calc.HplusT12, calc.W, undefined, I3_TOREC_1_X_IMG_B64) : (calc.torecHasRaskosina && (calc.xRaskosina || calc.torecSections > 3)) ? diagramEndPanelGen(calc.W, calc.HplusT12, calc.torecSections, calc.torecFloors, calc.xRaskosina, calc.k30plusW31) : diagramEndPanel(calc.k32, calc.torecSections, calc.torecHasRaskosina, calc.W, calc.HplusT12, calc.torecNoRaskosinaDiagram, calc.torecFloors, calc.k30plusW31)) + `</div>` + renderSection('', calc.endPanel, 'endPanel') + `</div>`;
-  tablesHtml += `<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + (((calc.xRaskosina && calc.l42 > 0) || calc.l19 > 4) ? diagramBokovoyGen(calc.k41, calc.bokOverhang, calc.edgeDistKryshka, calc.HplusT12, calc.l19, calc.bokFloors, calc.xRaskosina, calc.k40, calc.w43, calc.bokSectionW, calc.t20, calc.l42 > 0) : diagramBokovoy(calc.H, calc.t12, calc.t41, calc.k41, calc.bokOverhang, calc.edgeDistKryshka, calc.l42, calc.bokFloors, calc.bokVertSpan, calc.l19, calc.k40, calc.w43)) + `</div>` + renderSection('', calc.bokovoy, 'bokovoy') + `</div>`;
+  tablesHtml += `<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot">` + (((calc.xRaskosina && calc.l42 > 0) || calc.l19 > 4) ? diagramBokovoyGen(calc.k41, calc.bokOverhang, calc.edgeDistKryshka, calc.HplusT12, calc.l19, calc.bokFloors, calc.xRaskosina, calc.k40, calc.w43, calc.bokSectionW, calc.t20, calc.l42 > 0, calc.plankGap) : diagramBokovoy(calc.H, calc.t12, calc.t41, calc.k41, calc.bokOverhang, calc.edgeDistKryshka, calc.l42, calc.bokFloors, calc.bokVertSpan, calc.l19, calc.k40, calc.w43, calc.plankGap)) + `</div>` + renderSection('', calc.bokovoy, 'bokovoy') + `</div>`;
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));

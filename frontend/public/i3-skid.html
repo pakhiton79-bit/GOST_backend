@@ -132,6 +132,26 @@
         <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
       </label>
       <label>
+        <input type="checkbox" id="customPlankCount" onchange="onPlankLayoutCheckboxChange('count')">
+        <span>Настроить число поясов планок<span class="option-hint">Штатно — минимум поясов с шагом между ними не более 700 мм</span></span>
+      </label>
+      <div id="plankCountRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="plankCountSlider"></div>
+          <input type="number" id="plankCountInput" step="1" min="2" oninput="onPlankCountInputChange()">
+        </div>
+      </div>
+      <label>
+        <input type="checkbox" id="customPlankGap" onchange="onPlankLayoutCheckboxChange('gap')">
+        <span>Настроить расстояние между краями поясов планок</span>
+      </label>
+      <div id="plankGapRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="plankGapSlider"></div>
+          <input type="number" id="plankGapInput" step="1" min="1" max="20000" oninput="onPlankGapInputChange()">
+        </div>
+      </div>
+      <label>
         <input type="checkbox" id="xRaskosina">
         <span>X-образные раскосины</span>
       </label>

@@ -20,7 +20,25 @@ const BOKOVOY_2FL_2P_IMG_B64 = "/images/bokovoy_2fl_2r.jpg"; // натураль
 const BOKOVOY_2FL_3P_IMG_B64 = "/images/bokovoy_2fl_4r.jpg"; // натуральный размер 1381x1326 (2 этажа, 3 планки, 4 раскосины)
 const BOKOVOY_2FL_4P_IMG_B64 = "/images/bokovoy_2fl_6r.jpg"; // натуральный размер 1886x1338 (2 этажа, 4 планки, 6 раскосин)
 
-function diagramBokovoy2Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+// Зазор между кромками соседних поясов планок (по указанию пользователя -
+// как у типа I-1): размер под щитом, между выступающими вниз концами планок
+// (у 4 планок - во второй секции, у 2-3 - в первой: так подпись не
+// упирается в подписи отступа и напуска по краям). xL/xR - кромки планок,
+// yBottom - низ планок на фото; dy - где размер относительно низа планок
+// (отрицательный - между концами планок под щитом, без выносных линий:
+// там, где снизу тесно от других подписей).
+function bokGapRecords(xL, xR, yBottom, gapVal, dy){
+  const y = yBottom + (dy || 45);
+  const text = dimLabel(gapVal)+' мм';
+  if(dy < 0) return [{type:'double', x1:xL, y1:y, x2:xR, y2:y, lx:(xL+xR)/2, ly:y-6, text}];
+  return [
+    {type:'line', x1:xL, y1:yBottom+5, x2:xL, y2:y+25},
+    {type:'line', x1:xR, y1:yBottom+5, x2:xR, y2:y+25},
+    {type:'double', x1:xL, y1:y, x2:xR, y2:y, lx:(xL+xR)/2, ly:y-6, text}
+  ];
+}
+
+function diagramBokovoy2Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 2 планки, без раскосины (натуральный размер 855×713).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -43,10 +61,10 @@ function diagramBokovoy2Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-92, y1:534, x2:69, y2:736, lx:-101, ly:516, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_2P_0R_IMG_B64, 'Щит боковой (2 планки, без раскосины) - схема расположения деталей', 855, 713, records, null, photoStrokeScale(855));
+  return renderDiagram(BOKOVOY_2P_0R_IMG_B64, 'Щит боковой (2 планки, без раскосины) - схема расположения деталей', 855, 713, records.concat(bokGapRecords(240, 618, 706, plankGapVal)), null, photoStrokeScale(855));
 }
 
-function diagramBokovoy2Planks1Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+function diagramBokovoy2Planks1Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 2 планки, 1 раскосина (натуральный размер 874×733).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -69,10 +87,10 @@ function diagramBokovoy2Planks1Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-78, y1:540, x2:83, y2:742, lx:-87, ly:522, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_2P_1R_IMG_B64, 'Щит боковой (2 планки, 1 раскосина) - схема расположения деталей', 874, 733, records, null, photoStrokeScale(874));
+  return renderDiagram(BOKOVOY_2P_1R_IMG_B64, 'Щит боковой (2 планки, 1 раскосина) - схема расположения деталей', 874, 733, records.concat(bokGapRecords(253, 632, 713, plankGapVal)), null, photoStrokeScale(874));
 }
 
-function diagramBokovoy3Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+function diagramBokovoy3Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 3 планки, без раскосины (натуральный размер 1390×752).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -95,10 +113,10 @@ function diagramBokovoy3Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-67, y1:548, x2:94, y2:750, lx:-76, ly:530, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_3P_0R_IMG_B64, 'Щит боковой (3 планки, без раскосины) - схема расположения деталей', 1390, 752, records, null, photoStrokeScale(1390));
+  return renderDiagram(BOKOVOY_3P_0R_IMG_B64, 'Щит боковой (3 планки, без раскосины) - схема расположения деталей', 1390, 752, records.concat(bokGapRecords(252, 632, 720, plankGapVal)), null, photoStrokeScale(1390));
 }
 
-function diagramBokovoy3Planks2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+function diagramBokovoy3Planks2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 3 планки, 2 раскосины (натуральный размер 1418×781).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -121,10 +139,10 @@ function diagramBokovoy3Planks2Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-34, y1:583, x2:127, y2:785, lx:-43, ly:565, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_3P_2R_IMG_B64, 'Щит боковой (3 планки, 2 раскосины) - схема расположения деталей', 1418, 781, records, null, photoStrokeScale(1418));
+  return renderDiagram(BOKOVOY_3P_2R_IMG_B64, 'Щит боковой (3 планки, 2 раскосины) - схема расположения деталей', 1418, 781, records.concat(bokGapRecords(286, 664, 756, plankGapVal)), null, photoStrokeScale(1418));
 }
 
-function diagramBokovoy4Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+function diagramBokovoy4Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 4 планки, без раскосины (натуральный размер 1900×778).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -147,10 +165,10 @@ function diagramBokovoy4Planks0Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-61, y1:561, x2:100, y2:763, lx:-70, ly:543, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_4P_0R_IMG_B64, 'Щит боковой (4 планки, без раскосины) - схема расположения деталей', 1900, 778, records, null, photoStrokeScale(1900));
+  return renderDiagram(BOKOVOY_4P_0R_IMG_B64, 'Щит боковой (4 планки, без раскосины) - схема расположения деталей', 1900, 778, records.concat(bokGapRecords(764, 1143, 734, plankGapVal)), null, photoStrokeScale(1900));
 }
 
-function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal){
+function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankGapVal){
   // Фото-чертёж: 4 планки, 3 раскосины (натуральный размер 1877×746).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -173,7 +191,7 @@ function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:-75, y1:537, x2:86, y2:739, lx:-84, ly:519, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_4P_3R_IMG_B64, 'Щит боковой (4 планки, 3 раскосины) - схема расположения деталей', 1877, 746, records, null, photoStrokeScale(1877));
+  return renderDiagram(BOKOVOY_4P_3R_IMG_B64, 'Щит боковой (4 планки, 3 раскосины) - схема расположения деталей', 1877, 746, records.concat(bokGapRecords(749, 1129, 710, plankGapVal)), null, photoStrokeScale(1877));
 }
 
 // Три чертежа ниже - варианты на 2 этажа (средняя горизонтальная планка делит щит
@@ -187,7 +205,7 @@ function diagramBokovoy4Planks3Raskosina(boardLenVal, overhangVal, edgeDistVal, 
 // планка начинает заходить на полоз - т.е. без учёта самого напуска, он показан
 // отдельной подписью).
 
-function diagramBokovoy2Floors2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
+function diagramBokovoy2Floors2Raskosina(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal, plankGapVal){
   // Фото-чертёж: 2 этажа, 2 планки, 2 раскосины (натуральный размер 966×1361).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -217,10 +235,10 @@ function diagramBokovoy2Floors2Raskosina(boardLenVal, overhangVal, edgeDistVal, 
     {type:'single', x1:393, y1:1512, x2:128, y2:1364, lx:399, ly:1532, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_2FL_2P_IMG_B64, 'Щит боковой (2 этажа, 2 планки, 2 раскосины) - схема расположения деталей', 966, 1361, records, null, photoStrokeScale(966));
+  return renderDiagram(BOKOVOY_2FL_2P_IMG_B64, 'Щит боковой (2 этажа, 2 планки, 2 раскосины) - схема расположения деталей', 966, 1361, records.concat(bokGapRecords(312, 691, 1335, plankGapVal, -45)), null, photoStrokeScale(966));
 }
 
-function diagramBokovoy2Floors3Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
+function diagramBokovoy2Floors3Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal, plankGapVal){
   // Фото-чертёж: 2 этажа, 3 планки, 4 раскосины (натуральный размер 1381×1326).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -250,10 +268,10 @@ function diagramBokovoy2Floors3Planks(boardLenVal, overhangVal, edgeDistVal, hei
     {type:'single', x1:331, y1:1485, x2:66, y2:1337, lx:337, ly:1505, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_2FL_3P_IMG_B64, 'Щит боковой (2 этажа, 3 планки, 4 раскосины) - схема расположения деталей', 1381, 1326, records, null, photoStrokeScale(1381));
+  return renderDiagram(BOKOVOY_2FL_3P_IMG_B64, 'Щит боковой (2 этажа, 3 планки, 4 раскосины) - схема расположения деталей', 1381, 1326, records.concat(bokGapRecords(249, 628, 1307, plankGapVal)), null, photoStrokeScale(1381));
 }
 
-function diagramBokovoy2Floors4Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal){
+function diagramBokovoy2Floors4Planks(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, upperSpanVal, midPlankWidthVal, plankGapVal){
   // Фото-чертёж: 2 этажа, 4 планки, 6 раскосин (натуральный размер 1886×1338).
   const valBoardLen = dimLabel(boardLenVal);
   const valOverhang = dimLabel(overhangVal);
@@ -283,10 +301,10 @@ function diagramBokovoy2Floors4Planks(boardLenVal, overhangVal, edgeDistVal, hei
     {type:'single', x1:338, y1:1498, x2:73, y2:1350, lx:344, ly:1518, text: valEdgeDist+' мм'}
   ];
 
-  return renderDiagram(BOKOVOY_2FL_4P_IMG_B64, 'Щит боковой (2 этажа, 4 планки, 6 раскосин) - схема расположения деталей', 1886, 1338, records, null, photoStrokeScale(1886));
+  return renderDiagram(BOKOVOY_2FL_4P_IMG_B64, 'Щит боковой (2 этажа, 4 планки, 6 раскосин) - схема расположения деталей', 1886, 1338, records.concat(bokGapRecords(750, 1130, 1321, plankGapVal)), null, photoStrokeScale(1886));
 }
 
-function diagramBokovoy(Hmm, t12val, t41val, k41val, overhangVal, edgeDistVal, raskosinCountVal, floorsVal, floorSpanVal, plankCountVal, plankLenVal, midPlankWidthVal){
+function diagramBokovoy(Hmm, t12val, t41val, k41val, overhangVal, edgeDistVal, raskosinCountVal, floorsVal, floorSpanVal, plankCountVal, plankLenVal, midPlankWidthVal, plankGapVal){
   const hasRaskosina = raskosinCountVal > 0;
   const plankCount = Math.min(plankCountVal, 4);
   const heightPlusFloor = Hmm + t12val;
@@ -296,12 +314,12 @@ function diagramBokovoy(Hmm, t12val, t41val, k41val, overhangVal, edgeDistVal, r
     // есть почти всегда (см. bokHasRaskosina в app-i3.js), отдельных фото «без
     // раскосины» на 2 этажа не присылали.
     if(plankCount <= 2){
-      return diagramBokovoy2Floors2Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal);
+      return diagramBokovoy2Floors2Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal, plankGapVal);
     }
     if(plankCount === 3){
-      return diagramBokovoy2Floors3Planks(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal);
+      return diagramBokovoy2Floors3Planks(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal, plankGapVal);
     }
-    return diagramBokovoy2Floors4Planks(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal);
+    return diagramBokovoy2Floors4Planks(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal, plankGapVal);
   }
   // Выбор фото идёт по числу планок (plankCountVal = l19) и наличию раскосины
   // (raskosinCountVal > 0 <=> bokHasRaskosina). Для 5+ планок фото ещё нет —
@@ -309,15 +327,15 @@ function diagramBokovoy(Hmm, t12val, t41val, k41val, overhangVal, edgeDistVal, r
   // то же самое, просто на фото меньше планок, чем в реальном ящике.
   if(plankCount <= 2){
     return hasRaskosina
-      ? diagramBokovoy2Planks1Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor)
-      : diagramBokovoy2Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor);
+      ? diagramBokovoy2Planks1Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal)
+      : diagramBokovoy2Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal);
   }
   if(plankCount === 3){
     return hasRaskosina
-      ? diagramBokovoy3Planks2Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor)
-      : diagramBokovoy3Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor);
+      ? diagramBokovoy3Planks2Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal)
+      : diagramBokovoy3Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal);
   }
   return hasRaskosina
-    ? diagramBokovoy4Planks3Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor)
-    : diagramBokovoy4Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor);
+    ? diagramBokovoy4Planks3Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal)
+    : diagramBokovoy4Planks0Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal);
 }
