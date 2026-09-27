@@ -130,7 +130,12 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
   // (2 этажа - ~2.4) своих высот: иначе у очень длинного щита (10+ м) чертёж
   // превращается в тонкую полосу, а подписи наезжают друг на друга.
   const maxIW = (F === 2 ? 2.4 : 4) * (45 + PH + 80);
-  const sw = Math.max(1.2*pw, Math.min(innerH * i3aspect(sectionWmm - 100, realInH), (maxIW - 2*stub - P*pw) / (P-1)));
+  // И не уже, чем фото бокового щита с 2 планками (1 этаж - 874×733, 2 этажа -
+  // 966×1361): по замечанию пользователя, при 2 планках (особенно на 2 этажах)
+  // чертёж выходил узким и высоким и занимал много места по вертикали.
+  const minIW = (F === 2 ? 966/1361 : 874/733) * (45 + PH + 80);
+  const sw = Math.max(1.2*pw, (minIW - 2*stub - P*pw) / (P-1),
+    Math.min(innerH * i3aspect(sectionWmm - 100, realInH), (maxIW - 2*stub - P*pw) / (P-1)));
   const panelW = 2*stub + P*pw + (P-1)*sw;
   const up = 45;                                    // планки чуть выступают над щитом (как в I-1)
   const IW = Math.round(panelW), IH = up + PH + ovh;
