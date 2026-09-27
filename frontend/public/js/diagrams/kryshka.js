@@ -4,7 +4,7 @@
 const KRYSHKA_IMG_B64 = "/images/kryshka.png"; // натуральный размер 1718x1274
 const KRYSHKA_2BEAMS_IMG_B64 = "/images/kryshka_2beams.jpg"; // натуральный размер 1157x839 (вариант с 2 поперечными брусьями)
 
-function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal){
+function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm){
   // Фото под 3 планки крышки (l19=3) - выбор чертежа крышки идёт по l19, см. diagramKryshka().
   // Длина крышки = длина груза + (толщина доски торца + толщина планки торца)*2 (см. k9Base).
   const valLen        = dimLabel(lengthMm + t30*2 + t32*2);
@@ -15,12 +15,11 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
   const valPlankaThick  = dimLabel(t40);
   // Расстояние от крайней планки крышки до края крышки (edgeDistKryshka = min(L/6, 1000)).
   const valEdgePlanka   = dimLabel(edgeDistKryshkaMm);
-  // Расстояние от крайнего поперечного бруса до края крышки: из длины крышки вычитаем
-  // суммарную ширину, занятую самими брусьями (количество × ширина бруса), остаток делим
-  // поровну на «количество брусьев + 1» промежутков.
-  const valEdgeBeam     = crossBeamQty > 0
-    ? dimLabel((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
-    : dimLabel(valLen);
+  // Расстояние от края крышки до кромки крайнего поперечного бруса - из расчёта
+  // (beamEdgeMm: зазор между брусьями ровно beamGapMm=800, остаток пополам - см.
+  // l21 в расчёте), а не прежнее равномерное деление.
+  const valEdgeBeam     = dimLabel(beamEdgeMm);
+  const valBeamGap      = dimLabel(beamGapMm);
   // Зазор между кромками соседних поясов-планок (plankEdgeGapVal) - по более
   // позднему указанию пользователя показываем (как у типа I-1): за задней
   // кромкой, между торчащими из-под крышки концами 1-й и 2-й планок.
@@ -42,22 +41,24 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
     {type:'single', x1:-51, y1:266, x2:263, y2:400, lx:-85, ly:225, text: valPlankaThick+' мм'},
     {type:'line', x1:273, y1:263, x2:195, y2:124},
     {type:'line', x1:567, y1:178, x2:489, y2:39},
-    {type:'double', x1:204, y1:141, x2:498, y2:56, lx:276, ly:-35, text: valPlankGap+' мм'} // подпись - за стрелкой: стрелка короче подписи
+    {type:'double', x1:204, y1:141, x2:498, y2:56, lx:276, ly:-35, text: valPlankGap+' мм'}, // подпись - за стрелкой: стрелка короче подписи
+    // зазор между кромками 1-го и 2-го поперечных брусьев - на продолжении
+    // размера отступа бруса, подпись - за стрелкой, в промежутке между брусьями
+    {type:'double', x1:572, y1:887, x2:880, y2:772, lx:661, ly:692, text: valBeamGap+' мм'}
   ];
 
   return renderDiagram(KRYSHKA_IMG_B64, 'Крышка - схема расположения деталей', 1718, 1274, records, null, photoStrokeScale(1718));
 }
 
-function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal){
+function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm){
   // Фото под 2 планки крышки (l19=2, натуральный размер 1157×839) - выбор чертежа
   // крышки идёт по l19, см. diagramKryshka().
   const valLen      = dimLabel(lengthMm + t30*2 + t32*2);
   const valWidth    = dimLabel(widthMm + t41*2);
   const valPlankaThick = dimLabel(t40);
   const valEdgePlanka  = dimLabel(edgeDistKryshkaMm);
-  const valEdgeBeam    = crossBeamQty > 0
-    ? dimLabel((valLen - crossBeamQty*crossBeamWidthMm) / (crossBeamQty + 1))
-    : dimLabel(valLen);
+  const valEdgeBeam    = dimLabel(beamEdgeMm); // из расчёта, см. diagramKryshkaDefault
+  const valBeamGap     = dimLabel(beamGapMm);
   // Зазор между кромками поясов-планок - за задней кромкой, между концами
   // планок (см. diagramKryshkaDefault выше).
   const valPlankGap = dimLabel(plankEdgeGapVal);
@@ -80,19 +81,21 @@ function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKry
     {type:'single', x1:28, y1:607, x2:117, y2:371, lx:5, ly:639, text: valEdgeBeam+' мм'},
     {type:'line', x1:187, y1:175, x2:147, y2:105},
     {type:'line', x1:610, y1:45, x2:570, y2:-25},
-    {type:'double', x1:157, y1:123, x2:580, y2:-7, lx:368, ly:52, text: valPlankGap+' мм'}
+    {type:'double', x1:157, y1:123, x2:580, y2:-7, lx:368, ly:52, text: valPlankGap+' мм'},
+    // зазор между кромками поперечных брусьев - подпись за стрелкой, между брусьями
+    {type:'double', x1:344, y1:500, x2:801, y2:355, lx:528, ly:334, text: valBeamGap+' мм'}
   ];
 
   return renderDiagram(KRYSHKA_2BEAMS_IMG_B64, 'Крышка (2 поперечных бруса) - схема расположения деталей', 1157, 839, records, null, photoStrokeScale(1157));
 }
 
-function diagramKryshka(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal){
+function diagramKryshka(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm){
   // Выбор чертежа крышки идёт по количеству планок крышки (l19), а не по числу
   // поперечных брусьев: доступны 2 фото - под 2 планки и под 3. Для l19>3 показываем
   // фото под 3 планки (расположение планок то же самое, просто на фото меньше
   // планок, чем в реальном ящике) - как раньше делалось по числу брусьев.
   if(plankCount <= 2){
-    return diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal);
+    return diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm);
   }
-  return diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal);
+  return diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm);
 }

@@ -212,7 +212,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
 // Положение планок/брусьев вдоль длины - в реальных пропорциях; сама длина
 // крышки на чертеже - в пределах 1.4..4 её ширины (иначе очень длинная
 // крышка превратилась бы в тонкую полосу).
-function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal){
+function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm){
   const lidLen = lengthMm + t30*2 + t32*2, lidW = widthMm + t41*2;
   const P = Math.max(1, Math.round(plankCount)), B = Math.max(0, Math.round(crossBeamQty));
   const eu = [0.9507, -0.3101], ev = [-0.4406, -0.8977];
@@ -251,8 +251,8 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   polys.push([pt(0,0), pt(0,Wv), pt(0,Wv,thick), pt(0,0,thick)]);
   polys.push(quad(0, Lu, 0, Wv));
   // внутренние поперечные брусья - сверху
-  const beamStep = B > 0 ? (lidLen - B*(crossBeamWidthMm||100)) / (B + 1) : 0;
-  const beamU = i => Math.min(Math.max((beamStep*(i+1) + i*(crossBeamWidthMm||100)) * k, 0), Lu - bw);
+  // расстановка - как в расчёте: отступ beamEdgeMm, зазор между кромками beamGapMm
+  const beamU = i => Math.min(Math.max((beamEdgeMm + i*((crossBeamWidthMm||100) + beamGapMm)) * k, 0), Lu - bw);
   for(let i=0; i<B; i++){
     const u0 = beamU(i);
     box(u0, u0 + bw, 0.05*Wv, 0.95*Wv);
@@ -277,9 +277,13 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const pxU = Math.max((maxX - minX)/290, (maxY - minY)/240);
   const D = P2(0,0,thick), C = P2(Lu,0,thick), Bk = P2(Lu,Wv);
   const records = [];
-  // длина - вдоль передней кромки, снаружи (за концами планок и размером
-  // отступа планки)
-  const dOff = 190 + 30*pxU;
+  // Ряды размеров перед крышкой (от кромки наружу): 1 - отступ крайней
+  // планки, 2 - отступ крайнего поперечного бруса и зазор между брусьями,
+  // 3 - длина крышки.
+  const rowBeam = 190 + 45*pxU;
+  // длина - вдоль передней кромки, снаружи (за концами планок и размерами
+  // отступов)
+  const dOff = B > 0 ? rowBeam + 60*pxU : 190 + 30*pxU;
   const d1 = off(D, nfront, dOff), d2 = off(C, nfront, dOff);
   records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,dOff+40)[0], y2:off(D,nfront,dOff+40)[1]});
   records.push({type:'line', x1:C[0], y1:C[1], x2:off(C,nfront,dOff+40)[0], y2:off(C,nfront,dOff+40)[1]});
@@ -323,6 +327,32 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     const lab = off(b1, nleft, 42*pxU), lineEnd = off(b1, nleft, 12*pxU);
     records.push({type:'line', x1:b1[0], y1:b1[1], x2:lineEnd[0], y2:lineEnd[1]});
     records.push({type:'double', x1:b1[0], y1:b1[1], x2:b2[0], y2:b2[1], lx:lab[0], ly:lab[1], text: valEdgePlanka+' мм'});
+  }
+  // Поперечные брусья (сверху, видны целиком) - по указанию пользователя:
+  // отступ от края ящика до кромки крайнего бруса и зазор между кромками
+  // соседних брусьев. Выносные линии - от передних углов самих брусьев,
+  // размеры - во втором ряду перед крышкой; подпись отступа - слева на
+  // продолжении стрелки, подпись зазора - за стрелкой (под ней).
+  if(B > 0){
+    const vB = 0.05*Wv;                              // передние торцы брусьев
+    const beamDim = (uA, uB, fromA, fromB) => {
+      const a = off(P2(uA, 0, thick), nfront, rowBeam), b = off(P2(uB, 0, thick), nfront, rowBeam);
+      const ea = off(P2(uA, 0, thick), nfront, rowBeam + 30), eb = off(P2(uB, 0, thick), nfront, rowBeam + 30);
+      if(fromA) records.push({type:'line', x1:fromA[0], y1:fromA[1], x2:ea[0], y2:ea[1]});
+      records.push({type:'line', x1:fromB[0], y1:fromB[1], x2:eb[0], y2:eb[1]});
+      return [a, b];
+    };
+    const bu0 = beamU(0);
+    const [ea, eb] = beamDim(0, bu0, null, P2(bu0, vB));  // от края крышки - выносная линия длины уже есть
+    const lab = off(ea, nleft, 42*pxU), lineEnd = off(ea, nleft, 12*pxU);
+    records.push({type:'line', x1:ea[0], y1:ea[1], x2:lineEnd[0], y2:lineEnd[1]});
+    records.push({type:'double', x1:ea[0], y1:ea[1], x2:eb[0], y2:eb[1], lx:lab[0], ly:lab[1], text: dimLabel(beamEdgeMm)+' мм'});
+    if(B > 1){
+      const gi = Math.floor((B-1)/2), ua = beamU(gi) + bw, ub = beamU(gi+1);
+      const [ga, gb] = beamDim(ua, ub, P2(ua, vB), P2(ub, vB));
+      const gl = off([(ga[0]+gb[0])/2, (ga[1]+gb[1])/2], nfront, 24*pxU);
+      records.push({type:'double', x1:ga[0], y1:ga[1], x2:gb[0], y2:gb[1], lx:gl[0], ly:gl[1], text: dimLabel(beamGapMm)+' мм'});
+    }
   }
   // толщина планки - сноска к дальнему левому углу конца первой планки
   const tc = tip(plankU(0));

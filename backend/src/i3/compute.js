@@ -309,7 +309,17 @@ function computeGost10198I3(input) {
   if (crossBeam.exceeded) {
     warnings.push('Масса или ширина ящика вне Табл. 14 — брус крышки принят по крайнему значению.');
   }
-  const t21 = ov('t21Value', roundUpToAvailable(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки'), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0), l21 = ceilInt(L / 800);
+  // Внутренний поперечный брус: толщина и ширина по Таблице 14 (масса + наружная ширина
+  // ящика; ширина по таблице всегда 100мм). Расстановка (по указанию пользователя,
+  // вместо прежней временной формулы «длина груза : 800, вверх»): зазор между
+  // кромками соседних брусьев - ровно 800 мм, число брусьев - максимальное, при
+  // котором отступ от края крышки до кромки крайнего бруса не меньше (толщина
+  // вертикальной планки торца + толщина доски торца); остаток длины крышки -
+  // поровну на оба отступа (максимально равномерно).
+  const t21 = ov('t21Value', roundUpToAvailable(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки'), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0);
+  const I3_BEAM_GAP = 800, beamMinEdge = t_planka_torca + t_doska_torca;
+  const l21 = Math.max(1, Math.floor((k9Base - 2 * beamMinEdge + I3_BEAM_GAP) / (w21 + I3_BEAM_GAP) + 1e-9));
+  const beamEdgeDist = (k9Base - l21 * w21 - (l21 - 1) * I3_BEAM_GAP) / 2;
   kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21, overrideKey: 't21Value' });
 
   const volKryshka = vol(t19, w19, k19, l19) + vol(t20, w20, k20, l20) + vol(t21, w21, k21, l21)
@@ -473,7 +483,7 @@ function computeGost10198I3(input) {
     warnings, dno, kryshka, endPanel, bokovoy, crateMass, woodDensity: woodRho,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
-    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW, plankGap,
+    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW, plankGap, beamEdgeDist, beamGap: I3_BEAM_GAP,
     standardPlankCount: standardLayout.count, standardPlankGap: standardLayout.gap,
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
     H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina, t20,
