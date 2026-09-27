@@ -1121,3 +1121,85 @@
   #printArea .diagram-label-vertical{
     transform:translate(-50%,-50%) rotate(-90deg);
   }
+
+  /* ============ Новая раскладка (body.layout-v2) - по указанию пользователя,
+     пока только на типе I-3 (пример для одобрения) ============
+     1) Широкий экран: слева ввод, справа «липкая» колонка с кнопкой
+        «Рассчитать», статусом и итогом; спецификация - ниже на всю ширину.
+        Узкий экран: всё в одну колонку, панель с кнопкой «Рассчитать»
+        прилипает к низу экрана, пока не дошли до неё.
+     4) Поле, из-за которого расчёт заблокирован, - красная рамка (.field-error).
+     8) Толщины «в наличии» - чипами прямо в карточке (без выпадающего списка),
+        подсказка «не выбраны» - нейтральная, не жёлтая.
+     9) Телефон: строки таблиц деталей - карточками. */
+  #resultsMore{display:none;}
+  @media screen{
+    .layout-v2 .field-error{border-color:var(--error) !important;box-shadow:0 0 0 3px rgba(194,59,44,.15);}
+
+    /* 8) толщины чипами */
+    .layout-v2 #thicknessDropdownBtn{display:none;}
+    .layout-v2 #thicknessDropdownPanel{display:block;position:static;border:none;box-shadow:none;padding:0;max-height:none;overflow:visible;background:none;}
+    .layout-v2 #thicknessDropdownPanel .thickness-dropdown-actions{border-bottom:none;padding-bottom:0;}
+    .layout-v2 #thicknessCheckboxList{display:flex;flex-wrap:wrap;gap:8px;grid-template-rows:none;}
+    .layout-v2 #thicknessCheckboxList label{
+      margin:0;padding:7px 12px;border:1px solid var(--border-btn);border-radius:999px;
+      cursor:pointer;user-select:none;font-weight:600;background:var(--panel);transition:background .12s,border-color .12s,color .12s;
+    }
+    .layout-v2 #thicknessCheckboxList label:hover{background:var(--secondary-hover);}
+    .layout-v2 #thicknessCheckboxList input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;}
+    .layout-v2 #thicknessCheckboxList label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff;}
+    .layout-v2 #thicknessCheckboxList label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px;}
+    .layout-v2 #thicknessNote{background:var(--panel-hover);border-left-color:var(--rule);}
+  }
+  /* Липкие колонка/панель: у body/html стоит overflow-x:hidden - это делает
+     body контейнером прокрутки, и position:sticky не работает; clip обрезает
+     так же, но контейнером прокрутки не делает. */
+  html:has(body.layout-v2), body.layout-v2{overflow-x:clip;}
+  @media screen and (min-width:1100px){
+    /* итог в правой колонке: картинка ящика сверху, плитки 2×2 на всю ширину */
+    .layout-v2 .io-side .summary-row{flex-direction:column;align-items:stretch;gap:16px;}
+    .layout-v2 .io-side .box-view{flex-basis:auto;width:100%;max-width:220px;margin:0 auto;}
+    .layout-v2 .io-side .summary .value{font-size:20px;}
+    .layout-v2 .io-side .summary > div{padding:14px 16px;}
+    .layout-v2 .io-side .summary > div > div{padding:0;}
+    .layout-v2 .io-side .box-view{max-width:170px;padding:8px;}
+  }
+  /* 1) две колонки */
+  @media screen and (min-width:1100px){
+    .layout-v2 .wrap{max-width:1360px;}
+    .layout-v2 .io-grid{display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:24px;align-items:start;}
+    .layout-v2 .io-side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;}
+    .layout-v2 .io-side .card{padding:24px;}
+  }
+  /* 1) узкий экран: панель с кнопкой прилипает к низу */
+  @media screen and (max-width:1099px){
+    /* колонки не нужны - их обёртки «растворяются», чтобы панель прилипала
+       к низу экрана относительно всей страницы, а не только своей колонки */
+    .layout-v2 .io-grid, .layout-v2 .io-inputs, .layout-v2 .io-side{display:contents;}
+    .layout-v2 .action-card{position:sticky;bottom:0;z-index:20;box-shadow:0 -6px 18px rgba(9,17,53,.08);}
+  }
+  @media screen and (max-width:640px){
+    .layout-v2 .action-card{padding:12px 16px;gap:8px;margin-bottom:16px;border-radius:12px 12px 0 0;}
+    /* 9) строки таблиц деталей - карточками */
+    .layout-v2 #boardTables .spec-table table,
+    .layout-v2 #boardTables .spec-table tbody{display:block;width:100%;}
+    .layout-v2 #boardTables .spec-table thead{display:none;}
+    .layout-v2 #boardTables .spec-table tr{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 8px;padding:10px 12px;border-bottom:1px solid var(--rule);}
+    .layout-v2 #boardTables .spec-table tr:last-child{border-bottom:none;}
+    .layout-v2 #boardTables .spec-table td{display:block;padding:2px 0;border:none;text-align:left;}
+    .layout-v2 #boardTables .spec-table td:first-child{grid-column:1 / -1;width:auto;font-weight:700;padding-bottom:4px;}
+    /* итог на телефоне - списком: подпись слева, значение справа */
+    .layout-v2 .summary.summary-4{grid-template-columns:1fr;}
+    .layout-v2 .summary > div > div{padding:0;}
+    .layout-v2 .summary > div{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:12px 14px;}
+    .layout-v2 .summary > div.time-tile{padding-right:48px;}
+    .layout-v2 .summary .time-settings-btn{top:50%;transform:translateY(-50%);}
+    .layout-v2 .summary .label{margin-bottom:0;}
+    .layout-v2 .summary .value{font-size:18px;text-align:right;}
+    .layout-v2 .action-card button, .layout-v2 .action-card .print-btn{padding-top:10px;padding-bottom:10px;}
+    .layout-v2 #boardTables .spec-table td:nth-child(n+2)::before{display:block;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:1px;}
+    .layout-v2 #boardTables .spec-table td:nth-child(2)::before{content:'Толщина';}
+    .layout-v2 #boardTables .spec-table td:nth-child(3)::before{content:'Ширина';}
+    .layout-v2 #boardTables .spec-table td:nth-child(4)::before{content:'Длина';}
+    .layout-v2 #boardTables .spec-table td:nth-child(5)::before{content:'Кол-во';}
+  }

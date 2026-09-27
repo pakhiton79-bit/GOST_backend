@@ -660,3 +660,35 @@ document.getElementById('boxView').src = BOX_IMG_B64;
 
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
 initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
+
+// ============ Новая раскладка (body.layout-v2) - пример на I-3 ============
+// Спецификация и комментарий вынесены из #results в #resultsMore (ниже на
+// всю ширину) - показываются и скрываются вместе с #results (расчёт по-прежнему
+// управляет только #results).
+(function syncResultsMore(){
+  const r = document.getElementById('results'), m = document.getElementById('resultsMore');
+  if(!r || !m) return;
+  const sync = () => { m.style.display = r.style.display === 'block' ? 'block' : 'none'; };
+  new MutationObserver(sync).observe(r, {attributes:true, attributeFilter:['style']});
+  sync();
+})();
+// Enter в числовом поле ввода - «Рассчитать».
+(function enterToCalculate(){
+  const box = document.querySelector('.io-inputs');
+  if(!box) return;
+  box.addEventListener('keydown', e=>{
+    if(e.key !== 'Enter' || !e.target.matches('input[type="number"]')) return;
+    e.preventDefault();
+    e.target.blur();
+    calculate();
+  });
+})();
+// Поля, из-за которых расчёт заблокирован (по тексту ошибки) - подсвечиваются
+// красной рамкой (см. highlightErrorFields в common-print.js).
+function errorFieldsFor(text){
+  if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
+  if(/поперечными брусьями/.test(text)) return ['beamGapInput'];
+  if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
+  if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : [];
+  return [];
+}

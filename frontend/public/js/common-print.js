@@ -181,6 +181,7 @@ function markCalcChanged(){
     if(calcStateSignature() === calcErrorSnapshot.sig){
       setCalcStatus('error');
       if(errEl) errEl.textContent = calcErrorSnapshot.text;
+      highlightErrorFields(false);
       return;
     }
     if(errEl && errEl.textContent === calcErrorSnapshot.text) errEl.textContent = '';
@@ -194,6 +195,22 @@ function markCalcChanged(){
   }
   setCalcStatus('outdated');
 }
+// Подсветка поля, из-за которого расчёт заблокирован (по указанию пользователя):
+// тип объявляет errorFieldsFor(текст ошибки) -> id полей (пока только I-3);
+// у остальных типов функции нет - ничего не подсвечивается. Рамка снимается
+// при вводе в поле и при следующем расчёте.
+function highlightErrorFields(scroll){
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+  if(typeof errorFieldsFor !== 'function' || currentCalcStatus() !== 'error') return;
+  const errEl = document.getElementById('err');
+  const els = errorFieldsFor(errEl ? errEl.textContent : '')
+    .map(id => document.getElementById(id)).filter(el => el && el.offsetParent !== null);
+  els.forEach(el => el.classList.add('field-error'));
+  if(scroll && els.length) els[0].scrollIntoView({block:'center', behavior:'smooth'});
+}
+document.addEventListener('input', e=>{
+  if(e.target.classList && e.target.classList.contains('field-error')) e.target.classList.remove('field-error');
+});
 function beginPrintJob(kind){
   printInProgress = true;
   const prev = currentCalcStatus();
@@ -251,6 +268,7 @@ async function calculate(){
       const errEl = document.getElementById('err');
       if(currentCalcStatus() === 'error' && errEl && errEl.textContent) calcErrorSnapshot = {sig: calcStateSignature(), text: errEl.textContent};
     }
+    highlightErrorFields(true);
   }
 }
 // Предупреждение о ручных правках (по указанию пользователя): правки таблиц
