@@ -13,9 +13,11 @@ function i3stroke(IW, IH){
 // Картинка + подписи. Вокруг чертежа - поле на толщину линии: иначе крайние
 // линии рамы, лежащие ровно по краю картинки, обрезались бы наполовину и
 // выглядели тоньше остальных (по замечанию пользователя). Подписи сдвигаются
-// на то же поле.
-function i3render(title, IW, IH, shapes, records, join){
-  const stroke = i3stroke(IW, IH), m = Math.ceil(stroke);
+// на то же поле. strokeK - множитель толщины контура (у крышки линии тоньше -
+// по замечанию пользователя «слишком жирные»: там много близких параллельных
+// кромок, и при ~2px они сливаются).
+function i3render(title, IW, IH, shapes, records, join, strokeK){
+  const stroke = (i3stroke(IW, IH) * (strokeK || 1)).toFixed(1), m = Math.ceil(stroke);
   const W2 = IW + 2*m, H2 = IH + 2*m;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W2}" height="${H2}" viewBox="0 0 ${W2} ${H2}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
@@ -286,5 +288,5 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const tc = P2(u1, 0.95*Wv, up);
   records.push({type:'single', x1:tc[0]-260, y1:tc[1]-120, x2:tc[0], y2:tc[1], lx:tc[0]-290, ly:tc[1]-160, text: valPlankaThick+' мм'});
 
-  return i3render(`Крышка (${P} планок) - схема расположения деталей`, IW, IH, shapes, records, 'round');
+  return i3render(`Крышка (${P} планок) - схема расположения деталей`, IW, IH, shapes, records, 'round', 0.55);
 }
