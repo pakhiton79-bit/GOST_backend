@@ -326,7 +326,7 @@ function onAnyParamChange(e){
   const t = e.target;
   if(!t || !t.matches || !t.matches('input, select, textarea')) return;
   if(t.id === 'userComment' || t.id === 'boxName') return; // в расчёт не входят
-  if(t.closest('#boardTables, #timeSettingsOverlay, #printArea')) return;
+  if(t.closest('#boardTables, #timeSettingsOverlay, #densitySettingsOverlay, #printArea')) return;
   if(typeof invalidateCalc === 'function') invalidateCalc();
 }
 document.addEventListener('input', onAnyParamChange);

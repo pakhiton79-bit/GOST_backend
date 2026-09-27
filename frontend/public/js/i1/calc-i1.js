@@ -52,6 +52,7 @@ async function calculateNow(){
     manualOverrides,
     tableEdits,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
+    woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
   };
 
   let calc;
@@ -274,3 +275,4 @@ function buildPrintHtml(){
 
 document.getElementById('boxView').src = BOX_I1_IMG_B64;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);

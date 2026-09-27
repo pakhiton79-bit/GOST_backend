@@ -8,7 +8,7 @@ const path = require('path');
 const express = require('express');
 
 const { computeGost10198I3 } = require('./src/i3/compute');
-const { computeGost10198I1, WOOD_DENSITY_KG_M3 } = require('./src/i1/compute');
+const { computeGost10198I1 } = require('./src/i1/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
@@ -90,10 +90,11 @@ app.post('/api/i3/calculate', (req, res) => {
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * WOOD_DENSITY_KG_M3; }));
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
 app.post('/api/i1/calculate', (req, res) => {
@@ -112,10 +113,11 @@ app.post('/api/i1/calculate', (req, res) => {
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198I1(input), b.tableEdits, I1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * WOOD_DENSITY_KG_M3; }));
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
 app.post('/api/ii1/calculate', (req, res) => {

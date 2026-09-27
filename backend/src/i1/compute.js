@@ -9,11 +9,11 @@ const { packingDensity, wallThicknessI1, stepDownGrade, plankCount } = require('
 // Плотность древесины для перевода объёма пиломатериала (м³) в массу
 // ящика (кг) - по уточнению пользователя, типовое значение для сухой
 // сосны/ели.
-const WOOD_DENSITY_KG_M3 = 500;
+const WOOD_DENSITY_KG_M3 = 700; // по умолчанию; настраивается на клиенте (woodDensity)
 
 // input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,xRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -303,9 +303,10 @@ function computeGost10198I1(input) {
   const totalVolume = volDno + volKryshka + 2 * volBok + 2 * volTorec;
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
   // Масса ящика (тары, без груза) - объём пиломатериала × плотность
-  // древесины (по уточнению пользователя: 500 кг/м³, типовое значение для
-  // сухой сосны/ели).
-  const crateMass = totalVolume * WOOD_DENSITY_KG_M3;
+  // древесины (woodDensity - шестерёнка у «Массы ящика», по умолчанию
+  // 700 кг/м³, по указанию пользователя).
+  const woodRho = woodDensity > 0 ? woodDensity : WOOD_DENSITY_KG_M3;
+  const crateMass = totalVolume * woodRho;
 
 
   if (roundUpToAvailable.state.exceeded) {
@@ -333,7 +334,7 @@ function computeGost10198I1(input) {
 
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
-    outerL, outerW, outerH, totalVolume, normaVremeni, crateMass,
+    outerL, outerW, outerH, totalVolume, normaVremeni, crateMass, woodDensity: woodRho,
     dnoWidth, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina, xRaskosina: !!xRaskosina, kPlankaKryshka, H, W, wall,
     // Толщина у выступающего угла первой планки на чертежах Дна/Крышки/Бока
     // (своя у каждого щита: у дна - полоз либо планка дна).

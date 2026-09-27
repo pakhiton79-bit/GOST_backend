@@ -21,6 +21,8 @@ const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 12
 // Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
 // для этого типа ящика (см. js/common-timesettings.js).
 const TIME_SETTINGS_STORAGE_KEY = 'gost10198-t1-k3-time-settings';
+// Плотность древесины для «Массы ящика» (шестерёнка у плитки) - свой ключ.
+const WOOD_DENSITY_STORAGE_KEY = 'gost10198-t1-k3-wood-density';
 
 function loadAvailableThicknesses(){
   try{
@@ -225,6 +227,7 @@ async function calculateNow(){
     manualOverrides,
     tableEdits,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
+    woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
   };
 
   let calc;
@@ -416,3 +419,4 @@ function buildPrintHtml(){
 document.getElementById('boxView').src = BOX_IMG_B64;
 
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);

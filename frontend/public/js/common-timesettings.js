@@ -197,3 +197,52 @@ function initTimeSettings(storageKey){
     applySettings({ baseProductivity: loadTimeSettings(storageKey).baseProductivity, timeCoeff: v });
   };
 }
+
+// ============ Плотность древесины («Масса ящика») ============
+// Шестерёнка у плитки «Масса ящика» (по указанию пользователя - по аналогии с
+// настройками нормы времени): масса ящика = объём пиломатериала × плотность.
+// По умолчанию 700 кг/м³; остановки ползунка - 400..900 кг/м³ с шагом 50
+// (от лёгкой сухой хвои ~450 до тяжёлых лиственных пород/сырой древесины
+// ~850-900), любое другое значение - в поле ручного ввода. Хранится в
+// localStorage отдельно для каждого типа ящика (ключ передаётся в
+// initDensitySettings()), применяется только по «Рассчитать».
+const WOOD_DENSITY_STEPS = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900];
+const WOOD_DENSITY_DEFAULT = 700;
+
+function loadWoodDensity(storageKey){
+  try{
+    const v = Number(localStorage.getItem(storageKey));
+    if(v > 0) return v;
+  }catch(e){}
+  return WOOD_DENSITY_DEFAULT;
+}
+
+function initDensitySettings(storageKey){
+  const overlay = document.getElementById('densitySettingsOverlay');
+  const sliderEl = document.getElementById('woodDensitySlider');
+  const input = document.getElementById('woodDensityInput');
+  if(!overlay || !sliderEl || !input) return;
+
+  function apply(v){
+    try{ localStorage.setItem(storageKey, String(v)); }catch(e){}
+    if(typeof invalidateCalc === 'function') invalidateCalc();
+  }
+  const slider = createJumpSlider(sliderEl, WOOD_DENSITY_STEPS, v=>{ input.value = v; apply(v); });
+
+  window.onDensitySettingsOpen = function(){
+    const v = loadWoodDensity(storageKey);
+    slider.setValue(v);
+    input.value = v;
+    overlay.hidden = false;
+  };
+  window.onDensitySettingsClose = function(){ overlay.hidden = true; };
+  window.onDensitySettingsOverlayClick = function(event){
+    if(event.target === overlay) overlay.hidden = true;
+  };
+  window.onWoodDensityInputChange = function(){
+    const v = parseFloat(String(input.value).replace(',', '.'));
+    if(!(v > 0)) return;
+    slider.setValue(v);
+    apply(v);
+  };
+}
