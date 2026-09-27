@@ -148,6 +148,11 @@ function currentCalcStatus(){
 // (buildCalcInput() каждого типа) плюс правки таблиц, толщины «в наличии» и
 // настройки нормы времени - без пересчёта и без запросов к серверу.
 let calcStateSnapshot = null;
+// То же для расчёта, заблокированного ошибкой: параметры и текст причины (по
+// замечанию пользователя: после блокировки событие изменения поля - напр. при
+// уходе фокуса из поля, куда уже ввели значение, - меняло «Расчёт не проведён»
+// на жёлтое «Нажмите «Рассчитать»», а красная причина оставалась).
+let calcErrorSnapshot = null;
 function calcStateSignature(){
   if(typeof buildCalcInput !== 'function') return null;
   try{
@@ -166,8 +171,22 @@ function calcStateSignature(){
   }
 }
 // Вызывается из invalidateCalc() каждого типа при любом изменении параметров.
+// После заблокированного расчёта: параметры те же - остаётся «Расчёт не
+// проведён» с причиной; изменились - «Нажмите «Рассчитать»», а красная причина
+// (она про прежние параметры) убирается; вернули как было - снова ошибка.
 function markCalcChanged(){
   const st = currentCalcStatus();
+  if(calcErrorSnapshot !== null && !calcInProgress && (st === 'error' || st === 'outdated')){
+    const errEl = document.getElementById('err');
+    if(calcStateSignature() === calcErrorSnapshot.sig){
+      setCalcStatus('error');
+      if(errEl) errEl.textContent = calcErrorSnapshot.text;
+      return;
+    }
+    if(errEl && errEl.textContent === calcErrorSnapshot.text) errEl.textContent = '';
+    setCalcStatus('outdated');
+    return;
+  }
   if(calcStateSnapshot !== null && !calcInProgress && (st === 'outdated' || st === 'check')
      && calcStateSignature() === calcStateSnapshot){
     setCalcStatus('check');
@@ -223,11 +242,14 @@ async function calculate(){
     showManualEditsWarning();
     updateResetButton();
     // Снимок - только после успешного расчёта (см. markCalcChanged()).
+    calcErrorSnapshot = null;
     if(currentCalcStatus() === 'check'){
       rememberCellOriginals();
       calcStateSnapshot = calcStateSignature();
     } else {
       calcStateSnapshot = null;
+      const errEl = document.getElementById('err');
+      if(currentCalcStatus() === 'error' && errEl && errEl.textContent) calcErrorSnapshot = {sig: calcStateSignature(), text: errEl.textContent};
     }
   }
 }
