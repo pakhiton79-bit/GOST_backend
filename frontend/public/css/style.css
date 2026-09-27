@@ -1129,27 +1129,15 @@
         Узкий экран: всё в одну колонку, панель с кнопкой «Рассчитать»
         прилипает к низу экрана, пока не дошли до неё.
      4) Поле, из-за которого расчёт заблокирован, - красная рамка (.field-error).
-     8) Толщины «в наличии» - чипами прямо в карточке (без выпадающего списка),
-        подсказка «не выбраны» - нейтральная, не жёлтая.
      9) Телефон: строки таблиц деталей - карточками. */
   #resultsMore{display:none;}
+  /* подзаголовки групп дополнительных опций (по указанию пользователя - опции
+     разделены по смыслу) */
+  .option-group-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);padding-top:14px;border-top:1px solid var(--rule);}
+  .option-group-title:first-child{padding-top:0;border-top:none;}
   @media screen{
     .layout-v2 .field-error{border-color:var(--error) !important;box-shadow:0 0 0 3px rgba(194,59,44,.15);}
 
-    /* 8) толщины чипами */
-    .layout-v2 #thicknessDropdownBtn{display:none;}
-    .layout-v2 #thicknessDropdownPanel{display:block;position:static;border:none;box-shadow:none;padding:0;max-height:none;overflow:visible;background:none;}
-    .layout-v2 #thicknessDropdownPanel .thickness-dropdown-actions{border-bottom:none;padding-bottom:0;}
-    .layout-v2 #thicknessCheckboxList{display:flex;flex-wrap:wrap;gap:8px;grid-template-rows:none;}
-    .layout-v2 #thicknessCheckboxList label{
-      margin:0;padding:7px 12px;border:1px solid var(--border-btn);border-radius:999px;
-      cursor:pointer;user-select:none;font-weight:600;background:var(--panel);transition:background .12s,border-color .12s,color .12s;
-    }
-    .layout-v2 #thicknessCheckboxList label:hover{background:var(--secondary-hover);}
-    .layout-v2 #thicknessCheckboxList input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none;}
-    .layout-v2 #thicknessCheckboxList label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff;}
-    .layout-v2 #thicknessCheckboxList label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px;}
-    .layout-v2 #thicknessNote{background:var(--panel-hover);border-left-color:var(--rule);}
   }
   /* Липкие колонка/панель: у body/html стоит overflow-x:hidden - это делает
      body контейнером прокрутки, и position:sticky не работает; clip обрезает
@@ -1163,11 +1151,30 @@
     .layout-v2 .io-side .summary > div{padding:14px 16px;}
     .layout-v2 .io-side .summary > div > div{padding:0;}
     .layout-v2 .io-side .box-view{max-width:170px;padding:8px;}
+    /* правую колонку растянули разделителем - итог снова в строку: картинка слева, плитки справа */
+    .layout-v2 .io-side{container-type:inline-size;}
+    /* левую колонку сузили - поля размеров по два в ряд */
+    .layout-v2 .io-inputs{container-type:inline-size;}
+    @container (max-width:660px){
+      .layout-v2 .io-inputs .inputs{grid-template-columns:repeat(2,1fr);}
+    }
+    @container (min-width:760px){
+      .layout-v2 .io-side .summary-row{flex-direction:row;align-items:center;}
+      .layout-v2 .io-side .box-view{flex:0 0 220px;width:220px;max-width:none;margin:0;}
+    }
   }
   /* 1) две колонки */
   @media screen and (min-width:1100px){
     .layout-v2 .wrap{max-width:1360px;}
-    .layout-v2 .io-grid{display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:24px;align-items:start;}
+    /* ширина правой колонки - --io-side-w, меняется перетаскиванием
+       разделителя (.io-resizer, см. ioResizer в app) */
+    .layout-v2 .io-grid{display:grid;grid-template-columns:minmax(0,1fr) 24px var(--io-side-w,560px);gap:0;align-items:start;}
+    .layout-v2 .io-resizer{align-self:stretch;cursor:col-resize;position:relative;touch-action:none;outline:none;}
+    .layout-v2 .io-resizer::before{content:'';position:absolute;top:0;bottom:24px;left:50%;width:2px;transform:translateX(-50%);border-radius:2px;background:transparent;transition:background .15s;}
+    .layout-v2 .io-resizer:hover::before, .layout-v2 .io-resizer:focus-visible::before, body.io-resizing .io-resizer::before{background:var(--accent);}
+    .layout-v2 .io-resizer-grip{position:sticky;top:calc(50vh - 24px);display:block;width:6px;height:48px;margin:0 auto;border-radius:3px;background:var(--rule);transition:background .15s;}
+    .layout-v2 .io-resizer:hover .io-resizer-grip, body.io-resizing .io-resizer-grip{background:var(--accent);}
+    body.io-resizing{cursor:col-resize;user-select:none;}
     .layout-v2 .io-side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;}
     .layout-v2 .io-side .card{padding:24px;}
   }
@@ -1176,6 +1183,7 @@
     /* колонки не нужны - их обёртки «растворяются», чтобы панель прилипала
        к низу экрана относительно всей страницы, а не только своей колонки */
     .layout-v2 .io-grid, .layout-v2 .io-inputs, .layout-v2 .io-side{display:contents;}
+    .layout-v2 .io-resizer{display:none;}
     .layout-v2 .action-card{position:sticky;bottom:0;z-index:20;box-shadow:0 -6px 18px rgba(9,17,53,.08);}
   }
   @media screen and (max-width:640px){

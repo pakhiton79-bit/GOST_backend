@@ -692,3 +692,45 @@ function errorFieldsFor(text){
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : [];
   return [];
 }
+
+// Разделитель колонок (по указанию пользователя): перетаскивается мышью, меняя
+// ширину левой и правой колонки; ширина правой запоминается. Стрелки
+// клавиатуры - по 20 px, двойной щелчок - ширина по умолчанию.
+(function ioResizer(){
+  const grid = document.querySelector('.io-grid'), handle = document.querySelector('.io-resizer');
+  if(!grid || !handle) return;
+  const KEY = OPTIONS_STORAGE_PREFIX + 'sideWidth';
+  const DEF = 560, MIN_SIDE = 420, MIN_MAIN = 480, HANDLE = 24;
+  const current = () => parseFloat(grid.style.getPropertyValue('--io-side-w')) || DEF;
+  function apply(w, save){
+    w = Math.round(Math.max(MIN_SIDE, Math.min(w, grid.clientWidth - HANDLE - MIN_MAIN)));
+    grid.style.setProperty('--io-side-w', w + 'px');
+    if(save){ try{ localStorage.setItem(KEY, String(w)); }catch(e){} }
+  }
+  let saved = null;
+  try{ saved = parseFloat(localStorage.getItem(KEY)); }catch(e){}
+  if(saved > 0) grid.style.setProperty('--io-side-w', saved + 'px');
+  handle.addEventListener('pointerdown', e=>{
+    if(e.button !== 0) return;
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    document.body.classList.add('io-resizing');
+    const move = ev => apply(grid.getBoundingClientRect().right - ev.clientX - HANDLE/2, false);
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+      handle.removeEventListener('pointercancel', up);
+      document.body.classList.remove('io-resizing');
+      apply(current(), true);
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+    handle.addEventListener('pointercancel', up);
+  });
+  handle.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowLeft'){ apply(current() + 20, true); e.preventDefault(); }
+    else if(e.key === 'ArrowRight'){ apply(current() - 20, true); e.preventDefault(); }
+  });
+  handle.addEventListener('dblclick', ()=> apply(DEF, true));
+  window.addEventListener('resize', ()=>{ if(grid.style.getPropertyValue('--io-side-w')) apply(current(), false); });
+})();

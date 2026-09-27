@@ -113,10 +113,12 @@
     <div class="card">
       <h2>Дополнительные опции</h2>
       <div class="fastening-option-list">
+        <div class="option-group-title">Доски</div>
         <label>
           <input type="checkbox" id="roundBoardWidths">
           <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
         </label>
+        <div class="option-group-title">Пояса планок и брусья крышки</div>
         <label>
           <input type="checkbox" id="customPlankCount" onchange="onPlankLayoutCheckboxChange('count')">
           <span>Настроить число поясов планок<span class="option-hint">Штатно — минимум поясов с шагом между ними не более 700 мм</span></span>
@@ -148,13 +150,15 @@
           </div>
         </div>
         <label>
-          <input type="checkbox" id="xRaskosina">
-          <span>X-образные раскосины</span>
-        </label>
-        <label>
           <input type="checkbox" id="optimizeSizes">
           <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм</span></span>
         </label>
+        <div class="option-group-title">Раскосины</div>
+        <label>
+          <input type="checkbox" id="xRaskosina">
+          <span>X-образные раскосины</span>
+        </label>
+        <div class="option-group-title">Дно и полозья</div>
         <label id="removeFloorBoardsRow">
           <input type="checkbox" id="removeFloorBoards">
           <span>Убрать доски дна</span>
@@ -176,6 +180,7 @@
 
     <div class="disclaimer" style="margin:4px 2px 16px;">Чертежи схематичны и могут не отражать действительность.</div>
     </div>
+    <div class="io-resizer" role="separator" aria-orientation="vertical" aria-label="Ширина колонок" title="Потяните, чтобы изменить ширину колонок (двойной щелчок - по умолчанию)" tabindex="0"><span class="io-resizer-grip"></span></div>
     <div class="io-side">
     <div class="card action-card">
       <button id="calcBtn" onclick="calculate()">Рассчитать</button>
