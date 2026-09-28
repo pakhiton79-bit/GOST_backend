@@ -212,7 +212,9 @@ function computeGost10198I1(input) {
 
   // --- БОКОВОЙ ЩИТ (расчёт на 1 щит, далее удвоение) ---
   const bokovoy = [];
-  const kPlankaBok = H + T.krBoard + T.dnoBoard + T.krPlanka + (skidEnabled ? skidT : T.dnoPlanka); // высота груза + доска крышки + доска дна + планка крышки + (полоз либо планка дна)
+  // Длина планки бока (по уточнению пользователя): полоз (без полоза - планка
+  // дна) + доска дна + высота груза + доска крышки; планка крышки не входит.
+  const kPlankaBok = (skidEnabled ? skidT : T.dnoPlanka) + T.dnoBoard + H + T.krBoard;
   bokovoy.push({ name: 'Планка', t: T.bokPlanka, w: 100, l: kPlankaBok, qty: plankQty, overrideKey: 'tBokPlanka' });
   const fbBok = fillBoards(H, roundBoardWidths);
   const w41 = 100, l41 = fbBok.mainQty;
