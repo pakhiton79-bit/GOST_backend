@@ -90,6 +90,7 @@ app.post('/api/i3/calculate', (req, res) => {
     plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
     plankLayoutValue: toNum(b.plankLayoutValue),
     beamGapValue: toNum(b.beamGapValue),
+    beamCountValue: toNum(b.beamCountValue),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),

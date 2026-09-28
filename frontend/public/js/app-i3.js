@@ -367,6 +367,7 @@ function setBeamGapUI(v){
 }
 function onBeamGapCheckboxChange(){
   const on = document.getElementById('customBeamGap').checked;
+  if(on && typeof setBeamCountOff === 'function' && document.getElementById('customBeamCount').checked) setBeamCountOff();
   document.getElementById('beamGapRow').style.display = on ? '' : 'none';
   beamGapValue = on ? BEAM_GAP_STANDARD : null;
   setBeamGapUI(BEAM_GAP_STANDARD);
@@ -392,6 +393,83 @@ function onBeamGapInputChange(){
   } else {
     setBeamGapUI(BEAM_GAP_STANDARD);
   }
+})();
+
+// ============ Число поперечных брусьев крышки ============
+// Галочка «Настроить число поперечных брусьев крышки» (по указанию
+// пользователя): брусья равномерно по длине крышки (отступ от края = зазору),
+// как у поясов планок; с галочкой «расстояние между брусьями» -
+// взаимоисключающие. Ползунок - вокруг штатного числа (по зазору 800 мм,
+// обновляется при каждом расчёте) ±3, поле - любое значение от 1.
+const BEAM_COUNT_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'beamCount';
+let beamCountValue = null; // null - по зазору (штатно 800 мм)
+let lastStandardBeamCount = null;
+let beamCountSlider = null;
+function beamCountSteps(center){
+  center = Math.max(1, Math.round(center));
+  const steps = [];
+  for(let i=-3;i<=3;i++) steps.push(Math.max(1, center+i));
+  return Array.from(new Set(steps)).sort((a,b)=>a-b);
+}
+function saveBeamCount(){
+  try{ localStorage.setItem(BEAM_COUNT_STORAGE_KEY, beamCountValue === null ? '' : String(beamCountValue)); }catch(e){}
+}
+function rebuildBeamCountSlider(center, value){
+  beamCountSlider = createJumpSlider(document.getElementById('beamCountSlider'), beamCountSteps(center), v=>{
+    beamCountValue = v;
+    document.getElementById('beamCountInput').value = v;
+    saveBeamCount();
+    invalidateCalc();
+  });
+  beamCountSlider.setValue(value);
+}
+function setBeamCountOff(){
+  document.getElementById('customBeamCount').checked = false;
+  document.getElementById('beamCountRow').style.display = 'none';
+  beamCountValue = null;
+  saveBeamCount();
+}
+function onBeamCountCheckboxChange(){
+  const on = document.getElementById('customBeamCount').checked;
+  if(!on){ setBeamCountOff(); invalidateCalc(); return; }
+  if(document.getElementById('customBeamGap').checked){
+    document.getElementById('customBeamGap').checked = false;
+    document.getElementById('beamGapRow').style.display = 'none';
+    beamGapValue = null;
+    saveBeamGap();
+  }
+  const center = lastStandardBeamCount || 3;
+  beamCountValue = center;
+  document.getElementById('beamCountRow').style.display = '';
+  document.getElementById('beamCountInput').value = center;
+  rebuildBeamCountSlider(center, center);
+  saveBeamCount();
+  invalidateCalc();
+}
+function onBeamCountInputChange(){
+  const v = parseInt(document.getElementById('beamCountInput').value, 10);
+  if(!(v >= 1)) return;
+  beamCountValue = v;
+  if(beamCountSlider) beamCountSlider.setValue(v);
+  saveBeamCount();
+  invalidateCalc();
+}
+(function initBeamCountFromStorage(){
+  let saved = null;
+  try{ const raw = localStorage.getItem(BEAM_COUNT_STORAGE_KEY); if(raw) saved = parseInt(raw, 10); }catch(e){}
+  if(!(saved >= 1)) return;
+  // обе галочки сразу быть не могут - при восстановлении число главнее
+  if(document.getElementById('customBeamGap').checked){
+    document.getElementById('customBeamGap').checked = false;
+    document.getElementById('beamGapRow').style.display = 'none';
+    beamGapValue = null;
+    saveBeamGap();
+  }
+  beamCountValue = saved;
+  document.getElementById('customBeamCount').checked = true;
+  document.getElementById('beamCountRow').style.display = '';
+  document.getElementById('beamCountInput').value = saved;
+  rebuildBeamCountSlider(saved, saved);
 })();
 
 // Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
@@ -436,6 +514,7 @@ function buildCalcInput(){
     plankLayoutMode,
     plankLayoutValue,
     beamGapValue,
+    beamCountValue,
     availableThicknesses,
     manualOverrides,
     tableEdits,
@@ -485,6 +564,7 @@ async function calculateNow(){
   lastStandardPlankCount = calc.standardPlankCount;
   lastStandardPlankGap = calc.standardPlankGap;
   lastKLen = calc.k9Base;
+  lastStandardBeamCount = calc.standardBeamCount;
   if(plankLayoutMode === 'gap' && plankLayoutValue > lastKLen){
     plankLayoutValue = lastKLen;
     const gapInput = document.getElementById('plankGapInput');
@@ -677,6 +757,7 @@ initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
 function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   if(/поперечными брусьями/.test(text)) return ['beamGapInput'];
+  if(/поперечных брусьев с отступом/.test(text)) return ['beamCountInput'];
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : [];
   return [];

@@ -139,6 +139,16 @@
           </div>
         </div>
         <label>
+          <input type="checkbox" id="customBeamCount" onchange="onBeamCountCheckboxChange()">
+          <span>Настроить число поперечных брусьев крышки<span class="option-hint">Брусья равномерно по длине крышки</span></span>
+        </label>
+        <div id="beamCountRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+          <div class="modal-slider-row">
+            <div class="jump-slider" id="beamCountSlider"></div>
+            <input type="number" id="beamCountInput" step="1" min="1" oninput="onBeamCountInputChange()">
+          </div>
+        </div>
+        <label>
           <input type="checkbox" id="customBeamGap" onchange="onBeamGapCheckboxChange()">
           <span>Настроить расстояние между краями поперечных брусьев крышки<span class="option-hint">Штатно — 800 мм</span></span>
         </label>

@@ -35,7 +35,7 @@ function computeGost10198I3(input) {
   const {
     variant, L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
     roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, baseProductivity, timeCoeff, woodDensity,
-    plankLayoutMode, plankLayoutValue, beamGapValue,
+    plankLayoutMode, plankLayoutValue, beamGapValue, beamCountValue,
   } = input;
   const availableThicknesses = input.availableThicknesses || [];
 
@@ -319,14 +319,32 @@ function computeGost10198I3(input) {
   // (галочка «Настроить расстояние между краями поперечных брусьев крышки»,
   // beamGapValue).
   const t21 = ov('t21Value', roundUpToAvailable(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки'), w21 = 100, k21 = W - (optimizeSizes ? 4 : 0);
-  const I3_BEAM_GAP = beamGapValue > 0 ? beamGapValue : 800, beamMinEdge = t_planka_torca + t_doska_torca;
-  const l21 = Math.max(1, Math.floor((k9Base - 2 * beamMinEdge + I3_BEAM_GAP) / (w21 + I3_BEAM_GAP) + 1e-9));
-  const beamEdgeDist = (k9Base - l21 * w21 - (l21 - 1) * I3_BEAM_GAP) / 2;
-  // Свой зазор (галочка), при котором помещается только 1 брус, и зазор больше
-  // отступа этого бруса от края крышки - расчёт блокируется (по указанию
-  // пользователя: такой зазор не имеет смысла). Штатные 800 мм не блокируются.
-  if (beamGapValue > 0 && l21 === 1 && I3_BEAM_GAP > beamEdgeDist) {
-    return { error: `Расстояние между поперечными брусьями ${I3_BEAM_GAP} мм больше отступа единственного бруса от края крышки (${Math.round(beamEdgeDist)} мм) — расчёт не выполняется.` };
+  const beamMinEdge = t_planka_torca + t_doska_torca;
+  // Штатная расстановка (зазор 800 мм) - её число брусьев стоит в центре
+  // ползунка галочки «Настроить число поперечных брусьев крышки».
+  const beamCountForGap = gap => Math.max(1, Math.floor((k9Base - 2 * beamMinEdge + gap) / (w21 + gap) + 1e-9));
+  const standardBeamCount = beamCountForGap(800);
+  let l21, beamEdgeDist, I3_BEAM_GAP;
+  if (beamCountValue > 0) {
+    // Своё число брусьев (по указанию пользователя) - как у поясов планок:
+    // равномерно, отступ от края = зазору между брусьями (до целого мм);
+    // отступ меньше минимального - расчёт блокируется.
+    l21 = Math.max(1, Math.round(beamCountValue));
+    beamEdgeDist = Math.round((k9Base - l21 * w21) / (l21 + 1));
+    I3_BEAM_GAP = l21 > 1 ? (k9Base - 2 * beamEdgeDist - l21 * w21) / (l21 - 1) : 0;
+    if (beamEdgeDist < beamMinEdge) {
+      return { error: `Длина крышки ${Math.round(k9Base)} мм недостаточна для ${l21} поперечных брусьев с отступом от края — расчёт не выполняется.` };
+    }
+  } else {
+    I3_BEAM_GAP = beamGapValue > 0 ? beamGapValue : 800;
+    l21 = beamCountForGap(I3_BEAM_GAP);
+    beamEdgeDist = (k9Base - l21 * w21 - (l21 - 1) * I3_BEAM_GAP) / 2;
+    // Свой зазор (галочка), при котором помещается только 1 брус, и зазор больше
+    // отступа этого бруса от края крышки - расчёт блокируется (по указанию
+    // пользователя: такой зазор не имеет смысла). Штатные 800 мм не блокируются.
+    if (beamGapValue > 0 && l21 === 1 && I3_BEAM_GAP > beamEdgeDist) {
+      return { error: `Расстояние между поперечными брусьями ${I3_BEAM_GAP} мм больше отступа единственного бруса от края крышки (${Math.round(beamEdgeDist)} мм) — расчёт не выполняется.` };
+    }
   }
   kryshka.push({ name: 'Внутренний поперечный брус', t: t21, w: w21, l: k21, qty: l21, overrideKey: 't21Value' });
 
@@ -491,7 +509,7 @@ function computeGost10198I3(input) {
     warnings, dno, kryshka, endPanel, bokovoy, crateMass, woodDensity: woodRho,
     outerL, outerW, outerH, totalVolume, normaVremeni,
     k9Base, t41, t40, torecFrameThickness: t_doska_torca + t_planka_torca,
-    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW, plankGap, beamEdgeDist, beamGap: I3_BEAM_GAP,
+    W, L, t30, t32, t40Display, edgeDistKryshka, l21, w21, l19, bokSectionW, plankGap, beamEdgeDist, beamGap: I3_BEAM_GAP, standardBeamCount,
     standardPlankCount: standardLayout.count, standardPlankGap: standardLayout.gap,
     k32, torecSections, torecHasRaskosina, HplusT12: H + t12, torecNoRaskosinaDiagram, torecFloors, k30plusW31: k30 + w31,
     H, t12, k41, bokOverhang, l42, bokFloors, bokVertSpan, k40, w43, xRaskosina: !!xRaskosina, t20,
