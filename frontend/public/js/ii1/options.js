@@ -1,15 +1,13 @@
-// ГОСТ 10198-91, тип II-1 - UI: фильтр толщин "в наличии" + тип крепления
-// груза. Перенесено из src/ii1/ui.js исходного (фронтенд-only) репозитория
-// pakhiton79-bit/GOST_10198-91 - roundUpToAvailable/thicknessLimitExceeded
-// здесь больше не нужны (расчёт и связанное предупреждение теперь на
-// сервере, см. js/ii1/calc-ii1.js), availableThicknesses остаётся клиентским
-// состоянием (собирается в тело запроса к /api/ii1/calculate).
+// ГОСТ 10198-91, тип II-1: опции формы - толщины «в наличии», способ
+// крепления груза, взаимоисключающие галочки, запоминание галочек и
+// расположения досок крышки в localStorage (ключи - свои для типа II-1).
 const THICKNESS_STORAGE_KEY = 'gost10198-ii1-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
-// Настройки шестерёнки у плитки "Норма времени" - свой ключ localStorage
-// для этого типа ящика (см. js/common-timesettings.js).
-const TIME_SETTINGS_STORAGE_KEY = 'gost10198-ii1-time-settings';
+const TIME_SETTINGS_STORAGE_KEY = 'gost10198-ii1-time-settings'; // шестерёнка «Нормы времени»
+const FASTENING_STORAGE_KEY = 'gost10198-ii1-fastening-type';
+const OPTIONS_STORAGE_PREFIX = 'gost10198-ii1-opt-';             // галочки и переключатели
 
+// ============ Толщины «в наличии» ============
 function loadAvailableThicknesses(){
   try{
     const raw = localStorage.getItem(THICKNESS_STORAGE_KEY);
@@ -34,17 +32,11 @@ function buildThicknessCheckboxList(){
   list.innerHTML = html;
 }
 
-// Прячет "Расчёт выполнен" при любом изменении входных данных или таблицы
-// деталей. Если расчёт уже хоть раз показывался (#results видим) - вместо
-// галочки показываем краткую подсказку "устарело" (см. #calcOutdated в
-// frontend/public/ii1.html) - до первого расчёта её показывать нечего.
+// Любое изменение параметров: после первого расчёта показывается «Нажмите
+// «Рассчитать»» (вернули как было - снова «Расчёт выполнен»), см.
+// markCalcChanged в common-print.js.
 function invalidateCalc(){
-  // По указанию пользователя - при ЛЮБОМ изменении параметров (цифры,
-  // галочки, выпадающие списки...) сразу подсказка «Нажмите «Рассчитать»», но
-  // только после первого нажатия «Рассчитать» (позднее указание пользователя:
-  // при первом заполнении формы подсказка не нужна; см. markCalcChanged и
-  // общий слушатель в common-print.js).
-  markCalcChanged(); // вернули как было - снова «Расчёт выполнен» (см. common-print.js)
+  markCalcChanged();
 }
 
 function onThicknessCheckboxChange(el){
@@ -68,6 +60,7 @@ function setAllThickness(state){
   invalidateCalc();
 }
 
+// Надпись на кнопке списка и предупреждение, если ничего не выбрано.
 function updateThicknessSummary(){
   const label = document.getElementById('thicknessDropdownLabel');
   const note  = document.getElementById('thicknessNote');
@@ -90,6 +83,7 @@ function updateThicknessSummary(){
 function toggleThicknessDropdown(){
   document.getElementById('thicknessDropdownPanel').classList.toggle('open');
 }
+// Клик мимо выпадающего списка закрывает его.
 document.addEventListener('click', e=>{
   document.querySelectorAll('.dropdown-wrap').forEach(wrap=>{
     if(!wrap.contains(e.target)){
@@ -102,12 +96,7 @@ document.addEventListener('click', e=>{
 buildThicknessCheckboxList();
 updateThicknessSummary();
 
-// ============ Тип крепления груза (за полозья / к доскам дна) ============
-// В отличие от типа I-3, здесь это не переключение между двумя собранными
-// файлами (в I-3 - разные файлы из-за разной толщины доски дна), а простой
-// переключатель на одной странице - доска дна пересчитывается на лету через
-// параметр fasteningType в теле запроса к /api/ii1/calculate.
-const FASTENING_STORAGE_KEY = 'gost10198-ii1-fastening-type';
+// ============ Способ крепления груза ============
 const FASTENING_LABELS = {
   skid:         'Крепление за полозья',
   floor_boards: 'Крепление к доскам дна'
@@ -118,11 +107,17 @@ try{
   if(saved === 'skid' || saved === 'floor_boards') fasteningType = saved;
 }catch(e){}
 
+// «Убрать доски дна» - только при креплении за полозья: при креплении к
+// доскам дна они и есть точка крепления.
+function showRemoveFloorBoardsRow(){
+  document.getElementById('removeFloorBoardsRow').style.display = fasteningType === 'skid' ? '' : 'none';
+}
+
 function onFasteningTypeChange(el){
   fasteningType = el.value;
   try{ localStorage.setItem(FASTENING_STORAGE_KEY, fasteningType); }catch(e){}
   updateFasteningSummary();
-  document.getElementById('removeFloorBoardsRow').style.display = fasteningType === 'skid' ? '' : 'none';
+  showRemoveFloorBoardsRow();
   if(fasteningType !== 'skid'){
     document.getElementById('removeFloorBoards').checked = false;
   }
@@ -138,10 +133,9 @@ function toggleFasteningDropdown(){
   document.getElementById('fasteningDropdownPanel').classList.toggle('open');
 }
 updateFasteningSummary();
-document.getElementById('removeFloorBoardsRow').style.display = fasteningType === 'skid' ? '' : 'none';
+showRemoveFloorBoardsRow();
 
-// «Убрать подполозные доски» и «Погрузка авто/электропогрузчиком» - взаимоисключающие
-// (см. тот же комментарий в типе I-3).
+// «Убрать подполозные доски» и «Погрузка погрузчиком» - взаимоисключающие.
 function onSkidForkliftExclusive(el){
   if(el.checked){
     const otherId = el.id === 'removeSkidBoards' ? 'forkliftLoading' : 'removeSkidBoards';
@@ -151,15 +145,7 @@ function onSkidForkliftExclusive(el){
   invalidateCalc();
 }
 
-// ============ Запоминание галочек и переключателей «Дополнительные опции» /
-// «Расположение досок крышки» ============
-// Тот же принцип, что и у толщин/способа крепления выше (THICKNESS_STORAGE_KEY/
-// FASTENING_STORAGE_KEY) - свой набор ключей localStorage для этого типа
-// ящика, чтобы выбор не «утекал» между калькуляторами разных типов. По
-// просьбе пользователя: все чекбоксы/переключатели опций должны запоминаться
-// между заходами, как уже давно работает для толщин "в наличии" и способа
-// крепления.
-const OPTIONS_STORAGE_PREFIX = 'gost10198-ii1-opt-';
+// ============ Запоминание галочек и расположения досок крышки ============
 function persistCheckbox(id){
   const el = document.getElementById(id);
   if(!el) return;
