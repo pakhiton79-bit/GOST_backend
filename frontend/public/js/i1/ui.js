@@ -154,6 +154,7 @@ persistCheckbox('roundBoardWidths');
 persistCheckbox('removeLidBottomRaskosina');
 persistCheckbox('xRaskosina');
 persistCheckbox('addEndTape');
+persistCheckbox('addParchment');
 
 // skidThicknessValue (а не DOM) - источник истины при расчёте (см. calc-i1.js),
 // поэтому восстанавливаем именно его, а не только checked-состояние радио.

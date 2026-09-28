@@ -44,6 +44,7 @@ function buildCalcInput(){
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
     addEndTape: document.getElementById('addEndTape').checked,
+    addParchment: document.getElementById('addParchment').checked,
     plankLayoutMode,
     plankLayoutValue,
     availableThicknesses,
@@ -152,6 +153,12 @@ async function calculateNow(){
     const tr = calc.endTape[0], tapeKeys = tableRowKeys(calc.endTape);
     const tapeText = (typeof tr.text === 'string') ? tr.text : `Обшивочная лента ${Math.ceil(tr.l - 1e-9)} мм × 2`;
     tablesHtml += `<div class="spec-table tape-table"><table data-section="endTape"><tbody><tr data-row-key="${escapeAttr(tapeKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(tr, 'text')}>${escapeAttr(tapeText)}</td></tr></tbody></table></div>`;
+  }
+  // Пергамин - такой же строкой под лентой (см. parchment в расчёте).
+  if(calc.parchment && calc.parchment.length){
+    const pr = calc.parchment[0], prKeys = tableRowKeys(calc.parchment);
+    const prText = (typeof pr.text === 'string') ? pr.text : `Пергамин ${pr.area.toFixed(2)} м²`;
+    tablesHtml += `<div class="spec-table tape-table"><table data-section="parchment"><tbody><tr data-row-key="${escapeAttr(prKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(pr, 'text')}>${escapeAttr(prText)}</td></tr></tbody></table></div>`;
   }
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = tablesHtml;

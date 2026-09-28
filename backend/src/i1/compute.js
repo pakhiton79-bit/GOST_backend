@@ -13,7 +13,7 @@ const WOOD_DENSITY_KG_M3 = 700; // по умолчанию; настраивае
 
 // input: {L,W,H,MASS,skidEnabled,skidThicknessRaw,roundBoardWidths,removeLidBottomRaskosina,addRaskosina,xRaskosina,plankLayoutMode,plankLayoutValue,availableThicknesses,manualOverrides,baseProductivity,timeCoeff}.
 function computeGost10198I1(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, addParchment, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const roundUpToAvailable = makeRoundUpToAvailable(availableThicknesses);
   const mo = input.manualOverrides || {};
@@ -331,6 +331,12 @@ function computeGost10198I1(input) {
   // распространялся общий механизм ручных правок таблицы (tableEdits,
   // withTableEdits в server.js с множителем раздела 0 - в объём не входит).
   const endTape = addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + T.bokBoard * 2) + (H + T.krBoard * 2)) * 2 - 1e-9), qty: 2 }] : [];
+  // Пергамин (галочка «Добавить пергамин», по указанию пользователя) - площадь
+  // внутренних поверхностей ящика по внутренним размерам (размерам груза):
+  // 2×(Д×Ш + Д×В + Ш×В), м², округление вверх до 0.01. Выводится строкой под
+  // лентой обшивки, как и она - отдельный раздел (правится вручную, в объём
+  // пиломатериала, массу и норму времени не входит).
+  const parchment = addParchment ? [{ name: 'Пергамин', area: Math.ceil(2 * (L * W + L * H + W * H) / 1e6 * 100 - 1e-9) / 100 }] : [];
 
   const result = {
     warnings, dno, kryshka, bokovoy, torec,
@@ -339,7 +345,7 @@ function computeGost10198I1(input) {
     // Толщина у выступающего угла первой планки на чертежах Дна/Крышки/Бока
     // (своя у каждого щита: у дна - полоз либо планка дна).
     drawPlankT: { dno: skidEnabled ? skidT : T.dnoPlanka, kryshka: T.krPlanka, bokovoy: T.bokPlanka },
-    standardPlankCount, standardPlankGap, endTape,
+    standardPlankCount, standardPlankGap, endTape, parchment,
   };
   const negField = findNegativeField(result, '');
   if (negField) {
