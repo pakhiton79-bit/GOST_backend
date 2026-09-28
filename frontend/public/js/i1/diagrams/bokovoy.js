@@ -128,7 +128,7 @@ function fmtMm(v){
 // IW/IH, как раньше: при общем масштабе (см. i1PageFramePx) фото разной
 // ширины рисуются с разным коэффициентом, и доли давали бы разные зазоры
 // между подписями на разных вариантах.
-function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTitle, framePx){
+function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTitle, framePx, bottomTVal){
   const IW = g.IW, IH = g.IH, topY = g.topY, botY = g.botY;
   const stubL = g.stubL, p1L = g.p1L, p1R = g.p1R, p2L = g.p2L, stubR = g.stubR;
   const widthPx = i1DiagramWidth(IW, botY - topY, framePx);
@@ -192,6 +192,17 @@ function diagramBokPhoto(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, par
     {type:'line', x1:stubL, y1:bracketY, x2:p1L, y2:bracketY},
     {type:'single', x1:edgeLabelX, y1:edgeLabelY, x2:bracketMidX, y2:bracketY, lx:edgeLabelX, ly:edgeLabelY, text: fmtMm(edgeVal)+' мм'}
   ];
+
+  // Выступ планок снизу (только боковой щит, по указанию пользователя) - равен
+  // толщине полоза (без полоза - планки дна), он же учтён в длине планки:
+  // сноска к выступающему нижнему правому углу крайней правой планки (слева
+  // внизу - подписи отступа и зазора), подпись - под фото справа.
+  if(bottomTVal > 0){
+    const lastR = stubR - (p1L - stubL);
+    const botTargetY = botY + 0.2*(IH - botY);
+    const botTailX = lastR + 24*px, botTailY = IH + 14*px;
+    records.push({type:'single', x1:botTailX, y1:botTailY, x2:lastR, y2:botTargetY, lx:botTailX, ly:botTailY, text: dimLabel(bottomTVal)+' мм'});
+  }
 
   return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, widthPx, i1StrokeScale(IW, widthPx));
 }
@@ -299,6 +310,6 @@ function bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
   return (xRaskosinaVal && BOK_I1_X_IMG[key]) ? Object.assign({}, g, {img: BOK_I1_X_IMG[key]}) : g;
 }
 
-function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
-  return diagramBokPhoto(bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx);
+function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, bottomTVal){
+  return diagramBokPhoto(bokGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx, bottomTVal);
 }

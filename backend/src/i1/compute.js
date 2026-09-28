@@ -346,7 +346,10 @@ function computeGost10198I1(input) {
     // (своя у каждого щита).
     // У дна - толщина доски бокового щита (по уточнению пользователя; толщина
     // полоза - это выступ планок бокового щита снизу, он учтён в их длине).
-    drawPlankT: { dno: T.bokBoard, kryshka: T.krPlanka, bokovoy: T.bokPlanka },
+    // У бокового щита сверху - толщина доски крышки, снизу (bokovoyBottom) -
+    // полоза либо планки дна: на столько планки выступают за щит (учтено в их
+    // длине), по указанию пользователя.
+    drawPlankT: { dno: T.bokBoard, kryshka: T.krPlanka, bokovoy: T.krBoard, bokovoyBottom: skidEnabled ? skidT : T.dnoPlanka },
     standardPlankCount, standardPlankGap, endTape, parchment,
   };
   const negField = findNegativeField(result, '');
