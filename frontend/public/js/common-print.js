@@ -153,6 +153,8 @@ let calcStateSnapshot = null;
 // уходе фокуса из поля, куда уже ввели значение, - меняло «Расчёт не проведён»
 // на жёлтое «Нажмите «Рассчитать»», а красная причина оставалась).
 let calcErrorSnapshot = null;
+// Нажимали ли «Рассчитать» хоть раз с открытия страницы (см. markCalcChanged).
+let calcEverRun = false;
 function calcStateSignature(){
   if(typeof buildCalcInput !== 'function') return null;
   try{
@@ -175,6 +177,9 @@ function calcStateSignature(){
 // проведён» с причиной; изменились - «Нажмите «Рассчитать»», а красная причина
 // (она про прежние параметры) убирается; вернули как было - снова ошибка.
 function markCalcChanged(){
+  // До первого нажатия «Рассчитать» (форму только заполняют) - никакой
+  // подсказки (по указанию пользователя).
+  if(!calcEverRun) return;
   const st = currentCalcStatus();
   if(calcErrorSnapshot !== null && !calcInProgress && (st === 'error' || st === 'outdated')){
     const errEl = document.getElementById('err');
@@ -249,6 +254,7 @@ function setCalcInProgress(v){
 // где расчёт синхронный.
 async function calculate(){
   if(calcInProgress || printInProgress) return;
+  calcEverRun = true;
   setCalcInProgress(true);
   setCalcStatus('loading');
   await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
