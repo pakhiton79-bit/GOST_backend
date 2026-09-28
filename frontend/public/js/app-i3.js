@@ -185,7 +185,7 @@ function persistCheckbox(id){
 ['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards','xRaskosina'].forEach(persistCheckbox);
 
 // ============ Настройка раскладки поясов планок ============
-// Тот же блок, что и у типа I-1 (js/i1/ui.js) - по указанию
+// Тот же блок, что и у типа I-1 (js/i1/plank-layout.js) - по указанию
 // пользователя, «аналогично как у I-1». Стандартные значения и длина
 // крышки (предел зазора) обновляются в calculateNow() ниже.
 // Две взаимоисключающие галочки - "Настроить число поясов планок" и

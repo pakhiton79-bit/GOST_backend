@@ -1,26 +1,17 @@
-// ГОСТ 10198-91, тип I-1: общий вид ящика + чертёж "Щит торцевой". Вынесено
-// из i1/diagrams.js в отдельный файл (по узлам - см. также bokovoy.js,
-// kryshka-dno.js). Щит торцевой полностью совпадает по конструкции с торцом
-// типа I-3 (вариант без раскосины и с 1 раскосиной - у типа I-1 их бывает не
-// больше одной), поэтому переиспользует готовые чертежи типа I-3
-// (diagramPlaceholder/diagramEndPanel1Raskosina/diagramEndPanelNoRaskosina -
-// см. common-diagrams.js, должен быть подключён раньше). Ширина торца
-// подбирается так же, как у остальных чертежей I-1 - по общей высоте рамки
-// щита framePx (см. i1PageFramePx в bokovoy.js): высота рамки торца на
-// фото - 1107px (с раскосиной, 1352x1158) / 1103px (без раскосины,
-// 1354x1134), по концам стрелки вертикального размера.
-const BOX_I1_IMG_B64 = "/images/box_i1.jpg";
+// ГОСТ 10198-91, тип I-1: чертёж «Щит торцевой». Конструкция та же, что у
+// торца типа I-3 (без раскосины или с одной), поэтому используются его
+// готовые чертежи из common-diagrams.js.
 
-// X-образные раскосины (галочка xRaskosina): та же картинка, где раскосина
-// отражена, а отражение спрятано под исходной доской (исходная целая,
-// встречная - из двух кусков). *_x сгенерированы из исходных программно -
-// калибровка стрелок та же.
+// X-образные раскосины: то же фото с встречной раскосиной под исходной.
 const TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
+
 function diagramTorec(heightVal, widthVal, hasRaskosinaVal, xRaskosinaVal, framePx){
   if(hasRaskosinaVal){
-    const w = i1DiagramWidth(1352, 1107, framePx);
-    return diagramEndPanel1Raskosina(heightVal, widthVal, w, xRaskosinaVal ? TOREC_1_X_IMG_B64 : undefined, i1StrokeScale(1352, w));
+    const p = TOREC_I1_PHOTO.withRaskosina;
+    const w = i1DiagramWidth(p.IW, p.frameH, framePx);
+    return diagramEndPanel1Raskosina(heightVal, widthVal, w, xRaskosinaVal ? TOREC_1_X_IMG_B64 : undefined, i1StrokeScale(p.IW, w));
   }
-  const w = i1DiagramWidth(1354, 1103, framePx);
-  return diagramEndPanelNoRaskosina(heightVal, widthVal, w, i1StrokeScale(1354, w));
+  const p = TOREC_I1_PHOTO.noRaskosina;
+  const w = i1DiagramWidth(p.IW, p.frameH, framePx);
+  return diagramEndPanelNoRaskosina(heightVal, widthVal, w, i1StrokeScale(p.IW, w));
 }

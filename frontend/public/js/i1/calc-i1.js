@@ -1,20 +1,10 @@
-// ГОСТ 10198-91, тип I-1 - вызов бэкенд-API (POST /api/i1/calculate) и
-// отрисовка результата (таблицы, чертежи, печать). Перенесено из
-// src/i1/calc.js исходного (фронтенд-only) репозитория pakhiton79-bit/
-// GOST_10198-91 - там computeGost10198I1 считался локально в браузере,
-// здесь - на сервере, поэтому calculate() стала асинхронной; остальная
-// логика (чтение полей, рендер таблиц/чертежей, печать) не менялась.
-// BOX_I1_IMG_B64 - см. js/i1/diagrams.js (общий вид ящика, используется и на
-// самом сайте, и в печати).
+// ГОСТ 10198-91, тип I-1: сбор входных данных, запрос расчёта на сервер
+// (POST /api/i1/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
+// общую обёртку calculate() из common-print.js, та - calculateNow().
 
-// Ручной ввод толщины в таблице (data-override="..." в renderSection ниже) -
-// читается ДО того, как calculate() эту таблицу перерисует, и отправляется
-// на сервер вместе с остальными входными данными (см. computeGost10198I1/
-// ov() в backend/src/i1/compute.js). Учитываются ТОЛЬКО ячейки, реально
-// отредактированные пользователем (data-user-edited, взводится обработчиком
-// input ниже) - иначе каноническое поле "замораживалось" бы на прежнем
-// расчётном значении при каждом нажатии "Рассчитать", даже если пользователь
-// его не трогал (см. тот же приём в src/i1/calc.js исходного репозитория).
+// Ручные толщины из таблицы: только ячейки толщины, которые пользователь
+// действительно правил (data-user-edited) - иначе нетронутая ячейка
+// «замораживала» бы прошлое расчётное значение.
 function readManualOverrides(){
   const overrides = {};
   document.querySelectorAll('#boardTables td[data-override][data-user-edited="true"]').forEach(cell=>{
@@ -25,13 +15,11 @@ function readManualOverrides(){
   return overrides;
 }
 
-// Входные данные расчёта - в том виде, в каком они уходят в расчёт (на сервер).
-// Вынесены из calculateNow(), чтобы по ним же сравнивать текущее
-// состояние формы с последним успешным расчётом (см. calcStateSignature
-// в common-print.js).
+// Тело запроса на расчёт. По нему же common-print.js сравнивает текущую форму
+// с последним расчётом (calcStateSignature).
 function buildCalcInput(){
   const manualOverrides = readManualOverrides();
-  const tableEdits = readTableEdits(); // см. common-print.js, учитываются на сервере
+  const tableEdits = readTableEdits();
   return {
     L: parseFloat(document.getElementById('L').value),
     W: parseFloat(document.getElementById('W').value),
@@ -55,14 +43,17 @@ function buildCalcInput(){
   };
 }
 
-// Сам расчёт и рендер; кнопка «Рассчитать» вызывает общую обёртку
-// calculate() из common-print.js (индикатор «Идёт расчёт…», защита от
-// повторного запуска, блокировка печати на время расчёта).
+// Расчёт не проведён: текст ошибки, красный статус, результаты прошлого
+// расчёта скрываются.
+function showCalcError(text){
+  document.getElementById('err').textContent = text;
+  setCalcStatus('error');
+  document.getElementById('results').style.display = 'none';
+}
+
 async function calculateNow(){
-  const errEl = document.getElementById('err');
-  errEl.textContent = '';
+  document.getElementById('err').textContent = '';
   const input = buildCalcInput();
-  const manualOverrides = input.manualOverrides;
 
   let calc;
   try{
@@ -73,107 +64,18 @@ async function calculateNow(){
     });
     calc = await resp.json();
   }catch(e){
-    errEl.textContent = 'Не удалось связаться с сервером расчёта. Проверьте соединение и повторите.';
-    setCalcStatus('error');
-    document.getElementById('results').style.display = 'none';
+    showCalcError('Не удалось связаться с сервером расчёта. Проверьте соединение и повторите.');
     return;
   }
   if(calc.error){
-    errEl.textContent = calc.error;
-    setCalcStatus('error');
-    // Прячем «Итог» и спецификацию целиком - иначе на экране остаются
-    // цифры прошлого успешного расчёта рядом с текстом ошибки (по указанию
-    // пользователя).
-    document.getElementById('results').style.display = 'none';
+    showCalcError(calc.error);
     return;
   }
-  // "Стандартные" (штатные) число/шаг поясов планок - центр ползунков у
-  // галочек "Настроить число поясов"/"Настроить расстояние между поясами"
-  // (см. js/i1/ui.js) - обновляются при каждом успешном расчёте.
-  lastStandardPlankCount = calc.standardPlankCount;
-  lastStandardPlankGap = calc.standardPlankGap;
-  // Длина доски - верхний предел поля "расстояние между краями поясов
-  // планок" (plankGapMax() в ui.js, по указанию пользователя: больше длины
-  // доски отступ быть не может). Если уже введённое значение теперь выше
-  // нового предела (доска стала короче после пересчёта) - подрезаем и поле,
-  // и слайдер, чтобы не остаться с "зависшим" недостижимым значением.
-  lastKLen = calc.kLen;
-  if(plankLayoutMode === 'gap' && plankLayoutValue > lastKLen){
-    plankLayoutValue = lastKLen;
-    const gapInput = document.getElementById('plankGapInput');
-    gapInput.max = lastKLen;
-    gapInput.value = lastKLen;
-    rebuildPlankSlider('gap', lastKLen, lastKLen);
-    savePlankLayout();
-  }
 
-  document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
-  document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
-  document.getElementById('outMass').innerHTML = `${calc.crateMass.toFixed(1)} <span>кг</span>`;
-  document.getElementById('outTime').innerHTML = `${calc.normaVremeni} <span>ч</span>`;
-
-  function renderSection(title, rows, sectionKey){
-    let html = title ? `<div class="part-title">${title}</div>` : '';
-    html += `<div class="spec-table"><table data-section="${sectionKey}">
-      <thead><tr><th>Деталь</th><th class="num">Толщина</th><th class="num">Ширина</th><th class="num">Длина</th><th class="num">Кол-во</th></tr></thead><tbody>`;
-    const rowKeys = tableRowKeys(rows);
-    rows.forEach((r, i)=>{
-      const overrideAttr = r.overrideKey ? ` data-override="${r.overrideKey}"` : '';
-      html += `<tr data-row-key="${escapeAttr(rowKeys[i])}">
-        <td>${r.name}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="t"${overrideAttr}${editedAttr(r, 't', manualOverrides)}>${r.t}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="w"${editedAttr(r, 'w')}>${r.w}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="l"${editedAttr(r, 'l')}>${typeof r.l === 'number' ? Math.round(r.l) : r.l}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="qty"${editedAttr(r, 'qty')}>${r.qty}</td>
-      </tr>`;
-    });
-    html += `</tbody></table></div>`;
-    return html;
-  }
-
-  let tablesHtml = '';
-  // Каждый чертёж - максимального размера в своём слоте (по указанию
-  // пользователя, без общего масштаба) - см. i1PanelFramePx/i1TorecFramePx.
-  const kdFramePx = i1PanelFramePx(calc.plankQty, calc.kryshkaDnoHasRaskosina);
-  const bokFramePx = i1PanelFramePx(calc.plankQty, calc.raskosinaNeeded);
-  const torecFramePx = i1TorecFramePx(calc.raskosinaNeeded);
-  tablesHtml += `<div class="part-title">Дно</div><div class="spec-row-diagram"><div class="diagram-slot" data-i1-panel>` + diagramDno(calc.dnoWidth, calc.drawPlankT.dno, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx) + `</div>` + renderSection('', calc.dno, 'dno') + `</div>`;
-  tablesHtml += `<div class="part-title">Крышка</div><div class="spec-row-diagram"><div class="diagram-slot" data-i1-panel>` + diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx) + `</div>` + renderSection('', calc.kryshka, 'kryshka') + `</div>`;
-  tablesHtml += `<div class="part-title">Щит торцевой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-i1-panel>` + diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx) + `</div>` + renderSection('', calc.torec, 'torec') + `</div>`;
-  tablesHtml += `<div class="part-title">Щит боковой (2 шт.)</div><div class="spec-row-diagram"><div class="diagram-slot" data-i1-panel>` + diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, calc.plank.edgeDist, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, bokFramePx, calc.drawPlankT.bokovoyBottom) + `</div>` + renderSection('', calc.bokovoy, 'bokovoy') + `</div>`;
-  // Лента обшивки торцов - под всеми элементами и чертежами, отдельной
-  // табличкой 1×1 на всю ширину (под чертежами и под таблицами деталей), в
-  // стиле таблиц деталей, без заголовка (по указанию пользователя). Попадает
-  // и в печать/PDF (buildPrintHtml берёт содержимое #boardTables целиком).
-  // Весь текст ячейки редактируется как свободный текст (по указанию
-  // пользователя - не только число, но и «мм» и т.п.): role 'text',
-  // учитывается по «Рассчитать» через readTableEdits/applyTableEdits и
-  // сохраняется, как остальные правки; пустая ячейка - расчётный текст.
-  if(calc.endTape && calc.endTape.length){
-    const tr = calc.endTape[0], tapeKeys = tableRowKeys(calc.endTape);
-    const tapeText = (typeof tr.text === 'string') ? tr.text : `Обшивочная лента ${Math.ceil(tr.l - 1e-9)} мм × 2`;
-    tablesHtml += `<div class="spec-table tape-table"><table data-section="endTape"><tbody><tr data-row-key="${escapeAttr(tapeKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(tr, 'text')}>${escapeAttr(tapeText)}</td></tr></tbody></table></div>`;
-  }
-  // Пергамин - такой же строкой под лентой (см. parchment в расчёте).
-  if(calc.parchment && calc.parchment.length){
-    const pr = calc.parchment[0], prKeys = tableRowKeys(calc.parchment);
-    const prText = (typeof pr.text === 'string') ? pr.text : `Пергамин ${pr.area.toFixed(2)} м²`;
-    tablesHtml += `<div class="spec-table tape-table"><table data-section="parchment"><tbody><tr data-row-key="${escapeAttr(prKeys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(pr, 'text')}>${escapeAttr(prText)}</td></tr></tbody></table></div>`;
-  }
-  const boardTablesEl = document.getElementById('boardTables');
-  boardTablesEl.innerHTML = tablesHtml;
-  const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
-  Promise.all(boardImages.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()))
-    .then(()=> reserveDiagramOverflowScreen(boardTablesEl));
-
-  let warningsHtml = '';
-  if(calc.warnings.length){
-    warningsHtml += '<div style="color:var(--warn);margin-bottom:10px;font-weight:700;">Внимание:</div>' +
-      calc.warnings.map(w=>`<div style="margin-bottom:8px;">⚠ ${w}</div>`).join('');
-  }
-  const warningsEl = document.getElementById('warningsTop');
-  warningsEl.innerHTML = warningsHtml;
-  warningsEl.style.display = calc.warnings.length ? 'block' : 'none';
+  updatePlankLayoutFromCalc(calc);
+  renderSummary(calc);
+  renderBoardTables(calc, input.manualOverrides);
+  renderWarnings(calc.warnings);
 
   document.getElementById('results').style.display = 'block';
   setCalcStatus('check');
@@ -185,115 +87,18 @@ async function calculateNow(){
   });
 });
 
-
+// Правка ячейки таблицы не пересчитывает сразу: ячейка помечается
+// исправленной, расчёт - устаревшим; учтётся по «Рассчитать».
 document.getElementById('boardTables').addEventListener('input', e=>{
   if(e.target.classList.contains('editable-cell')){
-    // Правка ячейки НЕ пересчитывает итоги сразу (по указанию пользователя) -
-    // только помечает ячейку как исправленную и расчёт как устаревший
-    // (подсказка «Нажмите «Рассчитать»»); учтётся при нажатии "Рассчитать" - на сервере
-    // (толщина с data-override - через readManualOverrides(), остальное -
-    // через readTableEdits(), см. common-print.js / withTableEdits в
-    // backend/server.js).
     markCellEdited(e.target); syncOverrideCells(e.target);
     updateResetButton();
     invalidateCalc();
   }
 });
 
-function buildPrintHtml(){
-  const L = document.getElementById('L').value;
-  const W = document.getElementById('W').value;
-  const H = document.getElementById('H').value;
-  const M = document.getElementById('M').value;
-
-  const outDimsText = document.getElementById('outDims').textContent.trim();
-  const volumeText  = document.getElementById('outVolume').textContent.trim();
-  const massText    = document.getElementById('outMass').textContent.trim();
-  const timeText    = document.getElementById('outTime').textContent.trim();
-
-  const clone = document.getElementById('boardTables').cloneNode(true);
-  clone.querySelectorAll('.editable-cell').forEach(cell=>{
-    cell.removeAttribute('contenteditable');
-    cell.classList.remove('editable-cell');
-  });
-
-  clone.querySelectorAll('.part-title, .spec-row-diagram').forEach(el=>{
-    el.style.marginTop = '';
-    el.style.marginBottom = '';
-  });
-
-  clone.querySelectorAll('.diagram-wrap').forEach(wrap=>{
-    wrap.style.marginTop = '';
-    wrap.style.marginBottom = '';
-    wrap.style.marginLeft = '';
-    wrap.style.width = '';
-    wrap.style.removeProperty('--dk');
-  });
-  clone.querySelectorAll('.diagram-slot').forEach(slot=>{
-    slot.style.width = '';
-    slot.style.flexBasis = '';
-  });
-
-  let sections = '';
-  const children = Array.from(clone.children);
-  for(let i=0; i<children.length; i+=2){
-    const title = children[i];
-    const row   = children[i+1];
-    sections += `<div class="print-section">${title.outerHTML}${row ? row.outerHTML : ''}</div>`;
-  }
-
-  const commentRaw = (document.getElementById('userComment').value || '').trim();
-  let commentHtml = '';
-  if(commentRaw){
-    const esc = commentRaw
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    commentHtml = `<div class="print-section">
-      <div class="part-title">Комментарий</div>
-      <div class="print-comment">${esc}</div>
-    </div>`;
-  }
-
-  return `
-    <img class="print-watermark" src="${LOGO_B64}" alt="">
-
-    <h1>ГОСТ 10198-91, тип I-1${boxNameHtml()}</h1>
-
-    <div class="part-title">Общий вид ящика</div>
-    <div class="spec-row-diagram">
-      <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_I1_IMG_B64}" alt=""></div></div>
-      <div class="print-summary-col">
-        <div class="print-summary-block">
-          <h2>Внутренние размеры груза, мм</h2>
-          <table class="print-plain-table">
-            <tr><td class="k">Длина</td><td>${L}</td></tr>
-            <tr><td class="k">Ширина</td><td>${W}</td></tr>
-            <tr><td class="k">Высота</td><td>${H}</td></tr>
-            <tr><td class="k">Масса груза, кг</td><td>${M}</td></tr>
-          </table>
-        </div>
-        <div class="print-summary-block">
-          <h2>Итог</h2>
-          <table class="print-plain-table">
-            <tr><td class="k">Наружные размеры, мм</td><td>${outDimsText}</td></tr>
-            <tr><td class="k">Расход пило&shy;материала</td><td>${volumeText}</td></tr>
-            <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
-            <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    ${sections}
-    ${commentHtml}
-  `;
-}
-
-document.getElementById('boxView').src = BOX_I1_IMG_B64;
-initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
-initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
-
-// Поля, из-за которых расчёт заблокирован (по тексту ошибки) - подсвечиваются
-// красной рамкой (см. highlightErrorFields в common-print.js).
+// Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
+// красной рамкой (highlightErrorFields в common-print.js).
 function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
@@ -302,3 +107,7 @@ function errorFieldsFor(text){
   if(/раскосины торца/.test(text)) return ['W', 'H'];
   return [];
 }
+
+document.getElementById('boxView').src = BOX_I1_IMG_B64;
+initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
