@@ -614,9 +614,10 @@
      от заголовка, см. boxNameHtml в common-print.js). ===== */
   header.title-row{display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
   header.title-row h1{margin:0;}
+  /* до правого края - как карточки ниже (по указанию пользователя, для
+     единообразия; раньше было не шире 360px) */
   .box-name-input{
     flex:1 1 260px;
-    max-width:360px;
     height:40px;
     padding:0 12px;
     font-family:inherit;
