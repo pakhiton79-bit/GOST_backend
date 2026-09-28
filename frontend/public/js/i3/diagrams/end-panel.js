@@ -1,7 +1,7 @@
-// ГОСТ 10198-91, тип I-3: чертежи "Щит торцевой". Вынесены из diagrams.js в
-// отдельный файл (по узлам - см. также dno.js, kryshka.js, bokovoy.js).
-// diagramEndPanel1Raskosina/diagramEndPanelNoRaskosina/diagramPlaceholder -
-// см. common-diagrams.js (общие с типом I-1), должен быть подключён раньше.
+// ГОСТ 10198-91, тип I-3: чертёж «Щит торцевой». Фото - на 1-3 раскосины
+// (1 и 2 этажа); с X-образными раскосинами или больше 3 секций - генерируется
+// (diagramEndPanelGen). diagramEndPanel1Raskosina/diagramEndPanelNoRaskosina/
+// diagramPlaceholder - из common-diagrams.js (общие с типом I-1).
 const TOREC_2_IMG_B64 = "/images/torec_2.png"; // натуральный размер 1811x842 (вариант с 2 раскосинами)
 const TOREC_3_IMG_B64 = "/images/torec_3.jpg"; // натуральный размер 2476x802 (вариант с 3 раскосинами)
 const TOREC_2FLOORS_1_IMG_B64 = "/images/torec_2floors_1raskosina.jpg"; // натуральный размер 695x1051 (2 этажа, по 1 раскосине на этаж)
@@ -150,4 +150,65 @@ function diagramEndPanel(k32val, sectionsVal, hasRaskosinaVal, innerWidthVal, he
   }
 
   return diagramPlaceholder('Щит торцевой');
+}
+
+// X-вариант на 1 этаж с 1 секцией - готовое фото (то же, что у типа I-1).
+const I3_TOREC_1_X_IMG_B64 = "/images/torec_1_x.png";
+
+// --- Щит торцевой: N секций, 1 или 2 этажа ---
+// Wmm - длина горизонтальной планки (ширина груза), Htot - высота рамы (H+t12),
+// floorSpan - (2 этажа) вертикальная планка этажа + ширина гор. планки.
+function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
+  const N = Math.max(1, Math.round(sections)), F = floors === 2 ? 2 : 1;
+  const IH = F === 2 ? 1200 : 800, hp = 90, vw = 90; // гор. и верт. планки - одной ширины
+  const innerH = (IH - hp*(F+1)) / F;
+  const realSecW = (Wmm - 100*(N+1)) / N, realInH = F === 2 ? (Htot - 300)/2 : Htot - 200;
+  const sw = innerH * i3aspect(realSecW, realInH);
+  const IW = Math.round((N+1)*vw + N*sw);
+  const vx = i => i*(vw + sw);                      // левый край i-й вертикальной планки
+  let shapes = '';
+  for(let fl=0; fl<F; fl++){
+    const top = hp + fl*(innerH + hp), bot = top + innerH;
+    const upper = F === 2 && fl === 0;              // верхний этаж - зеркально нижнему
+    for(let i=0; i<N; i++){
+      const leftHalf = i < Math.ceil(N/2);
+      shapes += i3cross(vx(i)+vw, vx(i+1), top, bot, upper ? !leftHalf : leftHalf, xMode, vw, true, true);
+    }
+  }
+  for(let fl=0; fl<F; fl++){
+    const top = hp + fl*(innerH + hp);
+    for(let i=0; i<=N; i++) shapes += i3rect(vx(i), top, vw, innerH);
+  }
+  for(let k=0; k<=F; k++) shapes += i3rect(0, k*(innerH + hp), IW, hp);
+
+  const val = dimLabel(Htot), planLen = dimLabel(Wmm);
+  const records = [
+    {type:'line', x1:0, y1:150, x2:0, y2:-120},
+    {type:'line', x1:IW, y1:150, x2:IW, y2:-120},
+    {type:'double', x1:0, y1:-97, x2:IW, y2:-97, lx:IW/2, ly:-139, text: planLen+' мм'},
+    {type:'line', x1:IW-160, y1:0, x2:IW+180, y2:0},
+    {type:'line', x1:IW-160, y1:IH, x2:IW+180, y2:IH},
+    {type:'double', x1:IW+140, y1:0, x2:IW+140, y2:IH, lx:IW+135, ly:IH/2, text: val+' мм', vertical:true}
+  ];
+  if(F === 2){
+    const midBot = hp + innerH + hp;
+    records.push(
+      {type:'line', x1:130, y1:midBot, x2:-170, y2:midBot},
+      {type:'line', x1:130, y1:IH, x2:-170, y2:IH},
+      {type:'double', x1:-110, y1:midBot, x2:-110, y2:IH, lx:-115, ly:(midBot+IH)/2, text: dimLabel(floorSpanVal)+' мм', vertical:true}
+    );
+  }
+  const title = `Щит торцевой (${F} эт., ${N} секц.${xMode ? ', X-раскосины' : ''}) - схема расположения деталей`;
+  return i3render(title, IW, IH, shapes, records);
+}
+
+// Чертёж торцевого щита для результата расчёта.
+function diagramEndPanelFor(calc){
+  if(calc.xRaskosina && calc.torecHasRaskosina && calc.torecFloors !== 2 && calc.torecSections <= 1){
+    return diagramEndPanel1Raskosina(calc.HplusT12, calc.W, undefined, I3_TOREC_1_X_IMG_B64);
+  }
+  if(calc.torecHasRaskosina && (calc.xRaskosina || calc.torecSections > 3)){
+    return diagramEndPanelGen(calc.W, calc.HplusT12, calc.torecSections, calc.torecFloors, calc.xRaskosina, calc.k30plusW31);
+  }
+  return diagramEndPanel(calc.k32, calc.torecSections, calc.torecHasRaskosina, calc.W, calc.HplusT12, calc.torecNoRaskosinaDiagram, calc.torecFloors, calc.k30plusW31);
 }

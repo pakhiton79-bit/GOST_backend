@@ -1,7 +1,4 @@
-// ГОСТ 10198-91, тип I-3: чертёж "Дно". Вынесен из diagrams.js в отдельный
-// файл (по узлам - см. также kryshka.js, end-panel.js, bokovoy.js). Зависит
-// от renderDiagram/photoStrokeScale из common-diagrams.js (должен быть
-// подключён раньше в HTML).
+// ГОСТ 10198-91, тип I-3: чертёж «Дно» (фото).
 const DNO_IMG_B64 = "/images/dno.png"; // натуральный размер 385x197
 
 function diagramDno(skidLenMm, tBokDoska, outerWidthMm, tBokPlanka, tTorcaPlusPlanka){
