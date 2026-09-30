@@ -3,7 +3,7 @@
        одобренный пользователем): почти ахроматичный холст + один оттенок
        коричневого (--accent, Umber) вместо синих акцентов референса -
        заливка CTA-кнопки и все остальные акцентные касания (фокус, ссылки,
-       чекбоксы, hover-обводки, eyebrow). Более светлый --accent2 (Amber)
+       чекбоксы, hover-обводки). Более светлый --accent2 (Amber)
        использовался раньше для этих "остальных" случаев - полностью убран
        по замечанию пользователя ("снеси старый цвет полностью"), в разметке
        и в палитре больше не встречается. Тени убраны везде
@@ -70,15 +70,6 @@
     border-bottom:1px solid var(--rule);
     padding-bottom:20px;
     margin-bottom:32px;
-  }
-  .eyebrow{
-    font-family:inherit;
-    font-size:13px;
-    font-weight:600;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    color:var(--accent);
-    margin-bottom:8px;
   }
   h1{
     font-size:30px;
@@ -159,21 +150,6 @@
     outline-offset:2px;
     border-color:var(--accent);
   }
-  select{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid var(--border-input);
-    border-radius:8px;
-    font-family:inherit;
-    font-size:16px;
-    background:#ffffff;
-    color:var(--ink);
-  }
-  select:focus{
-    outline:2px solid var(--accent);
-    outline-offset:2px;
-    border-color:var(--accent);
-  }
 
   .comment-field{
     width:100%;
@@ -214,7 +190,6 @@
     transition:background-color .15s ease;
   }
   button:hover{background:var(--accent-hover);}
-  .action-card button:first-child{margin-top:0;}
 
   /* Secondary — второстепенные действия (см. design.md: белая, рамка, hover-фон) */
   .btn-secondary{
@@ -561,7 +536,6 @@
      строку внутри своей колонки вместо наезда на соседнюю. */
   td.num{white-space:nowrap;}
   th.num{white-space:normal;overflow-wrap:break-word;}
-  tr.total td{font-weight:700;border-top:2px solid var(--ink);border-bottom:none;}
 
   .spec-table{margin-bottom:26px;}
   .spec-table:last-child{margin-bottom:0;}
@@ -655,7 +629,6 @@
   .action-card .calc-status{margin-left:2px;margin-right:2px;}
   .action-card > .error{flex-basis:100%;margin-top:0;}
   .action-card > .error:empty{display:none;}
-  .reset-btn[hidden]{display:none;}
 
   .note{
     font-size:13px;
@@ -697,21 +670,13 @@
     margin-left:32px;
     margin-top:24px;
   }
-  /* Тип I-1: все чертежи в едином масштабе (одинаковая высота рамки щита -
-     см. I1_FRAME_PX в src/i1/diagrams.js), поэтому самый длинный из них (4
-     планки) шире обычных 260px - слот расширен на 40px, из них 20px взяты у
-     левого отступа слота, так что таблица деталей сужается всего на 20px.
-     Скоуп #boardTables - печать не затрагивается (там свой слот, см.
-     #printArea .diagram-slot; каждый чертёж I-1 - своего размера, без
-     общего масштаба). */
-  #boardTables .diagram-slot[data-i1-panel]{
-    flex-basis:340px;
-    width:340px;
-    margin-left:12px;
-  }
-  /* I-3/II-1 - тот же расширенный слот, что и у I-1 (по указанию
-     пользователя: чертежи занимают всё своё место, см. growDiagramToSlot
-     в common-diagram-fit.js). */
+  /* Слот чертежа на экране расширен на 40px, из них 20px взяты у левого
+     отступа, так что таблица деталей сужается всего на 20px: у I-1 все
+     чертежи в едином масштабе (одинаковая высота рамки щита), и самый
+     длинный (4 планки) шире обычных 260px; у I-3/II-1 чертежи занимают всё
+     своё место (по указанию пользователя, см. growDiagramToSlot в
+     common-diagram-fit.js). Скоуп #boardTables - печать не затрагивается
+     (там свой слот, см. #printArea .diagram-slot). */
   #boardTables .diagram-slot{
     flex-basis:340px;
     width:340px;
@@ -806,7 +771,6 @@
        размер - через --dk) оставались бы прежними и наезжали друг на
        друга. Сжатие по ширине экрана делает fitDiagramsOnScreen
        (вместе с подписями), каждый чертёж - независимо. */
-    #boardTables .diagram-slot[data-i1-panel] .diagram-wrap,
     #boardTables .diagram-slot .diagram-wrap{
       max-width:none;
     }
@@ -825,7 +789,6 @@
      выше вместе со стекингом .summary-row.) */
   @media screen and (max-width: 480px){
     .card{padding:20px;}
-    .summary div{padding:14px 16px;}
     /* #boardTables - тот же повод, что и у соседнего блока (max-width:700px)
        выше: голые th/td совпадали бы и с ячейками печатной таблицы
        (#printArea .spec-table th/td) - здесь у обеих сторон нет !important,
@@ -1011,7 +974,6 @@
      применяет собственное «сжать до листа» поверх нашего (из-за этого
      страница уменьшалась дважды и треть листа пустовала). */
   #printScale{ transform-origin:top left; position:relative; --pk:1; }
-  #printArea, #printArea *{ box-sizing:border-box; }
 
   /* Водяной знак — в правом нижнем углу. Общий вид ящика - отдельная
      строка перед "Дно" (та же вёрстка .spec-row-diagram/.diagram-slot/
@@ -1048,7 +1010,6 @@
   /* Внутренние размеры груза + Итог — в колонке справа от чертежа ящика (см. .print-summary-col) */
   #printArea .print-summary-block{flex:0 0 auto;}
   #printArea .print-summary-block h2{font-size:calc(var(--pk)*12px);text-transform:uppercase;letter-spacing:.05em;color:#8A4B26;margin:0 0 6px;font-weight:700;}
-  #printArea .print-plain-table{border-collapse:collapse;width:100%;}
   #printArea .print-plain-table td{padding:calc(var(--pk)*2px) 0;text-align:left;font-size:calc(var(--pk)*13px);font-weight:700;white-space:nowrap;}
   #printArea .print-plain-table td.k{color:#36394A;}
   #printArea .print-plain-table td:not(.k){width:100%;text-align:right;}
@@ -1064,10 +1025,8 @@
   }
   #printArea .spec-table th{color:#36394A;text-transform:uppercase;font-size:calc(var(--pk)*10px);letter-spacing:0;font-weight:700;}
   #printArea .spec-table td.num, #printArea .spec-table th.num{text-align:right;}
-  /* Табличка ленты обшивки торцов - одна ячейка на всю ширину (общие
-     правила выше задают первой колонке 48%). */
+  /* Табличка ленты обшивки торцов - одна ячейка на всю ширину. */
   #printArea .spec-table.tape-table{margin-top:calc(var(--pk)*10px);}
-  #printArea .spec-table.tape-table td{width:100%;}
 
   #printArea .part-title{font-size:calc(var(--pk)*20px);font-weight:700;color:#8A4B26;margin:0 0 calc(var(--pk)*6px);}
 
@@ -1085,17 +1044,14 @@
     padding:calc(var(--pk)*10px) calc(var(--pk)*12px);
   }
   #printArea .spec-row-diagram{display:flex;gap:calc(var(--pk)*16px);align-items:center;page-break-inside:avoid;margin:0;}
-  #printArea .spec-row-diagram .spec-table{flex:1;min-width:0;margin:0;}
   /* 310px / отступ 26px — измеренный максимальный вылет подписей вправо и влево
      для старых (маленьких) чертежей. У Дна (2008×1212, длинная подпись у левого
      края) вылет больше — отступ увеличен до 44px; вертикальные вылеты, а также
      правый вылет подписей (пропорциональным сжатием чертежа через --dk, а не
      обрезкой) резервируются из JS (fitDiagramsForPrint). */
   #printArea .diagram-slot{flex:0 0 calc(var(--pk)*300px);width:calc(var(--pk)*300px);margin-left:calc(var(--pk)*44px);position:relative;overflow:visible;}
-  /* ширина самих чертежей проставляется из JS (у них разный масштаб) */
-  #printArea .diagram-wrap{position:relative;}
-  #printArea .diagram-wrap img{display:block;width:100%;height:auto;}
-  #printArea .diagram-arrows{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;}
+  /* ширина самих чертежей проставляется из JS (у них разный масштаб);
+     остальное - общие правила .diagram-wrap/.diagram-arrows/.diagram-labels */
   /* Стрелки на чертежах — при печати заметно толще, чем на экране. --dk (по
      умолчанию 1, задаётся из .diagram-wrap{--dk:1} в общем блоке выше) -
      дополнительный ПОДИАГРАММНЫЙ масштаб (в отличие от --pk, единого на всю
@@ -1108,7 +1064,6 @@
      bakeDiagramArrowStrokeWidths - тот же итоговый множитель, 3*4=12,
      теперь совпадает с этим правилом) - по репорту пользователя. */
   #printArea .diagram-arrows line{stroke-width:calc(var(--pk)*var(--dk)*12px) !important;}
-  #printArea .diagram-labels{position:absolute;inset:0;pointer-events:none;}
   #printArea .diagram-label{
     position:absolute;transform:translate(-50%,-50%);background:#fff;
     border:calc(var(--pk)*var(--dk)*var(--lk,1)*2px) solid #8A4B26;color:#091135;font-size:calc(var(--pk)*var(--dk)*var(--lk,1)*15px);font-weight:700;
