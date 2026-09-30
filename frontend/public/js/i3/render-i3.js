@@ -50,7 +50,7 @@ function renderTextRow(sectionKey, rows, defaultText){
 function renderBoardTables(calc, manualOverrides){
   let html = '';
   html += renderPartBlock(`<div class="part-title">Дно</div>`,
-    diagramDno(calc.k9Base, calc.t41, calc.outerW, calc.t40, calc.torecFrameThickness),
+    diagramDno(calc.k9Base, calc.t41, calc.outerW, calc.t40, calc.torecFrameThickness, dnoSkidCount(calc.dno)),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Крышка</div>`,
     diagramKryshkaFor(calc),

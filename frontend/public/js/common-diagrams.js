@@ -112,9 +112,35 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, l
   </div>`;
 }
 
+// Плашка вместо чертежа (оформление общее): diagramPlaceholder - фото ещё
+// не прислано, diagramTooDense - деталей так много, что на чертеже они
+// слились бы в сплошную массу (по указанию пользователя; количество и
+// размеры - в таблице рядом).
+function diagramStub(text){
+  return `<div class="diagram-wrap diagram-placeholder" style="display:flex;align-items:center;justify-content:center;min-height:160px;border:1px dashed var(--border-input);border-radius:12px;color:var(--ink-soft);font-size:13px;text-align:center;padding:12px;">${text}</div>`;
+}
 function diagramPlaceholder(label){
-  // Временная заглушка вместо чертежа, для которого фото ещё не прислано.
-  return `<div class="diagram-wrap diagram-placeholder" style="display:flex;align-items:center;justify-content:center;min-height:160px;border:1px dashed var(--border-input);border-radius:12px;color:var(--ink-soft);font-size:13px;text-align:center;padding:12px;">Чертёж «${label}» ещё не готов</div>`;
+  return diagramStub(`Чертёж «${label}» ещё не готов`);
+}
+const DIAGRAM_TOO_DENSE_TEXT = 'Слишком много деталей для чертежа — см. таблицу';
+function diagramTooDense(){
+  return diagramStub(DIAGRAM_TOO_DENSE_TEXT);
+}
+
+// Дно (типы I-3 и II-1): картинка по числу полозьев. На 2 - фото (у каждого
+// типа своё, photo2), на 3-8 - картинки из того же фото с дорисованными
+// средними полозьями (tools/make_dno_images.py, список images - DNO_SKIDS_IMAGES
+// в diagrams/dno.js типа): силуэт как на фото, размеры на тех же местах.
+// Больше 8 - null (заглушка). Число полозьев - из строки «Полоз» таблицы дна
+// (с учётом ручной правки количества).
+function dnoSkidCount(dnoRows){
+  const row = (dnoRows || []).find(r => r.name === 'Полоз');
+  const n = row ? Math.round(parseFloat(row.qty)) : 2;
+  return Number.isFinite(n) ? n : 2;
+}
+function dnoImageForSkids(count, photo2, images){
+  if(count <= 2) return photo2;
+  return images[count] || null;
 }
 
 // Чертежи торцевого щита (эта функция и все diagramEndPanel*Raskosina в

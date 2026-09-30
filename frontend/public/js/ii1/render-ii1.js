@@ -48,7 +48,7 @@ function renderBoardTables(calc, manualOverrides){
   const torecW = calc.W + calc.t_stojka*2;
   let html = '';
   html += renderPartBlock(`<div class="part-title">Дно</div>`,
-    diagramDno(calc.t_stojka, calc.skin.value, torecW, calc.k9Base),
+    diagramDno(calc.t_stojka, calc.skin.value, torecW, calc.k9Base, dnoSkidCount(calc.dno)),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Крышка</div>`,
     diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.t32Display, calc.sideFrameDisplay, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross),

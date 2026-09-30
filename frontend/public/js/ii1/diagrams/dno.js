@@ -5,19 +5,26 @@
 // BOX_I1_IMG_B64/BOX_IMG_B64 у типов I-1/I-3.
 const BOX_II1_IMG_B64 = "/images/box_ii1.png";
 const DNO_IMG_B64 = "/images/dno_ii1.jpg";
+// Дно на 3-8 полозьев (см. dnoImageForSkids в common-diagrams.js).
+const DNO_SKIDS_IMAGES = {
+  3: "/images/dno_3skids.png", 4: "/images/dno_4skids.png", 5: "/images/dno_5skids.png",
+  6: "/images/dno_6skids.png", 7: "/images/dno_7skids.png", 8: "/images/dno_8skids.png",
+};
 const DNO_IW = 2008, DNO_IH = 1212;
 
-// Дно - одна схема (не зависит от количества полозьев, в отличие от Крышки/
-// Щита торцевого) - координаты из присланной пользователем разметки фото
-// dno_ii1.jpg (2008x1212).
-function diagramDno(stojkaVal, skinVal, skidWidthVal, outerLenVal){
+// Дно - координаты из присланной пользователем разметки фото dno_ii1.jpg
+// (2008x1212); картинка - по числу полозьев skidCount (см. dnoImageForSkids
+// в common-diagrams.js), разметка у всех одна.
+function diagramDno(stojkaVal, skinVal, skidWidthVal, outerLenVal, skidCount){
+  const img = dnoImageForSkids(skidCount, DNO_IMG_B64, DNO_SKIDS_IMAGES);
+  if(!img) return diagramTooDense();
   const stojka = dimLabel(stojkaVal), skin = dimLabel(skinVal);
   const skidWidth = dimLabel(skidWidthVal), outerLen = dimLabel(outerLenVal);
   const records = [];
   records.push(
     {type:'line', x1:102, y1:676, x2:-85, y2:794},
     {type:'line', x1:813, y1:1092, x2:623, y2:1195},
-    {type:'double', x1:-57, y1:784, x2:643, y2:1183, lx:260, ly:979, text:skidWidth+' мм'}
+    {type:'double', x1:-57, y1:784, x2:643, y2:1183, lx:126, ly:1213, text:skidWidth+' мм'} // подпись - за стрелкой, не на торцах полозьев
   );
   records.push(
     {type:'line', x1:666, y1:1080, x2:990, y2:1258},
@@ -36,5 +43,5 @@ function diagramDno(stojkaVal, skinVal, skidWidthVal, outerLenVal){
     {type:'line', x1:1983, y1:414, x2:2025, y2:433},
     {type:'single', x1:2007, y1:223, x2:2007, y2:424, lx:2006, ly:183, text:stojka+' мм'}
   );
-  return renderDiagram(DNO_IMG_B64, 'Дно - схема расположения деталей', DNO_IW, DNO_IH, records, undefined, photoStrokeScale(DNO_IW));
+  return renderDiagram(img, 'Дно - схема расположения деталей', DNO_IW, DNO_IH, records, undefined, photoStrokeScale(DNO_IW));
 }
