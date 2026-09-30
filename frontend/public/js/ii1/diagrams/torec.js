@@ -22,11 +22,12 @@
 // стойки*3 + длина стойки*2 = panelHeightFull при floors=2), плюс
 // добавляется своя группа E (floorHeightVal = ширина стойки + длина
 // стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
-function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale){
+// xRaskosinaVal - X-образные раскосины (фото imgX).
+function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal){
   const variant = nearestTorecVariant(count, floors);
   const v = TOREC_VARIANTS[variant.floors][variant.count];
   const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal));
-  return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+  return renderDiagram(xRaskosinaVal ? v.imgX : v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
 
 const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 раскосина
@@ -35,11 +36,19 @@ const TOREC_IMG_4POSTS_B64 = "/images/torec_ii1_1floor_4posts.jpg"; // 3 рас�
 const TOREC_IMG_2FLOOR_2POSTS_B64 = "/images/torec_ii1_2floor_2posts.jpg"; // 2 этажа, 2 раскосины
 const TOREC_IMG_2FLOOR_3POSTS_B64 = "/images/torec_ii1_2floor_3posts.jpg"; // 2 этажа, 4 раскосины
 const TOREC_IMG_2FLOOR_4POSTS_B64 = "/images/torec_ii1_2floor_4posts.jpg"; // 2 этажа, 6 раскосин
+// X-образные раскосины: те же фото со встречной раскосиной под исходной в
+// каждой секции (сгенерированы из исходных), калибровка та же.
+const TOREC_IMG_2POSTS_X_B64 = "/images/torec_ii1_1floor_2posts_x.jpg";
+const TOREC_IMG_3POSTS_X_B64 = "/images/torec_ii1_1floor_3posts_x.jpg";
+const TOREC_IMG_4POSTS_X_B64 = "/images/torec_ii1_1floor_4posts_x.jpg";
+const TOREC_IMG_2FLOOR_2POSTS_X_B64 = "/images/torec_ii1_2floor_2posts_x.jpg";
+const TOREC_IMG_2FLOOR_3POSTS_X_B64 = "/images/torec_ii1_2floor_3posts_x.jpg";
+const TOREC_IMG_2FLOOR_4POSTS_X_B64 = "/images/torec_ii1_2floor_4posts_x.jpg";
 
 const TOREC_VARIANTS = {
   1: {
     // «2 стойки» (1 раскосина) - по исходной разметке пользователя.
-    2: { img: TOREC_IMG_2POSTS_B64, IW: 1116, IH: 796,
+    2: { img: TOREC_IMG_2POSTS_B64, imgX: TOREC_IMG_2POSTS_X_B64, IW: 1116, IH: 796,
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -76,7 +85,7 @@ const TOREC_VARIANTS = {
     // до стрелки) - у «2 стойки» выше этой ошибки не было изначально (там
     // своя отдельная линия-вынос для ширины, не переиспользует линию группы
     // skinVal).
-    3: { img: TOREC_IMG_3POSTS_B64, IW: 1460, IH: 605,
+    3: { img: TOREC_IMG_3POSTS_B64, imgX: TOREC_IMG_3POSTS_X_B64, IW: 1460, IH: 605,
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -105,7 +114,7 @@ const TOREC_VARIANTS = {
       }
     },
     // «4 стойки» (3 раскосины) - по разметке пользователя.
-    4: { img: TOREC_IMG_4POSTS_B64, IW: 2222, IH: 644,
+    4: { img: TOREC_IMG_4POSTS_B64, imgX: TOREC_IMG_4POSTS_X_B64, IW: 2222, IH: 644,
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -140,7 +149,7 @@ const TOREC_VARIANTS = {
     // длина стойки*2 = panelHeightFull), floorHeightVal - высота ОДНОГО
     // этажа (ширина стойки + длина стойки) - своя, отдельная от 1-этажных
     // схем группа E.
-    2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, IW: 833, IH: 1041,
+    2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, imgX: TOREC_IMG_2FLOOR_2POSTS_X_B64, IW: 833, IH: 1041,
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:680, y1:78, x2:989, y2:78});
@@ -172,7 +181,7 @@ const TOREC_VARIANTS = {
     // пользователя. В отличие от схемы «2 стойки» выше, здесь есть своя
     // группа skinVal (толщина досок обшивки бока) - на схеме «2 стойки» её
     // не было вовсе.
-    3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, IW: 1473, IH: 1088,
+    3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, imgX: TOREC_IMG_2FLOOR_3POSTS_X_B64, IW: 1473, IH: 1088,
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:1317, y1:73, x2:1654, y2:73});
@@ -211,7 +220,7 @@ const TOREC_VARIANTS = {
     // переиспользования линии группы skinVal) - как у «2 стойки», без
     // ошибки, что была у «3 стойки»/1-этажной «4 стойки» (см. комментарии
     // там).
-    4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, IW: 2223, IH: 1160,
+    4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, imgX: TOREC_IMG_2FLOOR_4POSTS_X_B64, IW: 2223, IH: 1160,
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:2065, y1:78, x2:2390, y2:76});

@@ -13,11 +13,11 @@
 // (какое фото - 2/3/4 стойки, 1/2 этажа - показать при расчётном количестве
 // стоек бока) не менялся - тот же приём, что и раньше (nearestBokVariant),
 // просто теперь ищет вариант среди TOREC_VARIANTS.
-function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale){
+function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal){
   const variant = nearestBokVariant(count, floors);
   const v = TOREC_VARIANTS[variant.floors][variant.count];
   const records = v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal));
-  return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+  return renderDiagram(xRaskosinaVal ? v.imgX : v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
 
 // Тот же приём, что и у nearestTorecVariant (сперва ближайшая доступная

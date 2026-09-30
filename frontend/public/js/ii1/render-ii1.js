@@ -54,10 +54,10 @@ function renderBoardTables(calc, manualOverrides){
     diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.t32Display, calc.sideFrameDisplay, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Щит торцевой (2 шт.)</div>`,
-    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE),
+    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina),
     renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
-    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE),
+    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
 
   const boardTablesEl = document.getElementById('boardTables');

@@ -172,5 +172,5 @@ function persistRadioGroup(name){
     if(el.checked){ try{ localStorage.setItem(key, el.value); }catch(e){} }
   }));
 }
-['removeFloorBoards','removeSkidBoards','forkliftLoading','solidRigidBase','roundBoardWidths','optimizeSizes'].forEach(persistCheckbox);
+['removeFloorBoards','removeSkidBoards','forkliftLoading','solidRigidBase','roundBoardWidths','optimizeSizes','xRaskosina'].forEach(persistCheckbox);
 persistRadioGroup('lidLayout');

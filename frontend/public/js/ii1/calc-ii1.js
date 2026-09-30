@@ -35,6 +35,7 @@ function buildCalcInput(){
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
     lidLayout: document.querySelector('input[name="lidLayout"]:checked').value,
     optimizeSizes: document.getElementById('optimizeSizes').checked,
+    xRaskosina: document.getElementById('xRaskosina').checked,
     availableThicknesses,
     manualOverrides,
     tableEdits,
