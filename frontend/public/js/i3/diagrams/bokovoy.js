@@ -354,6 +354,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
   const panelW = 2*stub + P*pw + (P-1)*sw;
   const up = 45;                                    // планки чуть выступают над щитом (как в I-1)
   const IW = Math.round(panelW), IH = up + PH + ovh;
+  if(diagramIsTooDense((hasBraces === false ? sw : Math.min(sw, innerH) / 2) - i3stroke(IW, IH), IW)) return diagramTooDense(); // планок так много, что они слились бы
   const px = i => stub + i*(pw + sw);
   let shapes = `<g transform="translate(0,${up})">` + i3rect(0, 0, IW, PH); // доски бока - сплошной щит
   for(let fl=0; fl<F && hasBraces !== false; fl++){  // hasBraces=false - щит без раскосин

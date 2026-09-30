@@ -52,6 +52,7 @@ function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
     plankW = (x1 - x0)/(n + 1.2*(n-1));
     bay = 1.2*plankW;
   }
+  if(diagramIsTooDense((hasRaskosinaVal ? bay / 2 : bay) - G.stroke, G.IW)) return null; // заглушка (см. panel.js)
   const px = i => x0 + i*(plankW + bay); // левый край i-й планки (с 0)
   const f = v => v.toFixed(1);
   // Горизонтальных планок у щита нет - раскосина упирается только в вертикальные.

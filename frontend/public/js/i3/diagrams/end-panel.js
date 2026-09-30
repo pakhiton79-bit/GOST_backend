@@ -165,6 +165,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal){
   const realSecW = (Wmm - 100*(N+1)) / N, realInH = F === 2 ? (Htot - 300)/2 : Htot - 200;
   const sw = innerH * i3aspect(realSecW, realInH);
   const IW = Math.round((N+1)*vw + N*sw);
+  if(diagramIsTooDense(Math.min(sw, innerH) / 2 - i3stroke(IW, IH), IW)) return diagramTooDense(); // секций так много, что планки слились бы
   const vx = i => i*(vw + sw);                      // левый край i-й вертикальной планки
   let shapes = '';
   for(let fl=0; fl<F; fl++){

@@ -124,6 +124,10 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const minGapU = P > 1 ? plankGapMm*k : Lu;       // plankGapMm - шаг поясов по осям
   const pw = Math.min(Math.max(100*k, 120), 0.55*minGapU);
   const bw = B > 0 ? Math.min(Math.max(100*k, 120), 0.55*(Lu/(B+1))) : 0;
+  // Планки/брусья слились бы - заглушка (размер картинки - по проекции крышки).
+  const gaps = [P > 1 ? plankGapMm*k - pw : Infinity, B > 1 ? ((crossBeamWidthMm||100) + beamGapMm)*k - bw : Infinity];
+  const IWe = Lu*0.9507 + Wv*0.4406, IHe = Lu*0.3101 + Wv*0.8977;
+  if(diagramIsTooDense(Math.min(...gaps) - i3stroke(IWe, IHe), IWe)) return diagramTooDense();
   const up = [-8, -26], thick = [7, 20];            // подъём брусьев над крышкой, толщина крышки
   const low = [thick[0]*2, thick[1]*2], lowEnd = [thick[0]*3.5, thick[1]*3.5]; // планки под крышкой
   const pt = (u, v, d) => [u*eu[0] + v*ev[0] + (d?d[0]:0), u*eu[1] + v*ev[1] + (d?d[1]:0)];

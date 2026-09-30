@@ -6,8 +6,9 @@
 // по длине - между торцевыми досками), поперечные - тёмно-серые, короче
 // крышки на толщину бокового щита сверху и снизу. Поперечные брусья стоят
 // по расчёту: отступ от края и зазоры - edgeDist, ширина - crossBeamW (в
-// масштабе длины крышки); если так плотно, что брусья слились бы, - null
-// (вызывающий код ставит заглушку).
+// масштабе длины крышки); не помещаются с зазором - сужаются; если так
+// плотно, что брусья слились бы и так, - null (вызывающий код ставит
+// заглушку).
 // Подписи - с фото того же вида (без продольных - «0×3», с продольными -
 // «4×4»), кроме привязанных к первому поперечному брусу (отступ от края и
 // толщина бокового щита) - они сдвигаются к его фактическому месту.
@@ -17,7 +18,6 @@ const KRYSHKA_GEN = {
 };
 const KRYSHKA_GEN_BEAM = 74;      // ширина бруса (как на фото)
 const KRYSHKA_GEN_INSET = 37.5;   // торцевая доска / боковой щит - отступ брусьев от края
-const KRYSHKA_GEN_MIN_BEAM = 20;  // уже - брусья сливаются, чертёж не рисуется
 const KRYSHKA_GEN_STROKE = 5.5;
 
 function kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, edgeDistVal, crossBeamW){
@@ -30,8 +30,9 @@ function kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, edgeDistVal,
   const bw = crossBeamW > 0 ? crossBeamW : 100;
   const centers = Array.from({length: crossBeamCount}, (_, i) => G.x0 + (edgeDistVal + bw / 2 + i * (bw + edgeDistVal)) * pxPerMm);
   const pitch = crossBeamCount > 1 ? centers[1] - centers[0] : span;
-  const beamW = Math.min(KRYSHKA_GEN_BEAM, pitch - 12, 2 * (centers[0] - G.x0) - 12);
-  if(beamW < KRYSHKA_GEN_MIN_BEAM) return null;
+  // брусья сужаются, если не помещаются с зазором (не меньше 40% шага)
+  const beamW = Math.min(KRYSHKA_GEN_BEAM, 0.6 * pitch, 1.2 * (centers[0] - G.x0));
+  if(diagramIsTooDense(pitch - beamW - KRYSHKA_GEN_STROKE, G.IW)) return null;
 
   let shapes = rect(G.x0, G.y0, G.x1, G.y1, '#fff');
   // продольные брусья

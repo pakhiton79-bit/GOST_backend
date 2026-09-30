@@ -46,7 +46,7 @@ function ii1BraceStrip(l, r, top, bot, rising, PW, fmt){
 
 // Чертёж на n стоек и floors этажей: { img, gap } - картинка (data:-URL SVG)
 // и кромки 1-й и 2-й стоек для размера «расстояние между стойками» (формат
-// поля gap у TOREC_VARIANTS).
+// поля gap у TOREC_VARIANTS); null - стоек так много, что они слились бы.
 function panelGeneratedII1(n, floors, xRaskosinaVal){
   const G = PANEL_GEN_II1[floors];
   const f = v => v.toFixed(1);
@@ -56,6 +56,7 @@ function panelGeneratedII1(n, floors, xRaskosinaVal){
     postW = (G.frameR - G.frameL)/(n + 1.2*(n-1));
     bay = 1.2*postW;
   }
+  if(diagramIsTooDense(bay / 2 - PANEL_GEN_II1_STROKE, G.IW)) return null; // заглушка
   const px = i => G.frameL + i*(postW + bay); // левая кромка i-й стойки (с 0)
   const rect = (x1, y1, x2, y2) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"/>`;
   const [sx1, sy1, sx2, sy2] = G.skin;

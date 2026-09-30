@@ -2,7 +2,8 @@
 // тот же щит с поясами планок (фото на 2-4 планки из panel-photos.js, на 5 и
 // более - panel-generated.js) с размерными стрелками.
 
-// Фото или сгенерированный чертёж для числа планок.
+// Фото или сгенерированный чертёж для числа планок; null - планок так много,
+// что они слились бы (вместо чертежа заглушка).
 function panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
   if(plankQty > 4) return panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal);
   return panelPhoto(plankQty, hasRaskosinaVal, xRaskosinaVal);
@@ -89,11 +90,17 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
 }
 
 function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, bottomTVal){
-  return diagramPanel(panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx, bottomTVal);
+  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+  if(!g) return diagramTooDense();
+  return diagramPanel(g, heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx, bottomTVal);
 }
 function diagramKryshka(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
-  return diagramPanel(panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Крышка', framePx);
+  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+  if(!g) return diagramTooDense();
+  return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Крышка', framePx);
 }
 function diagramDno(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
-  return diagramPanel(panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal), widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Дно', framePx);
+  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+  if(!g) return diagramTooDense();
+  return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Дно', framePx);
 }

@@ -123,6 +123,16 @@ function diagramPlaceholder(label){
   return diagramStub(`Чертёж «${label}» ещё не готов`);
 }
 const DIAGRAM_TOO_DENSE_TEXT = 'Слишком много деталей для чертежа — см. таблицу';
+// Сгенерированный чертёж «слишком плотный»: самый узкий просвет между
+// соседними деталями (minGap, в единицах картинки шириной IW, без толщины
+// линий) при обычной ширине чертежа на экране (DIAGRAM_DEFAULT_WIDTH) уже
+// DIAGRAM_MIN_GAP_PX - детали сливаются в сплошную массу. Сами детали могут
+// быть тонкими (линиями) - это не мешает читать чертёж. Секция с раскосиной
+// считается просветом в половину своей ширины (раскосина делит её).
+const DIAGRAM_MIN_GAP_PX = 3;
+function diagramIsTooDense(minGap, IW){
+  return minGap * DIAGRAM_DEFAULT_WIDTH / IW < DIAGRAM_MIN_GAP_PX;
+}
 function diagramTooDense(){
   return diagramStub(DIAGRAM_TOO_DENSE_TEXT);
 }
