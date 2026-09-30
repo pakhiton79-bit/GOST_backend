@@ -30,11 +30,20 @@ function gapPlankLayout(len, gap, minEdge) {
   return { count: n, edgeDist: edgeFor(n), gap };
 }
 
+// Текст ошибки «заданное число поясов не помещается»: «2 пояса планок не
+// помещаются», «21 пояс планок не помещается», «15 поясов планок не помещаются».
+function tooManyPlanksText(n) {
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return `${n} пояс планок не помещается`;
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return `${n} пояса планок не помещаются`;
+  return `${n} поясов планок не помещаются`;
+}
+
 // Заданное число поясов: равномерно, отступ от края = зазору (до целого мм).
 function countPlankLayout(len, count, minEdge) {
   const n = Math.max(2, Math.round(count));
   const edge = Math.round((len - n * PLANK_W) / (n + 1));
-  if (edge < minEdge) return { error: `Длина крышки ${Math.round(len)} мм недостаточна для отступа планок — расчёт не выполняется.` };
+  if (edge < minEdge) return { error: `${tooManyPlanksText(n)} на крышке ${Math.round(len)} мм${n > 2 ? ' — уменьшите число поясов' : ''}. Расчёт не выполняется.` };
   return { count: n, edgeDist: edge, gap: (len - 2 * edge - n * PLANK_W) / (n - 1) };
 }
 

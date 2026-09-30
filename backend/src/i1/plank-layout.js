@@ -29,12 +29,26 @@ function standardLayout(boardLen, minEdgeDist) {
   return { count, edgeDist, middle };
 }
 
+// Текст ошибки «заданное число поясов не помещается»: «2 пояса планок не
+// помещаются», «21 пояс планок не помещается», «15 поясов планок не помещаются».
+function tooManyPlanksText(n) {
+  const n10 = n % 10, n100 = n % 100;
+  if (n10 === 1 && n100 !== 11) return `${n} пояс планок не помещается`;
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return `${n} пояса планок не помещаются`;
+  return `${n} поясов планок не помещаются`;
+}
+
+// Число поясов, которое реально ставится при ручной настройке числа.
+function requestedPlankCount(value) {
+  return Math.max(2, Math.round(value));
+}
+
 // Заданное число поясов (не меньше 2): равномерно по всей доске - отступ от
 // края равен зазору между планками, (count+1) одинаковых промежутков.
 // Отступ округляется до целого мм, поэтому зазор может отличаться от него на
 // ±1 мм.
 function countLayout(boardLen, minEdgeDist, value) {
-  const count = Math.max(2, Math.round(value));
+  const count = requestedPlankCount(value);
   const edgeDist = Math.round((boardLen - count * PLANK_WIDTH) / (count + 1));
   const middle = boardLen - edgeDist * 2 - count * PLANK_WIDTH;
   if (edgeDist < minEdgeDist) return { count: null, edgeDist, middle };
@@ -64,4 +78,4 @@ function plankLayout(boardLen, minEdgeDist, override) {
   return countLayout(boardLen, minEdgeDist, override.value);
 }
 
-module.exports = { plankLayout, PLANK_WIDTH };
+module.exports = { plankLayout, requestedPlankCount, tooManyPlanksText, PLANK_WIDTH };

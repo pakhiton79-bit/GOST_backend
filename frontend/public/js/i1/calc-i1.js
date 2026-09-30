@@ -102,6 +102,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
 function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
+  if(/пояс\S* планок не помеща/.test(text)) return ['plankCountInput'];
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : ['L'];
   if(/Ширина груза/.test(text)) return ['W'];
   if(/раскосины торца/.test(text)) return ['W', 'H'];

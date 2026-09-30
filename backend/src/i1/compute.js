@@ -10,7 +10,7 @@
 //   6. наружные размеры, объём, масса, норма времени, предупреждения.
 const { vol, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade } = require('./thickness');
-const { plankLayout } = require('./plank-layout');
+const { plankLayout, requestedPlankCount, tooManyPlanksText } = require('./plank-layout');
 const parts = require('./parts');
 
 // Плотность древесины по умолчанию, кг/м³ (сухая сосна/ель); на клиенте
@@ -55,8 +55,13 @@ function partThicknesses(ov, wall) {
   };
 }
 
-// Текст ошибки «планки не помещаются»: при ручном зазоре причина - сам зазор.
+// Текст ошибки «планки не помещаются»: при ручном зазоре или числе поясов
+// причина - сама настройка. Длина доски - с учётом выбранных толщин.
 function plankLayoutError(kLen, override) {
+  if (override && override.mode === 'count') {
+    const n = requestedPlankCount(override.value);
+    return `${tooManyPlanksText(n)} на доске ${Math.round(kLen)} мм${n > 2 ? ' — уменьшите число поясов' : ''}. Расчёт не выполняется.`;
+  }
   if (override && override.mode === 'gap') {
     return `Расстояние между планками ${override.value} мм не помещается на доске ${Math.round(kLen)} мм (2 планки и отступы от края) — расчёт не выполняется.`;
   }
@@ -74,12 +79,13 @@ function layoutForWall(L, w, override) {
 // Шаг 2: толщина по ГОСТ. Если любой из зазоров (между поясами планок,
 // горизонтальная планка торца, высота торца между горизонтальными планками)
 // попадает в 400-500 мм, толщина снижается на градацию (штатно по ГОСТ, без
-// предупреждения) и раскладка пересчитывается - не более 4 раз.
+// предупреждения) и раскладка пересчитывается - не более 4 раз. Планки не
+// помещаются - { failedWall } (толщина, при которой не поместились).
 function chooseWallThickness(L, H, horizPlankaLen, override, wallStart) {
   let w = wallStart;
   for (let i = 0; i < 4; i++) {
-    const { kLen, plank } = layoutForWall(L, w, override);
-    if (plank.count === null) return { error: plankLayoutError(kLen, override) };
+    const { plank } = layoutForWall(L, w, override);
+    if (plank.count === null) return { failedWall: w };
     const plankGap = plank.middle / (plank.count - 1);
     const inGap400500 = [plankGap, horizPlankaLen, H - 200].some(g => g >= 400 && g <= 500);
     if (!inGap400500) break;
@@ -129,8 +135,14 @@ function computeGost10198I1(input) {
 
   // Штатная раскладка считается всегда - её число поясов и зазор клиент
   // показывает центром ползунков ручной настройки.
+  // Длина доски в тексте ошибки - с выбранными толщинами («в наличии» и
+  // ручные толщины вертикальной планки и доски торца), как в таблице.
+  const boardLenForError = w => {
+    const t = key => (manualOverrides[key] > 0 ? manualOverrides[key] : roundUpToAvailable(w));
+    return L + (t('tTorVert') + t('tTorBoard')) * 2;
+  };
   const standardPass = chooseWallThickness(L, H, horizPlankaLen, null, wallThicknessI1(density));
-  if (standardPass.error) return { error: standardPass.error };
+  if (standardPass.failedWall !== undefined) return { error: plankLayoutError(boardLenForError(standardPass.failedWall), null) };
   const standardWall = roundUpToAvailable(standardPass.wallRaw);
   const standardPlank = layoutForWall(L, standardWall, null).plank;
   const standardPlankCount = standardPlank.count;
@@ -139,7 +151,7 @@ function computeGost10198I1(input) {
   const mainPass = plankOverride
     ? chooseWallThickness(L, H, horizPlankaLen, plankOverride, wallThicknessI1(density))
     : standardPass;
-  if (mainPass.error) return { error: mainPass.error };
+  if (mainPass.failedWall !== undefined) return { error: plankLayoutError(boardLenForError(mainPass.failedWall), plankOverride) };
 
   // --- 3. Итоговые толщины ---
   const wall = { value: roundUpToAvailable(mainPass.wallRaw) };

@@ -124,6 +124,7 @@ function errorFieldsFor(text){
   if(/поперечными брусьями/.test(text)) return ['beamGapInput'];
   if(/поперечных брусьев с отступом/.test(text)) return ['beamCountInput'];
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
+  if(/пояс\S* планок не помеща/.test(text)) return ['plankCountInput'];
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : [];
   return [];
 }
