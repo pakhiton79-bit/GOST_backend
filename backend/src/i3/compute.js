@@ -42,7 +42,7 @@ function makeThicknessOverrides(manualOverrides) {
 
 // input: { variant ('skid' - крепление за полозья | 'floor_boards' - к доскам
 //   дна), L, W, H, MASS, optimizeSizes, removeFloorBoards, removeSkidBoards,
-//   roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, addParchment,
+//   roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, addEndTape, addParchment,
 //   plankLayoutMode, plankLayoutValue, beamGapValue, beamCountValue,
 //   availableThicknesses, manualOverrides, baseProductivity, timeCoeff,
 //   woodDensity }.
@@ -126,6 +126,11 @@ function computeGost10198I3(input) {
     torecNoRaskosinaDiagram: endPanel.noRaskosinaDiagram, torecFloors: endPanel.floors, k30plusW31: endPanel.floorSpan,
     H, t12: dno.t12, k41: len, bokOverhang: bokovoy.overhang, l42: bokovoy.raskQty, bokFloors: bokovoy.floors, bokVertSpan: bokovoy.vertSpan,
     k40: bokovoy.vertLen, w43: bokovoy.horizW, xRaskosina: !!input.xRaskosina, t20: wall,
+    // Лента обшивки торцов (галочка «Добавить ленту обшивки торцов») - по
+    // периметру торца: длина одной ленты = (ширина груза + 2 доски бока +
+    // высота груза + доска крышки + доска дна) × 2, лент 2; без досок дна
+    // («Убрать доски дна») их толщина 0. В объём не входит.
+    endTape: input.addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + wall * 2) + (H + wall + dno.t12)) * 2 - 1e-9), qty: 2 }] : [],
     // Пергамин (галочка «Добавить пергамин») - площадь внутренних поверхностей
     // ящика по размерам груза: 2×(Д×Ш + Д×В + Ш×В), м², вверх до 0.01. Не
     // пиломатериал - в объём, массу и норму времени не входит.

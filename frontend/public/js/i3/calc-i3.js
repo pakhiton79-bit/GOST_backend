@@ -33,6 +33,7 @@ function buildCalcInput(){
     solidRigidBase: document.getElementById('solidRigidBase').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
+    addEndTape: document.getElementById('addEndTape').checked,
     addParchment: document.getElementById('addParchment').checked,
     plankLayoutMode,
     plankLayoutValue,
