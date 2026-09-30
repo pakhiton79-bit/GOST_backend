@@ -1,8 +1,8 @@
 // ГОСТ 10198-91, тип II-1: чертёж «Крышка». Перенесено из
 // src/ii1/diagrams.js исходного репозитория pakhiton79-bit/GOST_10198-91 -
 // 9 готовых схем по числу продольных/поперечных брусьев (0/2/3/4 продольных,
-// 2/3/4 поперечных, не любое сочетание - см. KRYSHKA_LONG_OPTIONS/
-// KRYSHKA_CROSS_BY_LONG/nearestKryshkaVariant ниже). Геометрия (координаты
+// 2/3/4 поперечных, не любое сочетание); на остальные сочетания чертёж
+// генерируется (kryshka-generated.js). Геометрия (координаты
 // стрелок и подписей в натуральных пикселях фото) - из присланных заказчиком
 // схем, независимая запись per-вариант (без общей формулы).
 const KRYSHKA_0L_2P_IMG_B64 = "/images/kryshka_0l_2p.jpg";
@@ -203,25 +203,6 @@ const KRYSHKA_VARIANTS = {
   },
 };
 
-// Доступные готовые сочетания (см. комментарий выше) - продольных: 0 (режим
-// lidLayout='longitudinal', внутреннего продольного бруса нет вовсе) либо
-// 2/3/4 (lidLayout='transverse'); для каждого продольного - свой набор
-// доступных поперечных (не любое сочетание, см. имена файлов фото).
-const KRYSHKA_LONG_OPTIONS = [0, 2, 3, 4];
-const KRYSHKA_CROSS_BY_LONG = {0:[2,3,4], 2:[2,3], 3:[2,3,4], 4:[4]};
-
-// Если расчётное сочетание (longbeamCount продольных × crossBeamCount
-// поперечных) не входит в список готовых чертежей - берём ближайшее: сперва
-// продольное (максимально точное совпадение, в приоритете), затем для него
-// поперечное (максимально близкое из доступных именно для этого продольного) -
-// по уточнению пользователя.
-function nearestKryshkaVariant(longbeamCount, crossBeamCount){
-  const bestLong = KRYSHKA_LONG_OPTIONS.reduce((a,b)=> Math.abs(b-longbeamCount)<Math.abs(a-longbeamCount) ? b : a);
-  const crossOptions = KRYSHKA_CROSS_BY_LONG[bestLong];
-  const bestCross = crossOptions.reduce((a,b)=> Math.abs(b-crossBeamCount)<Math.abs(a-crossBeamCount) ? b : a);
-  return {longbeamCount: bestLong, crossBeamCount: bestCross, exact: bestLong===longbeamCount && bestCross===crossBeamCount};
-}
-
 // torecBoardVal - толщина доски торца (t32Display, с косметическим +2мм при
 // «Оптимизировать размеры» - см. calc-ii1.js); отсутствует на чертеже при
 // продольных=0 (см. KRYSHKA_VARIANTS - в этих 3 схемах доска торца не
@@ -232,9 +213,16 @@ function nearestKryshkaVariant(longbeamCount, crossBeamCount){
 // edgeDistVal - расстояние от края крышки до края крайнего поперечного
 // бруса (calc.edgeDistCross) - по методике I-3: брусья делят длину крышки
 // на (count+1) равных промежутков, а не flush-edge, как у стоек каркаса.
-function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal){
-  const variant = nearestKryshkaVariant(longbeamCount, crossBeamCount);
-  const v = KRYSHKA_VARIANTS[variant.longbeamCount + '_' + variant.crossBeamCount];
-  const records = v.records(dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal));
-  return renderDiagram(v.img, 'Крышка - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW));
+function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal, crossBeamW){
+  const title = 'Крышка - схема расположения деталей';
+  const v = KRYSHKA_VARIANTS[longbeamCount + '_' + crossBeamCount];
+  if(v){
+    const records = v.records(dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal));
+    return renderDiagram(v.img, title, v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW));
+  }
+  // Фото на такое сочетание нет - чертёж генерируется (kryshka-generated.js).
+  const g = kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, edgeDistVal, crossBeamW);
+  if(!g) return diagramTooDense();
+  const records = kryshkaGeneratedRecords(g, dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal));
+  return renderDiagram(g.img, title, g.IW, g.IH, records, widthPxOverride, photoStrokeScale(g.IW));
 }

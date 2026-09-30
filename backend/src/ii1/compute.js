@@ -20,7 +20,6 @@ const { buildKryshka } = require('./kryshka');
 const { buildFrame, frameAngleDeg, tooManyPostsText, MIN_ANGLE, MAX_ANGLE } = require('./frame');
 const { buildEndPanel } = require('./end-panel');
 const { buildBokovoy } = require('./bokovoy');
-const { nearestKryshkaVariant } = require('./drawing-variants');
 
 // Ручные правки толщин. Значение из цикла согласования читается на каждой
 // итерации, поэтому «меньше ГОСТ» не пишется в предупреждения сразу, а
@@ -94,10 +93,6 @@ function computeGost10198II1(input) {
   }
   if (s.longBeamExceeded) {
     warnings.push('Шаг осей брусьев крышки вне табл. продольных брусьев — сечение принято по крайнему значению.');
-  }
-  const kryshkaVariant = nearestKryshkaVariant(s.longBeamCount, s.crossBeamCount);
-  if (!kryshkaVariant.exact) {
-    warnings.push(`Крышка: чертёж — ближайшее готовое сочетание брусьев (${kryshkaVariant.longbeamCount}×прод./${kryshkaVariant.crossBeamCount}×попер.) вместо расчётного (${s.longBeamCount}×прод./${s.crossBeamCount}×попер.); точное количество см. в таблице ниже.`);
   }
   // Отступ от края крышки до края крайнего поперечного бруса (брусья - равномерно).
   const edgeDistCross = Math.round((L - s.crossBeamCount * s.crossBeamW) / (s.crossBeamCount + 1));
