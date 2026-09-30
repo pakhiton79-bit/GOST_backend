@@ -1,5 +1,5 @@
 // ГОСТ 10198-91, тип I-3: вывод результата расчёта - плитки «Итог»,
-// спецификация (чертёж + таблица по каждому узлу) и предупреждения.
+// спецификация (чертёж + таблица по каждому узлу), пергамин и предупреждения.
 // calc - ответ сервера (/api/i3/calculate).
 
 // Общий вид ящика (плитка «Итог» и печать).
@@ -38,6 +38,14 @@ function renderPartBlock(titleHtml, diagramHtml, tableHtml){
   return titleHtml + `<div class="spec-row-diagram"><div class="diagram-slot">` + diagramHtml + `</div>` + tableHtml + `</div>`;
 }
 
+// Строка свободного текста (пергамин) - табличка 1×1 на всю ширину. Текст
+// правится целиком; пустая ячейка - расчётный текст.
+function renderTextRow(sectionKey, rows, defaultText){
+  const row = rows[0], keys = tableRowKeys(rows);
+  const text = (typeof row.text === 'string') ? row.text : defaultText(row);
+  return `<div class="spec-table tape-table"><table data-section="${sectionKey}"><tbody><tr data-row-key="${escapeAttr(keys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(row, 'text')}>${escapeAttr(text)}</td></tr></tbody></table></div>`;
+}
+
 function renderBoardTables(calc, manualOverrides){
   let html = '';
   html += renderPartBlock(`<div class="part-title">Дно</div>`,
@@ -52,6 +60,10 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
     diagramBokovoyFor(calc),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
+  // Пергамин - под всеми узлами, попадает и в печать.
+  if(calc.parchment && calc.parchment.length){
+    html += renderTextRow('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
+  }
 
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = html;
