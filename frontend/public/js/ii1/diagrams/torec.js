@@ -23,11 +23,22 @@
 // добавляется своя группа E (floorHeightVal = ширина стойки + длина
 // стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
 // xRaskosinaVal - X-образные раскосины (фото imgX).
-function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal){
+// gapVal - расстояние между кромками соседних стоек (frame.sectionW, ширина
+// стоек учтена): стрелка внутри первой секции, от правой кромки 1-й стойки до
+// левой кромки 2-й (координаты кромок - поле gap у каждой схемы).
+function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal){
   const variant = nearestTorecVariant(count, floors);
   const v = TOREC_VARIANTS[variant.floors][variant.count];
-  const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal));
+  const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
+    .concat(postGapRecords(v, gapVal));
   return renderDiagram(xRaskosinaVal ? v.imgX : v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+}
+
+// Размер «расстояние между стойками» в первой секции схемы v: стрелка чуть
+// ниже верхнего бруса, подпись по её центру.
+function postGapRecords(v, gapVal){
+  const g = v.gap, y = g.secTop + v.IW * 0.06;
+  return [{type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:(g.x1 + g.x2) / 2, ly:y, text:dimLabel(gapVal)+' мм'}];
 }
 
 const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 раскосина
@@ -49,6 +60,7 @@ const TOREC_VARIANTS = {
   1: {
     // «2 стойки» (1 раскосина) - по исходной разметке пользователя.
     2: { img: TOREC_IMG_2POSTS_B64, imgX: TOREC_IMG_2POSTS_X_B64, IW: 1116, IH: 796,
+      gap: { x1: 196.5, x2: 920.5, secTop: 167.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -86,6 +98,7 @@ const TOREC_VARIANTS = {
     // своя отдельная линия-вынос для ширины, не переиспользует линию группы
     // skinVal).
     3: { img: TOREC_IMG_3POSTS_B64, imgX: TOREC_IMG_3POSTS_X_B64, IW: 1460, IH: 605,
+      gap: { x1: 148.5, x2: 696.5, secTop: 130.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -115,6 +128,7 @@ const TOREC_VARIANTS = {
     },
     // «4 стойки» (3 раскосины) - по разметке пользователя.
     4: { img: TOREC_IMG_4POSTS_B64, imgX: TOREC_IMG_4POSTS_X_B64, IW: 2222, IH: 644,
+      gap: { x1: 157.5, x2: 743.5, secTop: 134.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
         if(longbeamVal > 0){
@@ -150,6 +164,7 @@ const TOREC_VARIANTS = {
     // этажа (ширина стойки + длина стойки) - своя, отдельная от 1-этажных
     // схем группа E.
     2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, imgX: TOREC_IMG_2FLOOR_2POSTS_X_B64, IW: 833, IH: 1041,
+      gap: { x1: 161.5, x2: 681.5, secTop: 140.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:680, y1:78, x2:989, y2:78});
@@ -182,6 +197,7 @@ const TOREC_VARIANTS = {
     // группа skinVal (толщина досок обшивки бока) - на схеме «2 стойки» её
     // не было вовсе.
     3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, imgX: TOREC_IMG_2FLOOR_3POSTS_X_B64, IW: 1473, IH: 1088,
+      gap: { x1: 152.5, x2: 700.5, secTop: 138.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:1317, y1:73, x2:1654, y2:73});
@@ -221,6 +237,7 @@ const TOREC_VARIANTS = {
     // ошибки, что была у «3 стойки»/1-этажной «4 стойки» (см. комментарии
     // там).
     4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, imgX: TOREC_IMG_2FLOOR_4POSTS_X_B64, IW: 2223, IH: 1160,
+      gap: { x1: 157.5, x2: 743.5, secTop: 149.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
         records.push({type:'line', x1:2065, y1:78, x2:2390, y2:76});
