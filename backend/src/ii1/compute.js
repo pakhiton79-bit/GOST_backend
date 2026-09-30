@@ -20,7 +20,7 @@ const { buildKryshka } = require('./kryshka');
 const { buildFrame, frameAngleDeg, tooManyPostsText, MIN_ANGLE, MAX_ANGLE } = require('./frame');
 const { buildEndPanel } = require('./end-panel');
 const { buildBokovoy } = require('./bokovoy');
-const { nearestKryshkaVariant, nearestPanelVariant } = require('./drawing-variants');
+const { nearestKryshkaVariant } = require('./drawing-variants');
 
 // Ручные правки толщин. Значение из цикла согласования читается на каждой
 // итерации, поэтому «меньше ГОСТ» не пишется в предупреждения сразу, а
@@ -159,15 +159,6 @@ function computeGost10198II1(input) {
   if (bokFrame.len <= 0) {
     return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита — расчёт не выполняется.` };
   }
-  const torecVariant = nearestPanelVariant(torecFrame.count, torecFrame.floors);
-  if (!torecVariant.exact) {
-    warnings.push(`Щит торцевой: чертёж — ближайшая готовая схема (${torecVariant.count} стойки/${torecVariant.floors} эт.) вместо расчётной (${torecFrame.count} стоек/${torecFrame.floors} эт.); точное количество см. в таблице ниже.`);
-  }
-  const bokVariant = nearestPanelVariant(bokFrame.count, bokFrame.floors);
-  if (!bokVariant.exact) {
-    warnings.push(`Щит боковой: чертёж — ближайшая готовая схема (${bokVariant.count} стойки/${bokVariant.floors} эт.) вместо расчётной (${bokFrame.count} стоек/${bokFrame.floors} эт.); точное количество см. в таблице ниже.`);
-  }
-
   // Раскосина - 2/3 толщины стойки.
   const rask = { t: ov('tRaskosina', round(s.stojkaT * 2 / 3), 'Толщина раскосины'), w: 100 };
   const endPanel = buildEndPanel(c, s, torecFrame, rask);

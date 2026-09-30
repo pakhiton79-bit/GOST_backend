@@ -9,30 +9,13 @@
 // численно равен L, см. k43 в src/ii1/compute.js). Остальные параметры
 // (longbeamVal, skinVal, heightVal, floorHeightVal) - те же самые величины,
 // что и у торца (bokFrame.floors/.len совпадают с torecFrame.floors/.len -
-// обе рамы строятся от одной и той же общей высоты панели). Подбор схемы
-// (какое фото - 2/3/4 стойки, 1/2 этажа - показать при расчётном количестве
-// стоек бока) не менялся - тот же приём, что и раньше (nearestBokVariant),
-// просто теперь ищет вариант среди TOREC_VARIANTS. gapVal - расстояние между
-// стойками бока (bokFrame.sectionW), см. postGapRecords в torec.js.
+// обе рамы строятся от одной и той же общей высоты панели). Схема - та же,
+// что у торца (panelScheme в torec.js: фото на 2-4 стойки, на 5 и более -
+// сгенерированный чертёж). gapVal - расстояние между стойками бока
+// (bokFrame.sectionW), см. postGapRecords в torec.js.
 function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal){
-  const variant = nearestBokVariant(count, floors);
-  const v = TOREC_VARIANTS[variant.floors][variant.count];
+  const v = panelScheme(count, floors, xRaskosinaVal);
   const records = v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
-    .concat(postGapRecords(v, gapVal));
-  return renderDiagram(xRaskosinaVal ? v.imgX : v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
-}
-
-// Тот же приём, что и у nearestTorecVariant (сперва ближайшая доступная
-// этажность, затем ближайшее число стоек внутри неё) - ищет среди
-// TOREC_VARIANTS, т.к. чертёж бока переиспользует фото торца (см. diagramBok
-// выше). Раньше искала среди отдельной BOK_VARIANTS (свои фото бока,
-// удалены) - структура доступных ключей (этажи/стойки) была идентична
-// TOREC_VARIANTS, так что сам подбор не изменился.
-function nearestBokVariant(count, floors){
-  const floorsAvailable = Object.keys(TOREC_VARIANTS).map(Number);
-  const bestFloors = floorsAvailable.includes(floors) ? floors
-    : floorsAvailable.reduce((a,b)=> Math.abs(b-floors)<Math.abs(a-floors) ? b : a);
-  const countOptions = Object.keys(TOREC_VARIANTS[bestFloors]).map(Number);
-  const bestCount = countOptions.reduce((a,b)=> Math.abs(b-count)<Math.abs(a-count) ? b : a);
-  return {count: bestCount, floors: bestFloors, exact: bestCount===count && bestFloors===floors};
+    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }

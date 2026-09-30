@@ -5,10 +5,9 @@
 // принцип, что и у KRYSHKA_VARIANTS - независимые записи per-схема, в
 // натуральных пикселях именно этого фото). Схемы сгруппированы по этажности
 // (TOREC_VARIANTS[floors][count]) - геометрия/пропорции у 1-этажных и
-// 2-этажных щитов принципиально разные (два яруса раскосин), поэтому при
-// floors=2 fallback ищет ближайшее число стоек ТОЛЬКО среди готовых
-// 2-этажных схем, не подменяя их 1-этажным фото (см. nearestTorecVariant
-// ниже).
+// 2-этажных щитов принципиально разные (два яруса раскосин). Фото - на 2-4
+// стойки; на 5 и более чертёж генерируется по геометрии фото на 4 стойки
+// того же числа этажей (см. panelScheme ниже и panel-generated.js).
 // В 1-этажных схемах структура из 4 групп подписей:
 // - A (только если longbeamVal>0 - режим "поперечное" расположение досок
 //   крышки; при "продольном" бруса нет, группа не рисуется): толщина
@@ -24,21 +23,51 @@
 // стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
 // xRaskosinaVal - X-образные раскосины (фото imgX).
 // gapVal - расстояние между кромками соседних стоек (frame.sectionW, ширина
-// стоек учтена): стрелка внутри первой секции, от правой кромки 1-й стойки до
-// левой кромки 2-й (координаты кромок - поле gap у каждой схемы).
+// стоек учтена), см. postGapRecords.
+// На 5 и более стоек фото нет - чертёж генерируется (см. panelScheme).
 function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal){
-  const variant = nearestTorecVariant(count, floors);
-  const v = TOREC_VARIANTS[variant.floors][variant.count];
+  const v = panelScheme(count, floors, xRaskosinaVal);
   const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
-    .concat(postGapRecords(v, gapVal));
-  return renderDiagram(xRaskosinaVal ? v.imgX : v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+}
+
+// Схема щита на count стоек и floors (1 или 2) этажей: фото из
+// TOREC_VARIANTS (2-4 стойки) или сгенерированный чертёж (5 и более, см.
+// panel-generated.js) - с подписями фото на 4 стойки: у него те же размеры
+// картинки и наружные кромки щита. { img, IW, IH, records, gap }.
+function panelScheme(count, floors, xRaskosinaVal){
+  if(count <= 4){
+    const v = TOREC_VARIANTS[floors][count];
+    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap };
+  }
+  const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal);
+  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap };
 }
 
 // Размер «расстояние между стойками» в первой секции схемы v: стрелка чуть
-// ниже верхнего бруса, подпись по её центру.
-function postGapRecords(v, gapVal){
-  const g = v.gap, y = g.secTop + v.IW * 0.06;
-  return [{type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:(g.x1 + g.x2) / 2, ly:y, text:dimLabel(gapVal)+' мм'}];
+// ниже верхнего бруса, подпись - по её центру. Если подпись не помещается
+// между наконечниками (накрыла бы стрелку), весь размер выносится над
+// чертежом (по указанию пользователя, как зазор между планками у I-1):
+// выносные линии от кромок стоек вверх, стрелка над фото, подпись над ней.
+// widthPx/labelScale - ширина чертежа на экране и масштаб подписей (как в
+// renderDiagram): по ним оценивается ширина подписи в пикселях фото.
+function postGapRecords(v, gapVal, widthPx, labelScale){
+  const g = v.gap, text = dimLabel(gapVal)+' мм';
+  const px = v.IW / widthPx;                                        // пикселей фото на 1px экрана
+  const labelW = (text.length * 8.2 + 16) * (labelScale || 1) * px; // шрифт 13px bold + поля
+  const headLen = 9 * photoStrokeScale(v.IW);                       // наконечник (см. headTriangle)
+  const mid = (g.x1 + g.x2) / 2;
+  if(g.x2 - g.x1 >= labelW + 2*headLen + 6*px){
+    const y = g.secTop + v.IW * 0.06;
+    return [{type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:mid, ly:y, text}];
+  }
+  const y = -12*px;
+  return [
+    {type:'line', x1:g.x1, y1:g.secTop, x2:g.x1, y2:y - 6*px},
+    {type:'line', x1:g.x2, y1:g.secTop, x2:g.x2, y2:y - 6*px},
+    {type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:mid, ly:y - 16*px, text}
+  ];
 }
 
 const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 раскосина
@@ -272,21 +301,3 @@ const TOREC_VARIANTS = {
     },
   },
 };
-const TOREC_POST_OPTIONS = [2, 3, 4];
-
-// Готовых фото - 2/3/4 стойки (1/2/3 раскосины), И для 1 этажа, И для 2
-// этажей (см. TOREC_VARIANTS выше). Если для расчётного числа стоек нет
-// готовой схемы (5+) - берём ближайшее число стоек СРЕДИ схем ТОЙ ЖЕ
-// этажности (не подменяя другой этажностью - геометрия слишком разная);
-// если для расчётной этажности готовых схем нет вовсе (не может случиться
-// при нынешнем наборе фото, floors всегда 1 или 2) - используем схемы
-// доступной этажности (тот же приём, что и у Крышки, nearestKryshkaVariant,
-// но с дополнительным измерением "этаж").
-function nearestTorecVariant(count, floors){
-  const floorsAvailable = Object.keys(TOREC_VARIANTS).map(Number);
-  const bestFloors = floorsAvailable.includes(floors) ? floors
-    : floorsAvailable.reduce((a,b)=> Math.abs(b-floors)<Math.abs(a-floors) ? b : a);
-  const countOptions = Object.keys(TOREC_VARIANTS[bestFloors]).map(Number);
-  const bestCount = countOptions.reduce((a,b)=> Math.abs(b-count)<Math.abs(a-count) ? b : a);
-  return {count: bestCount, floors: bestFloors, exact: bestCount===count && bestFloors===floors};
-}

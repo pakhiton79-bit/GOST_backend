@@ -68,7 +68,8 @@ frontend/public/     статический фронтенд (HTML/CSS/JS, от�
       calc-ii1.js         входные данные, запрос расчёта, подсветка ошибок
       render-ii1.js       вывод результата: итог, таблицы, чертежи, предупреждения
       print-ii1.js        содержимое печати/PDF
-      diagrams/           чертежи типа II-1 по узлам: dno.js, kryshka.js, torec.js, bok.js
+      diagrams/           чертежи типа II-1 по узлам: dno.js, kryshka.js, torec.js, bok.js,
+                          panel-generated.js (щиты на 5 и более стоек - генерируемый чертёж)
     i1/
       options.js          толщины «в наличии», полоз, запоминание галочек
       plank-layout.js     ручная настройка поясов планок (галочки, ползунки)
