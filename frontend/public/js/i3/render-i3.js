@@ -15,7 +15,7 @@ function renderSummary(calc){
 
 // Таблица деталей узла. Все ячейки редактируются; правка толщины детали с
 // overrideKey уходит на сервер как ручная толщина (manualOverrides), прочие -
-// как правки таблицы (см. readTableEdits в common-print.js).
+// как правки таблицы (см. readTableEdits в common-table-edits.js).
 function renderPartTable(rows, sectionKey, manualOverrides){
   let html = `<div class="spec-table"><table data-section="${sectionKey}">
       <thead><tr><th>Деталь</th><th class="num">Толщина</th><th class="num">Ширина</th><th class="num">Длина</th><th class="num">Кол-во</th></tr></thead><tbody>`;
@@ -74,7 +74,7 @@ function renderBoardTables(calc, manualOverrides){
   // Место под вылет подписей чертежей - когда картинки загрузятся.
   const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
   Promise.all(boardImages.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()))
-    .then(()=> reserveDiagramOverflowScreen(boardTablesEl));
+    .then(()=> fitDiagramsOnScreen(boardTablesEl));
 }
 
 function renderWarnings(warnings){

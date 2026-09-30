@@ -36,7 +36,7 @@ function buildThicknessCheckboxList(){
 
 // Любое изменение параметров: после первого расчёта показывается «Нажмите
 // «Рассчитать»» (вернули как было - снова «Расчёт выполнен»), см.
-// markCalcChanged в common-print.js.
+// markCalcChanged в common-calc-state.js.
 function invalidateCalc(){
   markCalcChanged();
 }

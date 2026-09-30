@@ -48,7 +48,7 @@ function dimLabel(v){
 
 // labelScale — необязательный доп. множитель размера подписей (шрифт, отступы,
 // белая плашка), НЕЗАВИСИМЫЙ от --dk (авто-сжатие чертежа под ширину слота,
-// см. reserveDiagramOverflow[Screen]() в src/common-print.js). --dk реагирует
+// см. fitDiagramsOnScreen/fitDiagramsForPrint в common-diagram-fit.js). --dk реагирует
 // только на фактический вылет конкретных подписей за пределы фото и поэтому
 // непредсказуем (у одних чертежей срабатывает сильно, у других почти не
 // срабатывает, в зависимости от того, где именно на фото расположены подписи) -
@@ -96,9 +96,9 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, l
   const sizeStyle = ` style="width:${w}px;flex-basis:${w}px;${lkStyle}"`;
   // data-base-width дублирует исходную (авторскую, до любых экранных/печатных
   // подгонок) ширину как атрибут, а не только инлайн-стиль - печать (см.
-  // printBox() в src/common-print.js) читает именно его, а не style.width:
+  // printBox() в js/common-print.js) читает именно его, а не style.width:
   // к моменту печати style.width у чертежа уже мог измениться (реальный
-  // масштаб на экране после reserveDiagramOverflowScreen, или вовсе очищен в
+  // масштаб на экране после fitDiagramsOnScreen, или вовсе очищен в
   // buildPrintHtml перед вставкой в печатную область) - и раньше печать по
   // ошибке подставляла заглушку 260px для ЛЮБОГО чертежа, если style.width
   // на тот момент был пуст, из-за чего разная авторская ширина торца (210px

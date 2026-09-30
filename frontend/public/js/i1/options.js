@@ -8,7 +8,7 @@ const OPTIONS_STORAGE_PREFIX = 'gost10198-i1-opt-';             // галочк�
 
 // Любое изменение параметров: после первого расчёта показывается «Нажмите
 // «Рассчитать»» (вернули как было - снова «Расчёт выполнен»), см.
-// markCalcChanged в common-print.js.
+// markCalcChanged в common-calc-state.js.
 function invalidateCalc(){
   markCalcChanged();
 }

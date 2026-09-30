@@ -227,7 +227,7 @@
 
   /* Обёртка вокруг трёх взаимоисключающих статусов расчёта (calcCheck/
      calcOutdated/calcError - JS переключает между ними класс .active, см.
-     setCalcStatus() в common-print.js). Все три - в одной grid-ячейке
+     setCalcStatus() в common-calc-state.js). Все три - в одной grid-ячейке
      (stacking) и visibility:hidden вместо display:none, когда не активны -
      в отличие от display:none, visibility:hidden всё равно занимает место
      в раскладке, поэтому ширина обёртки всегда равна ширине самого
@@ -587,7 +587,7 @@
   }
   .editable-cell:hover{background:var(--accent-wash);}
   /* Значения, введённые вручную в таблице деталей (data-user-edited, см.
-     обработчик input у #boardTables и editedAttr в common-print.js) -
+     обработчик input у #boardTables и editedAttr в common-table-edits.js) -
      тёмно-коричневым текстом, по указанию пользователя; только на сайте:
      скоуп #boardTables не пересекается с печатной областью (#printArea). */
   /* + светло-коричневая заливка всей ячейки (по указанию пользователя). */
@@ -711,7 +711,7 @@
   }
   /* I-3/II-1 - тот же расширенный слот, что и у I-1 (по указанию
      пользователя: чертежи занимают всё своё место, см. growDiagramToSlot
-     в common-print.js). */
+     в common-diagram-fit.js). */
   #boardTables .diagram-slot{
     flex-basis:340px;
     width:340px;
@@ -721,7 +721,7 @@
     position:relative;
     flex:0 0 260px;
     width:260px;
-    --dk:1; /* масштаб чертежа на экране, см. reserveDiagramOverflowScreen() */
+    --dk:1; /* масштаб чертежа на экране, см. fitDiagramsOnScreen() */
     --lk:1; /* доп. фиксированный множитель подписей, см. renderDiagram()/labelScale в js/common-diagrams.js */
   }
   .diagram-wrap img{
@@ -787,7 +787,7 @@
     }
     /* width НЕ !important (в отличие от .diagram-slot выше) - её должен
        уметь перебить inline-стиль, который на каждый расчёт проставляет
-       reserveDiagramOverflowScreen() (см. js/common-print.js), сжимая
+       fitDiagramsOnScreen() (см. js/common-diagram-fit.js), сжимая
        чертёж, если подписи/стрелки не помещаются в реальную (узкую на
        телефоне) ширину слота. С !important инлайн-сжатие никогда не
        применялось - чертёж всегда рендерился на всю ширину до 240px, и
@@ -804,7 +804,7 @@
     /* I-1: каждый чертёж максимального размера (см. data-i1-panel выше) - длинный
        шире 240px; max-width обрезал бы только картинку, а подписи (их
        размер - через --dk) оставались бы прежними и наезжали друг на
-       друга. Сжатие по ширине экрана делает reserveDiagramOverflowScreen
+       друга. Сжатие по ширине экрана делает fitDiagramsOnScreen
        (вместе с подписями), каждый чертёж - независимо. */
     #boardTables .diagram-slot[data-i1-panel] .diagram-wrap,
     #boardTables .diagram-slot .diagram-wrap{
@@ -1090,7 +1090,7 @@
      для старых (маленьких) чертежей. У Дна (2008×1212, длинная подпись у левого
      края) вылет больше — отступ увеличен до 44px; вертикальные вылеты, а также
      правый вылет подписей (пропорциональным сжатием чертежа через --dk, а не
-     обрезкой) резервируются из JS (reserveDiagramOverflow). */
+     обрезкой) резервируются из JS (fitDiagramsForPrint). */
   #printArea .diagram-slot{flex:0 0 calc(var(--pk)*300px);width:calc(var(--pk)*300px);margin-left:calc(var(--pk)*44px);position:relative;overflow:visible;}
   /* ширина самих чертежей проставляется из JS (у них разный масштаб) */
   #printArea .diagram-wrap{position:relative;}
@@ -1099,9 +1099,9 @@
   /* Стрелки на чертежах — при печати заметно толще, чем на экране. --dk (по
      умолчанию 1, задаётся из .diagram-wrap{--dk:1} в общем блоке выше) -
      дополнительный ПОДИАГРАММНЫЙ масштаб (в отличие от --pk, единого на всю
-     страницу): его выставляет reserveDiagramOverflow() в src/common-print.js,
+     страницу): его выставляет fitDiagramsForPrint() в js/common-diagram-fit.js,
      когда конкретному чертежу требуется сжатие, чтобы вылетающие за картинку
-     подписи (см. reserveDiagramOverflow) не налезали на соседнюю таблицу. */
+     подписи (см. fitDiagramsForPrint) не налезали на соседнюю таблицу. */
   /* Базовый множитель поднят 3px -> 12px (в 4 раза) - линии стрелок были
      почти не видны при обычной печати (не через «Скачать PDF», у которой
      уже был свой отдельный PDF_ARROW_STROKE_FACTOR=4 - см. common-print.js,

@@ -50,7 +50,10 @@ frontend/public/     статический фронтенд (HTML/CSS/JS, от�
   css/, images/
   js/
     common-diagrams.js  общий рендер чертежей-фото (renderDiagram) - тип I-3 и I-1
-    common-print.js     общая механика печати (подгонка под 1 лист А4)
+    common-calc-state.js  статусы расчёта, кнопка «Рассчитать», устаревание результата
+    common-table-edits.js ручные правки таблицы деталей
+    common-diagram-fit.js подгонка чертежей под слот (экран и печать)
+    common-print.js     печать и PDF (подгонка под 1 лист А4)
     i3/
       options.js          толщины «в наличии», способ крепления, запоминание галочек
       plank-layout.js     ручная настройка поясов планок (как у I-1)

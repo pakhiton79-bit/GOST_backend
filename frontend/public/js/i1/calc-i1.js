@@ -1,6 +1,6 @@
 // ГОСТ 10198-91, тип I-1: сбор входных данных, запрос расчёта на сервер
 // (POST /api/i1/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
-// общую обёртку calculate() из common-print.js, та - calculateNow().
+// общую обёртку calculate() из common-calc-state.js, та - calculateNow().
 
 // Ручные толщины из таблицы: только ячейки толщины, которые пользователь
 // действительно правил (data-user-edited) - иначе нетронутая ячейка
@@ -15,7 +15,7 @@ function readManualOverrides(){
   return overrides;
 }
 
-// Тело запроса на расчёт. По нему же common-print.js сравнивает текущую форму
+// Тело запроса на расчёт. По нему же common-calc-state.js сравнивает текущую форму
 // с последним расчётом (calcStateSignature).
 function buildCalcInput(){
   const manualOverrides = readManualOverrides();
@@ -98,7 +98,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
 });
 
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
-// красной рамкой (highlightErrorFields в common-print.js).
+// красной рамкой (highlightErrorFields в common-calc-state.js).
 function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
