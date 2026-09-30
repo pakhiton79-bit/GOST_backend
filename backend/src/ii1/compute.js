@@ -17,7 +17,7 @@ const { skinThickness } = require('./logic');
 const { stabilizeSizes } = require('./sizing');
 const { buildDno } = require('./dno');
 const { buildKryshka } = require('./kryshka');
-const { buildFrame } = require('./frame');
+const { buildFrame, frameAngleDeg, tooManyPostsText, MIN_ANGLE, MAX_ANGLE } = require('./frame');
 const { buildEndPanel } = require('./end-panel');
 const { buildBokovoy } = require('./bokovoy');
 const { nearestKryshkaVariant, nearestPanelVariant } = require('./drawing-variants');
@@ -42,7 +42,8 @@ function makeThicknessOverrides(manualOverrides) {
 // input: { L, W, H, MASS, fasteningType ('skid' | 'floor_boards'),
 //   solidRigidBase, removeFloorBoards, removeSkidBoards, forkliftLoading,
 //   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
-//   xRaskosina, availableThicknesses, manualOverrides, baseProductivity, timeCoeff }.
+//   xRaskosina, torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
+//   availableThicknesses, manualOverrides, baseProductivity, timeCoeff }.
 function computeGost10198II1(input) {
   const { L, W, H, MASS, baseProductivity, timeCoeff } = input;
   const availableThicknesses = input.availableThicknesses || [];
@@ -119,16 +120,39 @@ function computeGost10198II1(input) {
 
   // Каркасы щитов. Высота щита на 1 этаж - без опоры снизу (полоза и доски дна).
   const panelHeightFull = H + s.floorBoardT + s.longBeamT;
-  const torecFrame = buildFrame(W + s.stojkaT * 2, panelHeightFull, H);
-  const bokFrame = buildFrame(L, panelHeightFull, H); // по длине груза
+  // Каркасы щитов. Штатное число стоек считается всегда - его клиент
+  // показывает центром ползунков ручной настройки.
+  const torecSpace = W + s.stojkaT * 2, bokSpace = L; // бок - по длине груза
+  const torecManual = input.torecPostCount > 0, bokManual = input.bokPostCount > 0;
+  const torecStandard = buildFrame(torecSpace, panelHeightFull, H);
+  const bokStandard = buildFrame(bokSpace, panelHeightFull, H);
+  const torecFrame = torecManual ? buildFrame(torecSpace, panelHeightFull, H, input.torecPostCount) : torecStandard;
+  const bokFrame = bokManual ? buildFrame(bokSpace, panelHeightFull, H, input.bokPostCount) : bokStandard;
   if (torecFrame.tooNarrow) {
     return { error: `Ширина груза ${W} мм слишком мала для минимум двух стоек торцевого щита (по 100мм) — расчёт не выполняется.` };
   }
   if (bokFrame.tooNarrow) {
     return { error: `Длина груза ${L} мм слишком мала для минимум двух стоек бокового щита (по 100мм) — расчёт не выполняется.` };
   }
+  // Заданное вручную число стоек не помещается - блокировка.
+  if (torecManual && torecFrame.sectionW <= 0) {
+    return { error: `${tooManyPostsText(torecFrame.count)} на торцевом щите ${Math.round(torecSpace)} мм — уменьшите число стоек. Расчёт не выполняется.` };
+  }
+  if (bokManual && bokFrame.sectionW <= 0) {
+    return { error: `${tooManyPostsText(bokFrame.count)} на боковом щите ${Math.round(bokSpace)} мм — уменьшите число стоек. Расчёт не выполняется.` };
+  }
+  // Угол раскосины при ручном числе стоек - вне 20-60° только предупреждение.
+  const manualAngleWarn = (manual, frame, title) => {
+    if (!manual || !frame.hasRaskosina) return;
+    const angle = frameAngleDeg(frame);
+    if (angle < MIN_ANGLE || angle > MAX_ANGLE) {
+      warnings.push(`${title}: угол раскосины ${Math.round(angle)}° вне 20–60° — нужна консультация конструктора.`);
+    }
+  };
   if (torecFrame.warn) warnings.push('Щит торцевой: ' + torecFrame.warn + '.');
+  manualAngleWarn(torecManual, torecFrame, 'Щит торцевой');
   if (bokFrame.warn) warnings.push('Щит боковой: ' + bokFrame.warn + '.');
+  manualAngleWarn(bokManual, bokFrame, 'Щит боковой');
   if (torecFrame.len <= 0) {
     return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса торцевого щита — расчёт не выполняется.` };
   }
@@ -175,6 +199,7 @@ function computeGost10198II1(input) {
     t32Display: input.optimizeSizes ? skin.value + 2 : skin.value, edgeDistCross,
     sideFrameDisplay: s.stojkaT + skin.value + (input.optimizeSizes ? 2 : 0),
     xRaskosina: !!input.xRaskosina,
+    standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
   };
 
   // Отрицательное число в любом поле - невозможная геометрия.
