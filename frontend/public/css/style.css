@@ -42,23 +42,25 @@
     --shadow-lg: none;
     --switch-bg: #EEF0F4;
     --switch-thumb: #FFFFFF;
+    --overlay: rgba(9,17,53,.45);    /* затемнение под окнами */
   }
-  /* Тёмная тема (шестерёнка настроек вверху страницы): те же токены, тёмные
-     фоны, светлый текст; акцент - тот же коричневый, чуть светлее, чтобы
-     читался на тёмном. color-scheme - тёмные системные элементы (галочки,
-     полосы прокрутки). */
+  /* Тёмная тема (кнопка «Настройки» вверху страницы): те же токены,
+     нейтральные графитовые фоны без синевы (по указанию пользователя - как
+     на образце переключателя темы), светлый текст; акцент - тот же
+     коричневый, чуть светлее, чтобы читался на тёмном. color-scheme -
+     тёмные системные элементы (галочки, полосы прокрутки). */
   :root[data-theme="dark"]{
     color-scheme:dark;
-    --bg: #14161D;
-    --panel: #1C1F29;
-    --panel-hover: #252936;
-    --table-header-bg: #262A36;
-    --ink: #E6E8EF;
-    --ink-soft: #A3A8B8;
-    --rule: #2F3442;
-    --border-input: #3A4050;
-    --border-btn: #3A4050;
-    --secondary-hover: #2A2E3B;
+    --bg: #151515;
+    --panel: #1E1E1E;
+    --panel-hover: #262626;
+    --table-header-bg: #262626;
+    --ink: #EDEDED;
+    --ink-soft: #A3A3A3;
+    --rule: #2F2F2F;
+    --border-input: #3B3B3B;
+    --border-btn: #3B3B3B;
+    --secondary-hover: #2A2A2A;
     --accent: #B8733F;
     --accent-hover: #CB8650;
     --accent-wash: #3A2B20;
@@ -67,8 +69,9 @@
     --warn: #E3A94B;
     --warn-wash: #2F2716;
     --error: #EF6B5C;
-    --switch-bg: #14161D;
-    --switch-thumb: #2E3240;
+    --switch-bg: #151515;
+    --switch-thumb: #333333;
+    --overlay: rgba(0,0,0,.6);
   }
   /* Светлые островки в тёмной теме: свой (светлый) фон и текст. */
   /* Подложка чертежа чуть шире слота (box-shadow, раскладку не меняет) -
@@ -177,7 +180,7 @@
     align-items:center;
     justify-content:center;
     padding:24px;
-    background:rgba(9,17,53,.45);
+    background:var(--overlay);
     animation:site-settings-fade .18s ease;
   }
   .site-settings-overlay[hidden]{display:none;}
@@ -597,7 +600,7 @@
   .modal-overlay{
     position:fixed;
     inset:0;
-    background:rgba(9,17,53,.45);
+    background:var(--overlay);
     display:flex;
     align-items:center;
     justify-content:center;
