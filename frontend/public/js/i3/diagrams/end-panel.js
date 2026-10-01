@@ -44,7 +44,7 @@ function diagramEndPanel3Raskosina(heightPlusT12Val, planLenVal){
 
 function diagramEndPanel2Floors1Raskosina(heightPlusT12Val, floorSpanVal, planLenVal){
   // Фото-чертёж для варианта на 2 этажа, по 1 раскосине на этаж (натуральный размер
-  // 695×1051). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
+  // 695×1051). floorSpanVal - длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (нижняя/средняя планка + вертикальная планка нижнего этажа).
   const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
   const floorSpan = dimLabel(floorSpanVal);
@@ -67,7 +67,7 @@ function diagramEndPanel2Floors1Raskosina(heightPlusT12Val, floorSpanVal, planLe
 
 function diagramEndPanel2Floors2Raskosina(heightPlusT12Val, floorSpanVal, planLenVal){
   // Фото-чертёж для варианта на 2 этажа, по 2 раскосины на этаж (натуральный размер
-  // 1222×1044). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
+  // 1222×1044). floorSpanVal - длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (та же величина, что и на чертеже с 1 раскосиной на этаж).
   const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
   const floorSpan = dimLabel(floorSpanVal);
@@ -90,7 +90,7 @@ function diagramEndPanel2Floors2Raskosina(heightPlusT12Val, floorSpanVal, planLe
 
 function diagramEndPanel2Floors3Raskosina(heightPlusT12Val, floorSpanVal, planLenVal){
   // Фото-чертёж для варианта на 2 этажа, по 3 раскосины на этаж (натуральный размер
-  // 1757×1030). floorSpanVal — длина вертикальной планки одного этажа + ширина одной
+  // 1757×1030). floorSpanVal - длина вертикальной планки одного этажа + ширина одной
   // горизонтальной планки (та же величина, что и на остальных чертежах 2 этажей).
   const val = dimLabel(heightPlusT12Val);       // полная высота рамы щита = высота груза + толщина доски дна
   const floorSpan = dimLabel(floorSpanVal);
@@ -113,9 +113,9 @@ function diagramEndPanel2Floors3Raskosina(heightPlusT12Val, floorSpanVal, planLe
 
 function diagramEndPanel(k32val, sectionsVal, hasRaskosinaVal, innerWidthVal, heightPlusT12Val, useNoRaskosinaDiagram, floorsVal, floorSpanVal){
   // Новый фото-чертёж (рамка) показываем только при H≤600 либо когда раскосина не
-  // требуется по углу (1 секция, угол >60°) — не при W≤600 (по указанию пользователя,
-  // при W≤600 и H>600 возвращена прежняя заглушка). Для 1, 2 и 3 раскосин — свои фото.
-  // Для секций больше 3 (пока максимум 4) фото ещё нет — показываем чертёж с
+  // требуется по углу (1 секция, угол >60°) - не при W≤600 (по указанию пользователя,
+  // при W≤600 и H>600 возвращена прежняя заглушка). Для 1, 2 и 3 раскосин - свои фото.
+  // Для секций больше 3 (пока максимум 4) фото ещё нет - показываем чертёж с
   // максимальным доступным числом раскосин (3) вместо заглушки: расположение планок
   // то же самое, просто не хватает одной секции на фото.
   // Для щита на 2 этажа (наружная высота >2000мм) фото есть для 1, 2 и 3 раскосин на

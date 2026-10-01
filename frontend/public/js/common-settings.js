@@ -77,7 +77,7 @@ const SITE_SETTINGS_SECTIONS = [
     id: 'appearance', title: 'Оформление',
     rows: () => [{
       title: 'Тема',
-      hint: 'Светлая, тёмная или «как в системе» — вслед за настройкой устройства.',
+      hint: 'Светлая, тёмная или «как в системе» - вслед за настройкой устройства.',
       control: siteThemeSwitchHtml,
     }],
   },

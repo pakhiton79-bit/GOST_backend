@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Расчёт ящика — ГОСТ 10198-91 тип I-3 — Тара+</title>
+<title>Расчёт ящика - ГОСТ 10198-91 тип I-3 - Тара+</title>
 <link rel="icon" type="image/png" href="/images/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,7 +66,7 @@
       <h2>Толщины пиломатериала в наличии</h2>
       <div class="thickness-filter dropdown-wrap">
         <button type="button" class="thickness-dropdown-btn" id="thicknessDropdownBtn" onclick="toggleThicknessDropdown()">
-          <span id="thicknessDropdownLabel">—</span>
+          <span id="thicknessDropdownLabel">-</span>
           <span class="thickness-dropdown-arrow">▾</span>
         </button>
         <div class="thickness-dropdown-panel" id="thicknessDropdownPanel">
@@ -84,7 +84,7 @@
       <h2>Тип крепления груза (сечение полоза)</h2>
       <div class="thickness-filter dropdown-wrap">
         <button type="button" class="thickness-dropdown-btn" id="fasteningDropdownBtn" onclick="toggleFasteningDropdown()">
-          <span id="fasteningDropdownLabel">—</span>
+          <span id="fasteningDropdownLabel">-</span>
           <span class="thickness-dropdown-arrow">▾</span>
         </button>
         <div class="thickness-dropdown-panel" id="fasteningDropdownPanel">
@@ -116,12 +116,12 @@
         <div class="option-group-title">Доски</div>
         <label>
           <input type="checkbox" id="roundBoardWidths">
-          <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток — при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
+          <span>Округлить ширину досок<span class="option-hint">Все доски по 100 мм, без более узких на остаток - при таком расчёте они суммарно могут занять чуть больше места, чем есть: лишнее у последней доски подрежут на месте</span></span>
         </label>
         <div class="option-group-title">Пояса планок и брусья крышки</div>
         <label>
           <input type="checkbox" id="customPlankCount" onchange="onPlankLayoutCheckboxChange('count')">
-          <span>Настроить число поясов планок<span class="option-hint">Штатно — минимум поясов с шагом между ними не более 700 мм</span></span>
+          <span>Настроить число поясов планок<span class="option-hint">Штатно - минимум поясов с шагом между ними не более 700 мм</span></span>
         </label>
         <div id="plankCountRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
           <div class="modal-slider-row">
@@ -151,7 +151,7 @@
         </div>
         <label>
           <input type="checkbox" id="customBeamGap" onchange="onBeamGapCheckboxChange()">
-          <span>Настроить расстояние между краями поперечных брусьев крышки<span class="option-hint">Штатно — 800 мм</span></span>
+          <span>Настроить расстояние между краями поперечных брусьев крышки<span class="option-hint">Штатно - 800 мм</span></span>
         </label>
         <div id="beamGapRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
           <div class="modal-slider-row">
@@ -183,7 +183,7 @@
         </label>
         <label>
           <input type="checkbox" id="solidRigidBase">
-          <span>Сплошное жёсткое основание груза<span class="option-hint">Сечение полозьев — по п.1.6.5 (по массе груза), а не по Табл. 19</span></span>
+          <span>Сплошное жёсткое основание груза<span class="option-hint">Сечение полозьев - по п.1.6.5 (по массе груза), а не по Табл. 19</span></span>
         </label>
         <div class="option-group-title">Обшивка</div>
         <label>
@@ -228,21 +228,21 @@
           <div class="summary summary-4">
             <div>
               <div class="label">Наружные размеры</div>
-              <div class="value" id="outDims">— <span>мм</span></div>
+              <div class="value" id="outDims">- <span>мм</span></div>
             </div>
             <div>
               <div class="label">Расход пило&shy;материала</div>
-              <div class="value" id="outVolume">— <span>м³</span></div>
+              <div class="value" id="outVolume">- <span>м³</span></div>
             </div>
             <div class="time-tile">
               <div class="label">Масса ящика</div>
               <button type="button" class="time-settings-btn" id="densitySettingsBtn" onclick="onDensitySettingsOpen()" aria-label="Настройки плотности древесины" title="Плотность древесины">⚙</button>
-              <div class="value" id="outMass">— <span>кг</span></div>
+              <div class="value" id="outMass">- <span>кг</span></div>
             </div>
             <div class="time-tile">
               <div class="label">Норма времени</div>
               <button type="button" class="time-settings-btn" id="timeSettingsBtn" onclick="onTimeSettingsOpen()" aria-label="Настройки нормы времени" title="Настройки нормы времени">⚙</button>
-              <div class="value" id="outTime">— <span>ч</span></div>
+              <div class="value" id="outTime">- <span>ч</span></div>
             </div>
           </div>
         </div>

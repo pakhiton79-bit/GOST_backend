@@ -69,7 +69,7 @@ function updateThicknessSummary(){
   const total = AVAILABLE_THICKNESS_OPTIONS.length;
   if(availableThicknesses.length === 0){
     label.textContent = 'Толщины не выбраны - расчёт строго по ГОСТ';
-    note.innerHTML = '⚠ Толщины «в наличии» не выбраны — расчёт по ГОСТ 10198-91 без округления.';
+    note.innerHTML = '⚠ Толщины «в наличии» не выбраны - расчёт по ГОСТ 10198-91 без округления.';
     note.style.display = 'block';
   } else if(availableThicknesses.length === total){
     label.textContent = `Выбраны все толщины (${AVAILABLE_THICKNESS_OPTIONS[0]}-${AVAILABLE_THICKNESS_OPTIONS[total-1]} мм)`;

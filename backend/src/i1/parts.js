@@ -105,7 +105,7 @@ function addRaskosiny(parts, g, plankGap, withLidBottom, xRaskosina) {
   const torecLegH = H - 200;
   const torecLegW = horizPlankaLen - 200;
   if (torecLegH <= 0 || torecLegW <= 0) {
-    return `Недостаточно места для раскосины торца (катеты должны быть >0, получено ${Math.round(torecLegH)}×${Math.round(torecLegW)} мм) — расчёт не выполняется.`;
+    return `Недостаточно места для раскосины торца (катеты должны быть >0, получено ${Math.round(torecLegH)}×${Math.round(torecLegW)} мм) - расчёт не выполняется.`;
   }
   parts.torec.push(...raskosinaRows(diagonal(torecLegH, torecLegW), 1, T.torRask, 'tTorRask', xRaskosina));
 

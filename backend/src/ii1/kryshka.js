@@ -31,7 +31,7 @@ function buildKryshka(c, s) {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
     rows.push({ name: 'Доска крышки (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty, overrideKey: 'skinValue' });
   });
-  if (fb.warn) warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска крышки: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска крышки: одна доска уже менее 100 мм.');
   volume += vol(skinT, 100, boardLen, fb.mainQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty), 0);
 

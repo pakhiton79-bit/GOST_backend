@@ -26,7 +26,7 @@ function gapPlankLayout(len, gap, minEdge) {
   const edgeFor = k => (len - k * PLANK_W - (k - 1) * gap) / 2;
   let n = Math.max(2, Math.ceil((len - gap) / (gap + PLANK_W) - 1e-9));
   while (n > 2 && edgeFor(n) < minEdge) n--;
-  if (edgeFor(n) < minEdge) return { error: `Расстояние между планками ${gap} мм не помещается на крышке ${Math.round(len)} мм (2 планки и отступы от края) — расчёт не выполняется.` };
+  if (edgeFor(n) < minEdge) return { error: `Расстояние между планками ${gap} мм не помещается на крышке ${Math.round(len)} мм (2 планки и отступы от края) - расчёт не выполняется.` };
   return { count: n, edgeDist: edgeFor(n), gap };
 }
 
@@ -43,7 +43,7 @@ function tooManyPlanksText(n) {
 function countPlankLayout(len, count, minEdge) {
   const n = Math.max(2, Math.round(count));
   const edge = Math.round((len - n * PLANK_W) / (n + 1));
-  if (edge < minEdge) return { error: `${tooManyPlanksText(n)} на крышке ${Math.round(len)} мм${n > 2 ? ' — уменьшите число поясов' : ''}. Расчёт не выполняется.` };
+  if (edge < minEdge) return { error: `${tooManyPlanksText(n)} на крышке ${Math.round(len)} мм${n > 2 ? ' - уменьшите число поясов' : ''}. Расчёт не выполняется.` };
   return { count: n, edgeDist: edge, gap: (len - 2 * edge - n * PLANK_W) / (n - 1) };
 }
 

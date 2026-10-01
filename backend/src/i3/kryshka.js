@@ -20,7 +20,7 @@ function beamLayout(len, minEdge, beamGapValue, beamCountValue) {
     const edgeDist = Math.round((len - count * BEAM_W) / (count + 1));
     const gap = count > 1 ? (len - 2 * edgeDist - count * BEAM_W) / (count - 1) : 0;
     if (edgeDist < minEdge) {
-      return { error: `Длина крышки ${Math.round(len)} мм недостаточна для ${count} поперечных брусьев с отступом от края — расчёт не выполняется.` };
+      return { error: `Длина крышки ${Math.round(len)} мм недостаточна для ${count} поперечных брусьев с отступом от края - расчёт не выполняется.` };
     }
     return { count, edgeDist, gap, standardCount };
   }
@@ -30,7 +30,7 @@ function beamLayout(len, minEdge, beamGapValue, beamCountValue) {
   // Свой зазор, при котором помещается только 1 брус, и зазор больше его
   // отступа от края - смысла не имеет, расчёт блокируется.
   if (beamGapValue > 0 && count === 1 && gap > edgeDist) {
-    return { error: `Расстояние между поперечными брусьями ${gap} мм больше отступа единственного бруса от края крышки (${Math.round(edgeDist)} мм) — расчёт не выполняется.` };
+    return { error: `Расстояние между поперечными брусьями ${gap} мм больше отступа единственного бруса от края крышки (${Math.round(edgeDist)} мм) - расчёт не выполняется.` };
   }
   return { count, edgeDist, gap, standardCount };
 }
@@ -59,13 +59,13 @@ function buildKryshka(c, len, outerW) {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
     rows.push({ name: 'Доска крышки (дополнительная)' + suffix, t: wall, w: e.width, l: len, qty: e.qty, overrideKey: 'wallValue' });
   });
-  if (fb.warn) warnings.push('Доска крышки: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска крышки: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска крышки: одна доска уже менее 100 мм.');
 
   // Внутренние поперечные брусья: толщина по Табл. 14 (масса + наружная ширина).
   const crossBeam = crossBeamThickness(MASS, outerW);
   if (crossBeam.exceeded) {
-    warnings.push('Масса или ширина ящика вне Табл. 14 — брус крышки принят по крайнему значению.');
+    warnings.push('Масса или ширина ящика вне Табл. 14 - брус крышки принят по крайнему значению.');
   }
   const beamT = ov('t21Value', round(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки');
   const beamLen = W - (c.optimizeSizes ? 4 : 0);

@@ -14,7 +14,7 @@ function buildEndPanel(c, s, frame, rask) {
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
   const fb = fillBoards(s.outerW, c.roundBoardWidths);
   const boardQty = fb.mainQty * frame.floors;
-  if (fb.warn) warnings.push('Доска торца: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска торца: одна доска уже менее 100 мм.');
 
   // X-образные раскосины: к каждой раскосине - встречная из 2 кусков по

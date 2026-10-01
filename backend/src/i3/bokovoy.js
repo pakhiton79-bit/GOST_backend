@@ -30,7 +30,7 @@ function buildBokovoy(c, p) {
   const vert = { l: floors === 2 ? (plankFull - PLANK_W) / 2 : plankFull, qty: plankQty * floors };
 
   const fb = fillBoards(hFull, c.roundBoardWidths);
-  if (fb.warn) warnings.push('Доска бока: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');
 
   // Раскосина - по диагонали секции одного этажа.
@@ -39,7 +39,7 @@ function buildBokovoy(c, p) {
   if (hasRaskosina && sectionW > 0) {
     const angleDeg = Math.atan2(vertSpan, sectionW) * 180 / Math.PI;
     if (angleDeg < 20 || angleDeg > 60) {
-      warnings.push(`Угол раскосины бокового щита ${Math.round(angleDeg)}° вне 20–60° — нужна консультация конструктора.`);
+      warnings.push(`Угол раскосины бокового щита ${Math.round(angleDeg)}° вне 20–60° - нужна консультация конструктора.`);
     }
   }
 

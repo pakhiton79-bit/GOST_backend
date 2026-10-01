@@ -65,7 +65,7 @@ function measureDiagram(wrap){
         left = Math.min(left, sr.left + bb.x * sx);
         right = Math.max(right, sr.left + (bb.x + bb.width) * sx);
       }
-    }catch(e){ /* getBBox недоступен — останутся отступы по подписям */ }
+    }catch(e){ /* getBBox недоступен - останутся отступы по подписям */ }
   }
   return {box, top, bottom, left, right};
 }

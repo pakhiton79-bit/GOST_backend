@@ -60,12 +60,12 @@ function partThicknesses(ov, wall) {
 function plankLayoutError(kLen, override) {
   if (override && override.mode === 'count') {
     const n = requestedPlankCount(override.value);
-    return `${tooManyPlanksText(n)} на доске ${Math.round(kLen)} мм${n > 2 ? ' — уменьшите число поясов' : ''}. Расчёт не выполняется.`;
+    return `${tooManyPlanksText(n)} на доске ${Math.round(kLen)} мм${n > 2 ? ' - уменьшите число поясов' : ''}. Расчёт не выполняется.`;
   }
   if (override && override.mode === 'gap') {
-    return `Расстояние между планками ${override.value} мм не помещается на доске ${Math.round(kLen)} мм (2 планки и отступы от края) — расчёт не выполняется.`;
+    return `Расстояние между планками ${override.value} мм не помещается на доске ${Math.round(kLen)} мм (2 планки и отступы от края) - расчёт не выполняется.`;
   }
-  return `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок — расчёт не выполняется.`;
+  return `Длина доски ${Math.round(kLen)} мм недостаточна для отступа планок - расчёт не выполняется.`;
 }
 
 // Раскладка поясов при толщине стенки w: длина доски = L + 4w (вертикальная
@@ -124,7 +124,7 @@ function computeGost10198I1(input) {
 
   const horizPlankaLen = W - 200; // между двумя вертикальными планками торца
   if (horizPlankaLen < 0) {
-    return { error: `Ширина груза ${W} мм недостаточна для двух вертикальных планок торца (по 100мм) — расчёт не выполняется.` };
+    return { error: `Ширина груза ${W} мм недостаточна для двух вертикальных планок торца (по 100мм) - расчёт не выполняется.` };
   }
 
   // --- 2. Толщина по ГОСТ ---
@@ -174,7 +174,7 @@ function computeGost10198I1(input) {
   if (skidEnabled) {
     skidT = ov('t9Value', Math.max(skidThicknessRaw, MIN_SKID_T), 'Толщина полоза');
     if (skidThicknessRaw < MIN_SKID_T && !(manualOverrides.t9Value > 0)) {
-      warnings.push(`Толщина полоза ${skidThicknessRaw} мм менее 50 — принято 50 мм.`);
+      warnings.push(`Толщина полоза ${skidThicknessRaw} мм менее 50 - принято 50 мм.`);
     }
   }
 
@@ -210,13 +210,13 @@ function computeGost10198I1(input) {
   const crateMass = totalVolume * woodRho;
 
   if (roundUpToAvailable.state.exceeded) {
-    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
+    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
   Object.values(belowGost).forEach(b => {
-    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) — использовано введённое значение.`);
+    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) - использовано введённое значение.`);
   });
   if (appliedCount() > 0) {
-    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ — чертежи ниже могут их не точно отражать.');
+    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ - чертежи ниже могут их не точно отражать.');
   }
 
   const result = {
@@ -238,7 +238,7 @@ function computeGost10198I1(input) {
   const negField = findNegativeField(result, '');
   if (negField) {
     console.warn('Расчёт дал отрицательное значение:', negField);
-    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей — рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
+    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }

@@ -20,7 +20,7 @@ function buildBokovoy(c, s, frame, rask) {
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
   const fb = fillBoards(L, c.roundBoardWidths);
   const boardQty = fb.mainQty * frame.floors;
-  if (fb.warn) warnings.push('Доска бока: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');
 
   // X-образные раскосины: к каждой раскосине - встречная из 2 кусков по

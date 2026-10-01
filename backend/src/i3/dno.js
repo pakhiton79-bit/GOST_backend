@@ -14,21 +14,21 @@ function chooseSkids(c, skidLen, skidCalcWidth) {
   if (c.solidRigidBase) {
     const poloz = polozSection165(MASS);
     if (poloz.exceeded) {
-      warnings.push('Масса вне диапазона п.1.6.5 (500–20000 кг) — сечение полоза принято по крайнему значению.');
+      warnings.push('Масса вне диапазона п.1.6.5 (500–20000 кг) - сечение полоза принято по крайнему значению.');
     }
     const count = Math.max((W > 1100) ? 3 : 2, minSkidsByWidth162(skidCalcWidth, poloz.w));
     return { count, t: poloz.h, w: poloz.w };
   }
   const sel = selectSkid19(MASS, skidLen, skidCalcWidth, c.availableThicknesses);
   if (sel.massSnapped) {
-    warnings.push(`Масса ${MASS} кг вне Табл. 19 — принята ближайшая (${sel.massUsed} кг).`);
+    warnings.push(`Масса ${MASS} кг вне Табл. 19 - принята ближайшая (${sel.massUsed} кг).`);
   }
   if (sel.lengthSnapped) {
-    warnings.push(`Длина полоза ${Math.round(skidLen)} мм вне Табл. 19 — принята ближайшая (${sel.lengthUsed} мм).`);
+    warnings.push(`Длина полоза ${Math.round(skidLen)} мм вне Табл. 19 - принята ближайшая (${sel.lengthUsed} мм).`);
   }
   if (sel.extrapolatedBeyondOne) {
     // +1 полоз сверх таблицы - штатно; больше - уже отклонение от правила.
-    warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) — добавлен ещё того же сечения (${sel.count} шт. итого).`);
+    warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) - добавлен ещё того же сечения (${sel.count} шт. итого).`);
   }
   return { count: sel.count, t: sel.h, w: sel.w };
 }
@@ -42,10 +42,10 @@ function floorBoardGostThickness(c, skid, skidCalcWidth) {
   const floor = floorBoardThickness(MASS, L, W, skidDistance);
   if (floor.exceeded) {
     if (floor.udel > T4_LOADS[T4_LOADS.length - 1]) {
-      warnings.push(`Удельная нагрузка на дно ${floor.udel.toFixed(2)} кг/см² вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
+      warnings.push(`Удельная нагрузка на дно ${floor.udel.toFixed(2)} кг/см² вне Табл. 4 - толщина доски дна принята по крайнему значению.`);
     }
     if (skidDistance > T4_DISTANCES[T4_DISTANCES.length - 1]) {
-      warnings.push(`Шаг полозьев ${Math.round(skidDistance)} мм вне Табл. 4 — толщина доски дна принята по крайнему значению.`);
+      warnings.push(`Шаг полозьев ${Math.round(skidDistance)} мм вне Табл. 4 - толщина доски дна принята по крайнему значению.`);
     }
   }
   return floor.value;
@@ -84,7 +84,7 @@ function buildDno(c) {
   // Торцовый брус дна (п.1.6.8). Ручная толщина (t11Value) - только в таблице.
   const endBeam = endBeamSection(MASS);
   if (endBeam.exceeded) {
-    warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) — сечение торцового бруса дна принято по крайнему значению.');
+    warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
   const beam = { t: round(endBeam.h), w: endBeam.w, l: W, qty: 2 };
   rows.push({ name: 'Торцовый брус дна', t: ov('t11Value', beam.t, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11Value' });
@@ -100,7 +100,7 @@ function buildDno(c) {
       const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
       rows.push({ name: 'Доска дна (дополнительная)' + suffix, t: t12, w: e.width, l: floorLen, qty: e.qty, overrideKey: 't12Value' });
     });
-    if (fb.warn) warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
+    if (fb.warn) warnings.push('Доска дна: остаток - нестандартная ширина (вне 75–99 мм).');
     if (fb.singleNarrow) warnings.push('Доска дна: одна доска уже менее 100 мм.');
   }
 

@@ -187,7 +187,7 @@ async function calculate(){
     clearCalcHint();
     const loading = document.getElementById('calcLoading');
     if(loading && loading.classList.contains('active')) setCalcStatus(null);
-    // Текст отказа, выданного во время расчёта (напр. «Идёт расчёт —
+    // Текст отказа, выданного во время расчёта (напр. «Идёт расчёт -
     // дождитесь…»), после успешного расчёта уже неактуален.
     const check = document.getElementById('calcCheck'), errEl = document.getElementById('err');
     if(check && check.classList.contains('active') && errEl && lastRefusalText && errEl.textContent === lastRefusalText) errEl.textContent = '';
@@ -213,7 +213,7 @@ async function calculate(){
 // только на экране) добавляется строка об этом; иначе после смены исходных
 // данных (напр. числа поясов планок) казалось бы, что «Рассчитать» ничего не
 // сделал - ручное значение в таблице оставалось прежним.
-const MANUAL_EDITS_WARNING = 'В таблицах есть ручные правки (выделены цветом) — они заменяют расчётные значения. Чтобы вернуть расчётные, нажмите «Сбросить до стандартных значений».';
+const MANUAL_EDITS_WARNING = 'В таблицах есть ручные правки (выделены цветом) - они заменяют расчётные значения. Чтобы вернуть расчётные, нажмите «Сбросить до стандартных значений».';
 function showManualEditsWarning(){
   const el = document.getElementById('warningsTop');
   if(!el) return;

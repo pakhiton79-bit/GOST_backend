@@ -31,7 +31,7 @@ function buildEndPanel(c, t12) {
   if (H > 600 && W > 600) {
     while (angleDeg(sections) < MIN_ANGLE && sectionWidth(sections + 1) > 0) sections++;
     if (angleDeg(sections) < MIN_ANGLE) {
-      warnings.push(`Щит торцевой: угол раскосины <20° даже при максимуме секций (${sections}) — больше не добавить, не хватает места (по ${PLANK_W} мм на планку).`);
+      warnings.push(`Щит торцевой: угол раскосины <20° даже при максимуме секций (${sections}) - больше не добавить, не хватает места (по ${PLANK_W} мм на планку).`);
     }
   }
   const hasRaskosina = H > 600 && W > 600 && !(sections === 1 && angleDeg(1) > MAX_ANGLE);
@@ -39,7 +39,7 @@ function buildEndPanel(c, t12) {
   const rask = { l: Math.sqrt(Math.pow(sectionWidth(sections), 2) + Math.pow(vertLen, 2)), qty: hasRaskosina ? sections * floors : 0 };
 
   const fb = fillBoards(hFull, c.roundBoardWidths);
-  if (fb.warn) warnings.push('Доска торца: остаток — нестандартная ширина (вне 75–99 мм).');
+  if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска торца: одна доска уже менее 100 мм.');
 
   // X-образные раскосины: к каждой раскосине - встречная из 2 кусков по

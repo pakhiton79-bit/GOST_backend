@@ -19,7 +19,7 @@ function buildDno(c, s, subLengthWarn) {
 
   const endBeam = endBeamSection(MASS);
   if (endBeam.exceeded) {
-    warnings.push('Масса вне диапазона п.1.6.8 (≤20000 кг) — сечение торцового бруса дна принято по крайнему значению.');
+    warnings.push('Масса вне диапазона п.1.6.8 (≤20000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
   const beam = { t: round(endBeam.h), w: endBeam.w, l: W, qty: 2 };
   rows.push({ name: 'Торцовый брус дна', t: ov('t11', beam.t, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
@@ -33,7 +33,7 @@ function buildDno(c, s, subLengthWarn) {
       const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
       rows.push({ name: 'Доска дна (дополнительная)' + suffix, t: floorT, w: e.width, l: floorLen, qty: e.qty, overrideKey: 'floorBoardT' });
     });
-    if (fb.warn) warnings.push('Доска дна: остаток — нестандартная ширина (вне 75–99 мм).');
+    if (fb.warn) warnings.push('Доска дна: остаток - нестандартная ширина (вне 75–99 мм).');
     if (fb.singleNarrow) warnings.push('Доска дна: одна доска уже менее 100 мм.');
   }
 

@@ -70,10 +70,10 @@ function computeGost10198II1(input) {
   }
   const warnings = [];
   if (MASS > 20000) {
-    warnings.push('Масса груза вне диапазона типа II-1 (≤20000 кг) — расчёт продолжен по крайнему значению.');
+    warnings.push('Масса груза вне диапазона типа II-1 (≤20000 кг) - расчёт продолжен по крайнему значению.');
   }
   if (MASS < 200) {
-    warnings.push(`Масса груза ${MASS} кг менее 200 кг — вне области распространения ГОСТ 10198-91 в целом (200–20000 кг). Расчёт продолжен, но результат нужно перепроверить.`);
+    warnings.push(`Масса груза ${MASS} кг менее 200 кг - вне области распространения ГОСТ 10198-91 в целом (200–20000 кг). Расчёт продолжен, но результат нужно перепроверить.`);
   }
   // Толщина досок обшивки (щиты и крышка) - черновая таблица по массе.
   const skin = { value: ov('skinValue', round(skinThickness(MASS)), 'Толщина обшивки (доска крышки)') };
@@ -83,7 +83,7 @@ function computeGost10198II1(input) {
   const s = stabilizeSizes(c);
 
   if (s.crossBeamExceeded) {
-    warnings.push('Масса или ширина ящика вне Табл. 14 — поперечный брус крышки принят по крайнему значению.');
+    warnings.push('Масса или ширина ящика вне Табл. 14 - поперечный брус крышки принят по крайнему значению.');
   }
   // Поперечные брусья крышки - равномерно: отступ от стенки до крайнего бруса
   // (crossEdge) равен промежутку между краями соседних (crossGap), при
@@ -101,7 +101,7 @@ function computeGost10198II1(input) {
   const maxCrossBeamCount = Math.max(2, Math.floor((L - crossMinGap) / (crossW + crossMinGap) + 1e-9));
   if (crossEdge < crossHardMin) {
     if (crossManual) {
-      return { error: `${tooManyCrossBeamsText(crossN)} в крышке: отступ от стенки до крайнего бруса ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) — уменьшите число брусьев. Расчёт не выполняется.` };
+      return { error: `${tooManyCrossBeamsText(crossN)} в крышке: отступ от стенки до крайнего бруса ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) - уменьшите число брусьев. Расчёт не выполняется.` };
     }
     warnings.push(`Отступ от стенки до крайнего поперечного бруса крышки ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) даже при 2 брусьях.`);
   }
@@ -111,28 +111,28 @@ function computeGost10198II1(input) {
     warnings.push(`Отступ от стенки до крайнего поперечного бруса крышки ${Math.round(crossEdge)} мм больше ${s.crossBeamMaxGap} мм.`);
   }
   if (s.polozSimpleExceeded) {
-    warnings.push('Масса вне диапазона табл. полозьев со сплошным основанием (500–20000 кг) — сечение полоза принято по крайнему значению.');
+    warnings.push('Масса вне диапазона табл. полозьев со сплошным основанием (500–20000 кг) - сечение полоза принято по крайнему значению.');
   }
   const t19 = s.skidTableInfo;
   if (t19) {
     if (t19.massSnapped) {
-      warnings.push(`Масса ${MASS} кг вне Табл. 19 — принята ближайшая (${t19.massUsed} кг).`);
+      warnings.push(`Масса ${MASS} кг вне Табл. 19 - принята ближайшая (${t19.massUsed} кг).`);
     }
     if (t19.lengthSnapped) {
-      warnings.push(`Длина полоза ${Math.round(s.len)} мм вне Табл. 19 — принята ближайшая (${t19.lengthUsed} мм).`);
+      warnings.push(`Длина полоза ${Math.round(s.len)} мм вне Табл. 19 - принята ближайшая (${t19.lengthUsed} мм).`);
     }
     if (t19.extrapolatedBeyondOne) {
-      warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) — добавлен ещё того же сечения (${t19.count} шт. итого).`);
+      warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) - добавлен ещё того же сечения (${t19.count} шт. итого).`);
     }
   }
   if (s.stojkaExceeded) {
-    warnings.push('Масса или высота ящика вне табл. толщины стоек — сечение принято по крайнему значению.');
+    warnings.push('Масса или высота ящика вне табл. толщины стоек - сечение принято по крайнему значению.');
   }
   if (s.longBeamExceeded) {
-    warnings.push('Шаг осей брусьев крышки вне табл. продольных брусьев — сечение принято по крайнему значению.');
+    warnings.push('Шаг осей брусьев крышки вне табл. продольных брусьев - сечение принято по крайнему значению.');
   }
   if (s.floorBoardExceeded) {
-    warnings.push('Удельная нагрузка или шаг полозьев вне Табл. 4 — толщина доски дна принята по крайнему значению.');
+    warnings.push('Удельная нагрузка или шаг полозьев вне Табл. 4 - толщина доски дна принята по крайнему значению.');
   }
   // Подполозная доска: длина < 300 мм - предупреждение; ≤ 0 или < 300 при
   // погрузке погрузчиком - в таблице ⚠ вместо длины.
@@ -159,24 +159,24 @@ function computeGost10198II1(input) {
   const torecFrame = torecManual ? buildFrame(torecSpace, panelHeightFull, H, input.torecPostCount) : torecStandard;
   const bokFrame = bokManual ? buildFrame(bokSpace, panelHeightFull, H, input.bokPostCount) : bokStandard;
   if (torecFrame.tooNarrow) {
-    return { error: `Ширина груза ${W} мм слишком мала для минимум двух стоек торцевого щита (по 100мм) — расчёт не выполняется.` };
+    return { error: `Ширина груза ${W} мм слишком мала для минимум двух стоек торцевого щита (по 100мм) - расчёт не выполняется.` };
   }
   if (bokFrame.tooNarrow) {
-    return { error: `Длина груза ${L} мм слишком мала для минимум двух стоек бокового щита (по 100мм) — расчёт не выполняется.` };
+    return { error: `Длина груза ${L} мм слишком мала для минимум двух стоек бокового щита (по 100мм) - расчёт не выполняется.` };
   }
   // Заданное вручную число стоек не помещается - блокировка.
   if (torecManual && torecFrame.sectionW <= 0) {
-    return { error: `${tooManyPostsText(torecFrame.count)} на торцевом щите ${Math.round(torecSpace)} мм — уменьшите число стоек. Расчёт не выполняется.` };
+    return { error: `${tooManyPostsText(torecFrame.count)} на торцевом щите ${Math.round(torecSpace)} мм - уменьшите число стоек. Расчёт не выполняется.` };
   }
   if (bokManual && bokFrame.sectionW <= 0) {
-    return { error: `${tooManyPostsText(bokFrame.count)} на боковом щите ${Math.round(bokSpace)} мм — уменьшите число стоек. Расчёт не выполняется.` };
+    return { error: `${tooManyPostsText(bokFrame.count)} на боковом щите ${Math.round(bokSpace)} мм - уменьшите число стоек. Расчёт не выполняется.` };
   }
   // Угол раскосины при ручном числе стоек - вне 20-60° только предупреждение.
   const manualAngleWarn = (manual, frame, title) => {
     if (!manual || !frame.hasRaskosina) return;
     const angle = frameAngleDeg(frame);
     if (angle < MIN_ANGLE || angle > MAX_ANGLE) {
-      warnings.push(`${title}: угол раскосины ${Math.round(angle)}° вне 20–60° — нужна консультация конструктора.`);
+      warnings.push(`${title}: угол раскосины ${Math.round(angle)}° вне 20–60° - нужна консультация конструктора.`);
     }
   };
   if (torecFrame.warn) warnings.push('Щит торцевой: ' + torecFrame.warn + '.');
@@ -184,10 +184,10 @@ function computeGost10198II1(input) {
   if (bokFrame.warn) warnings.push('Щит боковой: ' + bokFrame.warn + '.');
   manualAngleWarn(bokManual, bokFrame, 'Щит боковой');
   if (torecFrame.len <= 0) {
-    return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса торцевого щита — расчёт не выполняется.` };
+    return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса торцевого щита - расчёт не выполняется.` };
   }
   if (bokFrame.len <= 0) {
-    return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита — расчёт не выполняется.` };
+    return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита - расчёт не выполняется.` };
   }
   // Раскосина - 2/3 толщины стойки.
   const rask = { t: ov('tRaskosina', round(s.stojkaT * 2 / 3), 'Толщина раскосины'), w: 100 };
@@ -201,13 +201,13 @@ function computeGost10198II1(input) {
   const crateMass = totalVolume * woodRho;
 
   if (round.state.exceeded) {
-    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
+    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
   Object.values(belowGost).forEach(b => {
-    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) — использовано введённое значение.`);
+    warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) - использовано введённое значение.`);
   });
   if (appliedCount() > 0) {
-    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ — чертежи ниже могут их не точно отражать.');
+    warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ - чертежи ниже могут их не точно отражать.');
   }
 
   const result = {
@@ -237,7 +237,7 @@ function computeGost10198II1(input) {
   const negField = findNegativeField(result, '');
   if (negField) {
     console.warn('Расчёт дал отрицательное значение:', negField);
-    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей — рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
+    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }
