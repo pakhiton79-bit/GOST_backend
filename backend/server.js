@@ -148,6 +148,7 @@ app.post('/api/ii1/calculate', (req, res) => {
     xRaskosina: !!b.xRaskosina,
     torecPostCount: toNum(b.torecPostCount),
     bokPostCount: toNum(b.bokPostCount),
+    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),

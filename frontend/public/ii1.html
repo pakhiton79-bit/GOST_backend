@@ -123,25 +123,35 @@
         <input type="checkbox" id="optimizeSizes">
         <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм; при поперечном расположении досок крышки — и продольного бруса тоже</span></span>
       </label>
+      <label>
+        <input type="checkbox" id="customCrossBeams" onchange="onManualCountCheckboxChange('cross')">
+        <span>Настроить число поперечных брусьев<span class="option-hint">Брусья — равномерно по длине крышки, отступы от стенок равны промежуткам между брусьями. Штатно — наименьшее число, при котором расстояние между краями брусьев не больше 700 мм</span></span>
+      </label>
+      <div id="crossBeamsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="crossBeamsSlider"></div>
+          <input type="number" id="crossBeamsInput" step="1" min="2" oninput="onManualCountInputChange('cross')">
+        </div>
+      </div>
       <div class="option-group-title">Стойки каркаса</div>
       <label>
-        <input type="checkbox" id="customTorecPosts" onchange="onPostCountCheckboxChange('torec')">
+        <input type="checkbox" id="customTorecPosts" onchange="onManualCountCheckboxChange('torec')">
         <span>Настроить число стоек торцевого щита<span class="option-hint">Крайние стойки — по краям щита, остальные равномерно между ними</span></span>
       </label>
       <div id="torecPostsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="torecPostsSlider"></div>
-          <input type="number" id="torecPostsInput" step="1" min="2" oninput="onPostCountInputChange('torec')">
+          <input type="number" id="torecPostsInput" step="1" min="2" oninput="onManualCountInputChange('torec')">
         </div>
       </div>
       <label>
-        <input type="checkbox" id="customBokPosts" onchange="onPostCountCheckboxChange('bok')">
+        <input type="checkbox" id="customBokPosts" onchange="onManualCountCheckboxChange('bok')">
         <span>Настроить число стоек бокового щита<span class="option-hint">Крайние стойки — по краям щита, остальные равномерно между ними</span></span>
       </label>
       <div id="bokPostsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="bokPostsSlider"></div>
-          <input type="number" id="bokPostsInput" step="1" min="2" oninput="onPostCountInputChange('bok')">
+          <input type="number" id="bokPostsInput" step="1" min="2" oninput="onManualCountInputChange('bok')">
         </div>
       </div>
       <div class="option-group-title">Раскосины</div>
@@ -265,7 +275,7 @@
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
 <script src="/js/ii1/options.js"></script>
-<script src="/js/ii1/posts.js"></script>
+<script src="/js/ii1/manual-counts.js"></script>
 <script src="/js/ii1/render-ii1.js"></script>
 <script src="/js/ii1/print-ii1.js"></script>
 <script src="/js/ii1/calc-ii1.js"></script>
