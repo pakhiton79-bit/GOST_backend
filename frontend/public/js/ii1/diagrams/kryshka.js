@@ -5,9 +5,9 @@
 // границы, без досок (по указанию пользователя), продольные брусья
 // светло-серые (крайние - вровень с краями крышки, по длине - с отступом на
 // толщину торцевой доски), поперечные - тёмно-серые, короче крышки на
-// толщину бокового щита сверху и снизу. Поперечные брусья стоят по расчёту:
-// отступ от края и зазоры - edgeDist, ширина - crossBeamW (в масштабе длины
-// крышки); не помещаются с зазором - сужаются; если так плотно, что брусья
+// толщину бокового щита сверху и снизу. Поперечные брусья: зазоры -
+// edgeDist, ширина - crossBeamW (в масштабе длины крышки), группа - по
+// середине крышки; не помещаются с зазором - сужаются; если так плотно, что брусья
 // слились бы и так, - заглушка.
 // Подписи - как на фото того же вида (без продольных - «0×3», с продольными -
 // «4×4»), кроме привязанных к первому поперечному брусу (отступ от края и
@@ -25,10 +25,14 @@ function kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, edgeDistVal,
   const G = longbeamCount > 0 ? KRYSHKA_GEN[2] : KRYSHKA_GEN[0];
   const f = v => v.toFixed(1);
   const rect = (x0, y0, x1, y1, fill) => `<rect x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" fill="${fill}"/>`;
-  // Поперечные брусья: центры по расчётным отступу и зазорам (в масштабе длины).
+  // Поперечные брусья: шаг - по расчёту (ширина бруса + зазор edgeDist, в
+  // масштабе длины крышки), вся группа - по середине крышки (симметрично:
+  // отступ в расчёте - от внутренней стенки, а крышка на чертеже - по
+  // наружным размерам).
   const span = G.x1 - G.x0, pxPerMm = span / lengthVal;
   const bw = crossBeamW > 0 ? crossBeamW : 100;
-  const centers = Array.from({length: crossBeamCount}, (_, i) => G.x0 + (edgeDistVal + bw / 2 + i * (bw + edgeDistVal)) * pxPerMm);
+  const startMm = (lengthVal - (crossBeamCount * bw + (crossBeamCount - 1) * edgeDistVal)) / 2;
+  const centers = Array.from({length: crossBeamCount}, (_, i) => G.x0 + (startMm + bw / 2 + i * (bw + edgeDistVal)) * pxPerMm);
   const pitch = crossBeamCount > 1 ? centers[1] - centers[0] : span;
   // брусья сужаются, если не помещаются с зазором (не меньше 40% шага)
   const beamW = Math.min(KRYSHKA_GEN_BEAM, 0.6 * pitch, 1.2 * (centers[0] - G.x0));
