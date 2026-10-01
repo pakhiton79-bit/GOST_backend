@@ -29,6 +29,10 @@ function tooManyCrossBeamsText(n) {
 }
 const { buildBokovoy } = require('./bokovoy');
 
+// Плотность древесины по умолчанию, кг/м³; на клиенте настраивается
+// шестерёнкой у «Массы ящика».
+const WOOD_DENSITY_KG_M3 = 700;
+
 // Ручные правки толщин. Значение из цикла согласования читается на каждой
 // итерации, поэтому «меньше ГОСТ» не пишется в предупреждения сразу, а
 // копится в belowGost и выводится один раз в конце.
@@ -51,9 +55,10 @@ function makeThicknessOverrides(manualOverrides) {
 //   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
 //   xRaskosina, torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
-//   availableThicknesses, manualOverrides, baseProductivity, timeCoeff }.
+//   availableThicknesses, manualOverrides, baseProductivity, timeCoeff,
+//   woodDensity }.
 function computeGost10198II1(input) {
-  const { L, W, H, MASS, baseProductivity, timeCoeff } = input;
+  const { L, W, H, MASS, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const round = makeRoundUpToAvailable(availableThicknesses);
   const { ov, belowGost, appliedCount } = makeThicknessOverrides(input.manualOverrides || {});
@@ -191,6 +196,8 @@ function computeGost10198II1(input) {
   // --- 4. Итог ---
   const totalVolume = dno.volume + kryshka.volume + 2 * endPanel.volume + 2 * bokovoy.volume;
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);
+  const woodRho = woodDensity > 0 ? woodDensity : WOOD_DENSITY_KG_M3;
+  const crateMass = totalVolume * woodRho;
 
   if (round.state.exceeded) {
     warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) — использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
@@ -204,7 +211,7 @@ function computeGost10198II1(input) {
 
   const result = {
     warnings, dno: dno.rows, kryshka: kryshka.rows, endPanel: endPanel.rows, bokovoy: bokovoy.rows,
-    outerL: s.len, outerW: s.outerW, outerH: s.outerH, totalVolume, normaVremeni,
+    outerL: s.len, outerW: s.outerW, outerH: s.outerH, totalVolume, normaVremeni, crateMass, woodDensity: woodRho,
     // Параметры чертежей.
     k9Base: s.len, W, L, H, t_stojka: s.stojkaT, skin, t21: s.crossBeamT, t_longbeam: s.longBeamT, lidLayout: input.lidLayout,
     torecFrame, bokFrame, panelHeightFull,
@@ -230,4 +237,4 @@ function computeGost10198II1(input) {
   return result;
 }
 
-module.exports = { computeGost10198II1 };
+module.exports = { computeGost10198II1, WOOD_DENSITY_KG_M3 };

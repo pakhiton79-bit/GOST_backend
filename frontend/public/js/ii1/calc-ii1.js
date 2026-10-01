@@ -43,6 +43,7 @@ function buildCalcInput(){
     manualOverrides,
     tableEdits,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
+    woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
   };
 }
 
@@ -107,6 +108,7 @@ document.getElementById('boardTables').addEventListener('input', e=>{
 
 document.getElementById('boxView').src = BOX_II1_IMG_B64;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
 
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
 // красной рамкой (highlightErrorFields в common-calc-state.js).

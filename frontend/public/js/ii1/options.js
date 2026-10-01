@@ -4,6 +4,7 @@
 const THICKNESS_STORAGE_KEY = 'gost10198-ii1-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 const TIME_SETTINGS_STORAGE_KEY = 'gost10198-ii1-time-settings'; // шестерёнка «Нормы времени»
+const WOOD_DENSITY_STORAGE_KEY = 'gost10198-ii1-wood-density';   // шестерёнка «Массы ящика»
 const FASTENING_STORAGE_KEY = 'gost10198-ii1-fastening-type';
 const OPTIONS_STORAGE_PREFIX = 'gost10198-ii1-opt-';             // галочки и переключатели
 

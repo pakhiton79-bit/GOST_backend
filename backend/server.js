@@ -152,9 +152,11 @@ app.post('/api/ii1/calculate', (req, res) => {
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
     timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input));
+  res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
