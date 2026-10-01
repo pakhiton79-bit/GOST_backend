@@ -263,16 +263,22 @@
     margin-right:6px;
   }
 
+  /* Плитка с общим видом ящика - по высоте таблицы «Итог» (по указанию
+     пользователя): растягивается на высоту ряда, а сама в высоту ряда не
+     вкладывается (contain:size), картинка вписана без искажения
+     (object-fit:contain). В столбце (узкий экран) - обычная высота. */
   .summary-row{
     display:flex;
     gap:24px;
-    align-items:center;
+    align-items:stretch;
   }
   .summary-row .summary{flex:1;min-width:0;}
   .box-view{
     flex:0 0 280px;
     width:280px;
     height:auto;
+    contain:size;
+    object-fit:contain;
     display:block;
     border:1px solid var(--rule);
     border-radius:12px;
@@ -282,7 +288,7 @@
   }
   @media screen and (max-width:700px){
     .summary-row{flex-direction:column;align-items:stretch;}
-    .box-view{flex-basis:auto;width:100%;max-width:280px;margin:0 auto;}
+    .box-view{flex-basis:auto;width:100%;max-width:280px;margin:0 auto;contain:none;}
   }
 
   .summary{
