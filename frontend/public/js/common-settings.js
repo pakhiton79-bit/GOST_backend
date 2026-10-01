@@ -97,10 +97,10 @@ function siteSettingsContentHtml(){
 }
 
 // Верхняя панель сайта («чердак», по указанию пользователя - отдельно от
-// формы расчёта): слева логотип «Тара+» (ссылка на главную) и ссылки
-// «Назад / Главная» (берутся из .top-nav страницы - сама строка скрыта в
-// style.css), справа кнопка «Настройки». Ширина содержимого - как у .wrap
-// страницы; место под панель зарезервировано в style.css (body
+// формы расчёта): слева ссылки «Назад / Главная» (берутся из .top-nav
+// страницы - сама строка скрыта в style.css), правее них логотип «Тара+»
+// (ссылка на главную), справа кнопка «Настройки». Ширина содержимого - как
+// у .wrap страницы; место под панель зарезервировано в style.css (body
 // padding-top), поэтому при её появлении страница не сдвигается.
 function buildSiteTopbar(wrap){
   const bar = document.createElement('div');
@@ -109,7 +109,6 @@ function buildSiteTopbar(wrap){
   inner.className = 'site-topbar-inner';
   inner.style.maxWidth = getComputedStyle(wrap).maxWidth;
   const icon = document.querySelector('link[rel="icon"]');
-  inner.innerHTML = `<a class="site-brand" href="index.html">${icon ? `<img src="${icon.getAttribute('href')}" alt="">` : ''}<span>Тара+</span></a>`;
   const pageNav = wrap.querySelector('.top-nav');
   if(pageNav){
     const links = document.createElement('nav');
@@ -117,6 +116,7 @@ function buildSiteTopbar(wrap){
     pageNav.querySelectorAll('a').forEach(a => links.appendChild(a.cloneNode(true)));
     inner.appendChild(links);
   }
+  inner.insertAdjacentHTML('beforeend', `<a class="site-brand" href="index.html">${icon ? `<img src="${icon.getAttribute('href')}" alt="">` : ''}<span>Тара+</span></a>`);
   bar.appendChild(inner);
   document.body.insertBefore(bar, document.body.firstChild);
   return inner;
