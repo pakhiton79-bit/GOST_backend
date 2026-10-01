@@ -1,4 +1,12 @@
-  :root{
+  /* Светлая палитра - на всём сайте по умолчанию и в тёмной теме на
+     «светлых островках»: печатный лист (#printArea - печать и PDF всегда
+     светлые), чертежи (по указанию пользователя - на светлой подложке, как
+     на бумаге) и общий вид ящика (фото на белом фоне). Тёмная палитра -
+     ниже, :root[data-theme="dark"] (тему ставит js/common-settings.js). */
+  :root,
+  :root[data-theme="dark"] #printArea,
+  :root[data-theme="dark"] #boardTables .diagram-slot,
+  :root[data-theme="dark"] .box-view{
     /* Палитра и токены — "бумажная обсерватория" (см. превью-артефакт,
        одобренный пользователем): почти ахроматичный холст + один оттенок
        коричневого (--accent, Umber) вместо синих акцентов референса -
@@ -33,6 +41,41 @@
     --shadow-sm: none;
     --shadow-lg: none;
   }
+  /* Тёмная тема (шестерёнка настроек вверху страницы): те же токены, тёмные
+     фоны, светлый текст; акцент - тот же коричневый, чуть светлее, чтобы
+     читался на тёмном. color-scheme - тёмные системные элементы (галочки,
+     полосы прокрутки). */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg: #14161D;
+    --panel: #1C1F29;
+    --panel-hover: #252936;
+    --table-header-bg: #262A36;
+    --ink: #E6E8EF;
+    --ink-soft: #A3A8B8;
+    --rule: #2F3442;
+    --border-input: #3A4050;
+    --border-btn: #3A4050;
+    --secondary-hover: #2A2E3B;
+    --accent: #B8733F;
+    --accent-hover: #CB8650;
+    --accent-wash: #3A2B20;
+    --manual-ink: #F2BE94;
+    --ok: #5DBB6A;
+    --warn: #E3A94B;
+    --warn-wash: #2F2716;
+    --error: #EF6B5C;
+  }
+  /* Светлые островки в тёмной теме: свой (светлый) фон и текст. */
+  /* Подложка чертежа чуть шире слота (box-shadow, раскладку не меняет) -
+     подписи размеров стоят у самого края слота. */
+  :root[data-theme="dark"] #boardTables .diagram-slot{
+    color-scheme:light;
+    background:var(--panel);
+    color:var(--ink);
+    border-radius:12px;
+    box-shadow:0 0 0 8px var(--panel);
+  }
   *{box-sizing:border-box;}
   html{overflow-x:hidden;}
   body{
@@ -65,6 +108,47 @@
     text-decoration:none;
   }
   .top-nav a:hover{color:var(--accent);}
+
+  /* Шестерёнка общих настроек сайта (js/common-settings.js) - в правом краю
+     строки «Назад / Главная»; крупная и заметная (по указанию пользователя):
+     46×46, коричневая обводка и значок, на ховере - заливка, как у CTA.
+     Позиционируется абсолютно, чтобы строка навигации не стала выше. */
+  .top-nav{position:relative;}
+  /* строка только с шестерёнкой (главная) - высотой как обычная */
+  .top-nav.site-settings-only{height:18px;}
+  .site-settings-btn{
+    position:absolute;
+    right:0;
+    top:50%;
+    transform:translateY(-50%);
+    width:46px;
+    height:46px;
+    margin:0;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--panel);
+    color:var(--accent);
+    border:2px solid var(--accent);
+    border-radius:12px;
+    z-index:5;
+  }
+  .site-settings-btn:hover{background:var(--accent);color:#ffffff;}
+  .site-settings-btn svg{width:26px;height:26px;}
+  /* Выбор темы - два переключателя-кнопки в одну строку */
+  .site-theme-switch{display:flex;gap:8px;}
+  .site-theme-option{
+    flex:1;
+    margin:0;
+    padding:10px 16px;
+    background:var(--panel);
+    color:var(--ink);
+    border:1px solid var(--border-btn);
+    box-shadow:none;
+  }
+  .site-theme-option:hover{background:var(--secondary-hover);}
+  .site-theme-option[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#ffffff;}
 
   header{
     border-bottom:1px solid var(--rule);
@@ -136,7 +220,7 @@
     border-radius:8px;
     font-family:inherit;
     font-size:16px;
-    background:#ffffff;
+    background:var(--panel);
     color:var(--ink);
     -moz-appearance:textfield;
   }
@@ -160,7 +244,7 @@
     font-family:inherit;
     font-size:15px;
     line-height:1.5;
-    background:#ffffff;
+    background:var(--panel);
     color:var(--ink);
     resize:vertical;
     box-sizing:border-box;
@@ -193,7 +277,7 @@
 
   /* Secondary — второстепенные действия (см. design.md: белая, рамка, hover-фон) */
   .btn-secondary{
-    background:#ffffff;
+    background:var(--panel);
     color:var(--ink);
     border:1px solid var(--border-btn);
     box-shadow:none;
@@ -346,7 +430,7 @@
     margin:0;
     border:1px solid var(--rule);
     border-radius:8px;
-    background:#ffffff;
+    background:var(--panel);
     color:var(--ink-soft);
     font-size:14px;
     line-height:1;
@@ -855,14 +939,14 @@
     padding:12px 14px;
     border:1px solid var(--border-input);
     border-radius:8px;
-    background:#ffffff;
+    background:var(--panel);
     color:var(--ink);
     font-family:inherit;
     font-size:14px;
     cursor:pointer;
     text-align:left;
   }
-  .thickness-dropdown-btn:hover{background:#ffffff;border-color:var(--accent);}
+  .thickness-dropdown-btn:hover{background:var(--panel);border-color:var(--accent);}
   .thickness-dropdown-btn span:first-child{
     overflow:hidden;
     text-overflow:ellipsis;
