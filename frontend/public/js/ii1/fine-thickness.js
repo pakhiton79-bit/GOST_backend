@@ -8,6 +8,7 @@
 const FINE_THICKNESS_FIELDS = [
   { key: 'frame',     label: 'Каркас (стойки и раскосины)' },
   { key: 'skid',      label: 'Полозья' },
+  { key: 'sub',       label: 'Подполозные доски' },
   { key: 'skin',      label: 'Доски обшивки' },
   { key: 'floor',     label: 'Доски дна' },
   { key: 'endBeam',   label: 'Торцовые брусья дна' },
