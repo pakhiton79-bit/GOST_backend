@@ -483,6 +483,9 @@
     background:var(--accent);
     border-color:var(--accent);
   }
+  .jump-slider-dense .jump-slider-mark{
+    display:none;
+  }
   .jump-slider-thumb{
     position:absolute;
     top:50%;

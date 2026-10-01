@@ -79,25 +79,30 @@ function computeGost10198II1(input) {
   if (s.crossBeamExceeded) {
     warnings.push('Масса или ширина ящика вне Табл. 14 — поперечный брус крышки принят по крайнему значению.');
   }
-  // Поперечные брусья крышки. Отступ от стенки до крайнего бруса (= промежуток
-  // между краями брусьев): штатно меньше минимума (обшивка + стойка + 10 мм)
-  // - только предупреждение; при числе, заданном вручную, меньше обшивки +
-  // стойки - блокировка, меньше минимума или больше 700 мм - предупреждение.
+  // Поперечные брусья крышки - равномерно: отступ от стенки до крайнего бруса
+  // (crossEdge) равен промежутку между краями соседних (crossGap), при
+  // «Оптимизировать размеры» отступ больше на 2 мм, промежутки - меньше.
+  // Отступ меньше толщины обшивки + стойки: при числе, заданном вручную, -
+  // блокировка, штатно (2 бруса) - предупреждение. Ручное число с
+  // расстоянием больше 700 мм - предупреждение. maxCrossBeamCount -
+  // наибольшее число брусьев без блокировки (край ползунка у клиента).
   const crossManual = input.lidCrossBeamCount > 0;
-  const crossEdge = (L - s.crossBeamCount * s.crossBeamW) / (s.crossBeamCount + 1);
-  if (crossManual) {
-    const hardMin = skin.value + s.stojkaT;
-    if (crossEdge < hardMin) {
-      return { error: `${tooManyCrossBeamsText(s.crossBeamCount)} в крышке: отступ от стенки до крайнего бруса ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(hardMin)} мм) — уменьшите число брусьев. Расчёт не выполняется.` };
+  const crossN = s.crossBeamCount, crossW = s.crossBeamW, crossAdd = s.crossBeamEdgeAdd;
+  const crossEdge = (L - crossN * crossW) / (crossN + 1) + crossAdd;
+  const crossGap = (L - crossN * crossW - 2 * crossEdge) / (crossN - 1);
+  const crossHardMin = skin.value + s.stojkaT;
+  const crossMinGap = crossHardMin - crossAdd; // отступ без надбавки, при котором крайний брус ещё не заходит на стенку
+  const maxCrossBeamCount = Math.max(2, Math.floor((L - crossMinGap) / (crossW + crossMinGap) + 1e-9));
+  if (crossEdge < crossHardMin) {
+    if (crossManual) {
+      return { error: `${tooManyCrossBeamsText(crossN)} в крышке: отступ от стенки до крайнего бруса ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) — уменьшите число брусьев. Расчёт не выполняется.` };
     }
-    if (s.crossBeamMarginBelowMin) {
-      warnings.push(`Отступ от стенки до крайнего поперечного бруса крышки ${Math.round(crossEdge)} мм меньше минимума (обшивка + стойка + 10 мм = ${Math.round(hardMin + 10)} мм).`);
-    }
-    if (crossEdge > s.crossBeamMaxGap) {
-      warnings.push(`Расстояние между краями поперечных брусьев крышки ${Math.round(crossEdge)} мм больше ${s.crossBeamMaxGap} мм.`);
-    }
-  } else if (s.crossBeamMarginBelowMin) {
-    warnings.push('Отступ от края крышки до крайнего бруса меньше минимума (обшивка + стойка + 10 мм) даже при 2 брусьях — меньше 2 поперечных брусьев не ставится.');
+    warnings.push(`Отступ от стенки до крайнего поперечного бруса крышки ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) даже при 2 брусьях.`);
+  }
+  if (crossManual && crossGap > s.crossBeamMaxGap) {
+    warnings.push(`Расстояние между краями поперечных брусьев крышки ${Math.round(crossGap)} мм больше ${s.crossBeamMaxGap} мм.`);
+  } else if (crossManual && crossEdge > s.crossBeamMaxGap) {
+    warnings.push(`Отступ от стенки до крайнего поперечного бруса крышки ${Math.round(crossEdge)} мм больше ${s.crossBeamMaxGap} мм.`);
   }
   if (s.polozSimpleExceeded) {
     warnings.push('Масса вне диапазона табл. полозьев со сплошным основанием (500–20000 кг) — сечение полоза принято по крайнему значению.');
@@ -120,8 +125,6 @@ function computeGost10198II1(input) {
   if (s.longBeamExceeded) {
     warnings.push('Шаг осей брусьев крышки вне табл. продольных брусьев — сечение принято по крайнему значению.');
   }
-  // Отступ от края крышки до края крайнего поперечного бруса (брусья - равномерно).
-  const edgeDistCross = Math.round(crossEdge);
   if (s.floorBoardExceeded) {
     warnings.push('Удельная нагрузка или шаг полозьев вне Табл. 4 — толщина доски дна принята по крайнему значению.');
   }
@@ -208,11 +211,14 @@ function computeGost10198II1(input) {
     crossBeamCount: s.crossBeamCount, longbeamCount: s.longBeamCount,
     // Толщина обшивки и рамы на чертеже крышки: +2 мм при «Оптимизировать
     // размеры» (только чертёж).
-    t32Display: input.optimizeSizes ? skin.value + 2 : skin.value, edgeDistCross,
+    t32Display: input.optimizeSizes ? skin.value + 2 : skin.value,
+    // Отступ от стенки до крайнего поперечного бруса и расстояние между
+    // краями соседних (на чертеже крышки).
+    edgeDistCross: Math.round(crossEdge), gapDistCross: Math.round(crossGap),
     sideFrameDisplay: s.stojkaT + skin.value + (input.optimizeSizes ? 2 : 0),
     xRaskosina: !!input.xRaskosina,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
-    standardCrossBeamCount: s.standardCrossBeamCount,
+    standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,
   };
 
   // Отрицательное число в любом поле - невозможная геометрия.

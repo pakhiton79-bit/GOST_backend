@@ -58,8 +58,13 @@ function timeSettingsNearestStepIndex(steps, value){
 // одну остановку за раз (никогда не между ними), а left/width анимируются
 // через CSS transition (см. style.css) - "прыжками, но плавно" по
 // формулировке пользователя.
+// Больше стольких шагов - метки не рисуются (на узком экране сливаются в
+// сплошную рябь): ползунок выглядит сплошным, но по-прежнему ходит по шагам.
+const JUMP_SLIDER_MAX_MARKS = 25;
+
 function createJumpSlider(container, steps, onChange){
   container.classList.add('jump-slider');
+  container.classList.toggle('jump-slider-dense', steps.length > JUMP_SLIDER_MAX_MARKS);
   container.setAttribute('role', 'slider');
   if(!container.hasAttribute('tabindex')) container.setAttribute('tabindex', '0');
   container.setAttribute('aria-valuemin', steps[0]);
