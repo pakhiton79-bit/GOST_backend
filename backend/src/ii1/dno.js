@@ -10,9 +10,10 @@ function buildDno(c, s, subLengthWarn) {
   const { skid, sub, len } = s;
   const rows = [];
 
-  // Ручная толщина полоза (t9) и торцового бруса (t11) - только число в
-  // таблице: их сечение - табличная пара толщина×ширина.
-  rows.push({ name: 'Полоз', t: ov('t9', skid.t, 'Толщина полоза'), w: skid.w, l: len, qty: skid.count, overrideKey: 't9' });
+  // Полоз (t9) и торцовый брус (t11): толщина из «Тонкой настройки» - в
+  // расчёте (skid.t, beam.t), правка ячейки таблицы - только число в
+  // таблице (их сечение - табличная пара толщина×ширина).
+  rows.push({ name: 'Полоз', t: ov('t9', skid.tGost, 'Толщина полоза'), w: skid.w, l: len, qty: skid.count, overrideKey: 't9' });
   if (!removeSkidBoards) {
     rows.push({ name: 'Подполозная доска', t: sub.t, w: sub.w, l: subLengthWarn ? '⚠' : sub.l, qty: sub.qty, overrideKey: 't10' });
   }
@@ -21,8 +22,9 @@ function buildDno(c, s, subLengthWarn) {
   if (endBeam.exceeded) {
     warnings.push('Масса вне диапазона п.1.6.8 (≤20000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
-  const beam = { t: round(endBeam.h), w: endBeam.w, l: W, qty: 2 };
-  rows.push({ name: 'Торцовый брус дна', t: ov('t11', beam.t, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
+  const beamGostT = round(endBeam.h);
+  const beam = { t: ov('t11', beamGostT, 'Толщина торцового бруса дна', { cell: false }), w: endBeam.w, l: W, qty: 2 };
+  rows.push({ name: 'Торцовый брус дна', t: ov('t11', beamGostT, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
 
   // Доски дна - между торцовыми брусьями, поперёк ящика.
   const floorT = s.floorBoardT, floorLen = W;

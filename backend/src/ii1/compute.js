@@ -33,15 +33,37 @@ const { buildBokovoy } = require('./bokovoy');
 // шестерёнкой у «Массы ящика».
 const WOOD_DENSITY_KG_M3 = 700;
 
-// Ручные правки толщин. Значение из цикла согласования читается на каждой
-// итерации, поэтому «меньше ГОСТ» не пишется в предупреждения сразу, а
-// копится в belowGost и выводится один раз в конце.
-function makeThicknessOverrides(manualOverrides) {
+// Поля «Тонкая настройка» (fineThickness) -> ключи ручных толщин: каркас -
+// одна толщина и у стоек, и у раскосин.
+const FINE_THICKNESS_KEYS = {
+  frame: ['tStojka', 'tRaskosina'], skid: ['t9'], skin: ['skinValue'], floor: ['floorBoardT'],
+  endBeam: ['t11'], crossBeam: ['t21'], longBeam: ['tLongbeam'],
+};
+function fineThicknessOverrides(fineThickness) {
+  const out = {};
+  Object.keys(FINE_THICKNESS_KEYS).forEach(f => {
+    const v = fineThickness && fineThickness[f];
+    if (v > 0) FINE_THICKNESS_KEYS[f].forEach(k => { out[k] = v; });
+  });
+  return out;
+}
+
+// Ручные толщины: правка ячейки таблицы деталей (manualOverrides) главнее
+// поля «Тонкая настройка» (fine), то - главнее расчёта по ГОСТ. opts.cell /
+// opts.fine = false - не учитывать этот источник (полоз и торцовый брус
+// дна: поле тонкой настройки идёт в расчёт - высоту, объём, массу, а правка
+// ячейки - только число в таблице). Значение из цикла согласования
+// читается на каждой итерации, поэтому «меньше ГОСТ» не пишется в
+// предупреждения сразу, а копится в belowGost и выводится один раз в конце.
+function makeThicknessOverrides(manualOverrides, fine) {
   const belowGost = {};
   let applied = 0;
-  function ov(key, gostValue, label) {
-    const v = manualOverrides[key];
-    if (v === undefined || v === null || Number.isNaN(v) || v <= 0) return gostValue;
+  const valid = v => !(v === undefined || v === null || Number.isNaN(v) || v <= 0);
+  function ov(key, gostValue, label, opts) {
+    const useCell = !opts || opts.cell !== false, useFine = !opts || opts.fine !== false;
+    const v = useCell && valid(manualOverrides[key]) ? manualOverrides[key]
+      : useFine && valid(fine[key]) ? fine[key] : undefined;
+    if (v === undefined) return gostValue;
     applied++;
     if (v < gostValue) belowGost[key] = { value: v, gostValue, label };
     else delete belowGost[key];
@@ -55,14 +77,15 @@ function makeThicknessOverrides(manualOverrides) {
 //   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
 //   xRaskosina, torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
-//   addParchment,
+//   addParchment, fineThickness ({ frame, skid, skin, floor, endBeam,
+//   crossBeam, longBeam } - толщины из «Тонкой настройки», мм; нет - по расчёту),
 //   availableThicknesses, manualOverrides, baseProductivity, timeCoeff,
 //   woodDensity }.
 function computeGost10198II1(input) {
   const { L, W, H, MASS, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const round = makeRoundUpToAvailable(availableThicknesses);
-  const { ov, belowGost, appliedCount } = makeThicknessOverrides(input.manualOverrides || {});
+  const { ov, belowGost, appliedCount } = makeThicknessOverrides(input.manualOverrides || {}, fineThicknessOverrides(input.fineThickness));
 
   // --- 1. Входные данные, обшивка ---
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {

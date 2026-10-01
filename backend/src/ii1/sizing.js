@@ -62,6 +62,10 @@ function stabilizeSizes(c) {
       skid = { t: sel.h, w: sel.w, count: sel.count };
       skidTableInfo = sel;
     }
+    // Толщина полоза из «Тонкой настройки» - в расчёт (высота ящика, объём);
+    // ширина - по таблице. tGost - по ГОСТ (для таблицы деталей, см. dno.js).
+    skid.tGost = skid.t;
+    skid.t = ov('t9', skid.t, 'Толщина полоза', { cell: false });
 
     // Подполозная доска (п.1.6.11): при погрузке погрузчиком - не тоньше 50 мм.
     const t10Raw = c.forkliftLoading ? Math.max(subfloorThicknessRaw(MASS), 50) : subfloorThicknessRaw(MASS);

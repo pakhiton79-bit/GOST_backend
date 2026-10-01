@@ -42,6 +42,7 @@ function buildCalcInput(){
     lidCrossBeamCount: manualCount.cross,
     availableThicknesses,
     manualOverrides,
+    fineThickness: readFineThickness(),
     tableEdits,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
     woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),

@@ -62,6 +62,8 @@ const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Va
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
 // изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
 const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
+// II-1, «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js).
+const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
   const result = {};
   if (!obj || typeof obj !== 'object') return result;
@@ -152,6 +154,7 @@ app.post('/api/ii1/calculate', (req, res) => {
     lidCrossBeamCount: toNum(b.lidCrossBeamCount),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
+    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
     baseProductivity: toNum(b.baseProductivity),
     woodDensity: toNum(b.woodDensity),
     timeCoeff: toNum(b.timeCoeff),

@@ -1180,6 +1180,44 @@
   .fastening-option-list input{margin-top:3px;flex:0 0 auto;accent-color:var(--accent);}
   .fastening-option-disabled{opacity:.45;cursor:not-allowed !important;}
   .fastening-option-disabled input{cursor:not-allowed !important;}
+  /* «Тонкая настройка» толщин (II-1, js/ii1/fine-thickness.js) -
+     раскрывающаяся группа под фильтром толщин «в наличии». */
+  .fine-thickness{margin-top:16px;border-top:1px solid var(--rule);padding-top:14px;}
+  .fine-thickness summary{
+    cursor:pointer;
+    list-style:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+  }
+  .fine-thickness summary::-webkit-details-marker{display:none;}
+  .fine-thickness summary::before{
+    content:'';
+    width:7px;height:7px;
+    border-right:2px solid var(--ink-soft);
+    border-bottom:2px solid var(--ink-soft);
+    transform:rotate(-45deg);
+    transition:transform .15s ease;
+  }
+  .fine-thickness[open] summary::before{transform:rotate(45deg);}
+  .fine-thickness summary:hover{color:var(--accent);}
+  .fine-thickness-body{margin-top:14px;}
+  .fine-thickness-body .option-hint{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  .fine-thickness-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:14px 16px;
+  }
+  .fine-thickness-field{display:flex;flex-direction:column;justify-content:flex-end;}
+  @media screen and (max-width:640px){
+    .fine-thickness-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  }
+  .fine-thickness-hint{display:block;margin-top:2px;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;}
+  .fine-thickness-field input[type=number]{padding:10px 12px;font-size:15px;}
+  .fine-thickness-field input::placeholder{color:var(--ink-soft);opacity:.7;}
   .fastening-option-list .option-hint{
     display:block;
     font-size:12px;
