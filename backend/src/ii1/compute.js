@@ -55,6 +55,7 @@ function makeThicknessOverrides(manualOverrides) {
 //   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
 //   xRaskosina, torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
+//   addParchment,
 //   availableThicknesses, manualOverrides, baseProductivity, timeCoeff,
 //   woodDensity }.
 function computeGost10198II1(input) {
@@ -226,6 +227,10 @@ function computeGost10198II1(input) {
     xRaskosina: !!input.xRaskosina,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
     standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,
+    // Пергамин (галочка «Добавить пергамин») - площадь внутренних поверхностей
+    // ящика по размерам груза: 2×(Д×Ш + Д×В + Ш×В), м², вверх до 0.01 (как у
+    // I-1 и I-3). Не пиломатериал - в объём, массу и норму времени не входит.
+    parchment: input.addParchment ? [{ name: 'Пергамин', area: Math.ceil(2 * (L * W + L * H + W * H) / 1e6 * 100 - 1e-9) / 100 }] : [],
   };
 
   // Отрицательное число в любом поле - невозможная геометрия.

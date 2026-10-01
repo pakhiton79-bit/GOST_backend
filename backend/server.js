@@ -16,7 +16,7 @@ const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, comput
 // торцевой/боковой - по 2 шт.) - для ручных правок таблицы (tableEdits).
 const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
-const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 };
+const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
 
 // Ручные правки таблицы деталей (по указанию пользователя - учитываются
 // только при нажатии "Рассчитать", т.е. здесь, на сервере): подставляются в
@@ -146,6 +146,7 @@ app.post('/api/ii1/calculate', (req, res) => {
     solidRigidBase: !!b.solidRigidBase,
     forkliftLoading: !!b.forkliftLoading,
     xRaskosina: !!b.xRaskosina,
+    addParchment: !!b.addParchment,
     torecPostCount: toNum(b.torecPostCount),
     bokPostCount: toNum(b.bokPostCount),
     lidCrossBeamCount: toNum(b.lidCrossBeamCount),

@@ -1,5 +1,5 @@
 // ГОСТ 10198-91, тип II-1: вывод результата расчёта - плитки «Итог»,
-// спецификация (чертёж + таблица по каждому узлу) и предупреждения.
+// спецификация (чертёж + таблица по каждому узлу), пергамин и предупреждения.
 // calc - ответ сервера (/api/ii1/calculate). Общий вид ящика - BOX_II1_IMG_B64
 // (diagrams/dno.js).
 
@@ -40,6 +40,14 @@ function renderPartBlock(titleHtml, diagramHtml, tableHtml){
   return titleHtml + `<div class="spec-row-diagram"><div class="diagram-slot">` + diagramHtml + `</div>` + tableHtml + `</div>`;
 }
 
+// Строка свободного текста (пергамин) - табличка 1×1 на всю ширину. Текст
+// правится целиком; пустая ячейка - расчётный текст.
+function renderTextRow(sectionKey, rows, defaultText){
+  const row = rows[0], keys = tableRowKeys(rows);
+  const text = (typeof row.text === 'string') ? row.text : defaultText(row);
+  return `<div class="spec-table tape-table"><table data-section="${sectionKey}"><tbody><tr data-row-key="${escapeAttr(keys[0])}"><td class="editable-cell" contenteditable="true" data-role="text"${editedAttr(row, 'text')}>${escapeAttr(text)}</td></tr></tbody></table></div>`;
+}
+
 // Щиты торцевой и боковой - базовая ширина 260 (как у дна и крышки) и
 // множитель подписей 0.8 (см. renderDiagram в common-diagrams.js): у этих
 // чертежей подписи почти не вылетают за рамку, и автосжатие их не уменьшает.
@@ -60,6 +68,10 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
     diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
+  // Пергамин - под всеми узлами, попадает и в печать.
+  if(calc.parchment && calc.parchment.length){
+    html += renderTextRow('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
+  }
 
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = html;
