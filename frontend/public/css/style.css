@@ -98,50 +98,76 @@
      типах (замер). */
   .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
 
-  /* Навигация «Назад» / «Главная» - вверху страниц выбора ГОСТа/типа и самих
-     калькуляторов (везде, кроме самой стартовой страницы - там некуда). */
-  .top-nav{
-    display:flex;
-    gap:16px;
-    margin-bottom:20px;
+  /* ============ Верхняя панель сайта и настройки (js/common-settings.js) ============
+     Панель («чердак», по указанию пользователя - отдельно от формы
+     расчёта) на всю ширину окна: логотип «Тара+», ссылки «Назад / Главная»
+     (перенесены из .top-nav - сама строка скрыта), справа кнопка
+     «Настройки» (значок и подпись). Панель создаёт JS, место под неё
+     зарезервировано заранее (body padding-top) - страница не прыгает.
+     Только на экране: в печати видна одна #printArea. Окно настроек -
+     большое: шапка, слева разделы, справа строки; на телефоне - на весь экран. */
+  :root{--topbar-h:56px;}
+  @media screen{
+    body{padding-top:var(--topbar-h);}
   }
-  .top-nav a{
-    font-size:13px;
-    font-weight:500;
-    color:var(--ink-soft);
-    text-decoration:none;
-  }
-  .top-nav a:hover{color:var(--accent);}
-
-  /* ============ Общие настройки сайта (js/common-settings.js) ============
-     Шестерёнка - в правом краю строки «Назад / Главная» (абсолютно, чтобы
-     строка не стала выше); окно - большое (по указанию пользователя): шапка,
-     слева разделы, справа строки настроек; на телефоне - на весь экран. */
-  .top-nav{position:relative;}
-  /* строка только с шестерёнкой (главная) - высотой как обычная */
-  .top-nav.site-settings-only{height:18px;}
-  .site-settings-btn{
+  /* .top-nav в разметке страниц - только источник ссылок «Назад / Главная»
+     для панели (страницы выбора ГОСТа/типа и калькуляторы; на главной их нет). */
+  .top-nav{display:none;}
+  .site-topbar{
     position:absolute;
+    top:0;
+    left:0;
     right:0;
-    top:50%;
-    transform:translateY(-50%);
-    width:44px;
-    height:44px;
-    margin:0;
-    padding:0;
+    height:var(--topbar-h);
+    background:var(--panel-hover);
+    border-bottom:1px solid var(--rule);
+    z-index:30;
+  }
+  .site-topbar-inner{
+    max-width:1080px;
+    height:100%;
+    margin:0 auto;
+    padding:0 20px;
     display:flex;
     align-items:center;
-    justify-content:center;
-    background:var(--panel);
-    color:var(--ink);
-    border:1px solid var(--border-btn);
-    border-radius:12px;
-    box-shadow:none;
-    z-index:5;
-    transition:color .15s ease, border-color .15s ease, background-color .15s ease;
+    gap:24px;
   }
-  .site-settings-btn:hover{background:var(--secondary-hover);border-color:var(--accent);color:var(--accent);}
-  .site-settings-btn svg{width:24px;height:24px;}
+  .site-brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink);
+    text-decoration:none;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:.01em;
+  }
+  .site-brand img{width:22px;height:22px;display:block;}
+  .site-topbar-links{display:flex;gap:16px;}
+  .site-topbar-links a{font-size:13px;font-weight:500;color:var(--ink-soft);text-decoration:none;}
+  .site-topbar-links a:hover{color:var(--accent);}
+  .site-settings-btn{
+    margin:0 0 0 auto;
+    height:34px;
+    padding:0 12px;
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    background:var(--panel);
+    color:var(--ink-soft);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    font-size:13px;
+    font-weight:500;
+    box-shadow:none;
+    transition:color .15s ease, border-color .15s ease;
+  }
+  .site-settings-btn:hover{background:var(--panel);border-color:var(--accent);color:var(--accent);}
+  .site-settings-btn svg{width:17px;height:17px;flex:0 0 auto;}
+  @media screen and (max-width:480px){
+    .site-topbar-inner{gap:16px;}
+    .site-brand span{display:none;}
+  }
 
   .site-settings-overlay{
     position:fixed;
@@ -1036,7 +1062,7 @@
      все body>* кроме #printArea независимо от ширины экрана. */
   #tooNarrow{display:none;}
   @media screen and (max-width:259px){
-    .wrap{display:none !important;}
+    .wrap, .site-topbar{display:none !important;}
     #tooNarrow{
       display:flex;
       align-items:center;

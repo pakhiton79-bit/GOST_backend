@@ -1,5 +1,5 @@
-// Общие настройки сайта - шестерёнка вверху каждой страницы (главная, список
-// типов, калькуляторы). Окно настроек - большое (по указанию пользователя):
+// Общие настройки сайта - кнопка «Настройки» в верхней панели каждой
+// страницы (главная, список типов, калькуляторы). Окно настроек - большое (по указанию пользователя):
 // слева разделы, справа их настройки. Пока один раздел «Оформление» с
 // темой: как в системе / светлая / тёмная (по умолчанию светлая),
 // переключатель - три значка с плавно перемещающимся ползунком (по образцу
@@ -8,9 +8,8 @@
 //
 // Скрипт подключается в <head>: тема ставится сразу (атрибут data-theme у
 // <html>, палитра - в style.css), до первой отрисовки, без мигания светлой
-// темы. Кнопка и окно настроек добавляются, когда готова разметка: кнопка -
-// в правый край строки «Назад / Главная» (.top-nav), на главной, где этой
-// строки нет, - в такую же строку в начале страницы.
+// темы. Верхняя панель с кнопкой «Настройки» и окно настроек добавляются,
+// когда готова разметка (см. buildSiteTopbar).
 const SITE_SETTINGS_STORAGE_KEY = 'gost10198-site-settings';
 const SITE_THEME_DEFAULT = 'light';
 
@@ -97,23 +96,43 @@ function siteSettingsContentHtml(){
   return `<nav class="site-settings-nav">${nav}</nav><div class="site-settings-sections">${sections}</div>`;
 }
 
+// Верхняя панель сайта («чердак», по указанию пользователя - отдельно от
+// формы расчёта): слева логотип «Тара+» (ссылка на главную) и ссылки
+// «Назад / Главная» (берутся из .top-nav страницы - сама строка скрыта в
+// style.css), справа кнопка «Настройки». Ширина содержимого - как у .wrap
+// страницы; место под панель зарезервировано в style.css (body
+// padding-top), поэтому при её появлении страница не сдвигается.
+function buildSiteTopbar(wrap){
+  const bar = document.createElement('div');
+  bar.className = 'site-topbar';
+  const inner = document.createElement('div');
+  inner.className = 'site-topbar-inner';
+  inner.style.maxWidth = getComputedStyle(wrap).maxWidth;
+  const icon = document.querySelector('link[rel="icon"]');
+  inner.innerHTML = `<a class="site-brand" href="index.html">${icon ? `<img src="${icon.getAttribute('href')}" alt="">` : ''}<span>Тара+</span></a>`;
+  const pageNav = wrap.querySelector('.top-nav');
+  if(pageNav){
+    const links = document.createElement('nav');
+    links.className = 'site-topbar-links';
+    pageNav.querySelectorAll('a').forEach(a => links.appendChild(a.cloneNode(true)));
+    inner.appendChild(links);
+  }
+  bar.appendChild(inner);
+  document.body.insertBefore(bar, document.body.firstChild);
+  return inner;
+}
+
 function initSiteSettings(){
   const wrap = document.querySelector('.wrap');
   if(!wrap || document.getElementById('siteSettingsBtn')) return;
-  let nav = wrap.querySelector('.top-nav');
-  if(!nav){
-    nav = document.createElement('div');
-    nav.className = 'top-nav site-settings-only';
-    wrap.insertBefore(nav, wrap.firstChild);
-  }
+  const topbar = buildSiteTopbar(wrap);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.id = 'siteSettingsBtn';
   btn.className = 'site-settings-btn';
-  btn.title = 'Настройки';
   btn.setAttribute('aria-label', 'Настройки');
-  btn.innerHTML = SITE_ICONS.gear;
-  nav.appendChild(btn);
+  btn.innerHTML = SITE_ICONS.gear + '<span>Настройки</span>';
+  topbar.appendChild(btn);
 
   const overlay = document.createElement('div');
   overlay.className = 'site-settings-overlay';
