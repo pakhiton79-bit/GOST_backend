@@ -108,7 +108,7 @@ const FASTENING_LABELS = {
   frame:          'Крепление на металлической или деревянной раме'
 };
 
-let fasteningType = 'skid';
+let fasteningType = 'floor_boards'; // по умолчанию - к доскам дна (по указанию пользователя)
 try{
   const saved = localStorage.getItem(FASTENING_STORAGE_KEY);
   if(saved === 'skid' || saved === 'floor_boards') fasteningType = saved;
@@ -167,3 +167,6 @@ function persistCheckbox(id){
   });
 }
 ['optimizeSizes','roundBoardWidths','solidRigidBase','forkliftLoading','removeSkidBoards','removeFloorBoards','xRaskosina','addEndTape','addParchment'].forEach(persistCheckbox);
+// «Убрать доски дна» скрыта при креплении к доскам дна - сохранённая
+// галочка не должна действовать незаметно.
+if(fasteningType !== 'skid') document.getElementById('removeFloorBoards').checked = false;
