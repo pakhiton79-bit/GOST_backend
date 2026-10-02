@@ -135,7 +135,9 @@ function updateFasteningSummary(){
 function toggleFasteningDropdown(){
   document.getElementById('fasteningDropdownPanel').classList.toggle('open');
 }
-updateFasteningSummary();
+// Переключатель способа крепления временно убран со страницы (по указанию
+// пользователя) - надпись на нём не обновляется, крепление всегда к доскам дна.
+// updateFasteningSummary();
 showRemoveFloorBoardsRow();
 
 // «Убрать подполозные доски» и «Погрузка погрузчиком» - взаимоисключающие.

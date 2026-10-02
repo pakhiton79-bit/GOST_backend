@@ -1191,8 +1191,6 @@
     cursor:pointer;
   }
   .fastening-option-list input{margin-top:3px;flex:0 0 auto;accent-color:var(--accent);}
-  .fastening-option-disabled{opacity:.45;cursor:not-allowed !important;}
-  .fastening-option-disabled input{cursor:not-allowed !important;}
   /* «Тонкая настройка» толщин (II-1, js/ii1/fine-thickness.js) -
      раскрывающаяся группа под фильтром толщин «в наличии». */
   .fine-thickness{margin-top:16px;border-top:1px solid var(--rule);padding-top:14px;}

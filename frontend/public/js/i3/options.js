@@ -99,13 +99,10 @@ buildThicknessCheckboxList();
 updateThicknessSummary();
 
 // ============ Способ крепления груза ============
-// За полозья / к доскам дна (variant в запросе); остальные два - пока
-// недоступны в разметке.
+// За полозья / к доскам дна (variant в запросе).
 const FASTENING_LABELS = {
   skid:           'Крепление за полозья',
   floor_boards:   'Крепление к доскам дна',
-  mounting_beams: 'Крепление к крепёжным брусьям',
-  frame:          'Крепление на металлической или деревянной раме'
 };
 
 let fasteningType = 'floor_boards'; // по умолчанию - к доскам дна (по указанию пользователя)
@@ -142,7 +139,9 @@ function toggleFasteningDropdown(){
   document.getElementById('fasteningDropdownPanel').classList.toggle('open');
 }
 
-updateFasteningSummary();
+// Переключатель способа крепления временно убран со страницы (по указанию
+// пользователя) - надпись на нём не обновляется, крепление всегда к доскам дна.
+// updateFasteningSummary();
 showRemoveFloorBoardsRow();
 
 // «Убрать подполозные доски» и «Погрузка погрузчиком» - взаимоисключающие.
