@@ -1,6 +1,6 @@
 // ГОСТ 10198-91, тип III-1: вывод результата расчёта - плитки «Итог»,
-// спецификация (таблица по каждому узлу; чертежей пока нет - по указанию
-// пользователя, нарисуем позже), болты, пергамин и предупреждения.
+// спецификация (таблица по каждому узлу; из чертежей пока только боковой
+// щит - diagrams/bok.js), болты, пергамин и предупреждения.
 // calc - ответ сервера (/api/iii1/calculate).
 
 // Общий вид ящика (плитка «Итог» и печать). Своего чертежа у III-1 пока нет -
@@ -39,10 +39,19 @@ function renderPartTable(rows, sectionKey, manualOverrides){
   return html;
 }
 
-// Узел: заголовок и таблица на всю ширину (чертежей пока нет).
+// Узел: заголовок и таблица на всю ширину (чертежа пока нет).
 function renderPartBlock(title, tableHtml){
   return `<div class="part-title">${title}</div><div class="spec-row-table">${tableHtml}</div>`;
 }
+// Узел с чертежом: заголовок, чертёж слева, таблица справа (как у II-1).
+// Слот чертежа шире обычного и чертёж может быть выше (data-grow-max-h, см.
+// fitDiagramOnScreen) - чтобы занимал больше места (по указанию
+// пользователя). Отступ под заголовком - под размер над чертежом.
+function renderPartBlockDiagram(title, diagramHtml, tableHtml){
+  return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram spec-row-wide"><div class="diagram-slot diagram-slot-wide" data-grow-max-h="300">${diagramHtml}</div>${tableHtml}</div>`;
+}
+// Ширина чертежей щитов на экране - как у II-1.
+const III1_PANEL_WIDTH = 260;
 
 // Строки свободного текста (болты, пергамин) - табличка в 1 колонку на всю
 // ширину. Текст правится целиком; пустая ячейка - расчётный текст.
@@ -78,7 +87,7 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlock('Дно', renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка', renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock('Щит торцевой (2 шт.)', renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
-  html += renderPartBlock('Щит боковой (2 шт.)', renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
+  html += renderPartBlockDiagram('Щит боковой (2 шт.)', diagramBokIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Болты и пергамин - под всеми узлами, попадают и в печать.
   html += `<div class="part-title bolts-part">Болты<button type="button" class="btn-secondary btn-small part-title-action screen-only" onclick="setBoltsRemoved(true)">Убрать</button></div>`
     + renderTextRows('bolts', calc.bolts, r => `${r.name} Ø${r.d} мм - ${r.qty} шт.`).replace('class="spec-table tape-table"', 'class="spec-table tape-table bolts-part"')
@@ -86,8 +95,13 @@ function renderBoardTables(calc, manualOverrides){
   if(calc.parchment && calc.parchment.length){
     html += renderTextRows('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
   }
-  document.getElementById('boardTables').innerHTML = html;
+  const boardTablesEl = document.getElementById('boardTables');
+  boardTablesEl.innerHTML = html;
   applyBoltsRemoved();
+  // Место под вылет подписей чертежей - когда картинки загрузятся.
+  const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
+  Promise.all(boardImages.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()))
+    .then(()=> fitDiagramsOnScreen(boardTablesEl));
 }
 
 function renderWarnings(warnings){

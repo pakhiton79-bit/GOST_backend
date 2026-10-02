@@ -956,6 +956,15 @@
     width:340px;
     margin-left:12px;
   }
+  /* III-1: чертёж щита занимает больше места (по указанию пользователя). */
+  #boardTables .diagram-slot-wide{
+    flex-basis:420px;
+    width:420px;
+  }
+  /* Таблица рядом с ним уже - числовым колонкам больше места, чтобы
+     заголовки («Толщина») не переносились. */
+  #boardTables .spec-row-wide th:first-child, #boardTables .spec-row-wide td:first-child{width:24%;}
+  #boardTables .spec-row-wide th:not(:first-child), #boardTables .spec-row-wide td:not(:first-child){width:19%;}
   .diagram-wrap{
     position:relative;
     flex:0 0 260px;

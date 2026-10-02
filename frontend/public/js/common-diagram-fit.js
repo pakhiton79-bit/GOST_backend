@@ -183,7 +183,8 @@ function fitDiagramOnScreen(slot, wrap, forcedScale){
     setDiagramScale(wrap, baseWidth, scale);
   } else {
     scale = shrinkDiagramToSlot(wrap, slotWidth, baseWidth, null);
-    const grow = scale >= 1 && diagramCanGrow(slot, wrap) ? growDiagramToSlot(wrap, slotWidth, DIAGRAM_GROW_MAX_H, baseWidth) : 1;
+    const maxH = parseFloat(slot.dataset.growMaxH) || DIAGRAM_GROW_MAX_H; // свой предел высоты у слота (III-1)
+    const grow = scale >= 1 && diagramCanGrow(slot, wrap) ? growDiagramToSlot(wrap, slotWidth, maxH, baseWidth) : 1;
     setDiagramStrokeGrowth(wrap, grow);
   }
 
