@@ -139,7 +139,6 @@ persistCheckbox('roundBoardWidths');
 persistCheckbox('removeLidBottomRaskosina');
 persistCheckbox('xRaskosina');
 persistCheckbox('addEndTape');
-persistCheckbox('addParchment');
 
 // Толщина полоза запоминается отдельно (радиокнопки).
 const SKID_THICKNESS_KEY = OPTIONS_STORAGE_PREFIX + 'skidThickness';

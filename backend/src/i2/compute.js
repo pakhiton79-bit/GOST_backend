@@ -101,11 +101,11 @@ function sumVolume(rows) {
 
 // input: { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths,
 //   removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape,
-//   addParchment, plankLayoutMode, plankLayoutValue, availableThicknesses,
+//   plankLayoutMode, plankLayoutValue, availableThicknesses,
 //   manualOverrides, baseProductivity, timeCoeff, woodDensity,
 //   boardGapPercent - доля промежутков между досками обшивки, % }.
 function computeGost10198I2(input) {
-  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, addParchment, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
+  const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const manualOverrides = input.manualOverrides || {};
 
@@ -240,7 +240,6 @@ function computeGost10198I2(input) {
     drawPlankT: { dno: T.bokBoard, kryshka: T.krPlanka, bokovoy: T.krBoard, bokovoyBottom: skidEnabled ? skidT : T.dnoPlanka },
     standardPlankCount, standardPlankGap,
     endTape: addEndTape ? parts.endTapeRows(g) : [],
-    parchment: addParchment ? parts.parchmentRows(g) : [],
     // Промежутки обшивки по щитам: { qty, gap, share } или null - щит сплошной.
     boardGaps,
   };

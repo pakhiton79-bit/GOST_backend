@@ -1,5 +1,5 @@
 // ГОСТ 10198-91, тип I-2: вывод результата расчёта - плитки «Итог»,
-// спецификация (чертёж + таблица по каждому узлу), лента обшивки, пергамин и
+// спецификация (чертёж + таблица по каждому узлу), лента обшивки и
 // предупреждения. calc - ответ сервера (/api/i2/calculate).
 
 function renderSummary(calc){
@@ -35,7 +35,7 @@ function renderPartBlock(title, diagramHtml, tableHtml){
   return `<div class="part-title">${title}</div><div class="spec-row-diagram"><div class="diagram-slot" data-max-size>` + diagramHtml + `</div>` + tableHtml + `</div>`;
 }
 
-// Строка свободного текста (лента обшивки, пергамин) - табличка 1×1 на всю
+// Строка свободного текста (лента обшивки) - табличка 1×1 на всю
 // ширину. Текст правится целиком; пустая ячейка - расчётный текст.
 function renderTextRow(sectionKey, rows, defaultText){
   const row = rows[0], keys = tableRowKeys(rows);
@@ -64,12 +64,9 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlock('Щит боковой (2 шт.)',
     diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, panelFramePx, calc.drawPlankT.bokovoyBottom, gaps.bokovoy),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
-  // Лента обшивки и пергамин - под всеми узлами, попадают и в печать.
+  // Лента обшивки - под всеми узлами, попадает и в печать.
   if(calc.endTape && calc.endTape.length){
     html += renderTextRow('endTape', calc.endTape, r => `Обшивочная лента ${Math.ceil(r.l - 1e-9)} мм × 2`);
-  }
-  if(calc.parchment && calc.parchment.length){
-    html += renderTextRow('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
   }
 
   const boardTablesEl = document.getElementById('boardTables');
