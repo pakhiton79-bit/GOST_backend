@@ -154,6 +154,8 @@ function tableRowKeys(rows) {
     return n + '#' + i;
   });
 }
+// Разделы - строки свободного текста (лента обшивки, пергамин, болты).
+const TEXT_SECTIONS = ['endTape', 'parchment', 'bolts'];
 function applyTableEdits(calc, edits, sections) {
   if (!edits || typeof edits !== 'object') return 0;
   const num = v => { const x = parseFloat(v); return Number.isFinite(x) ? x : 0; };
@@ -177,7 +179,7 @@ function applyTableEdits(calc, edits, sections) {
         changed = true;
       });
       // role 'text' - свободный текст ячейки (лента обшивки торцов).
-      if ((sec === 'endTape' || sec === 'parchment') && typeof e.text === 'string') { r.text = e.text; r.edited = r.edited || {}; r.edited.text = true; changed = true; }
+      if (TEXT_SECTIONS.includes(sec) && typeof e.text === 'string') { r.text = e.text; r.edited = r.edited || {}; r.edited.text = true; changed = true; }
       if (!changed) return;
       delta += (rowVol(r) - before) * sections[sec];
       applied++;
@@ -207,7 +209,7 @@ function sanitizeTableEdits(raw, sections) {
         if (!(role in e) || !Number.isFinite(v) || v < 0 || v > 1e6 || (v === 0 && role !== 'qty')) return;
         clean[role] = v;
       });
-      if ((sec === 'endTape' || sec === 'parchment') && typeof e.text === 'string' && e.text.trim() && e.text.length <= 200) clean.text = e.text.trim();
+      if (TEXT_SECTIONS.includes(sec) && typeof e.text === 'string' && e.text.trim() && e.text.length <= 200) clean.text = e.text.trim();
       if (Object.keys(clean).length) {
         out[sec] = out[sec] || {};
         out[sec][key] = clean;

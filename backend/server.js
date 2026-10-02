@@ -11,6 +11,7 @@ const { computeGost10198I3 } = require('./src/i3/compute');
 const { computeGost10198I1 } = require('./src/i1/compute');
 const { computeGost10198I2 } = require('./src/i2/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
+const { computeGost10198III1 } = require('./src/iii1/compute');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
 // Разделы таблицы деталей и их множители в итоговом объёме (щиты
@@ -19,6 +20,7 @@ const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0
 const I2_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-2 нет)
 const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
+const III1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }; // bolts - болты, parchment - пергамин, в объём не входят
 
 // Ручные правки таблицы деталей (по указанию пользователя - учитываются
 // только при нажатии "Рассчитать", т.е. здесь, на сервере): подставляются в
@@ -65,6 +67,8 @@ const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Va
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
 // изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
 const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
+// III-1: как у II-1 + tWallBeam (продольные брусья стенок, Табл. 9).
+const III1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'tWallBeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
 // II-1, «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js).
 const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
@@ -188,6 +192,41 @@ app.post('/api/ii1/calculate', (req, res) => {
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+app.post('/api/iii1/calculate', (req, res) => {
+  const b = req.body || {};
+  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
+    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
+  }
+  if (b.lidLayout !== 'longitudinal' && b.lidLayout !== 'transverse') {
+    return res.status(400).json({ error: 'lidLayout должен быть "longitudinal" или "transverse".' });
+  }
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    fasteningType: b.fasteningType,
+    lidLayout: b.lidLayout,
+    optimizeSizes: !!b.optimizeSizes,
+    removeFloorBoards: !!b.removeFloorBoards,
+    removeSkidBoards: !!b.removeSkidBoards,
+    roundBoardWidths: !!b.roundBoardWidths,
+    solidRigidBase: !!b.solidRigidBase,
+    forkliftLoading: !!b.forkliftLoading,
+    bulkCargo: !!b.bulkCargo,
+    addRaskosina: !!b.addRaskosina,
+    xRaskosina: !!b.xRaskosina,
+    addParchment: !!b.addParchment,
+    torecPostCount: toNum(b.torecPostCount),
+    bokPostCount: toNum(b.bokPostCount),
+    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, III1_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+  };
+  res.json(withTableEdits(computeGost10198III1(input), b.tableEdits, III1_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
