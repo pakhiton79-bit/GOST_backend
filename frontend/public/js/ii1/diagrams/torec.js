@@ -21,12 +21,13 @@
 // стойки*3 + длина стойки*2 = panelHeightFull при floors=2), плюс
 // добавляется своя группа E (floorHeightVal = ширина стойки + длина
 // стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
-// xRaskosinaVal - X-образные раскосины (фото imgX).
+// xRaskosinaVal - X-образные раскосины (фото imgX); hasRaskosinaVal = false -
+// щит без раскосин (внутренняя высота до 600 мм, п.1.7.7).
 // gapVal - расстояние между кромками соседних стоек (frame.sectionW, ширина
 // стоек учтена), см. postGapRecords.
 // На 5 и более стоек фото нет - чертёж генерируется (см. panelScheme).
-function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal){
-  const v = panelScheme(count, floors, xRaskosinaVal);
+function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
+  const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!v) return diagramTooDense();
   const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
     .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
@@ -34,16 +35,17 @@ function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, 
 }
 
 // Схема щита на count стоек и floors (1 или 2) этажей: фото из
-// TOREC_VARIANTS (2-4 стойки) или сгенерированный чертёж (5 и более, см.
-// panel-generated.js) - с подписями фото на 4 стойки: у него те же размеры
-// картинки и наружные кромки щита. { img, IW, IH, records, gap }; null -
-// слишком много стоек (вместо чертежа заглушка).
-function panelScheme(count, floors, xRaskosinaVal){
-  if(count <= 4){
+// TOREC_VARIANTS (2-4 стойки с раскосинами) или сгенерированный чертёж (5 и
+// более стоек или щит без раскосин, см. panel-generated.js) - с подписями
+// фото на 4 стойки: у него те же размеры картинки и наружные кромки щита.
+// { img, IW, IH, records, gap }; null - слишком много стоек (вместо чертежа
+// заглушка).
+function panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal){
+  if(count <= 4 && hasRaskosinaVal){
     const v = TOREC_VARIANTS[floors][count];
     return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap };
   }
-  const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal);
+  const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!g) return null;
   return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap };
 }

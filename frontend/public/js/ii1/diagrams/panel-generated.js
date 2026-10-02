@@ -1,6 +1,7 @@
 // ГОСТ 10198-91, тип II-1: чертёж торцевого/бокового щита на 5 и более
-// стоек - фото есть только для 2-4 стоек (см. TOREC_VARIANTS в torec.js),
-// поэтому он рисуется программно (SVG) в координатах и с геометрией фото на
+// стоек, а также щита без раскосин (внутренняя высота до 600 мм, п.1.7.7) на
+// любое число стоек - фото есть только для 2-4 стоек с раскосинами (см.
+// TOREC_VARIANTS в torec.js), поэтому он рисуется программно (SVG) в координатах и с геометрией фото на
 // 4 стойки того же числа этажей (torec_ii1_{1,2}floor_4posts.jpg): обшивка,
 // брусья, стойки и раскосины шириной 72px, линии 6px, заливка как на фото.
 // Крайние стойки - по краям щита (как на фото), остальные - равномерно между
@@ -47,7 +48,8 @@ function ii1BraceStrip(l, r, top, bot, rising, PW, fmt){
 // Чертёж на n стоек и floors этажей: { img, gap } - картинка (data:-URL SVG)
 // и кромки 1-й и 2-й стоек для размера «расстояние между стойками» (формат
 // поля gap у TOREC_VARIANTS); null - стоек так много, что они слились бы.
-function panelGeneratedII1(n, floors, xRaskosinaVal){
+// hasRaskosinaVal = false - щит без раскосин.
+function panelGeneratedII1(n, floors, xRaskosinaVal, hasRaskosinaVal){
   const G = PANEL_GEN_II1[floors];
   const f = v => v.toFixed(1);
   let postW = PANEL_GEN_II1_POST_W;
@@ -56,7 +58,7 @@ function panelGeneratedII1(n, floors, xRaskosinaVal){
     postW = (G.frameR - G.frameL)/(n + 1.2*(n-1));
     bay = 1.2*postW;
   }
-  if(diagramIsTooDense(bay / 2 - PANEL_GEN_II1_STROKE, G.IW)) return null; // заглушка
+  if(diagramIsTooDense((hasRaskosinaVal ? bay / 2 : bay) - PANEL_GEN_II1_STROKE, G.IW)) return null; // заглушка
   const px = i => G.frameL + i*(postW + bay); // левая кромка i-й стойки (с 0)
   const rect = (x1, y1, x2, y2) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"/>`;
   const [sx1, sy1, sx2, sy2] = G.skin;
@@ -64,7 +66,7 @@ function panelGeneratedII1(n, floors, xRaskosinaVal){
   for(let fl=0; fl<floors; fl++){
     const top = G.bars[fl][1], bot = G.bars[fl+1][0];
     const upper = floors > 1 && fl === 0; // верхний этаж - зеркально
-    for(let i=0; i<n-1; i++){
+    for(let i=0; hasRaskosinaVal && i<n-1; i++){
       const l = px(i) + postW, r = px(i+1);
       const rising = (i < Math.ceil((n-1)/2)) !== upper;
       if(xRaskosinaVal) shapes += ii1BraceStrip(l, r, top, bot, !rising, postW, f);

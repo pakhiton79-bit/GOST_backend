@@ -13,8 +13,8 @@
 // что у торца (panelScheme в torec.js: фото на 2-4 стойки, на 5 и более -
 // сгенерированный чертёж). gapVal - расстояние между стойками бока
 // (bokFrame.sectionW), см. postGapRecords в torec.js.
-function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal){
-  const v = panelScheme(count, floors, xRaskosinaVal);
+function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
+  const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!v) return diagramTooDense();
   const records = v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
     .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
