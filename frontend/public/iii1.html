@@ -101,20 +101,6 @@
   -->
 
   <div class="card">
-    <h2>Расположение досок крышки</h2>
-    <div class="fastening-option-list">
-      <label>
-        <input type="radio" name="lidLayout" value="longitudinal" checked>
-        <span>Вдоль длины ящика<span class="option-hint">Продольные брусья крышки не требуются</span></span>
-      </label>
-      <label>
-        <input type="radio" name="lidLayout" value="transverse">
-        <span>Поперёк ящика<span class="option-hint">Добавляются внутренние продольные брусья крышки</span></span>
-      </label>
-    </div>
-  </div>
-
-  <div class="card">
     <h2>Дополнительные опции</h2>
     <div class="fastening-option-list">
       <div class="option-group-title">Доски</div>
@@ -125,7 +111,7 @@
       <div class="option-group-title">Брусья крышки</div>
       <label>
         <input type="checkbox" id="optimizeSizes">
-        <span>Оптимизировать размеры<span class="option-hint">Длина внутреннего поперечного бруса крышки уменьшается на 4 мм; при поперечном расположении досок крышки - и продольного бруса тоже. Отступ от стенки до крайнего поперечного бруса - на 2 мм больше</span></span>
+        <span>Оптимизировать размеры<span class="option-hint">Длина поперечного и продольного брусьев крышки уменьшается на 4 мм. Отступ от стенки до крайнего поперечного бруса - на 2 мм больше</span></span>
       </label>
       <label>
         <input type="checkbox" id="customCrossBeams" onchange="onManualCountCheckboxChange('cross')">
@@ -135,6 +121,16 @@
         <div class="modal-slider-row">
           <div class="jump-slider" id="crossBeamsSlider"></div>
           <input type="number" id="crossBeamsInput" step="1" min="2" oninput="onManualCountInputChange('cross')">
+        </div>
+      </div>
+      <label>
+        <input type="checkbox" id="customCrossAxis" onchange="onManualCountCheckboxChange('crossAxis')">
+        <span>Настроить расстояние между поперечными брусьями<span class="option-hint">Расстояние между осями соседних брусьев - от 500 до 800 мм (п.1.8.1). Берётся наименьшее число брусьев, при котором расстояние не больше заданного</span></span>
+      </label>
+      <div id="crossAxisRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="crossAxisSlider"></div>
+          <input type="number" id="crossAxisInput" step="1" min="500" max="800" oninput="onManualCountInputChange('crossAxis')">
         </div>
       </div>
       <div class="option-group-title">Стойки каркаса</div>

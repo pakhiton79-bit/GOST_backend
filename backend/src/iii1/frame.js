@@ -1,26 +1,29 @@
 // ГОСТ 10198-91, тип III-1: каркас щита (торцевого или бокового) - стойки,
 // этажи и раскосы.
-const { minCountBySpan, clearGapBySpan } = require('./logic');
+const { minCountByClearGap, clearGapBySpan } = require('./logic');
 
 const STOJKA_W = 100;   // ширина стойки
-const MAX_AXIS = 800;   // шаг осей стоек
+const MAX_CLEAR_GAP = 800;   // просвет между краями соседних стоек (по указанию пользователя)
 const MIN_ANGLE = 20, MAX_ANGLE = 60; // допустимый угол раскоса, ° (п.1.7.7)
 const RASKOSINA_MIN_H = 600;  // п.1.7.7: раскосы - при внутренней высоте ящика свыше 600 мм
 const TWO_FLOORS_H = 2000;    // п.1.6.16: средние продольные брусья - при внутренней высоте 2000 мм и более
 
-// fillspace - ширина щита под стойки, panelH - высота щита, H - высота груза
-// (внутренняя высота ящика), beamW - ширина продольных брусьев (Табл. 9).
+// fillspace - ширина щита под стойки, panelH - высота каркаса щита (высота
+// груза без бруса крышки над щитом), H - высота груза (внутренняя высота
+// ящика), beamW - ширина горизонтальных брусьев.
+// Стойка: 1 этаж - panelH без 2 горизонтальных брусьев, 2 этажа - без 3,
+// пополам.
 // Раскосы - при H свыше 600 мм или по галочке «Добавить раскосины»
 // (forceRaskosina). Этажи: 2 при H от 2000 мм или если на 1 этаже угол
-// раскоса при 2 стойках больше 60°. Стоек - не меньше, чем по шагу осей
-// 800 мм, и (при раскосах) столько, чтобы угол раскоса был не меньше 20°
-// (пока есть место). manualCount - число стоек, заданное вручную: крайние -
+// раскоса при 2 стойках больше 60°. Стоек - не меньше, чем по просвету
+// между краями 800 мм, и (при раскосах) столько, чтобы угол раскоса был не
+// меньше 20° (пока есть место). manualCount - число стоек, заданное вручную: крайние -
 // по краям щита, остальные равномерно между ними; не помещаются -
 // sectionW ≤ 0 (проверяет compute.js).
 // Возвращает { count, floors, len (длина стойки), sectionW, hasRaskosina,
 // warn, tooNarrow }.
 function buildFrame(fillspace, panelH, H, beamW, forceRaskosina, manualCount) {
-  const spacingMinCount = minCountBySpan(fillspace, STOJKA_W, MAX_AXIS);
+  const spacingMinCount = minCountByClearGap(fillspace, STOJKA_W, MAX_CLEAR_GAP);
   const sectionW = n => clearGapBySpan(fillspace, STOJKA_W, n);
   const angleDeg = (n, h) => Math.atan2(h, sectionW(n)) * 180 / Math.PI;
   const stojkaLen = fl => fl === 2 ? (panelH - beamW * 3) / 2 : panelH - beamW * 2;

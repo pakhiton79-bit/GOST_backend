@@ -67,8 +67,10 @@ const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Va
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
 // изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
 const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
-// III-1: как у II-1 + tWallBeam (продольные брусья стенок, Табл. 9).
-const III1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'tWallBeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
+// III-1: tTorFrame/tBokFrame - каркас торцевого/бокового щита (стойки и
+// горизонтальные брусья), tLidBeam - брусья крышки, tDnoBeam - продольный
+// брус дна; остальные - как у II-1.
+const III1_OVERRIDE_KEYS = ['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11'];
 // II-1, «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js).
 const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
@@ -200,13 +202,9 @@ app.post('/api/iii1/calculate', (req, res) => {
   if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
     return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
   }
-  if (b.lidLayout !== 'longitudinal' && b.lidLayout !== 'transverse') {
-    return res.status(400).json({ error: 'lidLayout должен быть "longitudinal" или "transverse".' });
-  }
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
-    lidLayout: b.lidLayout,
     optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,
@@ -220,6 +218,7 @@ app.post('/api/iii1/calculate', (req, res) => {
     torecPostCount: toNum(b.torecPostCount),
     bokPostCount: toNum(b.bokPostCount),
     lidCrossBeamCount: toNum(b.lidCrossBeamCount),
+    lidCrossBeamAxis: toNum(b.lidCrossBeamAxis),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
     manualOverrides: sanitizeManualOverrides(b.manualOverrides, III1_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),

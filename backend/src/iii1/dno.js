@@ -1,18 +1,19 @@
-// ГОСТ 10198-91, тип III-1: дно - полозья, подполозные доски, торцовые брусья
-// и доски дна.
+// ГОСТ 10198-91, тип III-1: дно - полозья, подполозные доски, доски дна,
+// продольные брусья дна (по краям, на них стоят боковые щиты) и торцовые
+// брусья.
 const { vol, fillBoards } = require('../helpers');
 const { endBeamSection } = require('./logic');
 
 // c - контекст расчёта (см. compute.js); s - согласованные размеры (sizing.js).
 // subLengthWarn - в таблице ⚠ вместо длины подполозной доски.
 function buildDno(c, s, subLengthWarn) {
-  const { L, W, MASS, ov, round, warnings, removeSkidBoards, removeFloorBoards } = c;
-  const { skid, sub, len } = s;
+  const { W, MASS, ov, round, warnings, removeSkidBoards, removeFloorBoards } = c;
+  const { skid, sub, len, outerW } = s;
   const rows = [];
 
-  // Полоз (t9) и торцовый брус (t11): толщина из «Тонкой настройки» - в
-  // расчёте (skid.t, beam.t), правка ячейки таблицы - только число в
-  // таблице (их сечение - табличная пара толщина×ширина).
+  // Полоз (t9) и торцовый брус (t11): правка ячейки таблицы - только число
+  // в таблице, в расчёт не идёт (их сечение - табличная пара
+  // толщина×ширина).
   rows.push({ name: 'Полоз', t: ov('t9', skid.tGost, 'Толщина полоза'), w: skid.w, l: len, qty: skid.count, overrideKey: 't9' });
   if (!removeSkidBoards) {
     rows.push({ name: 'Подполозная доска', t: sub.t, w: sub.w, l: subLengthWarn ? '⚠' : sub.l, qty: sub.qty, overrideKey: 't10' });
@@ -24,11 +25,11 @@ function buildDno(c, s, subLengthWarn) {
   }
   const beamGostT = round(endBeam.h);
   const beam = { t: ov('t11', beamGostT, 'Толщина торцового бруса дна', { cell: false }), w: endBeam.w, l: W, qty: 2 };
-  rows.push({ name: 'Торцовый брус дна', t: ov('t11', beamGostT, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
 
-  // Доски дна - между торцовыми брусьями, поперёк ящика.
-  const floorT = s.floorBoardT, floorLen = W;
-  const fb = fillBoards(L - beam.w * 2, c.roundBoardWidths);
+  // Доски дна - поперёк ящика на всю наружную ширину, занимают наружную
+  // длину без ширины двух торцовых брусьев.
+  const floorT = s.floorBoardT, floorLen = outerW;
+  const fb = fillBoards(len - beam.w * 2, c.roundBoardWidths);
   if (!removeFloorBoards) {
     if (fb.mainQty > 0) rows.push({ name: 'Доска дна', t: floorT, w: 100, l: floorLen, qty: fb.mainQty, overrideKey: 'floorBoardT' });
     fb.extra.forEach((e, i) => {
@@ -39,7 +40,13 @@ function buildDno(c, s, subLengthWarn) {
     if (fb.singleNarrow) warnings.push('Доска дна: одна доска уже менее 100 мм.');
   }
 
+  // Продольные брусья дна - как горизонтальный брус бокового щита.
+  const dnoBeam = { t: s.dnoBeamT, w: s.beamW, l: len, qty: 2 };
+  rows.push({ name: 'Продольный брус дна', t: dnoBeam.t, w: dnoBeam.w, l: dnoBeam.l, qty: dnoBeam.qty, overrideKey: 'tDnoBeam' });
+  rows.push({ name: 'Торцовый брус дна', t: ov('t11', beamGostT, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
+
   const volume = vol(skid.t, skid.w, len, skid.count) + (removeSkidBoards ? 0 : vol(sub.t, sub.w, sub.l, sub.qty)) + vol(beam.t, beam.w, beam.l, beam.qty)
+    + vol(dnoBeam.t, dnoBeam.w, dnoBeam.l, dnoBeam.qty)
     + (removeFloorBoards ? 0 : (vol(floorT, 100, floorLen, fb.mainQty) + fb.extra.reduce((s2, e) => s2 + vol(floorT, e.width, floorLen, e.qty), 0)));
 
   return { rows, volume };
