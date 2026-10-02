@@ -829,6 +829,13 @@
     margin:22px 0 8px;
   }
   .part-title:first-child{margin-top:0;}
+
+  /* Кнопка действия у заголовка узла (III-1: «Убрать» у болтов) и заметка
+     «Болты убраны» с кнопкой «Вернуть»; убранное - скрыто (is-removed). */
+  .btn-small{margin-top:0;padding:4px 12px;font-size:12px;font-weight:600;border-radius:8px;}
+  .part-title-action{margin-left:12px;vertical-align:middle;}
+  .bolts-removed-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 0;line-height:1.3;}
+  .is-removed{display:none !important;}
   /* Лента обшивки торцов (I-1) - табличка 1×1 на всю ширину под всеми
      элементами, см. calculate() в src/i1/calc.js. */
   .spec-table.tape-table{margin-top:22px;}

@@ -55,6 +55,24 @@ function renderTextRows(sectionKey, rows, defaultText){
   return `<div class="spec-table tape-table"><table data-section="${sectionKey}"><tbody>${trs}</tbody></table></div>`;
 }
 
+// Болты можно убрать из спецификации (кнопка «Убрать» у заголовка) и вернуть
+// («Вернуть» в строке-заметке на их месте). Убранные - не в печати и PDF
+// (см. printableBoardTables). Выбор запоминается и сохраняется при пересчёте.
+const BOLTS_REMOVED_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'boltsRemoved';
+let boltsRemoved = false;
+try{ boltsRemoved = localStorage.getItem(BOLTS_REMOVED_STORAGE_KEY) === '1'; }catch(e){}
+
+function setBoltsRemoved(removed){
+  boltsRemoved = removed;
+  try{ localStorage.setItem(BOLTS_REMOVED_STORAGE_KEY, removed ? '1' : '0'); }catch(e){}
+  applyBoltsRemoved();
+}
+function applyBoltsRemoved(){
+  document.querySelectorAll('#boardTables .bolts-part').forEach(el=>el.classList.toggle('is-removed', boltsRemoved));
+  const note = document.getElementById('boltsRemovedNote');
+  if(note) note.classList.toggle('is-removed', !boltsRemoved);
+}
+
 function renderBoardTables(calc, manualOverrides){
   let html = '';
   html += renderPartBlock('Дно', renderPartTable(calc.dno, 'dno', manualOverrides));
@@ -62,11 +80,14 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlock('Щит торцевой (2 шт.)', renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlock('Щит боковой (2 шт.)', renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Болты и пергамин - под всеми узлами, попадают и в печать.
-  html += `<div class="part-title">Болты</div>` + renderTextRows('bolts', calc.bolts, r => `${r.name} Ø${r.d} мм - ${r.qty} шт.`);
+  html += `<div class="part-title bolts-part">Болты<button type="button" class="btn-secondary btn-small part-title-action screen-only" onclick="setBoltsRemoved(true)">Убрать</button></div>`
+    + renderTextRows('bolts', calc.bolts, r => `${r.name} Ø${r.d} мм - ${r.qty} шт.`).replace('class="spec-table tape-table"', 'class="spec-table tape-table bolts-part"')
+    + `<div class="note bolts-removed-note screen-only" id="boltsRemovedNote">Болты убраны из спецификации, печати и PDF.<button type="button" class="btn-secondary btn-small" onclick="setBoltsRemoved(false)">Вернуть</button></div>`;
   if(calc.parchment && calc.parchment.length){
     html += renderTextRows('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
   }
   document.getElementById('boardTables').innerHTML = html;
+  applyBoltsRemoved();
 }
 
 function renderWarnings(warnings){

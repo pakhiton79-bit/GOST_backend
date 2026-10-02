@@ -5,6 +5,8 @@
 // размеров и отступов чертежей (на печати они считаются заново).
 function printableBoardTables(){
   const clone = document.getElementById('boardTables').cloneNode(true);
+  // Только для экрана: кнопки «Убрать / Вернуть» болтов, убранные болты.
+  clone.querySelectorAll('.screen-only, .is-removed').forEach(el=>el.remove());
   clone.querySelectorAll('.editable-cell').forEach(cell=>{
     cell.removeAttribute('contenteditable');
     cell.classList.remove('editable-cell');
