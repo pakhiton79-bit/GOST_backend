@@ -1,6 +1,5 @@
 // ГОСТ 10198-91, тип III-1: щит торцевой (расчёт на 1 щит, щитов 2). Щит -
-// по ширине груза, между боковыми щитами; сверху над ним - поперечный брус
-// крышки.
+// по ширине груза, между боковыми щитами, высотой с груз.
 const { vol, fillBoards } = require('../helpers');
 
 // c - контекст расчёта; s - согласованные размеры; frame - каркас (frame.js);
@@ -14,8 +13,8 @@ function buildEndPanel(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на всю высоту щита, занимают ширину груза.
-  const boardLen = H - s.lidBeamT;
+  // Доски обшивки - на всю высоту груза, занимают ширину груза.
+  const boardLen = H;
   const fb = fillBoards(W, c.roundBoardWidths);
   if (fb.warn) warnings.push('Доска обшивки торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска обшивки торца: одна доска уже менее 100 мм.');

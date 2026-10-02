@@ -1,5 +1,5 @@
 // ГОСТ 10198-91, тип III-1: щит боковой (расчёт на 1 щит, щитов 2). Щит -
-// на всю наружную длину ящика; сверху над ним - продольный брус крышки.
+// на всю наружную длину ящика, высотой с груз.
 const { vol, fillBoards } = require('../helpers');
 
 // Опорная планка крышки (п.1.8.2): ширина 50-75 мм - берём 75 мм (по
@@ -17,8 +17,8 @@ function buildBokovoy(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на всю высоту щита, занимают наружную длину ящика.
-  const boardLen = H - s.lidBeamT;
+  // Доски обшивки - на всю высоту груза, занимают наружную длину ящика.
+  const boardLen = H;
   const fb = fillBoards(s.len, c.roundBoardWidths);
   if (fb.warn) warnings.push('Доска обшивки бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска обшивки бока: одна доска уже менее 100 мм.');
