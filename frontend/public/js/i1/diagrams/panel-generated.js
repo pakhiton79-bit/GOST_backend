@@ -40,10 +40,28 @@ function braceStrip(l, r, top, bot, rising, PW, hTop, hBot, fmt){
   return `<polygon points="${poly.map(p=>fmt(p[0])+','+fmt(p[1])).join(' ')}"/>`;
 }
 
+// Тип I-2: щит на чертеже - не сплошной прямоугольник, а 3 доски (по
+// указанию пользователя) с промежутками. Промежуток - схематичный, всегда
+// одной и той же доли frac высоты щита (по указанию пользователя - одинаково
+// на всех чертежах, размер подписан); у сплошного щита (hasGap = false)
+// доски вплотную. Возвращает [верх, низ] каждой доски.
+function boardStrips(top, bot, hasGap, frac){
+  const F = bot - top;
+  const g = hasGap ? F * frac : 0;
+  const h = (F - 2*g) / 3;
+  return [[top, top + h], [top + h + g, top + 2*h + g], [top + 2*h + 2*g, bot]];
+}
+const PANEL_GEN_BOARD_GAP = 0.09; // доля высоты щита
+// линии чертежа I-2 толще: он рисуется на любое число планок, в том числе
+// на 2-4, и на экране должен выглядеть как фото I-1 того же числа планок
+const PANEL_GEN_BOARD_STROKE = 12;
+
 // Чертёж на n планок - в том же формате, что и записи PANEL_PHOTOS.
 // Раскосины: левая половина промежутков «/», правая «\» (при нечётном числе
 // центральный - «/»); X-образные - встречная рисуется под исходной.
-function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
+// boardGap - тип I-2: промежуток обшивки щита { gap, share } (null - щит
+// сплошной), вместо прямоугольника щита - 3 доски; у I-1 не передаётся.
+function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal, boardGap){
   const G = PANEL_GEN;
   const x0 = G.stubL + G.edge, x1 = G.stubR - G.edge;
   let plankW = PANEL_GEN_PLANK_W;
@@ -57,7 +75,14 @@ function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   const f = v => v.toFixed(1);
   // Горизонтальных планок у щита нет - раскосина упирается только в вертикальные.
   const band = (l, r, rising) => braceStrip(l, r, G.topY, G.botY, rising, plankW, false, false, f);
-  let shapes = `<rect x="${f(G.stubL)}" y="${f(G.topY)}" width="${f(G.stubR-G.stubL)}" height="${f(G.botY-G.topY)}"/>`;
+  let shapes = '', gap = null;
+  if(boardGap === undefined){
+    shapes = `<rect x="${f(G.stubL)}" y="${f(G.topY)}" width="${f(G.stubR-G.stubL)}" height="${f(G.botY-G.topY)}"/>`;
+  } else {
+    const strips = boardStrips(G.topY, G.botY, !!boardGap, PANEL_GEN_BOARD_GAP);
+    strips.forEach(s => { shapes += `<rect x="${f(G.stubL)}" y="${f(s[0])}" width="${f(G.stubR-G.stubL)}" height="${f(s[1]-s[0])}"/>`; });
+    if(boardGap) gap = { y1: strips[0][1], y2: strips[1][0], value: boardGap.gap };
+  }
   if(hasRaskosinaVal){
     for(let i=0; i<n-1; i++){
       const l = px(i) + plankW, r = px(i+1);
@@ -71,9 +96,9 @@ function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
   }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${G.IH}" viewBox="0 0 ${G.IW} ${G.IH}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
-    + `<g fill="#fff" stroke="#000" stroke-width="${G.stroke}" stroke-linejoin="miter">${shapes}</g></svg>`;
+    + `<g fill="#fff" stroke="#000" stroke-width="${boardGap === undefined ? G.stroke : PANEL_GEN_BOARD_STROKE}" stroke-linejoin="miter">${shapes}</g></svg>`;
   return {
     img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
-    IW:G.IW, IH:G.IH, stubL:G.stubL, p1L:px(0), p1R:px(0)+plankW, p2L:px(1), stubR:G.stubR, topY:G.topY, botY:G.botY
+    IW:G.IW, IH:G.IH, stubL:G.stubL, p1L:px(0), p1R:px(0)+plankW, p2L:px(1), stubR:G.stubR, topY:G.topY, botY:G.botY, gap
   };
 }

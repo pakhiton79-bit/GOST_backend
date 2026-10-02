@@ -30,8 +30,9 @@ function i1FrameFit(IW, IH, frameH, maxW){
 }
 
 // Высота рамки для чертежа бока, крышки или дна (см. panelGeomDims в panel.js).
-function i1PanelFramePx(plankQty, hasRaskosina){
-  const g = panelGeomDims(plankQty, hasRaskosina);
+// generated - тип I-2 (щиты всегда сгенерированные, см. panelGeom).
+function i1PanelFramePx(plankQty, hasRaskosina, generated){
+  const g = panelGeomDims(plankQty, hasRaskosina, generated);
   return Math.floor(i1FrameFit(g.IW, g.IH, g.botY - g.topY, I1_MAX_W));
 }
 
@@ -45,6 +46,23 @@ function i1TorecFramePx(hasRaskosina){
 // DIAGRAM_DEFAULT_WIDTH, какой бы ширины ни вышла картинка.
 function i1StrokeScale(IW, widthPx){
   return photoStrokeScale(IW) * DIAGRAM_DEFAULT_WIDTH / widthPx;
+}
+
+// Тип I-2, размер «промежуток между досками» (щиты и торец): выносные
+// линии от кромок досок (y1, y2) в точке x0 влево до dimX, к ним снаружи -
+// стрелки длиной arrow; подпись - левее размера (pad - зазор; ширина подписи
+// оценивается по числу знаков, в тех же единицах, что arrow).
+function boardGapRecords(x0, dimX, y1, y2, arrow, pad, gapVal){
+  const text = fmtMm(gapVal) + ' мм';
+  const halfW = (text.length * 4.2 + 8) * arrow / 24;
+  return [
+    {type:'line', x1:x0, y1, x2:dimX - pad, y2:y1},
+    {type:'line', x1:x0, y1:y2, x2:dimX - pad, y2},
+    {type:'single', x1:dimX, y1:y1 - arrow, x2:dimX, y2:y1},
+    {type:'single', x1:dimX, y1:y2 + arrow, x2:dimX, y2},
+    {type:'line', x1:dimX, y1, x2:dimX, y2},
+    {type:'label', lx:dimX - pad - halfW, ly:(y1 + y2) / 2, text},
+  ];
 }
 
 // Подпись размера на чертеже: целые мм с округлением вверх (зазор и отступ

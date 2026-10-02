@@ -44,24 +44,27 @@ function renderTextRow(sectionKey, rows, defaultText){
 }
 
 function renderBoardTables(calc, manualOverrides){
-  // Каждый чертёж - максимального размера в своём слоте.
-  const kdFramePx = i1PanelFramePx(calc.plankQty, calc.kryshkaDnoHasRaskosina);
-  const bokFramePx = i1PanelFramePx(calc.plankQty, calc.raskosinaNeeded);
+  // Каждый чертёж - максимального размера в своём слоте. Тип I-2
+  // (calc.boardGaps): щиты из досок с промежутками - gaps.<щит>, у I-1 нет.
+  const gaps = calc.boardGaps || {};
+  const i2 = !!calc.boardGaps;
+  const kdFramePx = i1PanelFramePx(calc.plankQty, calc.kryshkaDnoHasRaskosina, i2);
+  const bokFramePx = i1PanelFramePx(calc.plankQty, calc.raskosinaNeeded, i2);
   const torecFramePx = i1TorecFramePx(calc.raskosinaNeeded);
   const edge = calc.plank.edgeDist;
 
   let html = '';
   html += renderPartBlock('Дно',
-    diagramDno(calc.dnoWidth, calc.drawPlankT.dno, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    diagramDno(calc.dnoWidth, calc.drawPlankT.dno, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx, gaps.dno),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка',
-    diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx, gaps.kryshka),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock('Щит торцевой (2 шт.)',
-    diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx),
+    diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx, gaps.torec),
     renderPartTable(calc.torec, 'torec', manualOverrides));
   html += renderPartBlock('Щит боковой (2 шт.)',
-    diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, bokFramePx, calc.drawPlankT.bokovoyBottom),
+    diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, bokFramePx, calc.drawPlankT.bokovoyBottom, gaps.bokovoy),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Лента обшивки и пергамин - под всеми узлами, попадают и в печать.
   if(calc.endTape && calc.endTape.length){

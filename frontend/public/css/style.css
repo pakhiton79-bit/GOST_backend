@@ -728,6 +728,11 @@
   .jump-slider-dense .jump-slider-mark{
     display:none;
   }
+  /* Значение ещё не выбрано (тип I-2, доля промежутков обшивки): без бегунка
+     и заливки - выбор щелчком по ползунку или в поле. */
+  .jump-slider-empty .jump-slider-thumb, .jump-slider-empty .jump-slider-fill{visibility:hidden;}
+  .jump-slider-empty .jump-slider-mark.passed{background:var(--panel);border-color:var(--rule);}
+  .board-gap-hint{display:block;margin-top:10px;font-size:12px;color:var(--ink-soft);}
   .jump-slider-thumb{
     position:absolute;
     top:50%;

@@ -9,6 +9,7 @@ const express = require('express');
 
 const { computeGost10198I3 } = require('./src/i3/compute');
 const { computeGost10198I1 } = require('./src/i1/compute');
+const { computeGost10198I2 } = require('./src/i2/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
@@ -126,6 +127,32 @@ app.post('/api/i1/calculate', (req, res) => {
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198I1(input), b.tableEdits, I1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+// Тип I-2 - тот же ящик, что I-1, но обшивка с промежутками (boardGapPercent).
+app.post('/api/i2/calculate', (req, res) => {
+  const b = req.body || {};
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    skidEnabled: !!b.skidEnabled,
+    skidThicknessRaw: toNum(b.skidThicknessRaw),
+    roundBoardWidths: !!b.roundBoardWidths,
+    removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
+    addRaskosina: !!b.addRaskosina,
+    xRaskosina: !!b.xRaskosina,
+    addEndTape: !!b.addEndTape,
+    addParchment: !!b.addParchment,
+    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
+    plankLayoutValue: toNum(b.plankLayoutValue),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+    boardGapPercent: toNum(b.boardGapPercent),
+  };
+  res.json(withTableEdits(computeGost10198I2(input), b.tableEdits, I1_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 

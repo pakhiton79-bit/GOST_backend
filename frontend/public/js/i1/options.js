@@ -1,10 +1,15 @@
-// ГОСТ 10198-91, тип I-1: опции формы - толщины «в наличии», полоз и
-// галочки. Всё запоминается в localStorage (ключи - свои для типа I-1).
-const THICKNESS_STORAGE_KEY = 'gost10198-i1-available-thickness';
+// ГОСТ 10198-91, тип I-1 (и I-2 - тот же ящик с обшивкой с промежутками,
+// страница i2.html): опции формы - толщины «в наличии», полоз и галочки. Всё
+// запоминается в localStorage (ключи - свои для каждого типа).
+// I1_VARIANT - тип страницы: у I-2 задаётся в js/i2/variant.js (подключается
+// раньше этого файла), у I-1 - значения ниже.
+const I1_VARIANT = (typeof BOX_VARIANT !== 'undefined') ? BOX_VARIANT
+  : { key: 'i1', name: 'I-1', api: '/api/i1/calculate' };
+const THICKNESS_STORAGE_KEY = 'gost10198-' + I1_VARIANT.key + '-available-thickness';
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
-const TIME_SETTINGS_STORAGE_KEY = 'gost10198-i1-time-settings'; // шестерёнка «Нормы времени»
-const WOOD_DENSITY_STORAGE_KEY = 'gost10198-i1-wood-density';   // шестерёнка «Массы ящика»
-const OPTIONS_STORAGE_PREFIX = 'gost10198-i1-opt-';             // галочки и переключатели
+const TIME_SETTINGS_STORAGE_KEY = 'gost10198-' + I1_VARIANT.key + '-time-settings'; // шестерёнка «Нормы времени»
+const WOOD_DENSITY_STORAGE_KEY = 'gost10198-' + I1_VARIANT.key + '-wood-density';   // шестерёнка «Массы ящика»
+const OPTIONS_STORAGE_PREFIX = 'gost10198-' + I1_VARIANT.key + '-opt-';             // галочки и переключатели
 
 // Любое изменение параметров: после первого расчёта показывается «Нажмите
 // «Рассчитать»» (вернули как было - снова «Расчёт выполнен»), см.
