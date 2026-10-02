@@ -1,5 +1,5 @@
-// ГОСТ 10198-91, тип I-1: сбор входных данных, запрос расчёта на сервер
-// (POST /api/i1/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
+// ГОСТ 10198-91, тип I-2: сбор входных данных, запрос расчёта на сервер
+// (POST /api/i2/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
 // общую обёртку calculate() из common-calc-state.js, та - calculateNow().
 
 // Ручные толщины из таблицы: только ячейки толщины, которые пользователь
@@ -40,6 +40,7 @@ function buildCalcInput(){
     tableEdits,
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
     woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
+    boardGapPercent: readBoardGapPercent(), // доля промежутков между досками обшивки, % (board-gaps.js)
   };
 }
 
@@ -57,7 +58,7 @@ async function calculateNow(){
 
   let calc;
   try{
-    const resp = await fetch('/api/i1/calculate', {
+    const resp = await fetch('/api/i2/calculate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -106,9 +107,10 @@ function errorFieldsFor(text){
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : ['L'];
   if(/Ширина груза/.test(text)) return ['W'];
   if(/раскосины торца/.test(text)) return ['W', 'H'];
+  if(/долю промежутков между досками/.test(text)) return ['boardGapInput'];
   return [];
 }
 
-document.getElementById('boxView').src = BOX_I1_IMG_B64;
+document.getElementById('boxView').src = BOX_I2_IMG_B64;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
 initDensitySettings(WOOD_DENSITY_STORAGE_KEY);

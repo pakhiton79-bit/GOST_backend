@@ -1,4 +1,4 @@
-// ГОСТ 10198-91, тип I-1: содержимое печатной страницы и PDF (вызывается из
+// ГОСТ 10198-91, тип I-2: содержимое печатной страницы и PDF (вызывается из
 // printBox/downloadPdf в common-print.js).
 
 // Копия спецификации для печати: без редактируемых ячеек и без экранных
@@ -68,11 +68,11 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 10198-91, тип I-1${boxNameHtml()}</h1>
+    <h1>ГОСТ 10198-91, тип I-2${boxNameHtml()}</h1>
 
     <div class="part-title">Общий вид ящика</div>
     <div class="spec-row-diagram">
-      <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_I1_IMG_B64}" alt=""></div></div>
+      <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_I2_IMG_B64}" alt=""></div></div>
       <div class="print-summary-col">
         <div class="print-summary-block">
           <h2>Внутренние размеры груза, мм</h2>

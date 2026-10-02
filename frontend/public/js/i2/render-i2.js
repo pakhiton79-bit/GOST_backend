@@ -1,6 +1,6 @@
-// ГОСТ 10198-91, тип I-1: вывод результата расчёта - плитки «Итог»,
+// ГОСТ 10198-91, тип I-2: вывод результата расчёта - плитки «Итог»,
 // спецификация (чертёж + таблица по каждому узлу), лента обшивки, пергамин и
-// предупреждения. calc - ответ сервера (/api/i1/calculate).
+// предупреждения. calc - ответ сервера (/api/i2/calculate).
 
 function renderSummary(calc){
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
@@ -44,24 +44,25 @@ function renderTextRow(sectionKey, rows, defaultText){
 }
 
 function renderBoardTables(calc, manualOverrides){
-  // Каждый чертёж - максимального размера в своём слоте.
-  const kdFramePx = i1PanelFramePx(calc.plankQty, calc.kryshkaDnoHasRaskosina);
-  const bokFramePx = i1PanelFramePx(calc.plankQty, calc.raskosinaNeeded);
-  const torecFramePx = i1TorecFramePx(calc.raskosinaNeeded);
+  // Каждый чертёж - максимального размера в своём слоте. Обшивка щитов -
+  // доски с промежутками: gaps.<щит> (null - щит сплошной).
+  const gaps = calc.boardGaps;
+  const panelFramePx = i2PanelFramePx();
+  const torecFramePx = i2TorecFramePx(calc.raskosinaNeeded);
   const edge = calc.plank.edgeDist;
 
   let html = '';
   html += renderPartBlock('Дно',
-    diagramDno(calc.dnoWidth, calc.drawPlankT.dno, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    diagramDno(calc.dnoWidth, calc.drawPlankT.dno, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, panelFramePx, gaps.dno),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка',
-    diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, panelFramePx, gaps.kryshka),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock('Щит торцевой (2 шт.)',
-    diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx),
+    diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx, gaps.torec),
     renderPartTable(calc.torec, 'torec', manualOverrides));
   html += renderPartBlock('Щит боковой (2 шт.)',
-    diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, bokFramePx, calc.drawPlankT.bokovoyBottom),
+    diagramBokovoy(calc.H, calc.drawPlankT.bokovoy, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.raskosinaNeeded, calc.xRaskosina, panelFramePx, calc.drawPlankT.bokovoyBottom, gaps.bokovoy),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Лента обшивки и пергамин - под всеми узлами, попадают и в печать.
   if(calc.endTape && calc.endTape.length){

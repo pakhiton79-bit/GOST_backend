@@ -1019,7 +1019,7 @@
       max-width:240px;
       margin:0 auto;
     }
-    /* I-1: каждый чертёж максимального размера (см. data-i1-panel выше) - длинный
+    /* I-1 и I-2: каждый чертёж максимального размера (см. data-max-size выше) - длинный
        шире 240px; max-width обрезал бы только картинку, а подписи (их
        размер - через --dk) оставались бы прежними и наезжали друг на
        друга. Сжатие по ширине экрана делает fitDiagramsOnScreen
@@ -1360,11 +1360,11 @@
     border:calc(var(--pk)*var(--dk)*var(--lk,1)*2px) solid #8A4B26;color:#091135;font-size:calc(var(--pk)*var(--dk)*var(--lk,1)*15px);font-weight:700;
     padding:calc(var(--pk)*var(--dk)*var(--lk,1)*2px) calc(var(--pk)*var(--dk)*var(--lk,1)*6px);white-space:nowrap;line-height:1.3;
   }
-  /* I-1 (data-i1-panel): в печати подписи относительно картинки крупнее, чем на
-     экране (15px против 13px при ширине картинки x0.885) - на чертежах I-1
+  /* I-1 и I-2 (data-max-size): в печати подписи относительно картинки крупнее, чем на
+     экране (15px против 13px при ширине картинки x0.885) - на чертежах I-1 и I-2
      подписи расставлены плотнее (в два ряда под фото, см. diagramBokPhoto в
      src/i1/diagrams.js), поэтому в печати они немного уменьшены. */
-  #printArea .diagram-slot[data-i1-panel] .diagram-wrap{--lk:0.85;}
+  #printArea .diagram-slot[data-max-size] .diagram-wrap{--lk:0.85;}
   #printArea .diagram-label-vertical{
     transform:translate(-50%,-50%) rotate(-90deg);
   }

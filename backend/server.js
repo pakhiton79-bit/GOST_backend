@@ -16,6 +16,7 @@ const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, comput
 // Разделы таблицы деталей и их множители в итоговом объёме (щиты
 // торцевой/боковой - по 2 шт.) - для ручных правок таблицы (tableEdits).
 const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
+const I2_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
 
@@ -55,6 +56,7 @@ function toNum(v) {
 // числа под известными ключами - произвольные поля из тела запроса дальше в
 // расчёт не пропускаются.
 const I1_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorVert', 'tTorHoriz', 'tTorBoard', 'tTorRask'];
+const I2_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorVert', 'tTorHoriz', 'tTorBoard', 'tTorRask'];
 // I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
 // computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
 // изолированные (полное объяснение см. computeGost10198I3).
@@ -146,13 +148,13 @@ app.post('/api/i2/calculate', (req, res) => {
     plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
     plankLayoutValue: toNum(b.plankLayoutValue),
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I2_OVERRIDE_KEYS),
     baseProductivity: toNum(b.baseProductivity),
     woodDensity: toNum(b.woodDensity),
     timeCoeff: toNum(b.timeCoeff),
     boardGapPercent: toNum(b.boardGapPercent),
   };
-  res.json(withTableEdits(computeGost10198I2(input), b.tableEdits, I1_TABLE_SECTIONS, input,
+  res.json(withTableEdits(computeGost10198I2(input), b.tableEdits, I2_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 

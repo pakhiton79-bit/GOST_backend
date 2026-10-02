@@ -103,13 +103,8 @@ function sumVolume(rows) {
 // input: { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths,
 //   removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape,
 //   addParchment, plankLayoutMode, plankLayoutValue, availableThicknesses,
-//   manualOverrides, baseProductivity, timeCoeff, woodDensity,
-//   boardGapPercent (тип I-2 - доля промежутков между досками обшивки, %) }.
-// variant - тип ящика: I-1 (по умолчанию) или I-2 - тот же ящик, но доски
-// обшивки всех щитов с промежутками (см. ../i2/compute.js).
-const I1_VARIANT = { name: 'I-1', boardGaps: false };
-function computeGost10198I1(input, variant) {
-  const v = variant || I1_VARIANT;
+//   manualOverrides, baseProductivity, timeCoeff, woodDensity }.
+function computeGost10198I1(input) {
   const { L, W, H, MASS, skidEnabled, skidThicknessRaw, roundBoardWidths, removeLidBottomRaskosina, addRaskosina, xRaskosina, addEndTape, addParchment, plankLayoutMode, plankLayoutValue, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const manualOverrides = input.manualOverrides || {};
@@ -119,13 +114,8 @@ function computeGost10198I1(input, variant) {
     return { error: 'Заполните все поля положительными числами.' };
   }
   const warnings = [];
-  // Тип I-2: доля промежутков обязательна (по указанию пользователя).
-  const gapPercent = input.boardGapPercent;
-  if (v.boardGaps && !(gapPercent >= 10 && gapPercent <= 50)) {
-    return { error: 'Укажите долю промежутков между досками обшивки (от 10 до 50%) - расчёт не выполняется.' };
-  }
-  if (MASS < 200) warnings.push(`Масса груза вне диапазона типа ${v.name} (200–1000 кг): менее 200 кг.`);
-  if (MASS > 1000) warnings.push(`Масса груза вне диапазона типа ${v.name} (200–1000 кг): более 1000 кг.`);
+  if (MASS < 200) warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): менее 200 кг.');
+  if (MASS > 1000) warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): более 1000 кг.');
 
   const density = packingDensity(MASS, L, W, H);
   // Раскосины: по ГОСТ (высота от 1000, длина больше 5000, плотность больше
@@ -189,7 +179,7 @@ function computeGost10198I1(input, variant) {
   }
 
   // --- 5. Детали ---
-  const g = { L, W, H, T, skidT, kLen, plankQty, horizPlankaLen, roundBoardWidths, boardGapShare: v.boardGaps ? gapPercent / 100 : 0 };
+  const g = { L, W, H, T, skidT, kLen, plankQty, horizPlankaLen, roundBoardWidths };
   const dno = parts.buildDno(g);
   const p = {
     dno: dno.rows,
@@ -243,11 +233,6 @@ function computeGost10198I1(input, variant) {
     endTape: addEndTape ? parts.endTapeRows(g) : [],
     parchment: addParchment ? parts.parchmentRows(g) : [],
   };
-  // Тип I-2: промежутки обшивки по щитам (для чертежей).
-  if (v.boardGaps) {
-    result.boardGaps = parts.boardGapsByPanel(g);
-    warnings.push(...parts.boardGapWarnings(g, result.boardGaps));
-  }
 
   // Отрицательное число в любом поле - невозможная геометрия.
   const negField = findNegativeField(result, '');

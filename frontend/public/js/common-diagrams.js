@@ -167,7 +167,8 @@ function dnoImageForSkids(count, photo2, images){
 // квадратное) - там передаётся своё, меньшее значение.
 // imgOverride - необязательная подмена картинки при той же калибровке
 // (тип I-1: X-образные раскосины, см. diagramTorec в js/i1/diagrams/torec.js).
-// extraRecords - дополнительные размеры (тип I-2: промежуток между досками).
+// extraRecords - дополнительные размеры (тип I-2: промежуток между досками,
+// картинка - сгенерированный торец, см. js/i2/diagrams/torec.js).
 function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverride, imgOverride, strokeScaleOverride, extraRecords){
   // Фото-чертёж для варианта с 1 раскосиной (натуральный размер 1352×1158).
   // Подпись высоты - полная высота рамы щита = высота груза + толщина доски дна.
@@ -187,7 +188,7 @@ function diagramEndPanel1Raskosina(heightPlusT12Val, innerWidthVal, widthPxOverr
 }
 
 // imgOverride / extraRecords - тип I-2: сгенерированный чертёж того же вида
-// (доски с промежутками) и размер промежутка.
+// (доски с промежутками) и размер промежутка (см. js/i2/diagrams/torec.js).
 function diagramEndPanelNoRaskosina(heightPlusT12Val, widthVal, widthPxOverride, strokeScaleOverride, imgOverride, extraRecords){
   // Фото-чертёж для варианта без раскосины (H≤600мм либо W≤600мм - п.1.6.5/п.102 docx,
   // независимо друг от друга отключают раскосину на торце). Просто рамка из планок и

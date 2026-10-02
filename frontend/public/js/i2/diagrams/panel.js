@@ -1,20 +1,9 @@
-// ГОСТ 10198-91, тип I-1: чертежи «Щит боковой», «Крышка» и «Дно» - один и
-// тот же щит с поясами планок (фото на 2-4 планки из panel-photos.js, на 5 и
-// более - panel-generated.js) с размерными стрелками.
-
-// Фото или сгенерированный чертёж для числа планок; null - планок так много,
-// что они слились бы (вместо чертежа заглушка).
-function panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal){
-  if(plankQty > 4) return panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal);
-  return panelPhoto(plankQty, hasRaskosinaVal, xRaskosinaVal);
-}
-
-// Только размеры (без построения картинки) - для подбора масштаба.
-function panelGeomDims(plankQty, hasRaskosinaVal){
-  return plankQty > 4 ? PANEL_GEN : PANEL_PHOTOS[panelPhotoKey(plankQty, hasRaskosinaVal)];
-}
+// ГОСТ 10198-91, тип I-2: чертежи «Щит боковой», «Крышка» и «Дно» - один и
+// тот же щит с поясами планок и обшивкой из досок с промежутками
+// (panel-generated.js) с размерными стрелками.
 
 // Щит с размерами:
+//   g          - чертёж щита (panelGenerated);
 //   dimVal     - вертикальный размер (у бока - высота груза, у крышки и дна -
 //                ширина);
 //   plankTVal  - толщина у выступающего верхнего левого угла первой планки;
@@ -23,19 +12,19 @@ function panelGeomDims(plankQty, hasRaskosinaVal){
 //   boardLenVal - длина доски;
 //   bottomTVal - выступ планок снизу (только боковой щит), подписывается у
 //                нижнего правого угла крайней правой планки.
-// Отступы подписей заданы в экранных пикселях (px - пикселей фото на 1px
-// экрана), чтобы на фото разной ширины они выглядели одинаково.
+// Отступы подписей заданы в экранных пикселях (px - пикселей картинки на 1px
+// экрана), чтобы при разной ширине картинки они выглядели одинаково.
 function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTitle, framePx, bottomTVal){
   const IW = g.IW, IH = g.IH, topY = g.topY, botY = g.botY;
   const stubL = g.stubL, p1L = g.p1L, p1R = g.p1R, p2L = g.p2L, stubR = g.stubR;
-  const widthPx = i1DiagramWidth(IW, botY - topY, framePx);
+  const widthPx = i2DiagramWidth(IW, botY - topY, framePx);
   const px = IW / widthPx;
 
   // Вертикальный размер - справа от щита.
   const dimFarX = stubR + 20*px;
   const dblArrowX = stubR + 11*px;
 
-  // Длина доски - стрелкой над фото, от края до края щита.
+  // Длина доски - стрелкой над картинкой, от края до края щита.
   const topLineY = topY - 24*px;
 
   // Толщина - сноской к выступающему углу первой планки, подпись в ряду
@@ -46,7 +35,7 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
 
   // Под рамкой щита, на одном уровне bracketY: скобка «отступ от края»
   // (stubL..p1L) и стрелка «зазор между планками» (p1R..p2L). Подписи под
-  // фото: 1-й ряд - зазор, 2-й ряд - отступ (сноской).
+  // картинкой: 1-й ряд - зазор, 2-й ряд - отступ (сноской).
   const bracketYStart = botY - 0.085*IH, bracketYEnd = IH;
   const bracketY = botY + 0.44*(IH-botY);
   const bracketMidX = (stubL+p1L)/2;
@@ -79,6 +68,10 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
     {type:'single', x1:edgeLabelX, y1:edgeLabelY, x2:bracketMidX, y2:bracketY, lx:edgeLabelX, ly:edgeLabelY, text: fmtMm(edgeVal)+' мм'}
   ];
 
+  // Промежуток между досками - размер слева от щита у первого промежутка
+  // (у сплошного щита его нет).
+  if(g.gap) records.push(...boardGapRecords(stubL, stubL - 22*px, g.gap.y1, g.gap.y2, 24*px, 6*px, g.gap.value));
+
   if(bottomTVal > 0){
     const lastR = stubR - (p1L - stubL); // правая кромка крайней правой планки
     const botTargetY = botY + 0.2*(IH - botY);
@@ -86,21 +79,22 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
     records.push({type:'single', x1:botTailX, y1:botTailY, x2:lastR, y2:botTargetY, lx:botTailX, ly:botTailY, text: dimLabel(bottomTVal)+' мм'});
   }
 
-  return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, widthPx, i1StrokeScale(IW, widthPx));
+  return renderDiagram(g.img, partTitle + ' - схема расположения деталей', IW, IH, records, widthPx, i2StrokeScale(IW, widthPx));
 }
 
-function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, bottomTVal){
-  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+// boardGap - промежуток обшивки щита (calc.boardGaps.<щит>, null - сплошной).
+function diagramBokovoy(heightVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, bottomTVal, boardGap){
+  const g = panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal, boardGap);
   if(!g) return diagramTooDense();
   return diagramPanel(g, heightVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Щит боковой', framePx, bottomTVal);
 }
-function diagramKryshka(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
-  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+function diagramKryshka(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, boardGap){
+  const g = panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal, boardGap);
   if(!g) return diagramTooDense();
   return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Крышка', framePx);
 }
-function diagramDno(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx){
-  const g = panelGeom(plankQty, hasRaskosinaVal, xRaskosinaVal);
+function diagramDno(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, boardGap){
+  const g = panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal, boardGap);
   if(!g) return diagramTooDense();
   return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Дно', framePx);
 }
