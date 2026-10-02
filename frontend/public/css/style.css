@@ -1211,14 +1211,19 @@
   .fine-thickness summary:hover{color:var(--accent);}
   .fine-thickness-body{margin-top:14px;}
   .fine-thickness-body .option-hint{font-size:12px;color:var(--ink-soft);margin-bottom:14px;}
+  /* 4 колонки (ряд - дно, ряд - щиты и крышка), на узком экране - 2 (пары
+     того же узла), но не 3 - иначе ряды узлов разъезжаются. */
   .fine-thickness-grid{
     display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    grid-template-columns:repeat(4,minmax(0,1fr));
     gap:14px 16px;
   }
   .fine-thickness-field{display:flex;flex-direction:column;justify-content:flex-end;}
+  @media screen and (max-width:960px){
+    .fine-thickness-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
   @media screen and (max-width:640px){
-    .fine-thickness-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+    .fine-thickness-grid{gap:12px;}
   }
   .fine-thickness-hint{display:block;margin-top:2px;font-size:11px;font-weight:400;letter-spacing:0;text-transform:none;}
   .fine-thickness-field input[type=number]{padding:10px 12px;font-size:15px;}
