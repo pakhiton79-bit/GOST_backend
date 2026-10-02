@@ -803,6 +803,12 @@
       border-radius:12px;
       overflow:hidden;
     }
+    /* Таблица упирается в рамку обёртки: без нижнего отступа и без линии под
+       последней строкой - иначе под ней виднелось начало «новой строки»,
+       обрезанное скруглением (по замечанию пользователя). Подчёркивание
+       ячейки в фокусе остаётся. */
+    #boardTables .spec-table table{margin-bottom:0;}
+    #boardTables .spec-table tbody tr:last-child td:not(:focus){border-bottom-color:transparent;}
   }
   .editable-cell{
     cursor:text;
