@@ -12,34 +12,30 @@ const { stojkaSection } = require('./logic');
 const BEAM_W = 100;               // ширина стоек, горизонтальных брусьев щитов, брусьев крышки и продольного бруса дна
 const CROSS_BEAM_MAX_GAP = 700;   // промежуток между краями поперечных брусьев крышки (и от стенки до крайнего), по указанию пользователя
 const CROSS_BEAM_AXIS_MIN = 500, CROSS_BEAM_AXIS_MAX = 800; // настройка расстояния между осями поперечных брусьев крышки (п.1.8.1)
-const CROSS_BEAM_OPT_EDGE = 2;    // «Оптимизировать размеры»: отступ от стенки до крайнего бруса больше на 2 мм
 const LONG_BEAM_COUNT = 2;        // продольные брусья крышки
 const ITERATIONS = 4;
 
-// Поперечные брусья крышки (n шт. шириной w) - равномерно по длине груза L:
-// отступ от стенки до крайнего (edge) равен промежутку между краями соседних
-// (gap), при «Оптимизировать размеры» отступ больше на edgeAdd. axis -
-// расстояние между осями соседних.
-function crossBeamLayout(L, w, n, edgeAdd) {
-  const edge = (L - n * w) / (n + 1) + edgeAdd;
-  const gap = (L - n * w - 2 * edge) / (n - 1);
-  return { edge, gap, axis: gap + w };
+// Поперечные брусья крышки (n шт. шириной w) по длине крышки len (наружная
+// длина ящика): крайние - вровень с концами крышки, остальные - равномерно
+// между ними (по указанию пользователя). gap - промежуток между краями
+// соседних, axis - расстояние между осями.
+function crossBeamLayout(len, w, n) {
+  const gap = (len - n * w) / (n - 1);
+  return { gap, axis: gap + w };
 }
 
 // Число поперечных брусьев крышки: заданное вручную (c.lidCrossBeamCount) -
 // целое не меньше 2; по расстоянию между осями (c.lidCrossBeamAxis, 500-800
 // мм) - наименьшее, при котором оно не больше заданного; штатно -
-// наименьшее (не меньше 2), при котором и отступы, и промежутки между
-// краями брусьев ≤ 700 мм.
-function crossBeamCounts(c, edgeAdd) {
-  const { L } = c;
-  const standard = Math.max(2, Math.ceil((L - CROSS_BEAM_MAX_GAP + edgeAdd) / (CROSS_BEAM_MAX_GAP + BEAM_W - edgeAdd)));
+// наименьшее (не меньше 2), при котором промежутки между краями брусьев
+// ≤ 700 мм.
+function crossBeamCounts(c, len) {
+  const standard = Math.max(2, Math.ceil((len + CROSS_BEAM_MAX_GAP) / (CROSS_BEAM_MAX_GAP + BEAM_W) - 1e-9));
   if (c.lidCrossBeamCount > 0) return { standard, count: Math.max(2, Math.round(c.lidCrossBeamCount)), axisSet: 0 };
   if (c.lidCrossBeamAxis > 0) {
     const axisSet = Math.min(CROSS_BEAM_AXIS_MAX, Math.max(CROSS_BEAM_AXIS_MIN, c.lidCrossBeamAxis));
-    let n = 2;
-    while (n < 1000 && crossBeamLayout(L, BEAM_W, n, edgeAdd).axis > axisSet + 1e-9) n++;
-    return { standard, count: n, axisSet };
+    const count = Math.max(2, Math.ceil((len - BEAM_W) / axisSet - 1e-9) + 1);
+    return { standard, count, axisSet };
   }
   return { standard, count: standard, axisSet: 0 };
 }
@@ -109,16 +105,15 @@ function stabilizeSizes(c) {
     dnoBeamT = ov('tDnoBeam', bokFrameT, 'Толщина продольного бруса дна');
   }
 
-  const edgeAdd = c.optimizeSizes ? CROSS_BEAM_OPT_EDGE : 0;
-  const cross = crossBeamCounts(c, edgeAdd);
+  const cross = crossBeamCounts(c, len);
 
   return {
     frameGost, stojkaExceeded, torFrameT, bokFrameT, len, outerW, outerH,
     skid, skidTableInfo, polozSimpleExceeded, sub, skidSpace,
     beamW: BEAM_W, lidBeamT, dnoBeamT,
     crossBeamCount: cross.count, standardCrossBeamCount: cross.standard, crossBeamAxisSet: cross.axisSet,
-    crossBeamLayout: crossBeamLayout(L, BEAM_W, cross.count, edgeAdd),
-    crossBeamMaxGap: CROSS_BEAM_MAX_GAP, crossBeamEdgeAdd: edgeAdd,
+    crossBeamLayout: crossBeamLayout(len, BEAM_W, cross.count),
+    crossBeamMaxGap: CROSS_BEAM_MAX_GAP,
     longBeamCount: LONG_BEAM_COUNT,
     floorBoardT, floorBoardExceeded,
   };

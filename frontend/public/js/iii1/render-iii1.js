@@ -1,6 +1,6 @@
 // ГОСТ 10198-91, тип III-1: вывод результата расчёта - плитки «Итог»,
-// спецификация (таблица по каждому узлу; из чертежей пока только щиты -
-// diagrams/), болты, пергамин и предупреждения.
+// спецификация (таблица и чертёж по каждому узлу - diagrams/), болты,
+// пергамин и предупреждения.
 // calc - ответ сервера (/api/iii1/calculate).
 
 // Общий вид ящика (плитка «Итог» и печать). Своего чертежа у III-1 пока нет -
@@ -85,7 +85,7 @@ function applyBoltsRemoved(){
 function renderBoardTables(calc, manualOverrides){
   let html = '';
   html += renderPartBlockDiagram('Дно', diagramDnoIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.dno, 'dno', manualOverrides));
-  html += renderPartBlock('Крышка', renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
+  html += renderPartBlockDiagram('Крышка', diagramKryshkaIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlockDiagram('Щит торцевой (2 шт.)', diagramTorecIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlockDiagram('Щит боковой (2 шт.)', diagramBokIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Болты и пергамин - под всеми узлами, попадают и в печать.

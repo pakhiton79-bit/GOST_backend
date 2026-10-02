@@ -111,11 +111,11 @@
       <div class="option-group-title">Брусья крышки</div>
       <label>
         <input type="checkbox" id="optimizeSizes">
-        <span>Оптимизировать размеры<span class="option-hint">Длина поперечного и продольного брусьев крышки уменьшается на 4 мм. Отступ от стенки до крайнего поперечного бруса - на 2 мм больше</span></span>
+        <span>Оптимизировать размеры<span class="option-hint">Длина поперечного и продольного брусьев крышки уменьшается на 4 мм</span></span>
       </label>
       <label>
         <input type="checkbox" id="customCrossBeams" onchange="onManualCountCheckboxChange('cross')">
-        <span>Настроить число поперечных брусьев<span class="option-hint">Брусья - равномерно по длине крышки, отступы от стенок равны промежуткам между брусьями (при «Оптимизировать размеры» - на 2 мм больше). Штатно - наименьшее число, при котором расстояния между краями брусьев и отступы не больше 700 мм</span></span>
+        <span>Настроить число поперечных брусьев<span class="option-hint">Крайние брусья - по концам крышки, остальные равномерно между ними. Штатно - наименьшее число, при котором расстояния между краями брусьев не больше 700 мм</span></span>
       </label>
       <div id="crossBeamsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
@@ -306,6 +306,7 @@
 <script src="/js/iii1/diagrams/panel.js"></script>
 <script src="/js/iii1/diagrams/torec.js"></script>
 <script src="/js/iii1/diagrams/dno.js"></script>
+<script src="/js/iii1/diagrams/kryshka.js"></script>
 <script src="/js/iii1/diagrams/bok.js"></script>
 <script src="/js/iii1/render-iii1.js"></script>
 <script src="/js/iii1/print-iii1.js"></script>
