@@ -892,6 +892,14 @@
     line-height:1.6;
   }
 
+  /* Красное уведомление «тип ещё не готов» над результатами (III-1). */
+  .note-danger{
+    color:var(--error);
+    background:rgba(194,59,44,.08);
+    border-left-color:var(--error);
+    margin:0 0 16px;
+  }
+
   .disclaimer{
     font-size:12px;
     color:var(--ink-soft);
