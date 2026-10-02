@@ -1,6 +1,6 @@
 // ГОСТ 10198-91, тип III-1: вывод результата расчёта - плитки «Итог»,
-// спецификация (таблица по каждому узлу; из чертежей пока только боковой
-// щит - diagrams/bok.js), болты, пергамин и предупреждения.
+// спецификация (таблица по каждому узлу; из чертежей пока только щиты -
+// diagrams/), болты, пергамин и предупреждения.
 // calc - ответ сервера (/api/iii1/calculate).
 
 // Общий вид ящика (плитка «Итог» и печать). Своего чертежа у III-1 пока нет -
@@ -86,7 +86,7 @@ function renderBoardTables(calc, manualOverrides){
   let html = '';
   html += renderPartBlock('Дно', renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка', renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
-  html += renderPartBlock('Щит торцевой (2 шт.)', renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
+  html += renderPartBlockDiagram('Щит торцевой (2 шт.)', diagramTorecIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlockDiagram('Щит боковой (2 шт.)', diagramBokIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Болты и пергамин - под всеми узлами, попадают и в печать.
   html += `<div class="part-title bolts-part">Болты<button type="button" class="btn-secondary btn-small part-title-action screen-only" onclick="setBoltsRemoved(true)">Убрать</button></div>`
