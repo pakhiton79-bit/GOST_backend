@@ -41,7 +41,7 @@ function buildBokovoy(c, s, frame, rask) {
 
   const volume = vol(stojka.t, stojka.w, stojka.l, stojka.qty) + vol(horiz.t, horiz.w, horiz.l, horiz.qty)
     + vol(rask.t, rask.w, raskLen, raskQty) + vol(opora.t, opora.w, opora.l, opora.qty)
-    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty), 0)
+    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty * frame.floors), 0)
     + (withX ? vol(rask.t, rask.w, (raskLen - rask.w) / 2, raskQty * 2) : 0);
 
   return { rows, volume };
