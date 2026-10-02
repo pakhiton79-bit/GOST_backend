@@ -111,7 +111,9 @@ const FASTENING_LABELS = {
 let fasteningType = 'floor_boards'; // по умолчанию - к доскам дна (по указанию пользователя)
 try{
   const saved = localStorage.getItem(FASTENING_STORAGE_KEY);
-  if(saved === 'skid' || saved === 'floor_boards') fasteningType = saved;
+  // Крепление за полозья временно убрано (по указанию пользователя) -
+  // сохранённый выбор 'skid' не восстанавливается.
+  if(/* saved === 'skid' || */ saved === 'floor_boards') fasteningType = saved;
 }catch(e){}
 
 // «Убрать доски дна» - только при креплении за полозья: при креплении к
