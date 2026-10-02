@@ -84,7 +84,7 @@ function applyBoltsRemoved(){
 
 function renderBoardTables(calc, manualOverrides){
   let html = '';
-  html += renderPartBlock('Дно', renderPartTable(calc.dno, 'dno', manualOverrides));
+  html += renderPartBlockDiagram('Дно', diagramDnoIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка', renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlockDiagram('Щит торцевой (2 шт.)', diagramTorecIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlockDiagram('Щит боковой (2 шт.)', diagramBokIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
