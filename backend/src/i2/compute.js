@@ -53,8 +53,9 @@ function partThicknesses(ov, wall) {
     bokPlanka: ov('tBokPlanka', wall, 'Толщина планки бокового щита'),
     bokBoard: ov('tBokBoard', wall, 'Толщина доски бокового щита'),
     bokRask: ov('tBokRask', wall, 'Толщина раскосины бокового щита'),
-    torVert: ov('tTorVert', wall, 'Толщина вертикальной планки торца'),
-    torHoriz: ov('tTorHoriz', wall, 'Толщина горизонтальной планки торца'),
+    // Вертикальные и горизонтальные планки торца - одна толщина: правка
+    // одной меняет и другую (по указанию пользователя).
+    torPlanka: ov('tTorPlanka', wall, 'Толщина планок торца'),
     torBoard: ov('tTorBoard', wall, 'Толщина доски торцевого щита'),
     torRask: ov('tTorRask', wall, 'Толщина раскосины торца'),
   };
@@ -145,7 +146,7 @@ function computeGost10198I2(input) {
   // ручные толщины вертикальной планки и доски торца), как в таблице.
   const boardLenForError = w => {
     const t = key => (manualOverrides[key] > 0 ? manualOverrides[key] : roundUpToAvailable(w));
-    return L + (t('tTorVert') + t('tTorBoard')) * 2;
+    return L + (t('tTorPlanka') + t('tTorBoard')) * 2;
   };
   const standardPass = chooseWallThickness(L, null, wallThicknessI2(density));
   if (standardPass.failedWall !== undefined) return { error: plankLayoutError(boardLenForError(standardPass.failedWall), null) };
@@ -167,7 +168,7 @@ function computeGost10198I2(input) {
   // --- 4. Раскладка поясов под итоговые толщины ---
   // Толщина уже выбрана по расчётной (неокруглённой) раскладке; здесь только
   // геометрия под итоговый материал.
-  const torecWall = (T.torVert + T.torBoard) * 2;
+  const torecWall = (T.torPlanka + T.torBoard) * 2;
   const kLen = L + torecWall; // длина досок дна, крышки и бокового щита
   const plank = plankLayout(kLen, torecWall, plankOverride);
   if (plank.count === null) return { error: plankLayoutError(kLen, plankOverride) };
@@ -208,7 +209,7 @@ function computeGost10198I2(input) {
   const bottomSupport = skidEnabled ? skidT : T.dnoPlanka;
   const outerH = bottomSupport + T.dnoBoard + H + T.krBoard + T.krPlanka;
   const outerW = W + (T.bokPlanka + T.bokBoard) * 2;
-  const outerL = L + (T.torVert + T.torBoard) * 2;
+  const outerL = L + (T.torPlanka + T.torBoard) * 2;
 
   const totalVolume = sumVolume(p.dno) + sumVolume(p.kryshka) + 2 * sumVolume(p.bokovoy) + 2 * sumVolume(p.torec);
   const normaVremeni = computeNormaVremeni(totalVolume, baseProductivity, timeCoeff);

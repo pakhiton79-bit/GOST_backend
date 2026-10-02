@@ -74,8 +74,8 @@ function buildBokovoy(g) {
 function buildTorec(g) {
   const { W, H, T, horizPlankaLen, roundBoardWidths } = g;
   return [
-    { name: 'Вертикальная планка', t: T.torVert, w: PLANK_W, l: H, qty: 2, overrideKey: 'tTorVert' },
-    { name: 'Горизонтальная планка', t: T.torHoriz, w: PLANK_W, l: horizPlankaLen, qty: 2, overrideKey: 'tTorHoriz' },
+    { name: 'Вертикальная планка', t: T.torPlanka, w: PLANK_W, l: H, qty: 2, overrideKey: 'tTorPlanka' },
+    { name: 'Горизонтальная планка', t: T.torPlanka, w: PLANK_W, l: horizPlankaLen, qty: 2, overrideKey: 'tTorPlanka' },
     ...boardRows('Доска торцевого щита', T.torBoard, H, W, roundBoardWidths, 'tTorBoard'),
   ];
 }

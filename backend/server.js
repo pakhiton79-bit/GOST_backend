@@ -57,8 +57,8 @@ function toNum(v) {
 // { ключ: число }. На входе в API оставляем только конечные положительные
 // числа под известными ключами - произвольные поля из тела запроса дальше в
 // расчёт не пропускаются.
-const I1_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorVert', 'tTorHoriz', 'tTorBoard', 'tTorRask'];
-const I2_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorVert', 'tTorHoriz', 'tTorBoard', 'tTorRask'];
+const I1_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask'];
+const I2_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask'];
 // I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
 // computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
 // изолированные (полное объяснение см. computeGost10198I3).
