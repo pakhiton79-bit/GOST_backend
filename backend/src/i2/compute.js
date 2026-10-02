@@ -81,23 +81,17 @@ function layoutForWall(L, w, override) {
   return { kLen, plank };
 }
 
-// Шаг 2: толщина по ГОСТ. Если любой из зазоров (между поясами планок,
-// горизонтальная планка торца, высота торца между горизонтальными планками)
-// попадает в 400-500 мм, толщина снижается на градацию (штатно по ГОСТ, без
-// предупреждения) и раскладка пересчитывается - не более 4 раз. Планки не
-// помещаются - { failedWall } (толщина, при которой не поместились).
-function chooseWallThickness(L, H, horizPlankaLen, override, wallStart) {
-  let w = wallStart;
-  for (let i = 0; i < 4; i++) {
-    const { plank } = layoutForWall(L, w, override);
-    if (plank.count === null) return { failedWall: w };
-    const plankGap = plank.middle / (plank.count - 1);
-    const inGap400500 = [plankGap, horizPlankaLen, H - 200].some(g => g >= 400 && g <= 500);
-    if (!inGap400500) break;
-    const stepped = stepDownGrade(w);
-    if (stepped === w) break;
-    w = stepped;
-  }
+// Шаг 2: толщина по ГОСТ. Если расстояние между поясами планок попадает в
+// 400-500 мм, толщина снижается на одну градацию (штатно по ГОСТ, без
+// предупреждения) - только один раз (по указанию пользователя), и
+// раскладка пересчитывается под неё. Планки не помещаются - { failedWall }
+// (толщина, при которой не поместились).
+function chooseWallThickness(L, override, wallStart) {
+  const first = layoutForWall(L, wallStart, override).plank;
+  if (first.count === null) return { failedWall: wallStart };
+  const plankGap = first.middle / (first.count - 1);
+  const w = (plankGap >= 400 && plankGap <= 500) ? stepDownGrade(wallStart) : wallStart;
+  if (w !== wallStart && layoutForWall(L, w, override).plank.count === null) return { failedWall: w };
   return { wallRaw: w };
 }
 
@@ -153,7 +147,7 @@ function computeGost10198I2(input) {
     const t = key => (manualOverrides[key] > 0 ? manualOverrides[key] : roundUpToAvailable(w));
     return L + (t('tTorVert') + t('tTorBoard')) * 2;
   };
-  const standardPass = chooseWallThickness(L, H, horizPlankaLen, null, wallThicknessI2(density));
+  const standardPass = chooseWallThickness(L, null, wallThicknessI2(density));
   if (standardPass.failedWall !== undefined) return { error: plankLayoutError(boardLenForError(standardPass.failedWall), null) };
   const standardWall = roundUpToAvailable(standardPass.wallRaw);
   const standardPlank = layoutForWall(L, standardWall, null).plank;
@@ -161,7 +155,7 @@ function computeGost10198I2(input) {
   const standardPlankGap = standardPlank.count > 1 ? standardPlank.middle / (standardPlank.count - 1) : 0;
 
   const mainPass = plankOverride
-    ? chooseWallThickness(L, H, horizPlankaLen, plankOverride, wallThicknessI2(density))
+    ? chooseWallThickness(L, plankOverride, wallThicknessI2(density))
     : standardPass;
   if (mainPass.failedWall !== undefined) return { error: plankLayoutError(boardLenForError(mainPass.failedWall), plankOverride) };
 
