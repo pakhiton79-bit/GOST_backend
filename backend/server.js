@@ -10,6 +10,7 @@ const express = require('express');
 const { computeGost10198I3 } = require('./src/i3/compute');
 const { computeGost10198I1 } = require('./src/i1/compute');
 const { computeGost10198I2 } = require('./src/i2/compute');
+const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
@@ -19,6 +20,7 @@ const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, comput
 const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const I2_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-2 нет)
 const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
+const I4_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-4 нет)
 const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
 const III1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }; // bolts - болты, parchment - пергамин, в объём не входят
 
@@ -63,6 +65,7 @@ const I2_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKr
 // computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
 // изолированные (полное объяснение см. computeGost10198I3).
 const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value'];
+const I4_OVERRIDE_KEYS = I3_OVERRIDE_KEYS; // I-4 - копия I-3, ключи те же
 // II-1: skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina каскадные
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
 // изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
@@ -111,6 +114,38 @@ app.post('/api/i3/calculate', (req, res) => {
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+// Тип I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapPercent).
+app.post('/api/i4/calculate', (req, res) => {
+  const b = req.body || {};
+  if (b.variant !== 'skid' && b.variant !== 'floor_boards') {
+    return res.status(400).json({ error: 'variant должен быть "skid" или "floor_boards".' });
+  }
+  const input = {
+    variant: b.variant,
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    optimizeSizes: !!b.optimizeSizes,
+    removeFloorBoards: !!b.removeFloorBoards,
+    removeSkidBoards: !!b.removeSkidBoards,
+    roundBoardWidths: !!b.roundBoardWidths,
+    solidRigidBase: !!b.solidRigidBase,
+    forkliftLoading: !!b.forkliftLoading,
+    xRaskosina: !!b.xRaskosina,
+    addEndTape: !!b.addEndTape,
+    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
+    plankLayoutValue: toNum(b.plankLayoutValue),
+    beamGapValue: toNum(b.beamGapValue),
+    beamCountValue: toNum(b.beamCountValue),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I4_OVERRIDE_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+    boardGapPercent: toNum(b.boardGapPercent),
+  };
+  res.json(withTableEdits(computeGost10198I4(input), b.tableEdits, I4_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
