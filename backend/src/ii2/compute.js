@@ -84,7 +84,7 @@ function makeThicknessOverrides(manualOverrides, fine) {
 // input: { L, W, H, MASS, fasteningType ('skid' | 'floor_boards'),
 //   solidRigidBase, removeFloorBoards, removeSkidBoards, forkliftLoading,
 //   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
-//   xRaskosina, torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
+//   xRaskosina, addRaskosina (раскосины и при высоте до 600 мм), torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
 //   boardGapMax (наибольший промежуток между досками обшивки, мм), fineThickness ({ frame, skid, sub, skin, floor, endBeam,
 //   crossBeam, longBeam } - толщины из «Тонкой настройки», мм; нет - по расчёту),
@@ -190,10 +190,10 @@ function computeGost10198II2(input) {
   // показывает центром ползунков ручной настройки.
   const torecSpace = W + s.stojkaT * 2, bokSpace = L; // бок - по длине груза
   const torecManual = input.torecPostCount > 0, bokManual = input.bokPostCount > 0;
-  const torecStandard = buildFrame(torecSpace, panelHeightFull, H);
-  const bokStandard = buildFrame(bokSpace, panelHeightFull, H);
-  const torecFrame = torecManual ? buildFrame(torecSpace, panelHeightFull, H, input.torecPostCount) : torecStandard;
-  const bokFrame = bokManual ? buildFrame(bokSpace, panelHeightFull, H, input.bokPostCount) : bokStandard;
+  const torecStandard = buildFrame(torecSpace, panelHeightFull, H, 0, input.addRaskosina);
+  const bokStandard = buildFrame(bokSpace, panelHeightFull, H, 0, input.addRaskosina);
+  const torecFrame = torecManual ? buildFrame(torecSpace, panelHeightFull, H, input.torecPostCount, input.addRaskosina) : torecStandard;
+  const bokFrame = bokManual ? buildFrame(bokSpace, panelHeightFull, H, input.bokPostCount, input.addRaskosina) : bokStandard;
   if (torecFrame.tooNarrow) {
     return { error: `Ширина груза ${W} мм слишком мала для минимум двух стоек торцевого щита (по 100мм) - расчёт не выполняется.` };
   }

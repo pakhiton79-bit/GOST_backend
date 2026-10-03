@@ -8,7 +8,8 @@ const MIN_ANGLE = 20, MAX_ANGLE = 60; // допустимый угол раск�
 const RASKOSINA_MIN_H = 600; // п.1.7.7: раскосины - при внутренней высоте ящика свыше 600 мм
 
 // fillspace - ширина щита под стойки, panelH - высота щита, H - высота груза
-// (внутренняя высота ящика). Раскосины - только при H свыше 600 мм (п.1.7.7).
+// (внутренняя высота ящика). Раскосины - при H свыше 600 мм (п.1.7.7) или по
+// галочке «Добавить раскосины» (forceRaskosina) и при меньшей высоте.
 // Этажи: 2 при высоте груза больше 2000 мм или если на 1 этаже угол раскосины
 // при 2 стойках больше 60°. Стоек - не меньше, чем по шагу осей 800 мм, и
 // (при раскосинах) столько, чтобы угол раскосины был не меньше 20° (пока
@@ -18,7 +19,7 @@ const RASKOSINA_MIN_H = 600; // п.1.7.7: раскосины - при внутр
 // помещаются - sectionW ≤ 0 (проверяет compute.js).
 // Возвращает { count, floors, len (длина стойки), sectionW, hasRaskosina,
 // warn, tooNarrow }.
-function buildFrame(fillspace, panelH, H, manualCount) {
+function buildFrame(fillspace, panelH, H, manualCount, forceRaskosina) {
   const spacingMinCount = minCountBySpan(fillspace, STOJKA_W, MAX_AXIS);
   const sectionW = n => clearGapBySpan(fillspace, STOJKA_W, n);
   const angleDeg = (n, h) => Math.atan2(h, sectionW(n)) * 180 / Math.PI;
@@ -27,7 +28,7 @@ function buildFrame(fillspace, panelH, H, manualCount) {
     return { count: 2, floors: 1, len: 0, sectionW: 0, hasRaskosina: false, warn: null, tooNarrow: true };
   }
 
-  const needRaskosina = H > RASKOSINA_MIN_H;
+  const needRaskosina = H > RASKOSINA_MIN_H || !!forceRaskosina;
   let floors = H > 2000 ? 2 : 1;
   if (needRaskosina && floors === 1 && angleDeg(2, stojkaLen(1)) > MAX_ANGLE) floors = 2;
   const len = stojkaLen(floors);
