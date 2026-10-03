@@ -17,8 +17,11 @@ function buildBokovoy(c, s, frame, rask) {
   // целого, в пределах 50-75 мм), длина - как у горизонтального бруса.
   const opora = { t: skinT, w: Math.min(75, Math.max(50, Math.floor(STOJKA_W - s.crossBeamT))), l: horiz.l, qty: 2 };
 
+  // Доски обшивки - на длину груза + толщину стойки торцевого щита с
+  // каждой стороны (по указанию пользователя: заходят на торцы стоек
+  // торцевых щитов; доски торца - по наружной ширине - закрывают их концы).
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
-  const fb = fillBoards(L, c.roundBoardWidths);
+  const fb = fillBoards(L + s.stojkaT * 2, c.roundBoardWidths);
   const boardQty = fb.mainQty * frame.floors;
   if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');

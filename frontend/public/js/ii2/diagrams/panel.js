@@ -60,15 +60,11 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap, over
 }
 
 // Выступ досок обшивки за каркас с каждой стороны, мм - как в расчёте
-// (end-panel.js, bokovoy.js): при досках крышки поперёк доски бока идут по
-// всей наружной длине (выступ - стойка + обшивка торцевого щита), доски
-// торца - между боками (вровень с каркасом); при досках вдоль доски бока -
-// по длине груза (вровень), доски торца - по наружной ширине (выступ -
-// обшивка бока).
+// (end-panel.js, bokovoy.js; конструктив - как у II-1): доски бока - на
+// длину груза + стойку торцевого щита с каждой стороны (выступ - стойка),
+// доски торца - по наружной ширине (выступ - обшивка бока).
 function ii2PanelOverhang(calc, isBok){
-  const transverse = calc.lidLayout === 'transverse';
-  if(isBok) return transverse ? (calc.outerL - calc.L) / 2 : 0;
-  return transverse ? 0 : (calc.outerW - (calc.W + calc.t_stojka * 2)) / 2;
+  return isBok ? calc.t_stojka : (calc.outerW - (calc.W + calc.t_stojka * 2)) / 2;
 }
 
 // Щит: frame - каркас (calc.torecFrame / bokFrame), widthVal - подпись длины
