@@ -38,18 +38,38 @@ function tooManyCrossBeamsText(n) {
   return `${n} поперечных брусьев не помещаются`;
 }
 
-// Ручные толщины (правка ячейки таблицы деталей, manualOverrides) - главнее
-// расчёта по ГОСТ. opts.cell = false - не учитывать правку (полоз и
-// торцовый брус дна: правка ячейки - только число в таблице). Значение из
-// цикла согласования читается на каждой итерации, поэтому «меньше ГОСТ» не
+// Поля «Тонкая настройка» (fineThickness) -> ключи ручных толщин (как у
+// II-1): каркас щита - одна толщина и у стоек и брусьев, и у раскосин этого
+// щита (tRaskosinaTor / tRaskosinaBok - только для тонкой настройки, у
+// правки ячейки раскосины один ключ tRaskosina).
+const FINE_THICKNESS_KEYS = {
+  skid: ['t9'], sub: ['t10'], endBeam: ['t11'], dnoBeam: ['tDnoBeam'], floor: ['floorBoardT'],
+  torFrame: ['tTorFrame', 'tRaskosinaTor'], bokFrame: ['tBokFrame', 'tRaskosinaBok'], skin: ['skinValue'], lidBeam: ['tLidBeam'],
+};
+function fineThicknessOverrides(fineThickness) {
+  const out = {};
+  Object.keys(FINE_THICKNESS_KEYS).forEach(f => {
+    const v = fineThickness && fineThickness[f];
+    if (v > 0) FINE_THICKNESS_KEYS[f].forEach(k => { out[k] = v; });
+  });
+  return out;
+}
+
+// Ручные толщины: правка ячейки таблицы деталей (manualOverrides) главнее
+// поля «Тонкая настройка» (fine), то - главнее расчёта по ГОСТ (как у
+// II-1). opts.cell = false - не учитывать правку ячейки (полоз и торцовый
+// брус дна: правка ячейки - только число в таблице); opts.fineKey - ключ
+// тонкой настройки, если он другой (раскосины). Значение из цикла
+// согласования читается на каждой итерации, поэтому «меньше ГОСТ» не
 // пишется в предупреждения сразу, а копится в belowGost.
-function makeThicknessOverrides(manualOverrides) {
+function makeThicknessOverrides(manualOverrides, fine) {
   const belowGost = {};
   let applied = 0;
   const valid = v => !(v === undefined || v === null || Number.isNaN(v) || v <= 0);
   function ov(key, gostValue, label, opts) {
-    const useCell = !opts || opts.cell !== false;
-    const v = useCell && valid(manualOverrides[key]) ? manualOverrides[key] : undefined;
+    const useCell = !opts || opts.cell !== false, fineKey = (opts && opts.fineKey) || key;
+    const v = useCell && valid(manualOverrides[key]) ? manualOverrides[key]
+      : valid(fine[fineKey]) ? fine[fineKey] : undefined;
     if (v === undefined) return gostValue;
     applied++;
     if (v < gostValue) belowGost[key] = { value: v, gostValue, label };
@@ -67,13 +87,15 @@ function makeThicknessOverrides(manualOverrides) {
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
 //   lidCrossBeamAxis (расстояние между осями поперечных брусьев крышки
 //   500-800 мм вручную; нет - штатно; при lidCrossBeamCount не учитывается),
-//   addParchment, availableThicknesses, manualOverrides, baseProductivity,
+//   addParchment, fineThickness ({ skid, sub, endBeam, dnoBeam, floor,
+//   torFrame, bokFrame, skin, lidBeam } - толщины из «Тонкой настройки», мм;
+//   нет - по расчёту), availableThicknesses, manualOverrides, baseProductivity,
 //   timeCoeff, woodDensity }.
 function computeGost10198III1(input) {
   const { L, W, H, MASS, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
   const round = makeRoundUpToAvailable(availableThicknesses);
-  const { ov, belowGost, appliedCount } = makeThicknessOverrides(input.manualOverrides || {});
+  const { ov, belowGost, appliedCount } = makeThicknessOverrides(input.manualOverrides || {}, fineThicknessOverrides(input.fineThickness));
 
   // --- 1. Входные данные, обшивка ---
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
@@ -189,10 +211,10 @@ function computeGost10198III1(input) {
     return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита - расчёт не выполняется.` };
   }
   // Раскосина - не тоньше 2/3 толщины стойки щита, ширина как у стойки
-  // (п.1.7.7).
-  const rask = frameT => ({ t: ov('tRaskosina', round(frameT * 2 / 3), 'Толщина раскосины'), w: 100 });
-  const endPanel = buildEndPanel(c, s, torecFrame, rask(s.torFrameT));
-  const bokovoy = buildBokovoy(c, s, bokFrame, rask(s.bokFrameT));
+  // (п.1.7.7); каркас из «Тонкой настройки» задаёт и раскосины своего щита.
+  const rask = (frameT, fineKey) => ({ t: ov('tRaskosina', round(frameT * 2 / 3), 'Толщина раскосины', { fineKey }), w: 100 });
+  const endPanel = buildEndPanel(c, s, torecFrame, rask(s.torFrameT, 'tRaskosinaTor'));
+  const bokovoy = buildBokovoy(c, s, bokFrame, rask(s.bokFrameT, 'tRaskosinaBok'));
 
   // --- 4. Итог ---
   const totalVolume = dno.volume + kryshka.volume + 2 * endPanel.volume + 2 * bokovoy.volume;
