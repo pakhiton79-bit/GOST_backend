@@ -126,16 +126,17 @@ function crossBeamWidth(kryshkaRows){
   return w > 0 ? w : 100;
 }
 
-// torecBoardVal - толщина доски торца; отсутствует на чертеже при
-// продольных=0 (как на фото - доска торца там не подписывается вовсе, по
-// самой инструкции). sideFrameVal - толщина стойки +
-// толщина доски обшивки бока.
+// torecBoardVal - выступ досок крышки за концы продольных брусьев (толщина
+// доски торца, при «Оптимизировать размеры» +2 мм - calc.lidOverhangLong);
+// отсутствует на чертеже при продольных=0 (как на фото - доска торца там не
+// подписывается вовсе, по самой инструкции). sideFrameVal - выступ досок за
+// торцы поперечных брусьев (толщина стойки + доски обшивки бока, при
+// «Оптимизировать размеры» +2 мм - calc.lidOverhangCross).
 // widthVal/lengthVal - наружные ширина/длина ящика (outerW/k9Base).
 // edgeDistVal - расстояние от стенки до края крайнего поперечного бруса
 // (calc.edgeDistCross), gapDistVal - между краями соседних брусьев
 // (calc.gapDistCross): брусья делят длину крышки на (count+1) равных
-// промежутков (при «Оптимизировать размеры» крайние на 2 мм больше), а не
-// flush-edge, как у стоек каркаса.
+// промежутков, а не flush-edge, как у стоек каркаса.
 function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal, crossBeamW, gapDistVal){
   const g = kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, gapDistVal, crossBeamW);
   if(!g) return diagramTooDense();

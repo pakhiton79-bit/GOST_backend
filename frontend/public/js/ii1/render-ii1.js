@@ -60,7 +60,7 @@ function renderBoardTables(calc, manualOverrides){
     diagramDno(calc.t_stojka, calc.skin.value, torecW, calc.k9Base, dnoSkidCount(calc.dno)),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Крышка</div>`,
-    diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.skin.value, calc.t_stojka + calc.skin.value, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross, crossBeamWidth(calc.kryshka), calc.gapDistCross),
+    diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.lidOverhangLong, calc.lidOverhangCross, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross, crossBeamWidth(calc.kryshka), calc.gapDistCross),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Щит торцевой (2 шт.)</div>`,
     diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),

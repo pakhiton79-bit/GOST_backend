@@ -48,7 +48,7 @@ function ii2KryshkaImage(calc, crossBeamW){
 function diagramKryshkaII2(calc){
   const g = ii2KryshkaImage(calc, crossBeamWidth(calc.kryshka));
   if(!g) return diagramTooDense();
-  const records = kryshkaGeneratedRecords(g, dimLabel(calc.skin.value), dimLabel(calc.t_stojka + calc.skin.value), dimLabel(calc.outerW), dimLabel(calc.k9Base), dimLabel(calc.edgeDistCross))
+  const records = kryshkaGeneratedRecords(g, dimLabel(calc.lidOverhangLong), dimLabel(calc.lidOverhangCross), dimLabel(calc.outerW), dimLabel(calc.k9Base), dimLabel(calc.edgeDistCross))
     .concat(kryshkaGapRecords(g, dimLabel(calc.gapDistCross)));
   const bg = calc.boardGaps.kryshka, k = g.IW / DIAGRAM_DEFAULT_WIDTH;
   if(bg){

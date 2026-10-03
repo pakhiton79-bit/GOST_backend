@@ -12,7 +12,6 @@ const { stojkaSection, minCountBySpan, clearGapBySpan, longBeamSection } = requi
 
 const CROSS_BEAM_W = 100;         // ширина поперечного бруса крышки (Табл. 14 - всегда 100 мм)
 const CROSS_BEAM_MAX_GAP = 700;   // расстояние между краями поперечных брусьев крышки (и от стенки до крайнего)
-const CROSS_BEAM_OPT_EDGE = 2;    // «Оптимизировать размеры»: отступ от стенки до крайнего бруса больше на 2 мм
 const LONG_BEAM_MAX_AXIS = 800;   // шаг осей продольных брусьев крышки
 const ITERATIONS = 4;
 
@@ -34,18 +33,16 @@ function stabilizeSizes(c) {
     skidCalcWidth = W + stojkaT * 2;
 
     // Поперечные брусья крышки - равномерно по длине: отступы от стенок
-    // равны промежуткам между брусьями, при «Оптимизировать размеры» отступы
-    // больше на edgeAdd = 2 мм (промежутки соответственно меньше, см.
-    // compute.js). Штатно - наименьшее число (не меньше 2), при котором и
-    // отступы, и промежутки между краями брусьев ≤ 700 мм:
-    // (L - n·100) / (n + 1) + edgeAdd ≤ 700  =>  n ≥ (L - 700 + edgeAdd) / (800 - edgeAdd).
+    // равны промежуткам между брусьями («Оптимизировать размеры» их не
+    // меняет - по указанию пользователя). Штатно - наименьшее число (не
+    // меньше 2), при котором и отступы, и промежутки между краями брусьев
+    // ≤ 700 мм: (L - n·100) / (n + 1) ≤ 700  =>  n ≥ (L - 700) / 800.
     // Число, заданное вручную (c.lidCrossBeamCount), - целое не меньше 2,
     // проверки отступа - в compute.js.
     const crossBeamRaw = crossBeamThickness(MASS, outerW);
     crossBeamExceeded = crossBeamRaw.exceeded;
     crossBeamT = ov('t21', round(crossBeamRaw.value), 'Толщина поперечного бруса крышки');
-    const edgeAdd = c.optimizeSizes ? CROSS_BEAM_OPT_EDGE : 0;
-    standardCrossBeamCount = Math.max(2, Math.ceil((L - CROSS_BEAM_MAX_GAP + edgeAdd) / (CROSS_BEAM_MAX_GAP + CROSS_BEAM_W - edgeAdd)));
+    standardCrossBeamCount = Math.max(2, Math.ceil((L - CROSS_BEAM_MAX_GAP) / (CROSS_BEAM_MAX_GAP + CROSS_BEAM_W)));
     crossBeamCount = c.lidCrossBeamCount > 0 ? Math.max(2, Math.round(c.lidCrossBeamCount)) : standardCrossBeamCount;
 
     // Полозья: при сплошном жёстком основании - п.1.6.5 и число по ширине,
@@ -104,7 +101,7 @@ function stabilizeSizes(c) {
     stojkaT, stojkaExceeded, len, outerW, outerH,
     skid, skidTableInfo, polozSimpleExceeded, sub,
     crossBeamT, crossBeamW: CROSS_BEAM_W, crossBeamCount, standardCrossBeamCount, crossBeamExceeded,
-    crossBeamMaxGap: CROSS_BEAM_MAX_GAP, crossBeamEdgeAdd: c.optimizeSizes ? CROSS_BEAM_OPT_EDGE : 0,
+    crossBeamMaxGap: CROSS_BEAM_MAX_GAP,
     longBeamT, longBeamW, longBeamCount, longBeamExceeded,
     floorBoardT, floorBoardExceeded,
   };

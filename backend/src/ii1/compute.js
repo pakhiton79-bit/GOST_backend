@@ -109,19 +109,17 @@ function computeGost10198II1(input) {
     warnings.push('Масса или ширина ящика вне Табл. 14 - поперечный брус крышки принят по крайнему значению.');
   }
   // Поперечные брусья крышки - равномерно: отступ от стенки до крайнего бруса
-  // (crossEdge) равен промежутку между краями соседних (crossGap), при
-  // «Оптимизировать размеры» отступ больше на 2 мм, промежутки - меньше.
+  // (crossEdge) равен промежутку между краями соседних (crossGap).
   // Отступ меньше толщины обшивки + стойки: при числе, заданном вручную, -
   // блокировка, штатно (2 бруса) - предупреждение. Ручное число с
   // расстоянием больше 700 мм - предупреждение. maxCrossBeamCount -
   // наибольшее число брусьев без блокировки (край ползунка у клиента).
   const crossManual = input.lidCrossBeamCount > 0;
-  const crossN = s.crossBeamCount, crossW = s.crossBeamW, crossAdd = s.crossBeamEdgeAdd;
-  const crossEdge = (L - crossN * crossW) / (crossN + 1) + crossAdd;
+  const crossN = s.crossBeamCount, crossW = s.crossBeamW;
+  const crossEdge = (L - crossN * crossW) / (crossN + 1);
   const crossGap = (L - crossN * crossW - 2 * crossEdge) / (crossN - 1);
   const crossHardMin = skin.value + s.stojkaT;
-  const crossMinGap = crossHardMin - crossAdd; // отступ без надбавки, при котором крайний брус ещё не заходит на стенку
-  const maxCrossBeamCount = Math.max(2, Math.floor((L - crossMinGap) / (crossW + crossMinGap) + 1e-9));
+  const maxCrossBeamCount = Math.max(2, Math.floor((L - crossHardMin) / (crossW + crossHardMin) + 1e-9));
   if (crossEdge < crossHardMin) {
     if (crossManual) {
       return { error: `${tooManyCrossBeamsText(crossN)} в крышке: отступ от стенки до крайнего бруса ${Math.round(crossEdge)} мм меньше толщины обшивки и стойки (${Math.round(crossHardMin)} мм) - уменьшите число брусьев. Расчёт не выполняется.` };
@@ -243,6 +241,12 @@ function computeGost10198II1(input) {
     // Отступ от стенки до крайнего поперечного бруса и расстояние между
     // краями соседних (на чертеже крышки).
     edgeDistCross: Math.round(crossEdge), gapDistCross: Math.round(crossGap),
+    // Выступ досок крышки за брусья на чертеже крышки (подписи): за торцы
+    // поперечных - стойка + обшивка бока, за концы продольных - обшивка
+    // торца; при «Оптимизировать размеры» - на 2 мм больше (по указанию
+    // пользователя).
+    lidOverhangCross: s.stojkaT + skin.value + (input.optimizeSizes ? 2 : 0),
+    lidOverhangLong: skin.value + (input.optimizeSizes ? 2 : 0),
     xRaskosina: !!input.xRaskosina,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
     standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,
