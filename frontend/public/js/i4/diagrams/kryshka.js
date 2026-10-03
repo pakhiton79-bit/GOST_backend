@@ -97,15 +97,63 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   // концы планок выступают перед кромкой на ~155 ед.; подписи ряда (высотой
   // ~22px) не должны на них наезжать
   const rowNear = 155 + 15*pxU;
-  const dOff = rowNear + 30*pxU;
+  // Подпись зазора между поперечными брусьями (ближний ряд) встанет по
+  // центру стрелки, если помещается между наконечниками (см. dimFit) - тогда
+  // ряд длины крышки дальше, чтобы подписи рядов не наехали друг на друга.
+  const beamGapCentered = (()=>{
+    if(B < 2) return false;
+    const gi = Math.floor((B-1)/2), ua = beamU(gi) + bw, ub = beamU(gi+1);
+    const len = Math.hypot(...[0,1].map(i => P2(ub,0,thick)[i] - P2(ua,0,thick)[i]));
+    return len >= (String(dimLabel(beamGapMm)).length + 3) * 8.2 * pxU + 16*pxU + 2*9*photoStrokeScale(IW) + 6*pxU;
+  })();
+  const dOff = rowNear + (beamGapCentered ? 48 : 30)*pxU;
+  // Размер a-b, который помещается в своё место (по замечанию пользователя:
+  // наконечники и подписи не должны вылезать за размер и налезать на
+  // соседние): подпись помещается между наконечниками - она по центру
+  // стрелки; не помещается, но помещаются наконечники - стрелка внутри,
+  // подпись снаружи; не помещаются и наконечники - стрелки снаружи,
+  // направленные к выносным линиям. Подпись снаружи - вплотную к стрелке у
+  // конца outAt ('a' | 'b') в сторону outDir (единичный вектор), со сдвигом
+  // shift (в единицах чертежа); outside - подпись всегда снаружи (размер на
+  // самой крышке: подпись по центру закрыла бы детали).
+  const headU = 9 * photoStrokeScale(IW);
+  const labelLenU = text => (text.length * 8.2 + 16) * pxU;
+  const fits = (a, b, text) => Math.hypot(b[0]-a[0], b[1]-a[1]) >= labelLenU(text) + 2*headU + 6*pxU;
+  const dimFit = (a, b, text, outAt, outDir, shift, outside) => {
+    const len = Math.hypot(b[0]-a[0], b[1]-a[1]), ux = (b[0]-a[0])/len, uy = (b[1]-a[1])/len;
+    if(!outside && fits(a, b, text)){
+      records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1], lx:(a[0]+b[0])/2, ly:(a[1]+b[1])/2, text});
+      return;
+    }
+    let tail = 0;
+    if(len >= 2.4*headU){
+      records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1]});
+    } else {
+      tail = 1.8*headU;
+      records.push({type:'line', x1:a[0], y1:a[1], x2:b[0], y2:b[1]});
+      records.push({type:'single', x1:a[0] - ux*tail, y1:a[1] - uy*tail, x2:a[0], y2:a[1]});
+      records.push({type:'single', x1:b[0] + ux*tail, y1:b[1] + uy*tail, x2:b[0], y2:b[1]});
+    }
+    const from = outAt === 'a' ? a : b;
+    // половина подписи вдоль outDir: по ширине и высоте (~22px) подписи
+    const half = Math.abs(outDir[0]) * labelLenU(text)/2 + Math.abs(outDir[1]) * 11*pxU;
+    const lab = off(from, outDir, tail + 5*pxU + half);
+    const sh = shift || [0, 0];
+    records.push({type:'label', lx:lab[0] + sh[0], ly:lab[1] + sh[1], text});
+  };
+  // длина крышки - во втором ряду перед крышкой
   const d1 = off(D, nfront, dOff), d2 = off(C, nfront, dOff);
   records.push({type:'line', x1:D[0], y1:D[1], x2:off(D,nfront,dOff+40)[0], y2:off(D,nfront,dOff+40)[1]});
   records.push({type:'line', x1:C[0], y1:C[1], x2:off(C,nfront,dOff+40)[0], y2:off(C,nfront,dOff+40)[1]});
   records.push({type:'double', x1:d1[0], y1:d1[1], x2:d2[0], y2:d2[1], lx:(d1[0]+d2[0])/2, ly:(d1[1]+d2[1])/2, text: valLen+' мм'});
-  // ширина - вдоль правой кромки, снаружи
-  const Cr = P2(Lu,0), w1 = off(Cr, nright, 200), w2 = off(Bk, nright, 200);
-  records.push({type:'line', x1:Cr[0], y1:Cr[1], x2:off(Cr,nright,240)[0], y2:off(Cr,nright,240)[1]});
-  records.push({type:'line', x1:Bk[0], y1:Bk[1], x2:off(Bk,nright,240)[0], y2:off(Bk,nright,240)[1]});
+  // ширина - вдоль правой кромки, снаружи; при промежутках между досками -
+  // дальше, чтобы между ней и крышкой поместился размер промежутка.
+  const gapText = boardGap ? dimLabel(boardGap.gap)+' мм' : '';
+  const gapOff = 130;                                // стрелки промежутка - от кромки крышки
+  const wOff = boardGap ? gapOff + 10*pxU + labelLenU(gapText) + 18*pxU : 200;
+  const Cr = P2(Lu,0), w1 = off(Cr, nright, wOff), w2 = off(Bk, nright, wOff);
+  records.push({type:'line', x1:Cr[0], y1:Cr[1], x2:off(Cr,nright,wOff+40)[0], y2:off(Cr,nright,wOff+40)[1]});
+  records.push({type:'line', x1:Bk[0], y1:Bk[1], x2:off(Bk,nright,wOff+40)[0], y2:off(Bk,nright,wOff+40)[1]});
   records.push({type:'double', x1:w1[0], y1:w1[1], x2:w2[0], y2:w2[1], lx:(w1[0]+w2[0])/2, ly:(w1[1]+w2[1])/2, text: valWidth+' мм'});
   // Размеры по концам планок за задней кромкой: выносные линии - от дальних
   // углов концов планок (и от угла крышки), размер - на 170 за кромкой.
@@ -115,7 +163,8 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     records.push({type:'line', x1:fromA[0], y1:fromA[1], x2:ea[0], y2:ea[1]});
     records.push({type:'line', x1:fromB[0], y1:fromB[1], x2:eb[0], y2:eb[1]});
     const lab = off([(a[0]+b[0])/2, (a[1]+b[1])/2], nback, 26*pxU); // подпись - за стрелкой
-    records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1], lx:lab[0], ly:lab[1], text});
+    if(Math.hypot(b[0]-a[0], b[1]-a[1]) >= 2.4*headU) records.push({type:'double', x1:a[0], y1:a[1], x2:b[0], y2:b[1], lx:lab[0], ly:lab[1], text});
+    else dimFit(a, b, text, 'b', nright);
   };
   const tip = u => P2(u, 1.13*Wv, low);             // дальний угол конца планки
   // зазор между кромками соседних планок (по указанию пользователя, как у
@@ -138,9 +187,7 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     const s2 = P2(pu0, -0.13*Wv, lowEnd);            // передний конец первой планки
     records.push({type:'line', x1:D[0], y1:D[1], x2:e1[0], y2:e1[1]});
     records.push({type:'line', x1:s2[0], y1:s2[1], x2:e2[0], y2:e2[1]});
-    const lab = off(b1, nleft, 42*pxU), lineEnd = off(b1, nleft, 12*pxU);
-    records.push({type:'line', x1:b1[0], y1:b1[1], x2:lineEnd[0], y2:lineEnd[1]});
-    records.push({type:'double', x1:b1[0], y1:b1[1], x2:b2[0], y2:b2[1], lx:lab[0], ly:lab[1], text: valEdgePlanka+' мм'});
+    dimFit(b1, b2, valEdgePlanka+' мм', 'a', nleft);
   }
   // Поперечные брусья (сверху, видны целиком) - по указанию пользователя:
   // отступ от края ящика до кромки крайнего бруса и зазор между кромками
@@ -160,35 +207,38 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     };
     const bu0 = beamU(0);
     const ea = P2(0, 0.5*Wv), eb = P2(bu0, 0.5*Wv);
-    const lab = off(ea, nleft, 42*pxU), lineEnd = off(ea, nleft, 12*pxU);
-    records.push({type:'line', x1:ea[0], y1:ea[1], x2:lineEnd[0], y2:lineEnd[1]});
-    records.push({type:'double', x1:ea[0], y1:ea[1], x2:eb[0], y2:eb[1], lx:lab[0], ly:lab[1], text: dimLabel(beamEdgeMm)+' мм'});
+    const edgeText = dimLabel(beamEdgeMm)+' мм';
+    dimFit(ea, eb, edgeText, 'a', nleft, null, true);
     if(B > 1){
       const gi = Math.floor((B-1)/2), ua = beamU(gi) + bw, ub = beamU(gi+1);
       const [ga, gb] = beamDim(ua, ub, P2(ua, vB), P2(ub, vB), rowNear);
       // подпись - справа на продолжении стрелки; стрелка идёт вверх-вправо, поэтому
       // подпись опущена на столько же, чтобы не наезжать на концы планок
-      const gl = off(off(gb, nright, 42*pxU), nfront, 14*pxU), gEnd = off(gb, nright, 12*pxU);
-      records.push({type:'line', x1:gb[0], y1:gb[1], x2:gEnd[0], y2:gEnd[1]});
-      records.push({type:'double', x1:ga[0], y1:ga[1], x2:gb[0], y2:gb[1], lx:gl[0], ly:gl[1], text: dimLabel(beamGapMm)+' мм'});
+      const gapBText = dimLabel(beamGapMm)+' мм';
+      dimFit(ga, gb, gapBText, 'b', nright, [nfront[0]*14*pxU, nfront[1]*14*pxU]);
     }
   }
-  // Промежуток между досками крышки - у правого конца, за подписью ширины:
-  // выносные линии от кромок досок у первого промежутка, стрелки снаружи.
+  // Промежуток между досками крышки - у правого конца, между крышкой и
+  // размером ширины: выносные линии от кромок досок у первого промежутка,
+  // подпись - правее стрелок.
   if(boardGap){
     const va = lidStrips[0][1], vb = lidStrips[1][0];
     const a0 = P2(Lu, va), b0 = P2(Lu, vb);
-    const a = off(a0, nright, 470), b = off(b0, nright, 470);
-    const ea = off(a0, nright, 490), eb = off(b0, nright, 490);
+    const a = off(a0, nright, gapOff), b = off(b0, nright, gapOff);
+    const ea = off(a0, nright, gapOff + 20), eb = off(b0, nright, gapOff + 20);
     records.push({type:'line', x1:a0[0], y1:a0[1], x2:ea[0], y2:ea[1]});
     records.push({type:'line', x1:b0[0], y1:b0[1], x2:eb[0], y2:eb[1]});
-    const ar = 70;
-    const aOut = off(a, [-ev[0], -ev[1]], ar), bOut = off(b, ev, ar);
-    records.push({type:'single', x1:aOut[0], y1:aOut[1], x2:a[0], y2:a[1]});
-    records.push({type:'single', x1:bOut[0], y1:bOut[1], x2:b[0], y2:b[1]});
-    records.push({type:'line', x1:a[0], y1:a[1], x2:b[0], y2:b[1]});
-    const lab = off([(a[0]+b[0])/2, (a[1]+b[1])/2], nright, 40*pxU);
-    records.push({type:'label', lx:lab[0], ly:lab[1], text: dimLabel(boardGap.gap)+' мм'});
+    // подпись - правее стрелок, на уровне промежутка
+    const mid = [(a[0]+b[0])/2, (a[1]+b[1])/2];
+    const lab = off(mid, nright, 10*pxU + labelLenU(gapText)/2);
+    if(fits(a, b, gapText)) dimFit(a, b, gapText);
+    else {
+      const len = Math.hypot(b[0]-a[0], b[1]-a[1]), ux = (b[0]-a[0])/len, uy = (b[1]-a[1])/len, t = 1.8*headU;
+      records.push({type:'line', x1:a[0], y1:a[1], x2:b[0], y2:b[1]});
+      records.push({type:'single', x1:a[0] - ux*t, y1:a[1] - uy*t, x2:a[0], y2:a[1]});
+      records.push({type:'single', x1:b[0] + ux*t, y1:b[1] + uy*t, x2:b[0], y2:b[1]});
+      records.push({type:'label', lx:lab[0], ly:lab[1], text:gapText});
+    }
   }
   // толщина планки - сноска к дальнему левому углу конца первой планки
   const tc = tip(plankU(0));
