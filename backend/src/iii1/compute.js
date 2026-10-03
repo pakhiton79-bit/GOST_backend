@@ -61,7 +61,7 @@ function makeThicknessOverrides(manualOverrides) {
 
 // input: { L, W, H, MASS, fasteningType ('skid' | 'floor_boards'),
 //   solidRigidBase, removeFloorBoards, removeSkidBoards, forkliftLoading,
-//   roundBoardWidths, optimizeSizes,
+//   roundBoardWidths,
 //   bulkCargo (насыпной или незакреплённый груз), addRaskosina, xRaskosina,
 //   torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),

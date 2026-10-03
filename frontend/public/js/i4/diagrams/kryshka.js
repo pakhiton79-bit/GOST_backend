@@ -258,5 +258,5 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
 // Чертёж крышки для результата расчёта. I-4: всегда генерируемый - на фото
 // I-3 обшивка сплошная.
 function diagramKryshkaFor(calc){
-  return diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap, calc.boardGaps.kryshka);
+  return diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap, calc.boardGaps.kryshka);
 }

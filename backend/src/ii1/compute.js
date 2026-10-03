@@ -240,13 +240,9 @@ function computeGost10198II1(input) {
     k9Base: s.len, W, L, H, t_stojka: s.stojkaT, skin, t21: s.crossBeamT, t_longbeam: s.longBeamT, lidLayout: input.lidLayout,
     torecFrame, bokFrame, panelHeightFull,
     crossBeamCount: s.crossBeamCount, longbeamCount: s.longBeamCount,
-    // Толщина обшивки и рамы на чертеже крышки: +2 мм при «Оптимизировать
-    // размеры» (только чертёж).
-    t32Display: input.optimizeSizes ? skin.value + 2 : skin.value,
     // Отступ от стенки до крайнего поперечного бруса и расстояние между
     // краями соседних (на чертеже крышки).
     edgeDistCross: Math.round(crossEdge), gapDistCross: Math.round(crossGap),
-    sideFrameDisplay: s.stojkaT + skin.value + (input.optimizeSizes ? 2 : 0),
     xRaskosina: !!input.xRaskosina,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
     standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,

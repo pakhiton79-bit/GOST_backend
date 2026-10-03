@@ -33,7 +33,6 @@ function buildCalcInput(){
     removeSkidBoards: document.getElementById('removeSkidBoards').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     roundBoardWidths: document.getElementById('roundBoardWidths').checked,
-    optimizeSizes: document.getElementById('optimizeSizes').checked,
     bulkCargo: document.getElementById('bulkCargo').checked,
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
@@ -91,7 +90,7 @@ async function calculateNow(){
 ['L','W','H','M'].forEach(id=>{
   document.getElementById(id).addEventListener('input', invalidateCalc);
 });
-['solidRigidBase','roundBoardWidths','removeFloorBoards','optimizeSizes','bulkCargo','addRaskosina','addParchment'].forEach(id=>{
+['solidRigidBase','roundBoardWidths','removeFloorBoards','bulkCargo','addRaskosina','addParchment'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', invalidateCalc);
 });

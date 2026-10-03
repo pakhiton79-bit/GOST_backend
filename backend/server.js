@@ -240,7 +240,6 @@ app.post('/api/iii1/calculate', (req, res) => {
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
-    optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,
     roundBoardWidths: !!b.roundBoardWidths,

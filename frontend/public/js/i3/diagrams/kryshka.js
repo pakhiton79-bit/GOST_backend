@@ -10,8 +10,7 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
   const valLen        = dimLabel(lengthMm + t30*2 + t32*2);
   // Ширина груза + толщина основной доски боковой стенки*2.
   const valWidth       = dimLabel(widthMm + t41*2);
-  // Толщина вертикальной боковой планки (t40, планка бокового щита) - при
-  // «Оптимизировать размеры» увеличена на 2мм (t40Display в расчёте).
+  // Толщина вертикальной боковой планки (t40, планка бокового щита).
   const valPlankaThick  = dimLabel(t40);
   // Расстояние от крайней планки крышки до края крышки (edgeDistKryshka = min(L/6, 1000)).
   const valEdgePlanka   = dimLabel(edgeDistKryshkaMm);
@@ -278,5 +277,5 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
 // Чертёж крышки для результата расчёта.
 function diagramKryshkaFor(calc){
   const hasPhoto = (calc.l19 === 2 && calc.l21 === 2) || (calc.l19 === 3 && calc.l21 === 3);
-  return (hasPhoto ? diagramKryshka : diagramKryshkaGen)(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40Display, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap);
+  return (hasPhoto ? diagramKryshka : diagramKryshkaGen)(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap);
 }

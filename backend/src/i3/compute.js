@@ -118,7 +118,7 @@ function computeGost10198I3(input) {
     outerL, outerW, outerH, totalVolume, normaVremeni,
     // Параметры чертежей.
     k9Base: len, t41: wall, t40: wall, torecFrameThickness: wall + wall,
-    W, L, t30: wall, t32: wall, t40Display: input.optimizeSizes ? wall + 2 : wall,
+    W, L, t30: wall, t32: wall,
     edgeDistKryshka: planks.edgeDist, l21: beams.count, w21: kryshka.beamW, l19: planks.count, bokSectionW: sectionW, plankGap: planks.gap,
     beamEdgeDist: beams.edgeDist, beamGap: beams.gap, standardBeamCount: beams.standardCount,
     standardPlankCount: kryshka.standardPlanks.count, standardPlankGap: kryshka.standardPlanks.gap,

@@ -7,7 +7,7 @@ function buildKryshka(c, s) {
   const { L, W, warnings, skinT, optimizeSizes } = c;
   const rows = [];
 
-  const crossLen = W - (optimizeSizes ? 4 : 0);
+  const crossLen = W - (optimizeSizes ? 2 : 0);
   rows.push({ name: 'Внутренний поперечный брус', t: s.crossBeamT, w: s.crossBeamW, l: crossLen, qty: s.crossBeamCount, overrideKey: 't21' });
   let volume = vol(s.crossBeamT, s.crossBeamW, crossLen, s.crossBeamCount);
 
@@ -16,7 +16,7 @@ function buildKryshka(c, s) {
   // длина ящика).
   let boardLen, fillspace;
   if (c.lidLayout === 'transverse') {
-    const longLen = L + s.stojkaT * 2 - (optimizeSizes ? 4 : 0);
+    const longLen = L + s.stojkaT * 2 - (optimizeSizes ? 2 : 0);
     rows.push({ name: 'Внутренний продольный брус', t: s.longBeamT, w: s.longBeamW, l: longLen, qty: s.longBeamCount, overrideKey: 'tLongbeam' });
     volume += vol(s.longBeamT, s.longBeamW, longLen, s.longBeamCount);
     boardLen = s.outerW;
