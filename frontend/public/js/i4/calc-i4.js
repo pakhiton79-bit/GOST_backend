@@ -34,7 +34,7 @@ function buildCalcInput(){
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
     addEndTape: document.getElementById('addEndTape').checked,
-    boardGapPercent: readBoardGapPercent(), // доля промежутков между досками обшивки, % (board-gaps.js)
+    boardGapMax: readBoardGapMax(), // наибольший промежуток между досками обшивки, мм (board-gaps.js)
     plankLayoutMode,
     plankLayoutValue,
     beamGapValue,
@@ -128,6 +128,6 @@ function errorFieldsFor(text){
   if(/Расстояние между планками/.test(text)) return ['plankGapInput'];
   if(/пояс\S* планок не помеща/.test(text)) return ['plankCountInput'];
   if(/недостаточна для отступа планок/.test(text)) return plankLayoutMode === 'count' ? ['plankCountInput'] : [];
-  if(/долю промежутков между досками/.test(text)) return ['boardGapInput'];
+  if(/наибольший промежуток между досками/.test(text)) return ['boardGapInput'];
   return [];
 }

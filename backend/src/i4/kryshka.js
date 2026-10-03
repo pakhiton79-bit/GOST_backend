@@ -54,7 +54,7 @@ function buildKryshka(c, len, outerW) {
   if (planks.error) return { error: planks.error };
   rows.push({ name: 'Планка', t: wall, w: PLANK_W, l: width, qty: planks.count, overrideKey: 'wallValue' });
 
-  const fb = fillGapBoards(W + wall * 2, c.roundBoardWidths, c.boardGapShare, 'Крышка', warnings);
+  const fb = fillGapBoards(W + wall * 2, c.roundBoardWidths, c.boardGapMax, 'Крышка', warnings);
   if (fb.mainQty > 0) rows.push({ name: 'Доска крышки', t: wall, w: 100, l: len, qty: fb.mainQty, overrideKey: 'wallValue' });
   fb.extra.forEach((e, i) => {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';

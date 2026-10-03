@@ -39,7 +39,7 @@ function buildEndPanel(c, t12) {
   const vertQty = (sections + 1) * floors;
   const rask = { l: Math.sqrt(Math.pow(sectionWidth(sections), 2) + Math.pow(vertLen, 2)), qty: hasRaskosina ? sections * floors : 0 };
 
-  const fb = fillGapBoards(hFull, c.roundBoardWidths, c.boardGapShare, 'Щит торцевой', warnings);
+  const fb = fillGapBoards(hFull, c.roundBoardWidths, c.boardGapMax, 'Щит торцевой', warnings);
   if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска торца: одна доска уже менее 100 мм.');
 

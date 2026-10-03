@@ -30,7 +30,7 @@ function buildBokovoy(c, p) {
   const plankFull = hFull + overhang;
   const vert = { l: floors === 2 ? (plankFull - PLANK_W) / 2 : plankFull, qty: plankQty * floors };
 
-  const fb = fillGapBoards(hFull, c.roundBoardWidths, c.boardGapShare, 'Щит боковой', warnings);
+  const fb = fillGapBoards(hFull, c.roundBoardWidths, c.boardGapMax, 'Щит боковой', warnings);
   if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');
 

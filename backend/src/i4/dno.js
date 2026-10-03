@@ -95,7 +95,7 @@ function buildDno(c) {
   const t12 = removeFloorBoards ? 0 : ov('t12Value', round(floorGostT), 'Толщина доски дна');
   const floorLen = W;
   // Доски дна - с промежутками (boards.js); убраны - без предупреждений.
-  const fb = fillGapBoards(L - beam.w * 2, c.roundBoardWidths, c.boardGapShare, 'Дно', removeFloorBoards ? [] : warnings);
+  const fb = fillGapBoards(L - beam.w * 2, c.roundBoardWidths, c.boardGapMax, 'Дно', removeFloorBoards ? [] : warnings);
   if (!removeFloorBoards) {
     if (fb.mainQty > 0) rows.push({ name: 'Доска дна', t: t12, w: 100, l: floorLen, qty: fb.mainQty, overrideKey: 't12Value' });
     fb.extra.forEach((e, i) => {

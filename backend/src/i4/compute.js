@@ -1,13 +1,12 @@
 // ГОСТ 10198-91, тип I-4: расчёт ящика. Ящик - как у типа I-3 (отдельная
 // копия), но доски обшивки всех щитов (дно, крышка, бока, торцы) - с
-// промежутками, как у типа I-2: крайние по краям щита, остальные равномерно
-// между ними, промежутки - не больше заданной доли поверхности щита
-// (boardGapPercent, 10-50%, обязательна) и не больше 100 мм (см. boards.js). Пергамина нет
-// (решетчатый ящик). Толщина стенок - та же, что у I-3 (п.1.6.15 - общий для
-// I-3 и I-4).
+// промежутками: крайние по краям щита, остальные равномерно между ними,
+// промежуток между соседними досками - не больше заданного (boardGapMax,
+// 10-100 мм, обязательно; см. boards.js). Пергамина нет (решетчатый ящик).
+// Толщина стенок - та же, что у I-3 (п.1.6.15 - общий для I-3 и I-4).
 //
 // Порядок расчёта:
-//   1. проверка входных данных (в том числе доли промежутков);
+//   1. проверка входных данных (в том числе наибольшего промежутка);
 //   2. толщина стенок (п.1.6.15) с округлением до «в наличии»;
 //   3. узлы: дно (dno.js), крышка (kryshka.js), щит торцевой (end-panel.js),
 //      щит боковой (bokovoy.js);
@@ -26,6 +25,7 @@ const { buildKryshka } = require('./kryshka');
 const { buildEndPanel } = require('./end-panel');
 const { buildBokovoy } = require('./bokovoy');
 const { PLANK_W } = require('./plank-layout');
+const { GAP_MIN, GAP_MAX } = require('./boards');
 
 // Плотность древесины по умолчанию, кг/м³; на клиенте настраивается
 // шестерёнкой у «Массы ящика».
@@ -52,7 +52,7 @@ function makeThicknessOverrides(manualOverrides) {
 //   roundBoardWidths, solidRigidBase, forkliftLoading, xRaskosina, addEndTape,
 //   plankLayoutMode, plankLayoutValue, beamGapValue, beamCountValue,
 //   availableThicknesses, manualOverrides, baseProductivity, timeCoeff,
-//   woodDensity, boardGapPercent - доля промежутков между досками обшивки, % }.
+//   woodDensity, boardGapMax - наибольший промежуток между досками обшивки, мм }.
 function computeGost10198I4(input) {
   const { L, W, H, MASS, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
@@ -62,10 +62,10 @@ function computeGost10198I4(input) {
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
     return { error: 'Заполните все поля положительными числами.' };
   }
-  // Доля промежутков обязательна (как у I-2), значения по умолчанию нет.
-  const gapPercent = input.boardGapPercent;
-  if (!(gapPercent >= 10 && gapPercent <= 50)) {
-    return { error: 'Укажите долю промежутков между досками обшивки (от 10 до 50%) - расчёт не выполняется.' };
+  // Наибольший промежуток обязателен, значения по умолчанию нет.
+  const gapMax = input.boardGapMax;
+  if (!(gapMax >= GAP_MIN && gapMax <= GAP_MAX)) {
+    return { error: `Укажите наибольший промежуток между досками обшивки (от ${GAP_MIN} до ${GAP_MAX} мм) - расчёт не выполняется.` };
   }
   const warnings = [];
   if (L <= 1200 || W <= 800) {
@@ -87,7 +87,7 @@ function computeGost10198I4(input) {
   }
 
   // Контекст для узлов: входные данные + толщина стенок и общие функции.
-  const c = { ...input, availableThicknesses, wall, ov, round, warnings, boardGapShare: gapPercent / 100 };
+  const c = { ...input, availableThicknesses, wall, ov, round, warnings, boardGapMax: gapMax };
 
   // --- 3. Узлы ---
   const dno = buildDno(c);

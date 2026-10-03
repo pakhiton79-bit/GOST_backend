@@ -108,12 +108,12 @@
     <div class="card">
       <h2>Промежутки между досками обшивки</h2>
       <div class="modal-field">
-        <label id="boardGapLabel" for="boardGapInput">Доля промежутков, % поверхности щита</label>
+        <label id="boardGapLabel" for="boardGapInput">Наибольший промежуток между досками, мм</label>
         <div class="modal-slider-row">
           <div class="jump-slider" id="boardGapSlider" aria-labelledby="boardGapLabel"></div>
-          <input type="number" id="boardGapInput" step="1" min="10" max="50" placeholder="10-50" oninput="onBoardGapInputChange()">
+          <input type="number" id="boardGapInput" step="1" min="10" max="100" placeholder="10-100" oninput="onBoardGapInputChange()">
         </div>
-        <div class="option-hint board-gap-hint">Обязательно для типа I-4. Доски по 100 мм на всех щитах: крайние - по краям щита, остальные равномерно между ними, промежутки - не больше указанной доли и не больше 100 мм.</div>
+        <div class="option-hint board-gap-hint">Обязательно для типа I-4. Доски по 100 мм на всех щитах: крайние - по краям щита, остальные равномерно между ними, промежуток между соседними - не больше указанного.</div>
       </div>
     </div>
 
