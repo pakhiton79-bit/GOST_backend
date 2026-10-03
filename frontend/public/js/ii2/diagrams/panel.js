@@ -4,15 +4,19 @@
 // за каркасом - стоячие доски обшивки с промежутками (boards.js), каркас
 // (брусья, стойки, раскосины) - белый поверх. Стойки, брусья, раскосины и
 // доски - одной ширины на экране (drawnMemberWidth в common-diagrams.js);
-// наружные кромки каркаса - как у II-1 (подписи на тех же местах). Подписи - как у щита II-1 на 4
-// стойки (TOREC_VARIANTS, postGapRecords - js/ii1/diagrams/torec.js), плюс
-// размер «промежуток между досками» над щитом.
+// наружные кромки каркаса - как у II-1 (подписи на тех же местах). Подписи -
+// как у щита II-1 на 4 стойки (TOREC_VARIANTS, postGapRecords -
+// js/ii1/diagrams/torec.js), кроме выступа обшивки за каркас: он - по
+// расчёту (ii2PanelOverhang; у II-1 там всегда нарисован выступ и подписана
+// толщина обшивки или стойки, из-за чего размеры не сходились с наружной
+// длиной), плюс размер «промежуток между досками» над щитом.
 const II2_PANEL_WIDTH = 260, II2_PANEL_LABEL_SCALE = 0.8;
 
 // Картинка щита: n стоек, floors этажей; boardGap - промежутки досок
-// обшивки ({ gap, ... } или null - сплошь). { img, gap, strips } или null -
+// обшивки ({ gap, ... } или null - сплошь); overhang - доски выступают за
+// каркас (иначе - вровень с ним). { img, gap, strips, skinTop } или null -
 // стоек так много, что они слились бы (заглушка).
-function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap){
+function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap, overhang){
   const G = PANEL_GEN_II1[floors];
   const f = v => v.toFixed(1);
   const k = diagramScreenScale(G.IW, G.IH), mw = drawnMemberWidth(k);
@@ -28,7 +32,8 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap){
   if(diagramIsTooDense((hasRaskosinaVal ? bay / 2 : bay) - PANEL_GEN_II1_STROKE, G.IW)) return null;
   const px = i => G.frameL + i*(postW + bay); // левая кромка i-й стойки (с 0)
   const rect = (x1, y1, x2, y2) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"/>`;
-  const [sx1, sy1, sx2, sy2] = G.skin;
+  const [sk1, sy1, sk2, sy2] = G.skin;
+  const sx1 = overhang ? sk1 : G.frameL, sx2 = overhang ? sk2 : G.frameR;
   const strips = ii2BoardStrips(sx1, sx2, boardGap, k);
   let frame = '';
   for(let fl=0; fl<floors; fl++){
@@ -54,17 +59,51 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap){
   };
 }
 
-// Щит: frame - каркас (calc.torecFrame / bokFrame), widthVal - подпись
-// ширины (у бока - длина груза), skinVal - подпись отступа слева (у торца -
-// толщина обшивки, у бока - толщина стойки, как у II-1), boardGap -
-// промежутки ({ qty, gap, share } или null - сплошь).
-function ii2PanelDiagram(calc, frame, widthVal, skinVal, boardGap, alt){
-  const floors = frame.floors, v4 = TOREC_VARIANTS[floors][4];
-  const g = ii2PanelImage(frame.count, floors, calc.xRaskosina, frame.hasRaskosina, boardGap);
+// Выступ досок обшивки за каркас с каждой стороны, мм - как в расчёте
+// (end-panel.js, bokovoy.js): при досках крышки поперёк доски бока идут по
+// всей наружной длине (выступ - стойка + обшивка торцевого щита), доски
+// торца - между боками (вровень с каркасом); при досках вдоль доски бока -
+// по длине груза (вровень), доски торца - по наружной ширине (выступ -
+// обшивка бока).
+function ii2PanelOverhang(calc, isBok){
+  const transverse = calc.lidLayout === 'transverse';
+  if(isBok) return transverse ? (calc.outerL - calc.L) / 2 : 0;
+  return transverse ? 0 : (calc.outerW - (calc.W + calc.t_stojka * 2)) / 2;
+}
+
+// Щит: frame - каркас (calc.torecFrame / bokFrame), widthVal - подпись длины
+// каркаса (у бока - длина груза), overhangMm - выступ обшивки за каркас с
+// каждой стороны (ii2PanelOverhang), boardGap - промежутки ({ qty, gap,
+// share } или null - сплошь).
+function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
+  const floors = frame.floors, v4 = TOREC_VARIANTS[floors][4], G = PANEL_GEN_II1[floors];
+  const overhang = overhangMm > 0.5;
+  const g = ii2PanelImage(frame.count, floors, calc.xRaskosina, frame.hasRaskosina, boardGap, overhang);
   if(!g) return diagramTooDense();
   const v = { IW: v4.IW, IH: v4.IH, gap: g.gap };
-  const records = v4.records(dimLabel(calc.t_longbeam), dimLabel(widthVal), dimLabel(skinVal), dimLabel(calc.panelHeightFull), dimLabel(100 + frame.len))
-    .concat(postGapRecords(v, frame.sectionW, II2_PANEL_WIDTH, II2_PANEL_LABEL_SCALE));
+  const widthText = dimLabel(widthVal) + ' мм';
+  // Подписи щита II-1 без группы «выступ обшивки слева» (выносные линии у
+  // левого края x 0..80 и стрелка к ним); выносная линия длины каркаса слева -
+  // своя (у 1-этажного щита II-1 её роль играла линия той группы).
+  const records = v4.records(dimLabel(calc.t_longbeam), widthText.slice(0, -3), '', dimLabel(calc.panelHeightFull), dimLabel(100 + frame.len))
+    .filter(r => !(r.type === 'single' && r.x2 < 80) && !(r.type === 'line' && Math.min(r.x1, r.x2) >= 0 && Math.max(r.x1, r.x2) <= 80));
+  const dimB = records.find(r => r.type === 'double' && r.text === widthText);
+  const yB = dimB.y1, xL = G.frameL;
+  records.push({type:'line', x1:xL, y1:yB - 180, x2:xL, y2:yB + 25});
+  // Выступ обшивки - слева, как у II-1: выносная линия от края досок,
+  // перемычка до каркаса, стрелка с подписью (1 этаж - сверху слева, 2 этажа -
+  // снизу, левее подписей этажей).
+  if(overhang){
+    const x0 = G.skin[0], yH = floors === 2 ? yB - 33 : yB - 65, text = dimLabel(overhangMm) + ' мм';
+    records.push(
+      {type:'line', x1:x0, y1:yB - 180, x2:x0, y2:yB + 44},
+      {type:'line', x1:x0, y1:yH, x2:xL, y2:yH},
+      floors === 2
+        ? {type:'single', x1:-97, y1:yB + 74, x2:(x0 + xL) / 2, y2:yH, lx:-100, ly:yB + 245, text}
+        : {type:'single', x1:-108, y1:yB - 212, x2:(x0 + xL) / 2, y2:yH, lx:-109, ly:yB - 245, text}
+    );
+  }
+  records.push(...postGapRecords(v, frame.sectionW, II2_PANEL_WIDTH, II2_PANEL_LABEL_SCALE));
   // Промежуток между досками - над щитом, у 40% ширины (левее - размер
   // между стойками, правее - толщина продольного бруса).
   const pick = boardGap && ii2PickGap(g.strips, v.IW * 0.4);
@@ -76,8 +115,8 @@ function ii2PanelDiagram(calc, frame, widthVal, skinVal, boardGap, alt){
 }
 
 function diagramTorecII2(calc){
-  return ii2PanelDiagram(calc, calc.torecFrame, calc.W + calc.t_stojka*2, calc.skin.value, calc.boardGaps.torec, 'Щит торцевой - схема расположения деталей');
+  return ii2PanelDiagram(calc, calc.torecFrame, calc.W + calc.t_stojka*2, ii2PanelOverhang(calc, false), calc.boardGaps.torec, 'Щит торцевой - схема расположения деталей');
 }
 function diagramBokII2(calc){
-  return ii2PanelDiagram(calc, calc.bokFrame, calc.L, calc.t_stojka, calc.boardGaps.bokovoy, 'Щит боковой - схема расположения деталей');
+  return ii2PanelDiagram(calc, calc.bokFrame, calc.L, ii2PanelOverhang(calc, true), calc.boardGaps.bokovoy, 'Щит боковой - схема расположения деталей');
 }
