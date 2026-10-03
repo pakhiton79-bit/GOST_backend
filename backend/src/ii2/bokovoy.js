@@ -1,22 +1,16 @@
 // ГОСТ 10198-91, тип II-2: щит боковой (расчёт на 1 щит, щитов 2) - как у
 // II-1 (../ii1/bokovoy.js), доски обшивки - с промежутками (boards.js). При
-// поперечном расположении досок крышки - те доски крышки, что целиком над
-// боковым щитом (lidSideBoards: линии досок бока продолжают крышку); от
-// края щита до первой доски - промежуток edge.
+// поперечном расположении досок крышки доски бока идут по всей наружной
+// длине ящика (закрывают торцы торцевых щитов) и раскладываются так же,
+// как доски крышки, - линии досок бока продолжают крышку, крайние доски -
+// по краям (по указанию пользователя); иначе - по длине груза, как у II-1.
 const { vol } = require('../helpers');
 const { STOJKA_W } = require('../ii1/frame');
-const { fillGapBoards, lidSideBoards } = require('./boards');
+const { fillGapBoards } = require('./boards');
 
-// Раскладка досок бокового щита (вид результата - как у fillGapBoards).
-function sideBoards(c, s) {
-  const ls = c.lidLayout === 'transverse' ? lidSideBoards(s.len, (s.len - c.L) / 2, c.boardGapMax) : null;
-  if (ls) {
-    if (ls.side.edge > c.boardGapMax + 1e-9) {
-      c.warnings.push(`Щит боковой: от края щита до первой доски ${Math.round(ls.side.edge)} мм - больше заданного промежутка (доски бока продолжают линии досок крышки, ближе к краю доска не встаёт).`);
-    }
-    return { mainQty: ls.side.qty, extra: [], warn: false, singleNarrow: false, gap: ls.side };
-  }
-  return fillGapBoards(c.L, c.roundBoardWidths, c.boardGapMax, 'Щит боковой', c.warnings);
+// Ширина обшивки бокового щита: поперёк - наружная длина ящика, иначе - длина груза.
+function sideSpan(c, s) {
+  return c.lidLayout === 'transverse' ? s.len : c.L;
 }
 
 // c - контекст расчёта; s - согласованные размеры; frame - каркас (frame.js);
@@ -35,7 +29,7 @@ function buildBokovoy(c, s, frame, rask) {
   const opora = { t: skinT, w: Math.min(75, Math.max(50, Math.floor(STOJKA_W - s.crossBeamT))), l: horiz.l, qty: 2 };
 
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
-  const fb = sideBoards(c, s);
+  const fb = fillGapBoards(sideSpan(c, s), c.roundBoardWidths, c.boardGapMax, 'Щит боковой', warnings);
   const boardQty = fb.mainQty * frame.floors;
   if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');

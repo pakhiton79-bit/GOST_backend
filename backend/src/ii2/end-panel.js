@@ -12,10 +12,13 @@ function buildEndPanel(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на каждый этаж, по наружной ширине ящика, с
-  // промежутками.
+  // Доски обшивки - на каждый этаж, с промежутками: по наружной ширине
+  // ящика; при поперечном расположении досок крышки доски бока закрывают
+  // торцы торцевого щита (bokovoy.js), и доски торца - между ними (ширина
+  // груза + 2 стойки).
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
-  const fb = fillGapBoards(s.outerW, c.roundBoardWidths, c.boardGapMax, 'Щит торцевой', warnings);
+  const span = c.lidLayout === 'transverse' ? W + s.stojkaT * 2 : s.outerW;
+  const fb = fillGapBoards(span, c.roundBoardWidths, c.boardGapMax, 'Щит торцевой', warnings);
   const boardQty = fb.mainQty * frame.floors;
   if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска торца: одна доска уже менее 100 мм.');

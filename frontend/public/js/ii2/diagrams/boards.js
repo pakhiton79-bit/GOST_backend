@@ -5,10 +5,10 @@
 // каркас и брусья поверх - белые (как у I-4).
 const II2_BOARD_FILL = '#d9d9d9';
 
-// [начало, конец] досок на отрезке a..b: boardGap - промежутки ({ gap, edge })
+// [начало, конец] досок на отрезке a..b: boardGap - промежутки ({ gap, ... })
 // или null - сплошь; k - единиц картинки на 1px экрана (diagramScreenScale).
 function ii2BoardStrips(a, b, boardGap, k){
-  return drawnBoardStrips(a, b, k, boardGap ? boardGap.gap : null, boardGap && boardGap.edge > 0 ? boardGap.edge : 0);
+  return drawnBoardStrips(a, b, k, boardGap ? boardGap.gap : null);
 }
 
 // SVG-прямоугольники досок: vertical - доски стоят (полосы по x на

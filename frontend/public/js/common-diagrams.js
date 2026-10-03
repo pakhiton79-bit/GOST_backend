@@ -144,7 +144,7 @@ function diagramTooDense(){
 // досок на чертеже - сколько поместится (может отличаться от расчётного),
 // промежуток - в реальной доле к доске (не уже DRAWN_BOARD_MIN_GAP_PX),
 // крайние доски - по краям отрезка.
-const DRAWN_MEMBER_PX = 8, DRAWN_BOARD_MIN_GAP_PX = 1.6;
+const DRAWN_MEMBER_PX = 14, DRAWN_BOARD_MIN_GAP_PX = 2.5;
 // Единиц картинки IW×IH на 1px экрана: на странице чертёж увеличивается до
 // ~290×240px (см. common-diagram-fit.js).
 function diagramScreenScale(IW, IH){
@@ -156,13 +156,11 @@ function drawnMemberWidth(k){
 }
 // [начало, конец] досок на отрезке a..b картинки (k - единиц картинки на 1px
 // экрана, diagramScreenScale). gapMm - промежуток между досками по расчёту
-// (null - щит сплошной, доски вплотную); edgeMm - промежуток от края отрезка
-// до крайней доски по расчёту (0 - крайние по краям). Размеры в мм - к доске
-// 100 мм.
-function drawnBoardStrips(a, b, k, gapMm, edgeMm){
+// (null - щит сплошной, доски вплотную), мм - к доске 100 мм. Крайние доски -
+// по краям отрезка.
+function drawnBoardStrips(a, b, k, gapMm){
   const bw = drawnMemberWidth(k);
-  const e = edgeMm > 0 ? bw * edgeMm / 100 : 0;
-  const a1 = a + e, span = b - e - a1;
+  const a1 = a, span = b - a;
   if(span <= 0) return [];
   if(gapMm == null){
     const n = Math.max(1, Math.round(span / bw)), w = span / n;

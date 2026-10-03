@@ -8,7 +8,7 @@ const I4_BOARD_FILL = '#d9d9d9';
 // ({ gap, ... }) или null - щит сплошной; k - единиц картинки на 1px экрана
 // (diagramScreenScale).
 function i4BoardStrips(top, bot, boardGap, k){
-  return drawnBoardStrips(top, bot, k, boardGap ? boardGap.gap : null, 0);
+  return drawnBoardStrips(top, bot, k, boardGap ? boardGap.gap : null);
 }
 
 // Доски поперёк x0..x1 по полосам strips (SVG).

@@ -10,7 +10,7 @@
 const II2_PANEL_WIDTH = 260, II2_PANEL_LABEL_SCALE = 0.8;
 
 // Картинка щита: n стоек, floors этажей; boardGap - промежутки досок
-// обшивки ({ gap, edge } или null - сплошь). { img, gap, strips } или null -
+// обшивки ({ gap, ... } или null - сплошь). { img, gap, strips } или null -
 // стоек так много, что они слились бы (заглушка).
 function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap){
   const G = PANEL_GEN_II1[floors];
@@ -57,8 +57,7 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap){
 // Щит: frame - каркас (calc.torecFrame / bokFrame), widthVal - подпись
 // ширины (у бока - длина груза), skinVal - подпись отступа слева (у торца -
 // толщина обшивки, у бока - толщина стойки, как у II-1), boardGap -
-// промежутки ({ qty, gap, share, edge - от края до крайней доски } или null -
-// сплошь).
+// промежутки ({ qty, gap, share } или null - сплошь).
 function ii2PanelDiagram(calc, frame, widthVal, skinVal, boardGap, alt){
   const floors = frame.floors, v4 = TOREC_VARIANTS[floors][4];
   const g = ii2PanelImage(frame.count, floors, calc.xRaskosina, frame.hasRaskosina, boardGap);
