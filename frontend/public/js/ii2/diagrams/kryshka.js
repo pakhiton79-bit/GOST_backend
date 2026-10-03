@@ -2,7 +2,8 @@
 // крышка II-1 (KRYSHKA_GEN, kryshkaGeneratedRecords, kryshkaGapRecords,
 // crossBeamWidth - js/ii1/diagrams/kryshka.js), но с досками: доски крышки с
 // промежутками (boards.js) светло-серые, брусья поверх - продольные белые,
-// поперечные тёмно-серые. При поперечном расположении досок доски идут
+// поперечные тёмно-серые; брусья и доски - одной ширины на экране
+// (drawnMemberWidth в common-diagrams.js). При поперечном расположении досок доски идут
 // поперёк (полосы по длине крышки), при продольном - вдоль. Плюс размер
 // «промежуток между досками»: при поперечных - под чертежом, при продольных -
 // слева.
@@ -13,6 +14,7 @@ function ii2KryshkaImage(calc, crossBeamW){
   const transverse = calc.lidLayout === 'transverse';
   const G = longbeamCount > 0 ? KRYSHKA_GEN[2] : KRYSHKA_GEN[0];
   const f = v => v.toFixed(1);
+  const k = diagramScreenScale(G.IW, G.IH), mw = drawnMemberWidth(k);
   const rect = (x0, y0, x1, y1, fill) => `<rect x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" fill="${fill}"/>`;
   // Поперечные брусья - как у II-1.
   const span = G.x1 - G.x0, pxPerMm = span / lengthVal;
@@ -20,19 +22,18 @@ function ii2KryshkaImage(calc, crossBeamW){
   const startMm = (lengthVal - (crossBeamCount * bw + (crossBeamCount - 1) * gapDistVal)) / 2;
   const centers = Array.from({length: crossBeamCount}, (_, i) => G.x0 + (startMm + bw / 2 + i * (bw + gapDistVal)) * pxPerMm);
   const pitch = crossBeamCount > 1 ? centers[1] - centers[0] : span;
-  const beamW = Math.min(KRYSHKA_GEN_BEAM, 0.6 * pitch, 1.2 * (centers[0] - G.x0));
+  const beamW = Math.min(mw, 0.6 * pitch, 1.2 * (centers[0] - G.x0));
   if(diagramIsTooDense(pitch - beamW - KRYSHKA_GEN_STROKE, G.IW)) return null;
 
   // Доски: поперечные - полосы по x, продольные - полосы по y.
-  const k = diagramScreenScale(G.IW, G.IH);
   const strips = transverse ? ii2BoardStrips(G.x0, G.x1, bg, k) : ii2BoardStrips(G.y0, G.y1, bg, k);
   let shapes = rect(G.x0, G.y0, G.x1, G.y1, '#fff');
   shapes += transverse ? ii2BoardRects(strips, true, G.y0, G.y1) : ii2BoardRects(strips, false, G.x0, G.x1);
   if(longbeamCount > 0){
     const lx0 = G.x0 + KRYSHKA_GEN_INSET, lx1 = G.x1 - KRYSHKA_GEN_INSET;
     for(let i = 0; i < longbeamCount; i++){
-      const y = G.y0 + (G.y1 - G.y0 - KRYSHKA_GEN_BEAM) * i / (longbeamCount - 1);
-      shapes += rect(lx0, y, lx1, y + KRYSHKA_GEN_BEAM, '#fff');
+      const y = G.y0 + (G.y1 - G.y0 - mw) * i / (longbeamCount - 1);
+      shapes += rect(lx0, y, lx1, y + mw, '#fff');
     }
   }
   const cy0 = G.y0 + KRYSHKA_GEN_INSET + 0.5, cy1 = G.y1 - KRYSHKA_GEN_INSET - 0.5;

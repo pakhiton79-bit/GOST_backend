@@ -22,21 +22,28 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   // длинная крышка превращалась в узкую полосу).
   const Wv = 850, Lu = Wv * Math.min(2.5, Math.max(1.4, lidLen / lidW));
   const k = Lu / lidLen;                            // единиц чертежа на 1 мм вдоль длины
+  const up = [-8, -26], thick = [7, 20];            // подъём брусьев над крышкой, толщина крышки
+  const low = [thick[0]*2, thick[1]*2], lowEnd = [thick[0]*3.5, thick[1]*3.5]; // планки под крышкой
+  const pt = (u, v, d) => [u*eu[0] + v*ev[0] + (d?d[0]:0), u*eu[1] + v*ev[1] + (d?d[1]:0)];
+  // Масштаб чертежа (единиц на 1px экрана) - по крышке с концами планок:
+  // планки, брусья и доски - шириной детали на экране (drawnMemberWidth в
+  // common-diagrams.js; кромки досок и планок на изометрии почти
+  // перпендикулярны осям, поэтому ширина в единицах u/v - та же).
+  const lidBox = [pt(0,-0.13*Wv,lowEnd), pt(Lu,-0.13*Wv,lowEnd), pt(0,1.13*Wv,low), pt(Lu,1.13*Wv,low), pt(0,0,up), pt(Lu,Wv,up), pt(0,Wv,up)];
+  const lidK = diagramScreenScale(Math.max(...lidBox.map(q=>q[0])) - Math.min(...lidBox.map(q=>q[0])),
+    Math.max(...lidBox.map(q=>q[1])) - Math.min(...lidBox.map(q=>q[1])));
+  const mw = drawnMemberWidth(lidK);
   // Как на фото крышки (по уточнению пользователя): пояса-планки - снизу, из-под
   // крышки видны только их концы за передней и задней кромками; сверху -
-  // внутренние поперечные брусья. Ширина планки/бруса на чертеже - не меньше,
-  // чем на фото (схема, не в масштабе: при реальных 100 мм на длинной крышке они
-  // были бы нитками), но не шире, чем позволяет промежуток между соседними.
+  // внутренние поперечные брусья. Ширина планки/бруса - mw, но не шире, чем
+  // позволяет промежуток между соседними.
   const minGapU = P > 1 ? plankGapMm*k : Lu;       // plankGapMm - шаг поясов по осям
-  const pw = Math.min(Math.max(100*k, 120), 0.55*minGapU);
-  const bw = B > 0 ? Math.min(Math.max(100*k, 120), 0.55*(Lu/(B+1))) : 0;
+  const pw = Math.min(mw, 0.55*minGapU);
+  const bw = B > 0 ? Math.min(mw, 0.55*(Lu/(B+1))) : 0;
   // Планки/брусья слились бы - заглушка (размер картинки - по проекции крышки).
   const gaps = [P > 1 ? plankGapMm*k - pw : Infinity, B > 1 ? ((crossBeamWidthMm||100) + beamGapMm)*k - bw : Infinity];
   const IWe = Lu*0.9507 + Wv*0.4406, IHe = Lu*0.3101 + Wv*0.8977;
   if(diagramIsTooDense(Math.min(...gaps) - i3stroke(IWe, IHe), IWe)) return diagramTooDense();
-  const up = [-8, -26], thick = [7, 20];            // подъём брусьев над крышкой, толщина крышки
-  const low = [thick[0]*2, thick[1]*2], lowEnd = [thick[0]*3.5, thick[1]*3.5]; // планки под крышкой
-  const pt = (u, v, d) => [u*eu[0] + v*ev[0] + (d?d[0]:0), u*eu[1] + v*ev[1] + (d?d[1]:0)];
   const polys = [];                                 // [точки] в порядке отрисовки
   const quad = (u0, u1, v0, v1, d) => [pt(u0,v0,d), pt(u1,v0,d), pt(u1,v1,d), pt(u0,v1,d)];
   const box = (u0, u1, v0, v1) => {                 // брус сверху: боковые грани + верх
@@ -53,11 +60,6 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   }
   // крышка - доски вдоль длины (от дальней к ближней): передняя и левая
   // грани толщины + верх; доски - светло-серые (как на щитах).
-  // Ширина доски на экране - как на щитах: масштаб - по уже построенным
-  // планкам и плоскости крышки (доски и брусья внутри них).
-  const lidBox = polys.flat().concat([pt(0,0), pt(Lu,0), pt(Lu,Wv,up), pt(0,Wv,up), pt(0,0,thick)]);
-  const lidK = diagramScreenScale(Math.max(...lidBox.map(q=>q[0])) - Math.min(...lidBox.map(q=>q[0])),
-    Math.max(...lidBox.map(q=>q[1])) - Math.min(...lidBox.map(q=>q[1])));
   const lidStrips = i4BoardStrips(0, Wv, boardGap, lidK);
   const boardPolyFrom = polys.length;
   lidStrips.slice().reverse().forEach(([v0, v1])=>{

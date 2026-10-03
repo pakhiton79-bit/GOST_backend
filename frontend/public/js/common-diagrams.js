@@ -137,17 +137,22 @@ function diagramTooDense(){
   return diagramStub(DIAGRAM_TOO_DENSE_TEXT);
 }
 
-// Доски обшивки на чертежах типов с промежутками (I-4, II-2) - одной
-// ширины на экране на всех чертежах крышки и щитов (по указанию
-// пользователя): DRAWN_BOARD_PX экранных пикселей при обычном размере
-// чертежа, число досок на чертеже - сколько поместится (может отличаться от
-// расчётного). Промежуток - в реальной доле к доске (не уже
-// DRAWN_BOARD_MIN_GAP_PX), крайние доски - по краям отрезка.
-const DRAWN_BOARD_PX = 7, DRAWN_BOARD_MIN_GAP_PX = 1.6;
+// Детали на чертежах крышки и щитов типов с промежутками (I-4, II-2) -
+// доски обшивки, планки, раскосины, стойки и брусья - одной ширины на
+// экране на всех этих чертежах (по указанию пользователя): DRAWN_MEMBER_PX
+// экранных пикселей при обычном размере чертежа (drawnMemberWidth). Число
+// досок на чертеже - сколько поместится (может отличаться от расчётного),
+// промежуток - в реальной доле к доске (не уже DRAWN_BOARD_MIN_GAP_PX),
+// крайние доски - по краям отрезка.
+const DRAWN_MEMBER_PX = 8, DRAWN_BOARD_MIN_GAP_PX = 1.6;
 // Единиц картинки IW×IH на 1px экрана: на странице чертёж увеличивается до
 // ~290×240px (см. common-diagram-fit.js).
 function diagramScreenScale(IW, IH){
   return Math.max(IW / 290, IH / 240);
+}
+// Ширина детали в единицах картинки (k - diagramScreenScale).
+function drawnMemberWidth(k){
+  return DRAWN_MEMBER_PX * k;
 }
 // [начало, конец] досок на отрезке a..b картинки (k - единиц картинки на 1px
 // экрана, diagramScreenScale). gapMm - промежуток между досками по расчёту
@@ -155,7 +160,7 @@ function diagramScreenScale(IW, IH){
 // до крайней доски по расчёту (0 - крайние по краям). Размеры в мм - к доске
 // 100 мм.
 function drawnBoardStrips(a, b, k, gapMm, edgeMm){
-  const bw = DRAWN_BOARD_PX * k;
+  const bw = drawnMemberWidth(k);
   const e = edgeMm > 0 ? bw * edgeMm / 100 : 0;
   const a1 = a + e, span = b - e - a1;
   if(span <= 0) return [];

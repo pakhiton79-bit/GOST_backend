@@ -1,6 +1,8 @@
 // ГОСТ 10198-91, тип I-4: чертёж «Щит торцевой» - всегда генерируемый (SVG,
 // функции generated.js), т.к. на фото торца I-3 обшивка сплошная: рамка из
-// планок и раскосины поверх досок с промежутками (boards.js).
+// планок и раскосины поверх досок с промежутками (boards.js). Планки,
+// раскосины и доски - одной ширины на экране (drawnMemberWidth в
+// common-diagrams.js).
 
 // --- Щит торцевой: N секций, 1 или 2 этажа ---
 // Wmm - длина горизонтальной планки (ширина груза), Htot - высота рамы (H+t12),
@@ -9,11 +11,17 @@
 // ({ qty, gap, share }) или null - доски вплотную (см. boards.js).
 function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal, hasBraces, boardGap){
   const N = Math.max(1, Math.round(sections)), F = floors === 2 ? 2 : 1;
-  const IH = F === 2 ? 1200 : 800, hp = 90, vw = 90; // гор. и верт. планки - одной ширины
-  const innerH = (IH - hp*(F+1)) / F;
+  const IH = F === 2 ? 1200 : 800;
   const realSecW = (Wmm - 100*(N+1)) / N, realInH = F === 2 ? (Htot - 300)/2 : Htot - 200;
-  const sw = innerH * i3aspect(realSecW, realInH);
-  const IW = Math.round((N+1)*vw + N*sw);
+  // Гор. и верт. планки - шириной детали на экране: масштаб чертежа зависит
+  // от его ширины, а она - от ширины планок; нескольких проходов хватает.
+  let hp = 90, vw = 90, innerH, sw, IW;
+  for(let it=0; it<5; it++){
+    innerH = (IH - hp*(F+1)) / F;
+    sw = innerH * i3aspect(realSecW, realInH);
+    IW = Math.round((N+1)*vw + N*sw);
+    if(it < 4) hp = vw = drawnMemberWidth(diagramScreenScale(IW, IH));
+  }
   if(diagramIsTooDense(Math.min(sw, innerH) / 2 - i3stroke(IW, IH), IW)) return diagramTooDense(); // секций так много, что планки слились бы
   const vx = i => i*(vw + sw);                      // левый край i-й вертикальной планки
   // Обшивка - доски с промежутками под рамкой.
@@ -54,7 +62,7 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal, ha
   // верхней планки (под планкой его не видно).
   const gi = strips.findIndex((st, i) => i + 1 < strips.length && st[1] >= hp);
   if(boardGap && gi >= 0){
-    const k = IW / 260;
+    const k = Math.max(IW / 260, IH / 240); // единиц картинки на 1px экрана (узкий высокий чертёж - мельче 260px)
     records.push(...i4BoardGapRecords(vw, -Math.max(70, 10*k), strips[gi][1], strips[gi+1][0], Math.max(60, 9*k), Math.max(15, 3*k), boardGap.gap, k, -1));
   }
   const title = `Щит торцевой (${F} эт., ${N} секц.${hasBraces === false ? ', без раскосин' : xMode ? ', X-раскосины' : ''}) - схема расположения деталей`;

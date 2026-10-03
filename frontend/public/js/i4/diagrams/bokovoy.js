@@ -8,9 +8,13 @@
 // вплотную (см. boards.js).
 function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankCount, floors, xMode, upperSpanVal, midPlankWidthVal, sectionWmm, lidBoardTVal, hasBraces, plankGapVal, boardGap){
   const P = Math.max(2, Math.round(plankCount)), F = floors === 2 ? 2 : 1;
-  const PH = floors === 2 ? 1300 : 800, pw = 100, stub = 100, hp = 100; // средняя планка - той же ширины
+  const PH = floors === 2 ? 1300 : 800, stub = 100;
+  // Планки (и средняя у 2 этажей) - шириной детали на экране
+  // (drawnMemberWidth в common-diagrams.js, как доски и раскосины): масштаб
+  // чертежа зависит от его ширины, а она - от ширины планок; ширина
+  // подбирается несколькими проходами (см. цикл ниже).
+  let pw = 100, hp = 100;
   const ovh = 80;                                   // напуск планок ниже щита (на полоз)
-  const innerH = F === 2 ? (PH - hp)/2 : PH;
   const realInH = F === 2 ? (heightPlusFloorVal - (midPlankWidthVal||100))/2 : heightPlusFloorVal;
   // Ширина секции - по реальной пропорции, но весь чертёж не длиннее ~4
   // (2 этажа - ~2.4) своих высот: иначе у очень длинного щита (10+ м) чертёж
@@ -20,11 +24,16 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
   // 966×1361): по замечанию пользователя, при 2 планках (особенно на 2 этажах)
   // чертёж выходил узким и высоким и занимал много места по вертикали.
   const minIW = (F === 2 ? 966/1361 : 874/733) * (45 + PH + 80);
-  const sw = Math.max(1.2*pw, (minIW - 2*stub - P*pw) / (P-1),
-    Math.min(innerH * i3aspect(sectionWmm - 100, realInH), (maxIW - 2*stub - P*pw) / (P-1)));
-  const panelW = 2*stub + P*pw + (P-1)*sw;
   const up = 45;                                    // планки чуть выступают над щитом (как в I-1)
-  const IW = Math.round(panelW), IH = up + PH + ovh;
+  const IH = up + PH + ovh;
+  let innerH, sw, IW;
+  for(let it=0; it<5; it++){
+    innerH = F === 2 ? (PH - hp)/2 : PH;
+    sw = Math.max(1.2*pw, (minIW - 2*stub - P*pw) / (P-1),
+      Math.min(innerH * i3aspect(sectionWmm - 100, realInH), (maxIW - 2*stub - P*pw) / (P-1)));
+    IW = Math.round(2*stub + P*pw + (P-1)*sw);
+    if(it < 4) pw = hp = drawnMemberWidth(diagramScreenScale(IW, IH));
+  }
   if(diagramIsTooDense((hasBraces === false ? sw : Math.min(sw, innerH) / 2) - i3stroke(IW, IH), IW)) return diagramTooDense(); // планок так много, что они слились бы
   const px = i => stub + i*(pw + sw);
   // Доски бока - с промежутками.

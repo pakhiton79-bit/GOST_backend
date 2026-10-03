@@ -151,7 +151,7 @@ frontend/public/     статический фронтенд (HTML/CSS/JS, от�
       print-i4.js         содержимое печати/PDF
       diagrams/           чертежи типа I-4 (все рисуются SVG - на фото I-3 обшивка сплошная):
         generated.js        общие функции (как у I-3)
-        boards.js           обшивка: доски одной ширины на экране (drawnBoardStrips в common-diagrams.js) и размер промежутка
+        boards.js           обшивка с промежутками и её размер; доски, планки, раскосины и брусья - одной ширины на экране (drawnMemberWidth, drawnBoardStrips в common-diagrams.js)
         dno.js              дно (изометрия, доски дна с промежутками)
         kryshka.js, end-panel.js, bokovoy.js   крышка, щит торцевой, щит боковой
 ```
