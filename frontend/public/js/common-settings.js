@@ -1,9 +1,11 @@
 // Общие настройки сайта - кнопка «Настройки» в верхней панели каждой
 // страницы (главная, список типов, калькуляторы). Окно настроек - большое
-// (по указанию пользователя): слева разделы, справа их настройки. Пока один
-// раздел «Оформление» с темой: как в системе / светлая / тёмная (по
-// умолчанию - как в системе), переключатель - три значка с плавно
-// перемещающимся ползунком (по образцу пользователя). Новые настройки - разделами в SITE_SETTINGS_SECTIONS.
+// (по указанию пользователя): слева разделы, справа их настройки. Разделы:
+// «Оформление» - тема: как в системе / светлая / тёмная (по умолчанию - как
+// в системе), переключатель - три значка с плавно перемещающимся ползунком
+// (по образцу пользователя); «Сброс» - сброс всех сохранённых настроек
+// сайта (resetAllSiteSettings). Новые настройки - разделами в
+// SITE_SETTINGS_SECTIONS.
 // Настройки - одним объектом в localStorage, общие для всех страниц сайта.
 //
 // Скрипт подключается в <head>: тема ставится сразу (атрибут data-theme у
@@ -12,6 +14,10 @@
 // когда готова разметка (см. buildSiteTopbar).
 const SITE_SETTINGS_STORAGE_KEY = 'gost10198-site-settings';
 const SITE_THEME_DEFAULT = 'system';
+// Общее начало ключей сайта в localStorage: и общих настроек, и настроек
+// страниц типов (толщины, галочки, поля, «Тонкая настройка», нормы времени,
+// плотность).
+const SITE_STORAGE_PREFIX = SITE_SETTINGS_STORAGE_KEY.replace(/site-settings$/, '');
 
 // Значки - SVG (а не символы: те на части систем рисуются эмодзи или тофу).
 const siteIcon = body => `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
@@ -71,6 +77,22 @@ function siteThemeSwitchHtml(){
   return `<div class="theme-switch" role="radiogroup" aria-label="Тема оформления" style="--i:${idx}"><span class="theme-switch-thumb" aria-hidden="true"></span>${opts}</div>`;
 }
 
+// Сброс всех настроек сайта (по указанию пользователя): после подтверждения
+// удаляются все ключи сайта в localStorage, страница перезагружается -
+// всё возвращается к значениям по умолчанию.
+function resetAllSiteSettings(){
+  if(!window.confirm('Сбросить все настройки сайта? Толщины в наличии, галочки, поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема на всех страницах вернутся к значениям по умолчанию.')) return;
+  try{
+    const keys = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(SITE_STORAGE_PREFIX) === 0) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+  location.reload();
+}
+
 // Разделы окна: заголовок и строки (название, пояснение, элемент управления).
 const SITE_SETTINGS_SECTIONS = [
   {
@@ -79,6 +101,14 @@ const SITE_SETTINGS_SECTIONS = [
       title: 'Тема',
       hint: 'Светлая, тёмная или «как в системе» - вслед за настройкой устройства.',
       control: siteThemeSwitchHtml,
+    }],
+  },
+  {
+    id: 'reset', title: 'Сброс',
+    rows: () => [{
+      title: 'Сбросить все настройки',
+      hint: 'Толщины в наличии, галочки и поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема - на всех страницах сайта вернутся к значениям по умолчанию.',
+      control: () => '<button type="button" class="btn-secondary" id="siteSettingsReset">Сбросить</button>',
     }],
   },
 ];
@@ -171,6 +201,7 @@ function initSiteSettings(){
   content.addEventListener('click', e => {
     const opt = e.target.closest('.theme-switch-option');
     if(opt) selectTheme(opt);
+    if(e.target.closest('#siteSettingsReset')) resetAllSiteSettings();
   });
   // Стрелки - по вариантам, как у обычной группы переключателей.
   content.addEventListener('keydown', e => {
