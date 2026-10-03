@@ -102,8 +102,13 @@ function stabilizeSizes(c) {
     stojkaExceeded = stj.exceeded;
     torFrameT = ov('tTorFrame', frameGost, 'Толщина каркаса торцевого щита');
     bokFrameT = ov('tBokFrame', frameGost, 'Толщина каркаса бокового щита');
-    lidBeamT = ov('tLidBeam', bokFrameT, 'Толщина брусьев крышки');
-    dnoBeamT = ov('tDnoBeam', bokFrameT, 'Толщина продольного бруса дна');
+    // Поле каркаса «Тонкой настройки» брусья крышки и продольный брус дна не
+    // меняет - у них свои поля (по указанию пользователя); правка ячейки
+    // каркаса бокового щита в таблице - меняет, как раньше.
+    const mo = c.manualOverrides || {};
+    const bokFrameNoFine = mo.tBokFrame > 0 ? mo.tBokFrame : frameGost;
+    lidBeamT = ov('tLidBeam', bokFrameNoFine, 'Толщина брусьев крышки');
+    dnoBeamT = ov('tDnoBeam', bokFrameNoFine, 'Толщина продольного бруса дна');
   }
 
   const cross = crossBeamCounts(c, len);

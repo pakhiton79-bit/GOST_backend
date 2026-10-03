@@ -78,7 +78,7 @@ const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'f
 const III1_OVERRIDE_KEYS = ['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11'];
 // II-1, «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js).
 const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
-const III1_FINE_THICKNESS_KEYS = ['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'torFrame', 'bokFrame', 'skin', 'lidBeam'];
+const III1_FINE_THICKNESS_KEYS = ['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
   const result = {};
   if (!obj || typeof obj !== 'object') return result;
