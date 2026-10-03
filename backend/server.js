@@ -12,6 +12,7 @@ const { computeGost10198I1 } = require('./src/i1/compute');
 const { computeGost10198I2 } = require('./src/i2/compute');
 const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
+const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
@@ -22,6 +23,7 @@ const I2_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0
 const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
 const I4_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-4 нет)
 const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
+const II2_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 };
 const III1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }; // bolts - болты, parchment - пергамин, в объём не входят
 
 // Ручные правки таблицы деталей (по указанию пользователя - учитываются
@@ -229,6 +231,42 @@ app.post('/api/ii1/calculate', (req, res) => {
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+// Тип II-2 - тот же ящик, что II-1, но обшивка с промежутками (boardGapMax);
+// пергамина нет. Ручные толщины и «Тонкая настройка» - те же ключи, что у II-1.
+app.post('/api/ii2/calculate', (req, res) => {
+  const b = req.body || {};
+  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
+    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
+  }
+  if (b.lidLayout !== 'longitudinal' && b.lidLayout !== 'transverse') {
+    return res.status(400).json({ error: 'lidLayout должен быть "longitudinal" или "transverse".' });
+  }
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    fasteningType: b.fasteningType,
+    lidLayout: b.lidLayout,
+    optimizeSizes: !!b.optimizeSizes,
+    removeFloorBoards: !!b.removeFloorBoards,
+    removeSkidBoards: !!b.removeSkidBoards,
+    roundBoardWidths: !!b.roundBoardWidths,
+    solidRigidBase: !!b.solidRigidBase,
+    forkliftLoading: !!b.forkliftLoading,
+    xRaskosina: !!b.xRaskosina,
+    torecPostCount: toNum(b.torecPostCount),
+    bokPostCount: toNum(b.bokPostCount),
+    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
+    boardGapMax: toNum(b.boardGapMax),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
+    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+  };
+  res.json(withTableEdits(computeGost10198II2(input), b.tableEdits, II2_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
