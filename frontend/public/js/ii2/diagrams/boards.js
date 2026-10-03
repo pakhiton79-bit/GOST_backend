@@ -5,10 +5,19 @@
 // каркас и брусья поверх - белые (как у I-4).
 const II2_BOARD_FILL = '#d9d9d9';
 
-// [начало, конец] досок на отрезке a..b: boardGap - промежутки ({ gap, ... })
-// или null - сплошь; k - единиц картинки на 1px экрана (diagramScreenScale).
+// [начало, конец] досок на отрезке a..b: boardGap - промежутки ({ gap, cut,
+// ... }) или null - сплошь; k - единиц картинки на 1px экрана
+// (diagramScreenScale). cut - на сколько мм крайние доски уже 100 (бок при
+// досках крышки поперёк продолжает её линии, см. bokovoy.js): раскладка - на
+// отрезке, шире на cut с каждой стороны, крайние доски обрезаются по краям.
 function ii2BoardStrips(a, b, boardGap, k){
-  return drawnBoardStrips(a, b, k, boardGap ? boardGap.gap : null);
+  const cutPx = boardGap && boardGap.cut > 0 ? drawnMemberWidth(k) * boardGap.cut / 100 : 0;
+  const strips = drawnBoardStrips(a - cutPx, b + cutPx, k, boardGap ? boardGap.gap : null);
+  if(cutPx > 0 && strips.length){
+    strips[0][0] = a;
+    strips[strips.length - 1][1] = b;
+  }
+  return strips;
 }
 
 // SVG-прямоугольники досок: vertical - доски стоят (полосы по x на

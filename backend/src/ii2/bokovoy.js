@@ -4,7 +4,25 @@
 // стойки торцевого щита с каждой стороны.
 const { vol } = require('../helpers');
 const { STOJKA_W } = require('../ii1/frame');
-const { fillGapBoards } = require('./boards');
+const { fillGapBoards, gapBoards, BOARD_W } = require('./boards');
+
+// Раскладка досок бока (вид результата - как у fillGapBoards). При досках
+// крышки поперёк доски бока продолжают линии досок крышки (по указанию
+// пользователя): раскладка крышки по наружной длине (kryshka.js), обрезанная
+// краями бока - крайние доски бока уже 100 мм на толщину обшивки торцевого
+// щита (cut), остальные - по 100 мм точно под досками крышки. Иначе (или
+// если у крышки промежутков нет) - своя раскладка по ширине бока.
+function sideBoards(c, s, span) {
+  if (c.lidLayout === 'transverse') {
+    const lid = gapBoards(s.len, c.boardGapMax);
+    const cut = (s.len - span) / 2;
+    if (lid && cut > 0 && cut < BOARD_W) {
+      return { mainQty: lid.qty - 2, extra: [{ name: 'Доска (крайняя)', width: BOARD_W - cut, qty: 2 }],
+        warn: false, singleNarrow: false, gap: { ...lid, cut } };
+    }
+  }
+  return fillGapBoards(span, c.roundBoardWidths, c.boardGapMax, 'Щит боковой', c.warnings);
+}
 
 // c - контекст расчёта; s - согласованные размеры; frame - каркас (frame.js);
 // rask - толщина и ширина раскосины.
@@ -22,7 +40,7 @@ function buildBokovoy(c, s, frame, rask) {
   const opora = { t: skinT, w: Math.min(75, Math.max(50, Math.floor(STOJKA_W - s.crossBeamT))), l: horiz.l, qty: 2 };
 
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
-  const fb = fillGapBoards(L + s.stojkaT * 2, c.roundBoardWidths, c.boardGapMax, 'Щит боковой', warnings);
+  const fb = sideBoards(c, s, L + s.stojkaT * 2);
   const boardQty = fb.mainQty * frame.floors;
   if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');
@@ -40,7 +58,7 @@ function buildBokovoy(c, s, frame, rask) {
   if (boardQty > 0) rows.push({ name: 'Доска', t: skinT, w: 100, l: boardLen, qty: boardQty, overrideKey: 'skinValue' });
   fb.extra.forEach((e, i) => {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
-    rows.push({ name: 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty * frame.floors, overrideKey: 'skinValue' });
+    rows.push({ name: e.name || 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty * frame.floors, overrideKey: 'skinValue' });
   });
 
   const volume = vol(stojka.t, stojka.w, stojka.l, stojka.qty) + vol(horiz.t, horiz.w, horiz.l, horiz.qty)
