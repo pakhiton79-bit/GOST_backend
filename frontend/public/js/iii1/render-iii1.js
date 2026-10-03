@@ -44,11 +44,11 @@ function renderPartBlock(title, tableHtml){
   return `<div class="part-title">${title}</div><div class="spec-row-table">${tableHtml}</div>`;
 }
 // Узел с чертежом: заголовок, чертёж слева, таблица справа (как у II-1).
-// Слот чертежа шире обычного и чертёж может быть выше (data-grow-max-h, см.
-// fitDiagramOnScreen) - чтобы занимал больше места (по указанию
-// пользователя). Отступ под заголовком - под размер над чертежом.
+// Слот и предел высоты чертежа - обычные, как у остальных типов (по
+// указанию пользователя - для единообразия; раньше слот был шире и чертёж
+// выше). Отступ под заголовком - под размер над чертежом.
 function renderPartBlockDiagram(title, diagramHtml, tableHtml){
-  return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram spec-row-wide"><div class="diagram-slot diagram-slot-wide" data-grow-max-h="300">${diagramHtml}</div>${tableHtml}</div>`;
+  return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram"><div class="diagram-slot">${diagramHtml}</div>${tableHtml}</div>`;
 }
 // Ширина чертежей щитов на экране - как у II-1.
 const III1_PANEL_WIDTH = 260;
