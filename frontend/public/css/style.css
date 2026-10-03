@@ -234,6 +234,11 @@
   .site-settings-nav-item:hover{color:var(--ink);}
   .site-settings-nav-item.active{background:var(--secondary-hover);color:var(--ink);}
   .site-settings-sections{flex:1;min-width:0;overflow-y:auto;padding:24px 32px;}
+  /* Справа - только выбранный слева раздел (на телефоне списка разделов
+     нет - там разделы идут подряд). */
+  @media screen and (min-width:641px){
+    .site-settings-section:not(.active){display:none;}
+  }
   .site-settings-section h3{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--ink-soft);letter-spacing:.02em;}
   .site-settings-row{
     display:flex;

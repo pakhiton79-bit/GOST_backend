@@ -3,8 +3,9 @@
 // (по указанию пользователя): слева разделы, справа их настройки. Разделы:
 // «Оформление» - тема: как в системе / светлая / тёмная (по умолчанию - как
 // в системе), переключатель - три значка с плавно перемещающимся ползунком
-// (по образцу пользователя); «Сброс» - сброс всех сохранённых настроек
-// сайта (resetAllSiteSettings). Новые настройки - разделами в
+// (по образцу пользователя); «Сброс настроек» - отдельным разделом, сброс
+// всех сохранённых настроек сайта (resetAllSiteSettings). Справа - только
+// выбранный слева раздел. Новые настройки - разделами в
 // SITE_SETTINGS_SECTIONS.
 // Настройки - одним объектом в localStorage, общие для всех страниц сайта.
 //
@@ -104,7 +105,7 @@ const SITE_SETTINGS_SECTIONS = [
     }],
   },
   {
-    id: 'reset', title: 'Сброс',
+    id: 'reset', title: 'Сброс настроек',
     rows: () => [{
       title: 'Сбросить все настройки',
       hint: 'Толщины в наличии, галочки и поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема - на всех страницах сайта вернутся к значениям по умолчанию.',
@@ -115,8 +116,8 @@ const SITE_SETTINGS_SECTIONS = [
 
 function siteSettingsContentHtml(){
   const nav = SITE_SETTINGS_SECTIONS.map((s, i) =>
-    `<a class="site-settings-nav-item${i === 0 ? ' active' : ''}" href="#site-settings-${s.id}">${s.title}</a>`).join('');
-  const sections = SITE_SETTINGS_SECTIONS.map(s => `<section class="site-settings-section" id="site-settings-${s.id}">
+    `<a class="site-settings-nav-item${i === 0 ? ' active' : ''}" href="#site-settings-${s.id}" data-section="${s.id}">${s.title}</a>`).join('');
+  const sections = SITE_SETTINGS_SECTIONS.map((s, i) => `<section class="site-settings-section${i === 0 ? ' active' : ''}" id="site-settings-${s.id}">
       <h3>${s.title}</h3>
       ${s.rows().map(r => `<div class="site-settings-row">
         <div class="site-settings-row-text"><div class="site-settings-row-title">${r.title}</div><div class="site-settings-row-hint">${r.hint}</div></div>
@@ -198,7 +199,14 @@ function initSiteSettings(){
     saveSiteSetting('theme', opt.dataset.themeValue);
     applySiteTheme();
   }
+  // Выбор раздела слева: справа показывается только он.
+  function selectSection(id){
+    content.querySelectorAll('.site-settings-nav-item').forEach(a => a.classList.toggle('active', a.dataset.section === id));
+    content.querySelectorAll('.site-settings-section').forEach(s => s.classList.toggle('active', s.id === 'site-settings-' + id));
+  }
   content.addEventListener('click', e => {
+    const nav = e.target.closest('.site-settings-nav-item');
+    if(nav){ e.preventDefault(); selectSection(nav.dataset.section); return; }
     const opt = e.target.closest('.theme-switch-option');
     if(opt) selectTheme(opt);
     if(e.target.closest('#siteSettingsReset')) resetAllSiteSettings();
