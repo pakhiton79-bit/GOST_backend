@@ -91,12 +91,12 @@ function diagramDnoI4Generated(skidCount, hasSub, boardQty, gap, lenVal, widthVa
   // Ширина дна - вдоль ближнего левого края, по низу досок.
   line(P(0, 0, skidTop), P(-d*1.3, 0, skidTop)); line(P(0, W, skidTop), P(-d*1.3, W, skidTop));
   dbl(P(-d, 0, skidTop), P(-d, W, skidTop), dimLabel(widthVal)+' мм');
-  // Отступ торцового бруса от конца - выносные линии влево за дальний край,
-  // перемычка, стрелка сверху (как у дна III-1).
+  // Отступ торцового бруса от конца - от конца полоза до нижней кромки
+  // наружной грани бруса (по указанию пользователя): выносные линии на
+  // уровне верха полоза влево за дальний край, перемычка, стрелка сверху.
   const yL = W + d*1.1;
   line(P(0, W, skidTop), P(0, yL + 0.3*u, skidTop));
-  line(P(inset, W, endTop), P(inset, yL + 0.3*u, endTop));
-  line(P(inset, yL, skidTop), P(inset, yL, endTop));
+  line(P(inset, W, skidTop), P(inset, yL + 0.3*u, skidTop));
   line(P(0, yL, skidTop), P(inset, yL, skidTop));
   const tip = P(inset/2, yL, skidTop), from = P(inset/2, yL, skidTop + 2.6*u);
   rec.push({type:'single', x1:from[0], y1:from[1], x2:tip[0], y2:tip[1]});
