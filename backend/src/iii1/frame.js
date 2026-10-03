@@ -6,7 +6,7 @@ const STOJKA_W = 100;   // ширина стойки
 const MAX_CLEAR_GAP = 800;   // просвет между краями соседних стоек (по указанию пользователя)
 const MIN_ANGLE = 20, MAX_ANGLE = 60; // допустимый угол раскоса, ° (п.1.7.7)
 const RASKOSINA_MIN_H = 600;  // п.1.7.7: раскосы - при внутренней высоте ящика свыше 600 мм
-const TWO_FLOORS_H = 2000;    // п.1.6.16: средние продольные брусья - при внутренней высоте 2000 мм и более
+const TWO_FLOORS_H = 2000;    // 2 этажа (средние брусья) - при внутренней высоте больше 2000 мм (по указанию пользователя, как у II-1)
 
 // fillspace - ширина щита под стойки, panelH - высота каркаса щита (высота
 // груза), H - высота груза (внутренняя высота ящика), beamW - ширина
@@ -14,7 +14,7 @@ const TWO_FLOORS_H = 2000;    // п.1.6.16: средние продольные 
 // Стойка: 1 этаж - panelH без 2 горизонтальных брусьев, 2 этажа - без 3,
 // пополам.
 // Раскосы - при H свыше 600 мм или по галочке «Добавить раскосины»
-// (forceRaskosina). Этажи: 2 при H от 2000 мм или если на 1 этаже угол
+// (forceRaskosina). Этажи: 2 при H больше 2000 мм или если на 1 этаже угол
 // раскоса при 2 стойках больше 60°. Стоек - не меньше, чем по просвету
 // между краями 800 мм, и (при раскосах) столько, чтобы угол раскоса был не
 // меньше 20° (пока есть место). manualCount - число стоек, заданное вручную: крайние -
@@ -32,7 +32,7 @@ function buildFrame(fillspace, panelH, H, beamW, forceRaskosina, manualCount) {
   }
 
   const needRaskosina = H > RASKOSINA_MIN_H || !!forceRaskosina;
-  let floors = H >= TWO_FLOORS_H ? 2 : 1;
+  let floors = H > TWO_FLOORS_H ? 2 : 1;
   if (needRaskosina && floors === 1 && angleDeg(2, stojkaLen(1)) > MAX_ANGLE) floors = 2;
   const len = stojkaLen(floors);
   const hasRaskosina = needRaskosina && len > 0;
