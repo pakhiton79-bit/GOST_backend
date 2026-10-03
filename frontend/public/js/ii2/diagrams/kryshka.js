@@ -3,8 +3,7 @@
 // crossBeamWidth - js/ii1/diagrams/kryshka.js), но с досками: доски крышки с
 // промежутками (boards.js) светло-серые, брусья поверх - продольные белые,
 // поперечные тёмно-серые. При поперечном расположении досок доски идут
-// поперёк (полосы по длине крышки) и у концов - крайние доски над торцевыми
-// щитами (вплотную к соседним), при продольном - вдоль. Плюс размер
+// поперёк (полосы по длине крышки), при продольном - вдоль. Плюс размер
 // «промежуток между досками»: при поперечных - под чертежом, при продольных -
 // слева.
 
@@ -24,19 +23,9 @@ function ii2KryshkaImage(calc, crossBeamW){
   const beamW = Math.min(KRYSHKA_GEN_BEAM, 0.6 * pitch, 1.2 * (centers[0] - G.x0));
   if(diagramIsTooDense(pitch - beamW - KRYSHKA_GEN_STROKE, G.IW)) return null;
 
-  // Доски: поперечные - полосы по x (крайние над торцевыми щитами - в
-  // масштабе длины, но не уже 0.4 средней доски), продольные - полосы по y.
-  let strips, capFrac = 0;
-  if(transverse){
-    const n = bg ? bg.qty : ii2SolidBoardCount(lengthVal);
-    if(bg && bg.capW > 0){
-      const capPx = Math.max(bg.capW * pxPerMm, 0.4 * span / (n * 1.5 + 1));
-      capFrac = capPx / span;
-    }
-    strips = ii2BoardStrips(G.x0, G.x1, n, bg ? bg.share : 0, capFrac);
-  } else {
-    strips = ii2BoardStrips(G.y0, G.y1, bg ? bg.qty : ii2SolidBoardCount(calc.outerW), bg ? bg.share : 0, 0);
-  }
+  // Доски: поперечные - полосы по x, продольные - полосы по y.
+  const k = diagramScreenScale(G.IW, G.IH);
+  const strips = transverse ? ii2BoardStrips(G.x0, G.x1, bg, k) : ii2BoardStrips(G.y0, G.y1, bg, k);
   let shapes = rect(G.x0, G.y0, G.x1, G.y1, '#fff');
   shapes += transverse ? ii2BoardRects(strips, true, G.y0, G.y1) : ii2BoardRects(strips, false, G.x0, G.x1);
   if(longbeamCount > 0){
@@ -52,7 +41,7 @@ function ii2KryshkaImage(calc, crossBeamW){
     + `<rect width="100%" height="100%" fill="#fff"/>`
     + `<g stroke="#000" stroke-width="${KRYSHKA_GEN_STROKE}">${shapes}</g></svg>`;
   return { img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), IW: G.IW, IH: G.IH, tpl: G.tpl, G,
-    firstBeamX: centers[0] - beamW / 2, secondBeamX: centers[1] - beamW / 2, beamW, strips, hasCaps: capFrac > 0, transverse };
+    firstBeamX: centers[0] - beamW / 2, secondBeamX: centers[1] - beamW / 2, beamW, strips, transverse };
 }
 
 function diagramKryshkaII2(calc){
@@ -65,11 +54,11 @@ function diagramKryshkaII2(calc){
     if(g.transverse){
       // Под чертежом, ниже размера длины, у 60% длины (левее внизу - подпись
       // толщины торцевой доски).
-      const pick = ii2PickGap(g.strips, g.G.x0 + (g.G.x1 - g.G.x0) * 0.6, g.hasCaps);
+      const pick = ii2PickGap(g.strips, g.G.x0 + (g.G.x1 - g.G.x0) * 0.6);
       if(pick) records.push(...ii2BoardGapRecords(pick[0], pick[1], g.G.y1, g.IH + 40 * k, 7 * k, bg.gap, k, 1, true));
     } else {
       // Слева, у верхней четверти (ниже - подписи отступа и толщины бокового щита).
-      const pick = ii2PickGap(g.strips, g.G.y0 + (g.G.y1 - g.G.y0) * 0.2, false);
+      const pick = ii2PickGap(g.strips, g.G.y0 + (g.G.y1 - g.G.y0) * 0.2);
       if(pick) records.push(...ii2BoardGapRecords(pick[0], pick[1], g.G.x0, -9 * k, 7 * k, bg.gap, k, 1, false));
     }
   }

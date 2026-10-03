@@ -3,8 +3,8 @@
 // боковые) - с промежутками (boards.js): доски по 100 мм, крайние - по
 // краям щита, остальные равномерно, промежуток между соседними - не больше
 // заданного (boardGapMax, 10-150 мм, обязательно). При поперечном
-// расположении досок крышки её доски продолжают линии досок боковых щитов
-// (kryshka.js). Пергамина нет (как у I-2, I-4). Согласование размеров,
+// расположении досок крышки доски боковых щитов продолжают её линии
+// (lidSideBoards в boards.js, все доски по 100 мм). Пергамина нет (как у I-2, I-4). Согласование размеров,
 // каркасы щитов и таблицы - общие с II-1 (../ii1/sizing.js, frame.js,
 // logic.js).
 //
@@ -260,8 +260,9 @@ function computeGost10198II2(input) {
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
     standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,
     // Промежутки между досками обшивки по щитам: { qty, gap, share } (у
-    // крышки при поперечном расположении - и capW, ширина крайних досок) или
-    // null - щит сплошной (у дна - и когда доски убраны).
+    // бокового щита при досках крышки поперёк - и edge, промежуток от края
+    // щита до первой доски) или null - щит сплошной (у дна - и когда доски
+    // убраны).
     boardGaps: { dno: dno.boardGap, kryshka: kryshka.boardGap, torec: endPanel.boardGap, bokovoy: bokovoy.boardGap },
   };
 

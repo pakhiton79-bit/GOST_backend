@@ -1,16 +1,14 @@
-// ГОСТ 10198-91, тип I-4: обшивка щита на чертежах - доски с промежутками
-// (как у типа I-2, js/i2/diagrams/boards.js): 3 доски, промежуток -
-// схематичный, всегда одной доли frac высоты щита (настоящий размер
-// подписан); у сплошного щита (hasGap = false) доски вплотную. Доски -
-// светло-серые, рамка поверх - белая (как у торца I-2).
+// ГОСТ 10198-91, тип I-4: обшивка щита на чертежах - доски с промежутками,
+// одной ширины на экране на всех чертежах крышки и щитов (drawnBoardStrips
+// в common-diagrams.js, по указанию пользователя); у сплошного щита доски
+// вплотную. Доски - светло-серые, рамка поверх - белая (как у торца I-2).
 const I4_BOARD_FILL = '#d9d9d9';
 
-// [верх, низ] каждой из 3 досок на отрезке top..bot.
-function i4BoardStrips(top, bot, hasGap, frac){
-  const F = bot - top;
-  const g = hasGap ? F * frac : 0;
-  const h = (F - 2*g) / 3;
-  return [[top, top + h], [top + h + g, top + 2*h + g], [top + 2*h + 2*g, bot]];
+// [начало, конец] каждой доски на отрезке top..bot. boardGap - промежутки
+// ({ gap, ... }) или null - щит сплошной; k - единиц картинки на 1px экрана
+// (diagramScreenScale).
+function i4BoardStrips(top, bot, boardGap, k){
+  return drawnBoardStrips(top, bot, k, boardGap ? boardGap.gap : null, 0);
 }
 
 // Доски поперёк x0..x1 по полосам strips (SVG).

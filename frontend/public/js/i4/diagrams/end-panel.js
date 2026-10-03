@@ -6,8 +6,7 @@
 // Wmm - длина горизонтальной планки (ширина груза), Htot - высота рамы (H+t12),
 // floorSpan - (2 этажа) вертикальная планка этажа + ширина гор. планки.
 // I-4: hasBraces = false - щит без раскосин; boardGap - промежуток обшивки
-// ({ gap, ... }) или null - доски вплотную (см. boards.js).
-const I4_TOREC_BOARD_GAP = 0.06; // промежуток на чертеже - доля высоты щита
+// ({ qty, gap, share }) или null - доски вплотную (см. boards.js).
 function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal, hasBraces, boardGap){
   const N = Math.max(1, Math.round(sections)), F = floors === 2 ? 2 : 1;
   const IH = F === 2 ? 1200 : 800, hp = 90, vw = 90; // гор. и верт. планки - одной ширины
@@ -17,8 +16,8 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal, ha
   const IW = Math.round((N+1)*vw + N*sw);
   if(diagramIsTooDense(Math.min(sw, innerH) / 2 - i3stroke(IW, IH), IW)) return diagramTooDense(); // секций так много, что планки слились бы
   const vx = i => i*(vw + sw);                      // левый край i-й вертикальной планки
-  // Обшивка - 3 доски с промежутками под рамкой.
-  const strips = i4BoardStrips(0, IH, !!boardGap, I4_TOREC_BOARD_GAP);
+  // Обшивка - доски с промежутками под рамкой.
+  const strips = i4BoardStrips(0, IH, boardGap, diagramScreenScale(IW, IH));
   let shapes = i4BoardRects(0, IW, strips);
   for(let fl=0; fl<F && hasBraces !== false; fl++){
     const top = hp + fl*(innerH + hp), bot = top + innerH;
@@ -51,10 +50,12 @@ function diagramEndPanelGen(Wmm, Htot, sections, floors, xMode, floorSpanVal, ha
       {type:'double', x1:-110, y1:midBot, x2:-110, y2:IH, lx:-115, ly:(midBot+IH)/2, text: dimLabel(floorSpanVal)+' мм', vertical:true}
     );
   }
-  // Промежуток между досками - слева от щита, у первого промежутка.
-  if(boardGap){
+  // Промежуток между досками - слева от щита, у первого промежутка ниже
+  // верхней планки (под планкой его не видно).
+  const gi = strips.findIndex((st, i) => i + 1 < strips.length && st[1] >= hp);
+  if(boardGap && gi >= 0){
     const k = IW / 260;
-    records.push(...i4BoardGapRecords(vw, -Math.max(70, 10*k), strips[0][1], strips[1][0], Math.max(60, 9*k), Math.max(15, 3*k), boardGap.gap, k, -1));
+    records.push(...i4BoardGapRecords(vw, -Math.max(70, 10*k), strips[gi][1], strips[gi+1][0], Math.max(60, 9*k), Math.max(15, 3*k), boardGap.gap, k, -1));
   }
   const title = `Щит торцевой (${F} эт., ${N} секц.${hasBraces === false ? ', без раскосин' : xMode ? ', X-раскосины' : ''}) - схема расположения деталей`;
   return i3render(title, IW, IH, shapes, records);

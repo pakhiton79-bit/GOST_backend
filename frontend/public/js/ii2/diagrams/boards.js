@@ -1,31 +1,14 @@
-// ГОСТ 10198-91, тип II-2: обшивка на чертежах - доски с промежутками (как у
-// I-4, js/i4/diagrams/boards.js), но досок рисуется столько, сколько их на
-// самом деле (не больше II2_MAX_DRAW_BOARDS - по указанию пользователя: 3
-// доски на щите II-2 смотрятся странно), промежутки - в реальной доле, но не
-// уже II2_MIN_GAP_PX. Сплошной щит (промежутков нет) - доски вплотную. Доски
-// светло-серые, каркас и брусья поверх - белые.
+// ГОСТ 10198-91, тип II-2: обшивка на чертежах - доски с промежутками, одной
+// ширины на экране на всех чертежах крышки и щитов (drawnBoardStrips в
+// common-diagrams.js, по указанию пользователя; число досок на чертеже -
+// сколько поместится); сплошной щит - доски вплотную. Доски светло-серые,
+// каркас и брусья поверх - белые (как у I-4).
 const II2_BOARD_FILL = '#d9d9d9';
-const II2_MAX_DRAW_BOARDS = 24;
-const II2_MIN_GAP_PX = 14;
 
-// Полосы досок [начало, конец] на отрезке a..b: n - досок по расчёту,
-// share - доля промежутков (0 или нет - вплотную); caps - ширина крайних
-// досок (вплотную к соседним) в долях отрезка, 0 - крайних нет.
-function ii2BoardStrips(a, b, n, share, capFrac){
-  const cap = (capFrac || 0) * (b - a), a1 = a + cap, b1 = b - cap, span = b1 - a1;
-  const m = Math.max(1, Math.min(II2_MAX_DRAW_BOARDS, Math.round(n) || 1));
-  let g = share > 0 && m > 1 ? span * share / (m - 1) : 0;
-  if(share > 0 && m > 1) g = Math.min(Math.max(g, II2_MIN_GAP_PX), span / (m - 1) * 0.7);
-  const w = (span - g * (m - 1)) / m;
-  const strips = Array.from({length: m}, (_, i) => [a1 + i * (w + g), a1 + i * (w + g) + w]);
-  if(cap > 0) strips.unshift([a, a1]), strips.push([b1, b]);
-  return strips;
-}
-
-// Число досок для рисунка у сплошного щита (промежутков нет) - по ширине
-// щита span, мм.
-function ii2SolidBoardCount(span){
-  return Math.max(2, Math.ceil(span / 100 - 1e-9));
+// [начало, конец] досок на отрезке a..b: boardGap - промежутки ({ gap, edge })
+// или null - сплошь; k - единиц картинки на 1px экрана (diagramScreenScale).
+function ii2BoardStrips(a, b, boardGap, k){
+  return drawnBoardStrips(a, b, k, boardGap ? boardGap.gap : null, boardGap && boardGap.edge > 0 ? boardGap.edge : 0);
 }
 
 // SVG-прямоугольники досок: vertical - доски стоят (полосы по x на
@@ -38,12 +21,10 @@ function ii2BoardRects(strips, vertical, c0, c1){
 }
 
 // Промежуток для размера - между досками, середина которого ближе всего к
-// точке at (только между досками по 100 мм, не у крайних). [кромка 1, кромка 2]
-// или null.
-function ii2PickGap(strips, at, hasCaps){
-  const from = hasCaps ? 1 : 0, to = strips.length - (hasCaps ? 2 : 1);
+// точке at. [кромка 1, кромка 2] или null.
+function ii2PickGap(strips, at){
   let best = null;
-  for(let i = from; i < to; i++){
+  for(let i = 0; i < strips.length - 1; i++){
     const g = [strips[i][1], strips[i + 1][0]];
     if(g[1] - g[0] <= 0) continue;
     if(!best || Math.abs((g[0] + g[1]) / 2 - at) < Math.abs((best[0] + best[1]) / 2 - at)) best = g;

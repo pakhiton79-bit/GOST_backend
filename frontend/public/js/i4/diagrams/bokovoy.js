@@ -4,9 +4,8 @@
 // крышки и раскосины.
 
 // --- Щит боковой: P планок (P-1 секций), 1 или 2 этажа ---
-// I-4: boardGap - промежуток обшивки ({ gap, ... }) или null - доски
+// I-4: boardGap - промежуток обшивки ({ qty, gap, share }) или null - доски
 // вплотную (см. boards.js).
-const I4_BOK_BOARD_GAP = 0.06; // промежуток на чертеже - доля высоты щита
 function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloorVal, plankCount, floors, xMode, upperSpanVal, midPlankWidthVal, sectionWmm, lidBoardTVal, hasBraces, plankGapVal, boardGap){
   const P = Math.max(2, Math.round(plankCount)), F = floors === 2 ? 2 : 1;
   const PH = floors === 2 ? 1300 : 800, pw = 100, stub = 100, hp = 100; // средняя планка - той же ширины
@@ -28,8 +27,8 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
   const IW = Math.round(panelW), IH = up + PH + ovh;
   if(diagramIsTooDense((hasBraces === false ? sw : Math.min(sw, innerH) / 2) - i3stroke(IW, IH), IW)) return diagramTooDense(); // планок так много, что они слились бы
   const px = i => stub + i*(pw + sw);
-  // Доски бока - 3 доски с промежутками.
-  const strips = i4BoardStrips(0, PH, !!boardGap, I4_BOK_BOARD_GAP);
+  // Доски бока - с промежутками.
+  const strips = i4BoardStrips(0, PH, boardGap, diagramScreenScale(IW, IH));
   let shapes = `<g transform="translate(0,${up})">` + i4BoardRects(0, IW, strips);
   for(let fl=0; fl<F && hasBraces !== false; fl++){  // hasBraces=false - щит без раскосин
     const top = fl*(innerH + hp), bot = top + innerH;

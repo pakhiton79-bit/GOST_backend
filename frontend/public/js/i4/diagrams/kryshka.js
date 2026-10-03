@@ -10,10 +10,9 @@
 // Положение планок/брусьев вдоль длины - в реальных пропорциях; сама длина
 // крышки на чертеже - в пределах 1.4..4 её ширины (иначе очень длинная
 // крышка превратилась бы в тонкую полосу).
-// I-4: boardGap - промежуток обшивки ({ gap, ... }) или null - доски
-// вплотную: доски крышки идут вдоль длины, на чертеже - 3 полосы (см.
-// boards.js), сквозь промежутки видны пояса-планки снизу.
-const I4_LID_BOARD_GAP = 0.08; // промежуток на чертеже - доля ширины крышки
+// I-4: boardGap - промежуток обшивки ({ qty, gap, share }) или null - доски
+// вплотную: доски крышки идут вдоль длины, на чертеже - полосы по числу
+// досок (см. boards.js), сквозь промежутки видны пояса-планки снизу.
 function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm, boardGap){
   const lidLen = lengthMm + t30*2 + t32*2, lidW = widthMm + t41*2;
   const P = Math.max(1, Math.round(plankCount)), B = Math.max(0, Math.round(crossBeamQty));
@@ -52,9 +51,14 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     polys.push(quad(u0, u0+pw, -0.13*Wv, 1.13*Wv, low));
     polys.push([pt(u0,-0.13*Wv,low), pt(u0+pw,-0.13*Wv,low), pt(u0+pw,-0.13*Wv,lowEnd), pt(u0,-0.13*Wv,lowEnd)]);
   }
-  // крышка - 3 доски вдоль длины (от дальней к ближней): передняя и левая
+  // крышка - доски вдоль длины (от дальней к ближней): передняя и левая
   // грани толщины + верх; доски - светло-серые (как на щитах).
-  const lidStrips = i4BoardStrips(0, Wv, !!boardGap, I4_LID_BOARD_GAP);
+  // Ширина доски на экране - как на щитах: масштаб - по уже построенным
+  // планкам и плоскости крышки (доски и брусья внутри них).
+  const lidBox = polys.flat().concat([pt(0,0), pt(Lu,0), pt(Lu,Wv,up), pt(0,Wv,up), pt(0,0,thick)]);
+  const lidK = diagramScreenScale(Math.max(...lidBox.map(q=>q[0])) - Math.min(...lidBox.map(q=>q[0])),
+    Math.max(...lidBox.map(q=>q[1])) - Math.min(...lidBox.map(q=>q[1])));
+  const lidStrips = i4BoardStrips(0, Wv, boardGap, lidK);
   const boardPolyFrom = polys.length;
   lidStrips.slice().reverse().forEach(([v0, v1])=>{
     polys.push([pt(0,v0), pt(Lu,v0), pt(Lu,v0,thick), pt(0,v0,thick)]);

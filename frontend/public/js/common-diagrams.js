@@ -137,6 +137,39 @@ function diagramTooDense(){
   return diagramStub(DIAGRAM_TOO_DENSE_TEXT);
 }
 
+// Доски обшивки на чертежах типов с промежутками (I-4, II-2) - одной
+// ширины на экране на всех чертежах крышки и щитов (по указанию
+// пользователя): DRAWN_BOARD_PX экранных пикселей при обычном размере
+// чертежа, число досок на чертеже - сколько поместится (может отличаться от
+// расчётного). Промежуток - в реальной доле к доске (не уже
+// DRAWN_BOARD_MIN_GAP_PX), крайние доски - по краям отрезка.
+const DRAWN_BOARD_PX = 7, DRAWN_BOARD_MIN_GAP_PX = 1.6;
+// Единиц картинки IW×IH на 1px экрана: на странице чертёж увеличивается до
+// ~290×240px (см. common-diagram-fit.js).
+function diagramScreenScale(IW, IH){
+  return Math.max(IW / 290, IH / 240);
+}
+// [начало, конец] досок на отрезке a..b картинки (k - единиц картинки на 1px
+// экрана, diagramScreenScale). gapMm - промежуток между досками по расчёту
+// (null - щит сплошной, доски вплотную); edgeMm - промежуток от края отрезка
+// до крайней доски по расчёту (0 - крайние по краям). Размеры в мм - к доске
+// 100 мм.
+function drawnBoardStrips(a, b, k, gapMm, edgeMm){
+  const bw = DRAWN_BOARD_PX * k;
+  const e = edgeMm > 0 ? bw * edgeMm / 100 : 0;
+  const a1 = a + e, span = b - e - a1;
+  if(span <= 0) return [];
+  if(gapMm == null){
+    const n = Math.max(1, Math.round(span / bw)), w = span / n;
+    return Array.from({length: n}, (_, i) => [a1 + i * w, a1 + (i + 1) * w]);
+  }
+  const g0 = Math.max(bw * gapMm / 100, DRAWN_BOARD_MIN_GAP_PX * k);
+  const n = Math.floor((span + g0) / (bw + g0) + 1e-9);
+  if(n < 2) return [[a1, a1 + Math.min(bw, span)]];
+  const g = (span - n * bw) / (n - 1);
+  return Array.from({length: n}, (_, i) => [a1 + i * (bw + g), a1 + i * (bw + g) + bw]);
+}
+
 // Дно (типы I-3 и II-1): картинка по числу полозьев. На 2 - фото (у каждого
 // типа своё, photo2), на 3-8 - картинки из того же фото с дорисованными
 // средними полозьями (tools/make_dno_images.py, список images - DNO_SKIDS_IMAGES

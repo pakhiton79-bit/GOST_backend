@@ -20,6 +20,43 @@ function gapBoards(span, maxGap) {
   return { qty, gap: (span - qty * BOARD_W) / (qty - 1), share: (span - qty * BOARD_W) / span };
 }
 
+// Доски крышки поперёк ящика и боковых щитов - одной раскладкой (по
+// указанию пользователя: доски бока продолжают линии досок крышки, все доски
+// одной ширины 100 мм, пусть и меняется их число). Крышка (длина len) - как
+// обычный щит с промежутками: крайние доски по краям, остальные равномерно;
+// боковой щит (от edge до len - edge, edge - толщина торцевого щита) - те же
+// доски крышки, что целиком над ним; от края бокового щита до его первой
+// доски - промежуток sideEdge. Число досок крышки - наименьшее, при котором
+// и промежутки между досками, и sideEdge не больше заданного; если sideEdge
+// так не уменьшить (заданный промежуток меньше ~100 мм минус толщина
+// торцевого щита) - наименьшее по одним промежуткам, sideEdge больше
+// заданного (об этом - предупреждение у бокового щита). { lid: { qty, gap,
+// share }, side: { qty, gap, share, edge } } или null - на боковой щит не
+// приходится и 2 досок (тогда крышка и бок раскладываются каждый сам по
+// себе).
+function lidSideBoards(len, edge, maxGap) {
+  len = Math.round(len);
+  const side = len - 2 * edge;
+  let fallback = null;
+  for (let qty = 2; qty * BOARD_W < len; qty++) {
+    const gap = (len - qty * BOARD_W) / (qty - 1);
+    if (gap > maxGap + 1e-9) continue;
+    const pitch = BOARD_W + gap;
+    const first = Math.ceil((edge - 1e-9) / pitch);          // первая доска целиком над боком
+    const last = Math.floor((len - edge - BOARD_W + 1e-9) / pitch);
+    const sideQty = last - first + 1;
+    if (sideQty < 2) continue;
+    const sideEdge = first * pitch - edge;
+    const res = {
+      lid: { qty, gap, share: (len - qty * BOARD_W) / len },
+      side: { qty: sideQty, gap, share: (side - sideQty * BOARD_W) / side, edge: sideEdge },
+    };
+    if (sideEdge <= maxGap + 1e-9) return res;
+    if (!fallback) fallback = res;
+  }
+  return fallback;
+}
+
 // Замена fillBoards (тот же вид результата: mainQty, extra, warn,
 // singleNarrow) - с промежутками; gap - промежутки ({ qty, gap, share }) или
 // null - щит сплошной. panelName и warnings - для предупреждения о щите без
@@ -31,4 +68,4 @@ function fillGapBoards(span, roundBoardWidths, maxGap, panelName, warnings) {
   return { ...fillBoards(span, roundBoardWidths), gap: null };
 }
 
-module.exports = { fillGapBoards, gapBoards, BOARD_W, GAP_MIN, GAP_MAX };
+module.exports = { fillGapBoards, gapBoards, lidSideBoards, BOARD_W, GAP_MIN, GAP_MAX };
