@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="/css/style.css">
 <script src="/js/common-settings.js"></script>
 <style>
-  .gost-list{display:flex;flex-direction:column;gap:10px;}
+  .gost-list{display:flex;flex-direction:column;gap:16px;}
   .gost-link{
     display:flex;
     align-items:center;
@@ -30,6 +30,25 @@
     background:var(--accent-wash);
   }
   .gost-link .gost-name{font-size:16px;font-weight:600;}
+  /* ГОСТ в работе (по указанию пользователя): карточка не нажимается, без
+     стрелки и без подсветки, красная плашка - как у типов (.type-badge). */
+  .gost-link{position:relative;}
+  .gost-link-off{cursor:default;}
+  .gost-link-off:hover{border-color:var(--border-input);background:var(--panel);}
+  .gost-badge{
+    position:absolute;
+    top:-10px;
+    right:16px;
+    padding:4px 12px;
+    border-radius:999px;
+    background:var(--error);
+    color:#ffffff;
+    font-size:12px;
+    font-weight:600;
+    line-height:1.4;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+    pointer-events:none;
+  }
   .gost-link .arrow{color:var(--accent);font-size:18px;line-height:1;flex:none;}
   .empty-note{color:var(--ink-soft);font-size:14px;}
 </style>
@@ -50,6 +69,11 @@ const GOSTS = [
     gost: 'ГОСТ 10198-91',
     title: 'Ящики дощатые неразборные для грузов массой до 3000 кг',
     file: 'gost-10198-91.html'
+  },
+  {
+    gost: 'ГОСТ 2991-85',
+    title: 'Ящики дощатые неразборные для грузов массой до 500 кг',
+    badge: 'В работе'
   }
 ];
 
@@ -61,8 +85,14 @@ const GOSTS = [
   }
   let html = '<div class="gost-list">';
   GOSTS.forEach(g => {
+    const badge = g.badge ? `<span class="gost-badge">${g.badge}</span>` : '';
+    // Без file - ГОСТ в работе: карточка не ссылка.
+    if(!g.file){
+      html += `<div class="gost-link gost-link-off" aria-disabled="true">${badge}<div class="gost-name">${g.gost}</div></div>`;
+      return;
+    }
     html += `<a class="gost-link" href="${g.file}">
-      <div class="gost-name">${g.gost}</div>
+      ${badge}<div class="gost-name">${g.gost}</div>
       <span class="arrow">→</span>
     </a>`;
   });
