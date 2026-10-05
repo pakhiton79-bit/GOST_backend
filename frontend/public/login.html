@@ -13,37 +13,72 @@
 <script src="/js/common-settings.js"></script>
 <script src="/js/common-account.js"></script>
 </head>
-<body>
-<div class="wrap">
-  <div class="top-nav">
-    <a href="index.html">← Назад</a>
-    <a href="index.html">Главная</a>
-  </div>
-  <div class="card auth-card">
-    <h2 id="authTitle">Вход</h2>
-    <div class="auth-msg" id="authMsg" hidden></div>
-    <form id="authForm" novalidate>
-      <p class="auth-text" id="authText" hidden></p>
-      <div class="auth-field" data-field="email">
-        <label for="authEmail">Электронная почта</label>
-        <input type="email" id="authEmail" autocomplete="email" maxlength="254">
-      </div>
-      <div class="auth-field" data-field="code">
-        <label for="authCode">Код из письма</label>
-        <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
-      </div>
-      <div class="auth-field" data-field="password">
-        <label for="authPassword" id="authPasswordLabel">Пароль</label>
-        <input type="password" id="authPassword" autocomplete="current-password" maxlength="200">
-      </div>
-      <div class="auth-field" data-field="password2">
-        <label for="authPassword2">Пароль ещё раз</label>
-        <input type="password" id="authPassword2" autocomplete="new-password" maxlength="200">
-      </div>
-      <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
-    </form>
-    <div class="auth-links" id="authLinks"></div>
-  </div>
+<body class="auth-page">
+<div class="auth-split">
+  <!-- Слева - коллаж из чертежей сайта (декоративный). -->
+  <aside class="auth-art" aria-hidden="true">
+    <svg class="auth-art-lines" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+      <path d="M1000 90 H880 a40 40 0 0 0 -40 40 V390 a40 40 0 0 1 -40 40 H660"/>
+      <path d="M340 560 H210 a40 40 0 0 0 -40 40 V880 a40 40 0 0 1 -40 40 H0"/>
+    </svg>
+    <svg class="auth-art-star" style="left:84%;top:21%" viewBox="0 0 40 40"><path d="M20 2 C21 15 25 19 38 20 C25 21 21 25 20 38 C19 25 15 21 2 20 C15 19 19 15 20 2Z"/></svg>
+    <svg class="auth-art-star" style="left:17%;top:68%" viewBox="0 0 40 40"><path d="M20 2 C21 15 25 19 38 20 C25 21 21 25 20 38 C19 25 15 21 2 20 C15 19 19 15 20 2Z"/></svg>
+    <img class="auth-art-img" src="/images/box_ii1.png" alt="" loading="lazy" style="left:4%;top:5%;width:34%;--r:-6deg">
+    <img class="auth-art-img" src="/images/dno.png" alt="" loading="lazy" style="left:40%;top:3%;width:36%;--r:4deg">
+    <img class="auth-art-img" src="/images/torec_ii1_1floor_3posts_x.jpg" alt="" loading="lazy" style="left:-6%;top:36%;width:34%;--r:8deg">
+    <img class="auth-art-img" src="/images/box_iii1.png" alt="" loading="lazy" style="left:66%;top:38%;width:30%;--r:-5deg">
+    <img class="auth-art-img" src="/images/kryshka_2beams.jpg" alt="" loading="lazy" style="left:2%;top:74%;width:30%;--r:-3deg">
+    <img class="auth-art-img" src="/images/box_i2.png" alt="" loading="lazy" style="left:36%;top:76%;width:24%;--r:6deg">
+    <img class="auth-art-img" src="/images/bokovoy_3p_2r.jpg" alt="" loading="lazy" style="left:62%;top:72%;width:36%;--r:-7deg">
+    <img class="auth-art-img" src="/images/box_i4.png" alt="" loading="lazy" style="left:72%;top:14%;width:26%;--r:9deg">
+    <div class="auth-art-card">
+      <div class="auth-art-card-title">Расчёт ящиков<br><b>по ГОСТ 10198-91</b></div>
+      <div class="auth-art-pill">Таблица деталей</div>
+      <div class="auth-art-pill">Чертежи узлов</div>
+      <div class="auth-art-pill">Объём и нормы времени</div>
+    </div>
+  </aside>
+
+  <main class="auth-main">
+    <div class="auth-box">
+      <a class="auth-logo" href="index.html"><img src="/images/favicon.png" alt=""><span>Тара+</span></a>
+      <h1 class="auth-title" id="authTitle">Вход</h1>
+      <p class="auth-sub" id="authSub"></p>
+      <div class="auth-msg" id="authMsg" hidden></div>
+      <form id="authForm" novalidate>
+        <p class="auth-text" id="authText" hidden></p>
+        <div class="auth-field" data-field="email">
+          <label for="authEmail">Электронная почта <span class="auth-req">*</span></label>
+          <input type="email" id="authEmail" autocomplete="email" maxlength="254">
+        </div>
+        <div class="auth-field" data-field="code">
+          <label for="authCode">Код из письма <span class="auth-req">*</span></label>
+          <input type="text" id="authCode" class="auth-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+        </div>
+        <div class="auth-field" data-field="password">
+          <div class="auth-label-row">
+            <label for="authPassword"><span id="authPasswordLabel">Пароль</span> <span class="auth-req">*</span></label>
+            <a class="auth-forgot" data-mode="forgot" id="authForgot">Забыли пароль?</a>
+          </div>
+          <div class="auth-pw">
+            <input type="password" id="authPassword" autocomplete="current-password" maxlength="200">
+            <button type="button" class="auth-eye" data-eye="authPassword" aria-label="Показать пароль"></button>
+          </div>
+        </div>
+        <div class="auth-field" data-field="password2">
+          <label for="authPassword2">Пароль ещё раз <span class="auth-req">*</span></label>
+          <div class="auth-pw">
+            <input type="password" id="authPassword2" autocomplete="new-password" maxlength="200">
+            <button type="button" class="auth-eye" data-eye="authPassword2" aria-label="Показать пароль"></button>
+          </div>
+        </div>
+        <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
+      </form>
+      <div class="auth-links" id="authLinks"></div>
+      <div class="auth-switch" id="authSwitch"></div>
+      <a class="auth-home" href="index.html">← На главную</a>
+    </div>
+  </main>
 </div>
 <script src="/js/account/login.js"></script>
 </body>

@@ -1,14 +1,38 @@
 // Страница входа (login.html): вход, регистрация, подтверждение почты кодом,
-// восстановление пароля - одна форма, поля и кнопки меняются по режиму.
+// восстановление пароля - одна форма, поля и надписи меняются по режиму.
 // После входа - переход на ?next= (только страницы этого же сайта) или на
 // главную.
 const AUTH_MODES = {
-  login:    { title: 'Вход', submit: 'Войти', fields: ['email', 'password'], pwLabel: 'Пароль', pwAuto: 'current-password' },
-  register: { title: 'Регистрация', submit: 'Зарегистрироваться', fields: ['email', 'password', 'password2'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password' },
-  verify:   { title: 'Подтверждение почты', submit: 'Подтвердить', fields: ['code'] },
-  forgot:   { title: 'Восстановление пароля', submit: 'Получить код', fields: ['email'] },
-  reset:    { title: 'Новый пароль', submit: 'Сохранить пароль', fields: ['code', 'password', 'password2'], pwLabel: 'Новый пароль (не короче 8 символов)', pwAuto: 'new-password' },
+  login: {
+    title: 'Вход в аккаунт', sub: 'Войдите, чтобы продолжить.', submit: 'Войти',
+    fields: ['email', 'password'], pwLabel: 'Пароль', pwAuto: 'current-password', forgot: true,
+    switchHtml: 'Нет аккаунта? <a data-mode="register">Зарегистрироваться</a>',
+  },
+  register: {
+    title: 'Создайте аккаунт', sub: 'Бесплатно, карта не нужна.', submit: 'Создать аккаунт',
+    fields: ['email', 'password', 'password2'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
+    switchHtml: 'Уже есть аккаунт? <a data-mode="login">Войти</a>',
+  },
+  verify: {
+    title: 'Подтвердите почту', sub: '', submit: 'Подтвердить', fields: ['code'],
+    linksHtml: '<a data-resend="register">Отправить код ещё раз</a>',
+    switchHtml: '<a data-mode="login">Назад ко входу</a>',
+  },
+  forgot: {
+    title: 'Восстановление пароля', sub: 'Пришлём на почту код, чтобы задать новый пароль.', submit: 'Получить код',
+    fields: ['email'],
+    switchHtml: 'Вспомнили пароль? <a data-mode="login">Войти</a>',
+  },
+  reset: {
+    title: 'Новый пароль', sub: '', submit: 'Сохранить пароль',
+    fields: ['code', 'password', 'password2'], pwLabel: 'Новый пароль (не короче 8 символов)', pwAuto: 'new-password',
+    linksHtml: '<a data-resend="reset">Отправить код ещё раз</a>',
+    switchHtml: '<a data-mode="login">Назад ко входу</a>',
+  },
 };
+
+const EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
 
 const $ = id => document.getElementById(id);
 let authMode = 'login';
@@ -26,32 +50,34 @@ function showMsg(text, ok){
   m.className = 'auth-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error');
 }
 
-function link(text, mode){ return `<a data-mode="${mode}">${text}</a>`; }
+// Пароль скрыт / показан - значок «глаз» в поле.
+function setEye(btn, shown){
+  $(btn.dataset.eye).type = shown ? 'text' : 'password';
+  btn.innerHTML = shown ? EYE_CLOSED : EYE_OPEN;
+  btn.setAttribute('aria-label', shown ? 'Скрыть пароль' : 'Показать пароль');
+}
 
 function setMode(mode, msg, ok){
   authMode = mode;
   const m = AUTH_MODES[mode];
   $('authTitle').textContent = m.title;
+  $('authSub').textContent = m.sub;
   document.title = m.title + ' - Тара+';
   $('authSubmit').textContent = m.submit;
   document.querySelectorAll('.auth-field').forEach(f => { f.hidden = !m.fields.includes(f.dataset.field); });
   if(m.pwLabel){ $('authPasswordLabel').textContent = m.pwLabel; $('authPassword').autocomplete = m.pwAuto; }
+  $('authForgot').hidden = !m.forgot;
   $('authCode').value = ''; $('authPassword').value = ''; $('authPassword2').value = '';
+  document.querySelectorAll('.auth-eye').forEach(b => setEye(b, false));
   const text = $('authText');
   text.hidden = !(mode === 'verify' || mode === 'reset');
-  if(mode === 'verify') text.innerHTML = `Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут.`;
-  if(mode === 'reset') text.innerHTML = `Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль.`;
+  if(mode === 'verify') text.innerHTML = 'Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут.';
+  if(mode === 'reset') text.innerHTML = 'Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль.';
   if(!text.hidden) text.querySelector('b').textContent = authEmail;
-  const links = {
-    login: link('Регистрация', 'register') + link('Забыли пароль?', 'forgot'),
-    register: link('Уже есть аккаунт? Войти', 'login'),
-    verify: `<a data-resend="register">Отправить код ещё раз</a>` + link('Назад ко входу', 'login'),
-    forgot: link('Назад ко входу', 'login'),
-    reset: `<a data-resend="reset">Отправить код ещё раз</a>` + link('Назад ко входу', 'login'),
-  };
-  $('authLinks').innerHTML = links[mode];
+  $('authLinks').innerHTML = m.linksHtml || '';
+  $('authSwitch').innerHTML = m.switchHtml || '';
   showMsg(msg, ok);
-  const first = m.fields.find(f => f !== 'email' || !authEmail) || m.fields[0];
+  const first = m.fields.find(f => f !== 'email' || !$('authEmail').value) || m.fields[0];
   const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2' }[first];
   $(input).focus();
 }
@@ -107,16 +133,17 @@ async function onSubmit(e){
 }
 
 $('authForm').addEventListener('submit', onSubmit);
-$('authLinks').addEventListener('click', async e => {
-  const a = e.target.closest('a');
+// Ссылки режимов и «Отправить код ещё раз» - в нескольких местах формы.
+document.querySelector('.auth-box').addEventListener('click', async e => {
+  const eye = e.target.closest('.auth-eye');
+  if(eye) return setEye(eye, $(eye.dataset.eye).type === 'password');
+  const a = e.target.closest('a[data-mode], a[data-resend]');
   if(!a) return;
   if(a.dataset.mode) return setMode(a.dataset.mode);
-  if(a.dataset.resend){
-    try{
-      await api('resend', { email: authEmail, purpose: a.dataset.resend });
-      showMsg('Новый код отправлен.', true);
-    }catch(err){ showMsg(err.message); }
-  }
+  try{
+    await api('resend', { email: authEmail, purpose: a.dataset.resend });
+    showMsg('Новый код отправлен.', true);
+  }catch(err){ showMsg(err.message); }
 });
 
 // Уже вошли - сразу дальше.
