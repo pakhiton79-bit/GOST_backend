@@ -22,14 +22,26 @@ function authHref(mode){
   return 'login.html' + (q.length ? '?' + q.join('&') : '');
 }
 
-// Кнопки «Войти» и «Регистрация» слева от «Настройки» - только для гостей.
+// Слева от «Настройки»: для гостей - «Войти» и «Регистрация», для
+// вошедших - кнопка с почтой, открывает «Настройки» на разделе «Аккаунт».
 function initAccountButton(){
   const settingsBtn = document.getElementById('siteSettingsBtn');
   if(!settingsBtn || document.getElementById('siteAccountBtn')) return;
   initSettingsAccount();
   fetchAccountUser().then(user => {
     accountUserCache = user;
-    if(user) return;
+    if(user){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = 'siteAccountBtn';
+      btn.className = 'site-settings-btn site-account-btn';
+      btn.title = 'Аккаунт: ' + user.email;
+      btn.innerHTML = ACCOUNT_ICON + '<span></span>';
+      btn.querySelector('span').textContent = user.email;
+      btn.addEventListener('click', () => openSettingsSection('account'));
+      settingsBtn.parentNode.insertBefore(btn, settingsBtn);
+      return;
+    }
     const login = document.createElement('a');
     login.id = 'siteAccountBtn';
     login.className = 'site-settings-btn site-account-btn';
@@ -190,11 +202,17 @@ function initSettingsAccount(){
   });
   const section = location.hash.replace('#', '');
   if(section === 'account' || section === 'subscription'){
-    btn.click();
-    const nav = document.querySelector(`.site-settings-nav-item[data-section="${section}"]`);
-    if(nav) nav.click();
+    openSettingsSection(section);
     history.replaceState(null, '', location.pathname + location.search);
   }
+}
+// Открыть окно «Настройки» сразу на разделе.
+function openSettingsSection(section){
+  const btn = document.getElementById('siteSettingsBtn');
+  if(!btn) return;
+  btn.click();
+  const nav = document.querySelector(`.site-settings-nav-item[data-section="${section}"]`);
+  if(nav) nav.click();
 }
 
 // ---------- Предложения подписки (по указанию пользователя - к месту, не
