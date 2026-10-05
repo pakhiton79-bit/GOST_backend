@@ -31,5 +31,19 @@ function initAccountButton(){
   });
 }
 
+// Ошибка расчёта от сервера со ссылкой (не вошли - «Войти» с возвратом на
+// эту страницу, закончились расчёты - «Подписки»): ссылка после текста
+// ошибки (#err на страницах расчёта).
+function appendCalcErrorLink(link){
+  const err = document.getElementById('err');
+  if(!err || !link || !/^[a-z0-9-]+\.html$/.test(link.href)) return;
+  const a = document.createElement('a');
+  a.className = 'calc-error-link';
+  a.textContent = link.text;
+  a.href = link.href === 'login.html' ? 'login.html?next=' + encodeURIComponent(location.pathname.replace(/^\//, '')) : link.href;
+  err.appendChild(document.createTextNode(' '));
+  err.appendChild(a);
+}
+
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccountButton);
 else initAccountButton();

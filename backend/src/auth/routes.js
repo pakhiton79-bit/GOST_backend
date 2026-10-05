@@ -10,11 +10,26 @@
 //   GET  /api/auth/me                                  - кто вошёл
 //   POST /api/auth/forgot   { email }                  - код для нового пароля
 //   POST /api/auth/reset    { email, code, password }  - новый пароль, вход
+//   POST /api/auth/device-replace { ticket, id }       - вход сверх лимита устройств:
+//                                                        выйти на устройстве id и войти
+//   GET  /api/auth/devices                             - устройства, где выполнен вход
+//   POST /api/auth/devices/logout { id }               - выйти на устройстве
+//
+// Вход, когда устройств уже столько, сколько разрешает подписка (по
+// указанию пользователя): вместо входа - список устройств, пользователь
+// выбирает, где выйти (ответ { needDevice, ticket, devices }).
 const express = require('express');
 const store = require('./store');
-const { hashPassword, verifyPassword, newCode, hashCode, sameHash } = require('./crypto');
+const { hashPassword, verifyPassword, newCode, newToken, sha256, hashCode, sameHash } = require('./crypto');
 const { sendCode } = require('./mailer');
 const { startSession, endSession } = require('./session');
+const { planOf, quotaInfo, syncUser } = require('./plans');
+
+const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
+const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+function isAdmin(user) {
+  return !!user && ADMIN_EMAILS.includes(user.email);
+}
 
 const CODE_TTL_MS = 15 * 60 * 1000;   // код действует 15 минут
 const CODE_MAX_ATTEMPTS = 5;          // столько попыток ввести код
@@ -78,7 +93,29 @@ function checkCode(email, purpose, code) {
 }
 
 function publicUser(u) {
-  return { email: u.email, plan: u.plan, createdAt: u.createdAt };
+  const now = Date.now();
+  if (syncUser(u, now)) store.updateUser(u);
+  return { email: u.email, createdAt: u.createdAt, quota: quotaInfo(u, now), isAdmin: isAdmin(u) };
+}
+
+function publicDevices(user, currentId) {
+  return store.listUserSessions(user.id).map(s => ({
+    id: s.id, label: s.label || 'Браузер', lastSeen: new Date(s.lastSeen || s.createdAt || Date.now()).toISOString(),
+    current: s.id === currentId,
+  }));
+}
+
+// Вход (пароль или код уже проверены): если устройств уже столько, сколько
+// разрешает подписка, - пропуск и список устройств, иначе сессия.
+function finishLogin(req, res, user) {
+  const limit = planOf(user).devices;
+  if (store.listUserSessions(user.id).length >= limit) {
+    const ticket = newToken();
+    store.setTicket(sha256(ticket), { userId: user.id, expires: Date.now() + TICKET_TTL_MS });
+    return res.json({ ok: true, needDevice: true, ticket, limit, planName: planOf(user).name, devices: publicDevices(user, null) });
+  }
+  startSession(req, res, user.id);
+  res.json({ ok: true, user: publicUser(user) });
 }
 
 const router = express.Router();
@@ -110,8 +147,7 @@ router.post('/verify', rateLimit, (req, res) => {
   const err = checkCode(email, 'register', req.body.code);
   if (err) return res.status(400).json({ error: err });
   store.updateUser(user, { verified: true });
-  startSession(req, res, user.id);
-  res.json({ ok: true, user: publicUser(user) });
+  finishLogin(req, res, user);
 });
 
 router.post('/resend', rateLimit, async (req, res, next) => {
@@ -141,9 +177,33 @@ router.post('/login', rateLimit, async (req, res, next) => {
       const err = await issueCode(email, 'register');
       return res.json({ ok: true, needVerify: true, notice: err || undefined });
     }
-    startSession(req, res, user.id);
-    res.json({ ok: true, user: publicUser(user) });
+    finishLogin(req, res, user);
   } catch (e) { next(e); }
+});
+
+router.post('/device-replace', rateLimit, (req, res) => {
+  const ticketHash = sha256(String(req.body.ticket || ''));
+  const t = store.getTicket(ticketHash);
+  const user = t && store.findUserById(t.userId);
+  if (!user) return res.status(400).json({ error: 'Время на выбор устройства вышло. Войдите ещё раз.' });
+  if (!store.deleteSessionById(user.id, String(req.body.id || ''))) {
+    return res.status(400).json({ error: 'Это устройство уже не в аккаунте. Обновите список.', devices: publicDevices(user, null) });
+  }
+  store.deleteTicket(ticketHash);
+  finishLogin(req, res, user);
+});
+
+router.get('/devices', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+  res.json({ devices: publicDevices(req.user, req.sessionId) });
+});
+
+router.post('/devices/logout', (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+  const id = String(req.body.id || '');
+  if (id === req.sessionId) return res.status(400).json({ error: 'Чтобы выйти на этом устройстве, нажмите «Выйти».' });
+  store.deleteSessionById(req.user.id, id);
+  res.json({ ok: true, devices: publicDevices(req.user, req.sessionId) });
 });
 
 router.post('/logout', (req, res) => {
@@ -182,4 +242,4 @@ router.post('/reset', rateLimit, (req, res) => {
   res.json({ ok: true, user: publicUser(user) });
 });
 
-module.exports = router;
+module.exports = { router, isAdmin };

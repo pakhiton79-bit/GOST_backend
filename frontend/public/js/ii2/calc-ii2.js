@@ -76,6 +76,7 @@ async function calculateNow(){
   }
   if(calc.error){
     showCalcError(calc.error);
+    appendCalcErrorLink(calc.errorLink); // не вошли / закончились расчёты - common-account.js
     return;
   }
 

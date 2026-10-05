@@ -24,6 +24,7 @@ function load() {
   db.users = Array.isArray(db.users) ? db.users : [];
   db.sessions = db.sessions && typeof db.sessions === 'object' ? db.sessions : {};
   db.codes = db.codes && typeof db.codes === 'object' ? db.codes : {};
+  db.tickets = db.tickets && typeof db.tickets === 'object' ? db.tickets : {};
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
   return db;
 }
@@ -44,21 +45,47 @@ function findUserById(id) {
 }
 function createUser(email, passHash) {
   const d = load();
-  const user = { id: d.nextUserId++, email, passHash, verified: false, plan: 'free', createdAt: new Date().toISOString() };
+  const now = Date.now();
+  const user = { id: d.nextUserId++, email, passHash, verified: false, createdAt: new Date(now).toISOString(), plan: 'free', planSince: now };
   d.users.push(user);
   save();
   return user;
 }
 function updateUser(user, fields) {
-  Object.assign(user, fields);
+  Object.assign(user, fields || {});
   save();
   return user;
 }
+function listUsers() {
+  return load().users.slice();
+}
 
 // ---- Сессии (ключ - хэш токена из cookie) ----
-function createSession(tokenHash, userId, expires) {
-  load().sessions[tokenHash] = { userId, expires };
+// Сессия = устройство (браузер, где выполнен вход): id - для списка
+// устройств, label - браузер и система, lastSeen - последнее обращение.
+function createSession(tokenHash, userId, expires, meta) {
+  load().sessions[tokenHash] = { userId, expires, ...(meta || {}) };
   save();
+}
+function touchSession(tokenHash, now) {
+  const s = load().sessions[tokenHash];
+  if (s) { s.lastSeen = now; save(); }
+}
+// Действующие сессии пользователя, свежие - первыми.
+function listUserSessions(userId) {
+  const d = load(), now = Date.now();
+  return Object.keys(d.sessions)
+    .filter(k => d.sessions[k].userId === userId && d.sessions[k].expires > now)
+    .map(k => ({ tokenHash: k, ...d.sessions[k] }))
+    .sort((a, b) => (b.lastSeen || 0) - (a.lastSeen || 0));
+}
+function deleteSessionById(userId, id) {
+  const d = load();
+  const k = Object.keys(d.sessions).find(k => d.sessions[k].userId === userId && d.sessions[k].id === id);
+  if (!k) return false;
+  delete d.sessions[k];
+  save();
+  return true;
 }
 function getSession(tokenHash) {
   const s = load().sessions[tokenHash];
@@ -95,8 +122,26 @@ function deleteCode(email, purpose) {
   save();
 }
 
+// ---- Пропуск на вход сверх лимита устройств (ключ - хэш): пароль уже
+// проверен, осталось выбрать, на каком устройстве выйти. ----
+function setTicket(ticketHash, rec) {
+  const d = load(), now = Date.now();
+  Object.keys(d.tickets).forEach(k => { if (d.tickets[k].expires < now) delete d.tickets[k]; });
+  d.tickets[ticketHash] = rec;
+  save();
+}
+function getTicket(ticketHash) {
+  const t = load().tickets[ticketHash];
+  return t && t.expires > Date.now() ? t : null;
+}
+function deleteTicket(ticketHash) {
+  delete load().tickets[ticketHash];
+  save();
+}
+
 module.exports = {
-  findUserByEmail, findUserById, createUser, updateUser,
-  createSession, getSession, deleteSession, deleteUserSessions,
+  findUserByEmail, findUserById, createUser, updateUser, listUsers,
+  createSession, touchSession, getSession, deleteSession, deleteUserSessions, listUserSessions, deleteSessionById,
   getCode, setCode, deleteCode,
+  setTicket, getTicket, deleteTicket,
 };

@@ -19,12 +19,33 @@
     <a href="index.html">← Назад</a>
     <a href="index.html">Главная</a>
   </div>
-  <div class="card auth-card" id="accountCard" hidden>
-    <h2>Аккаунт</h2>
-    <div class="account-row"><span>Почта</span><span id="accountEmail"></span></div>
-    <div class="account-row"><span>Подписка</span><span id="accountPlan"></span></div>
-    <div class="account-row"><span>Зарегистрирован</span><span id="accountCreated"></span></div>
-    <button type="button" class="btn-secondary auth-submit" id="accountLogout">Выйти</button>
+  <div id="accountBox" hidden>
+    <div class="card auth-card">
+      <h2>Аккаунт</h2>
+      <div class="account-row"><span>Почта</span><span id="accountEmail"></span></div>
+      <div class="account-row"><span>Подписка</span><span id="accountPlan"></span></div>
+      <div class="account-row"><span>Зарегистрирован</span><span id="accountCreated"></span></div>
+      <div class="account-actions">
+        <a class="btn-secondary account-btn" href="plans.html">Подписки</a>
+        <a class="btn-secondary account-btn" href="admin.html" id="accountAdmin" hidden>Администрирование</a>
+      </div>
+    </div>
+    <div class="card auth-card">
+      <h2>Расчёты</h2>
+      <div class="account-quota">
+        <div class="account-quota-num"><span id="quotaLeft"></span><small id="quotaOf"></small></div>
+        <div class="account-quota-bar"><div id="quotaBar"></div></div>
+      </div>
+      <div class="account-row"><span>Осталось в этом месяце</span><span id="quotaMonthly"></span></div>
+      <div class="account-row" id="quotaWelcomeRow"><span>Бонус за регистрацию</span><span id="quotaWelcome"></span></div>
+      <div class="account-row"><span>Новые расчёты</span><span id="quotaReset"></span></div>
+    </div>
+    <div class="card auth-card">
+      <h2>Устройства</h2>
+      <p class="auth-text" id="devicesNote"></p>
+      <div class="auth-devices" id="devicesList"></div>
+      <button type="button" class="btn-secondary auth-submit" id="accountLogout">Выйти на этом устройстве</button>
+    </div>
   </div>
 </div>
 <script src="/js/account/account.js"></script>

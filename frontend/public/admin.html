@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Администрирование - Тара+</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-settings.js"></script>
+<script src="/js/common-account.js"></script>
+</head>
+<body>
+<div class="wrap admin-wrap">
+  <div class="top-nav">
+    <a href="account.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <header>
+    <h1>Администрирование</h1>
+    <div class="subtitle">Аккаунты и подписки. Новая подписка действует с момента сохранения, месяц и счётчик расчётов начинаются заново.</div>
+  </header>
+  <div class="auth-msg" id="adminMsg" hidden></div>
+  <div class="card" id="adminCard" hidden>
+    <div class="auth-field"><input type="search" id="adminSearch" placeholder="Поиск по почте" aria-label="Поиск по почте"></div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Почта</th><th>Регистрация</th><th>Подписка</th><th>Расчёты</th><th>Устройства</th><th></th></tr></thead>
+        <tbody id="adminRows"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="/js/account/admin.js"></script>
+</body>
+</html>

@@ -23,6 +23,11 @@ const AUTH_MODES = {
     fields: ['email'],
     switchHtml: 'Вспомнили пароль? <a data-mode="login">Войти</a>',
   },
+  // Вход сверх лимита устройств подписки: список устройств, где выйти.
+  devices: {
+    title: 'Выберите, где выйти', sub: '', submit: '', fields: [],
+    switchHtml: '<a data-mode="login">Назад ко входу</a>',
+  },
   reset: {
     title: 'Новый пароль', sub: '', submit: 'Сохранить пароль',
     fields: ['code', 'password', 'password2'], pwLabel: 'Новый пароль (не короче 8 символов)', pwAuto: 'new-password',
@@ -37,6 +42,7 @@ const EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" s
 const $ = id => document.getElementById(id);
 let authMode = 'login';
 let authEmail = '';
+let deviceTicket = '';
 
 function nextUrl(){
   const n = new URLSearchParams(location.search).get('next') || '';
@@ -74,12 +80,54 @@ function setMode(mode, msg, ok){
   if(mode === 'verify') text.innerHTML = 'Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут.';
   if(mode === 'reset') text.innerHTML = 'Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль.';
   if(!text.hidden) text.querySelector('b').textContent = authEmail;
+  $('authSubmit').hidden = !m.submit;
+  $('authDevices').hidden = mode !== 'devices';
   $('authLinks').innerHTML = m.linksHtml || '';
   $('authSwitch').innerHTML = m.switchHtml || '';
   showMsg(msg, ok);
   const first = m.fields.find(f => f !== 'email' || !$('authEmail').value) || m.fields[0];
   const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2' }[first];
-  $(input).focus();
+  if(input) $(input).focus();
+}
+
+function fmtDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+function devicesWord(n){
+  return n === 1 ? '1 устройстве' : n + ' устройствах';
+}
+
+// Ответ входа: вошли - дальше; устройств уже сколько можно - выбор, где выйти.
+function afterLogin(d){
+  if(!d.needDevice){ location.href = nextUrl(); return; }
+  deviceTicket = d.ticket;
+  setMode('devices');
+  $('authText').hidden = false;
+  $('authText').textContent = `По подписке ${d.planName} в аккаунт можно войти на ${devicesWord(d.limit)}. Выберите, на каком выйти, чтобы войти здесь.`;
+  renderDevices(d.devices);
+}
+function renderDevices(list){
+  const box = $('authDevices');
+  box.innerHTML = '';
+  (list || []).forEach(dev => {
+    const row = document.createElement('div');
+    row.className = 'auth-device';
+    row.innerHTML = '<div><div class="auth-device-name"></div><div class="auth-device-seen"></div></div><button type="button" class="btn-secondary">Выйти здесь</button>';
+    row.querySelector('.auth-device-name').textContent = dev.label;
+    row.querySelector('.auth-device-seen').textContent = 'Последний раз: ' + fmtDateTime(dev.lastSeen);
+    row.querySelector('button').addEventListener('click', async e => {
+      e.target.disabled = true;
+      try{
+        afterLogin(await api('device-replace', { ticket: deviceTicket, id: dev.id }));
+      }catch(err){
+        showMsg(err.message);
+        if(err.devices) renderDevices(err.devices);
+        e.target.disabled = false;
+      }
+    });
+    box.appendChild(row);
+  });
 }
 
 async function api(path, body){
@@ -90,7 +138,11 @@ async function api(path, body){
   });
   let data = {};
   try{ data = await r.json(); }catch(e){}
-  if(!r.ok) throw new Error(data.error || 'Ошибка сервера. Попробуйте ещё раз.');
+  if(!r.ok){
+    const err = new Error(data.error || 'Ошибка сервера. Попробуйте ещё раз.');
+    err.devices = data.devices;
+    throw err;
+  }
   return data;
 }
 
@@ -109,14 +161,13 @@ async function onSubmit(e){
       const d = await api('login', { email, password: pw });
       authEmail = email;
       if(d.needVerify) return setMode('verify', d.notice || 'Почта ещё не подтверждена: мы отправили код.', !d.notice);
-      location.href = nextUrl();
+      afterLogin(d);
     } else if(authMode === 'register'){
       const d = await api('register', { email, password: pw });
       authEmail = email;
       setMode('verify', d.notice, false);
     } else if(authMode === 'verify'){
-      await api('verify', { email: authEmail, code });
-      location.href = nextUrl();
+      afterLogin(await api('verify', { email: authEmail, code }));
     } else if(authMode === 'forgot'){
       await api('forgot', { email });
       authEmail = email;

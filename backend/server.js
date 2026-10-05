@@ -14,7 +14,10 @@ const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
-const authRoutes = require('./src/auth/routes');
+const { router: authRoutes } = require('./src/auth/routes');
+const adminRoutes = require('./src/auth/admin');
+const { calcQuota } = require('./src/auth/calc-quota');
+const { publicPlans } = require('./src/auth/plans');
 const { attachUser } = require('./src/auth/session');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
@@ -51,6 +54,10 @@ app.use(express.json());
 // Аккаунты: кто вошёл (req.user) и /api/auth/* (см. src/auth/routes.js).
 app.use(attachUser);
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
+// Расчёты - только после входа и в пределах лимита подписки.
+app.post('/api/:type/calculate', calcQuota);
 
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -
 // на входе в API фильтруем до допустимого сортаментного ряда и сортируем,

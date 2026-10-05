@@ -162,3 +162,57 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
   .auth-main{padding:32px 16px;align-items:flex-start;}
   .auth-title{font-size:28px;}
 }
+
+/* Ссылка «Войти» / «Подписки» после ошибки расчёта. */
+.calc-error-link{color:var(--accent);text-decoration:underline;text-underline-offset:3px;font-weight:600;}
+
+/* Вход сверх лимита устройств: список устройств, где выйти. */
+.auth-devices{display:flex;flex-direction:column;gap:10px;}
+.auth-devices[hidden]{display:none;}
+.auth-device{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--border-input);border-radius:12px;background:var(--panel);}
+.auth-device-name{font-size:15px;font-weight:600;color:var(--ink);}
+.auth-device-seen{font-size:13px;color:var(--ink-soft);margin-top:2px;}
+.auth-device button{margin:0;padding:8px 14px;font-size:13px;flex:0 0 auto;}
+
+/* Страница аккаунта: кнопки-ссылки, счётчик расчётов. */
+.account-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+.account-btn{display:inline-flex;align-items:center;padding:10px 18px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;}
+.account-btn[hidden]{display:none;}
+.account-quota{margin-bottom:8px;}
+.account-quota-num span{font-size:34px;font-weight:700;color:var(--ink);}
+.account-quota-num small{font-size:15px;color:var(--ink-soft);}
+.account-quota-bar{height:8px;border-radius:999px;background:var(--rule);overflow:hidden;margin:10px 0 6px;}
+.account-quota-bar div{height:100%;background:var(--accent);border-radius:999px;}
+#accountBox[hidden], .account-row[hidden]{display:none;}
+
+/* Страница подписок. */
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;}
+.plan-card{display:flex;flex-direction:column;padding:28px 24px;border:1px solid var(--rule);border-radius:16px;background:var(--panel);box-shadow:var(--shadow-sm);}
+.plan-card-accent{border-color:var(--accent);}
+.plan-card-current{outline:2px solid var(--accent);outline-offset:-1px;}
+.plan-name{font-size:22px;font-weight:700;color:var(--ink);}
+.plan-price{font-size:20px;font-weight:600;color:var(--accent);margin:8px 0 18px;}
+.plan-price small{font-size:13px;color:var(--ink-soft);font-weight:500;}
+.plan-features{list-style:none;margin:0 0 20px;padding:0;flex:1;}
+.plan-features li{padding:8px 0;border-top:1px solid var(--rule);font-size:15px;color:var(--ink);}
+.plan-features li::before{content:'✓';color:var(--accent);font-weight:700;margin-right:10px;}
+.plan-btn{width:100%;margin:0;}
+.plan-btn:disabled{opacity:.6;cursor:default;}
+.plans-note{margin-top:24px;font-size:14px;color:var(--ink-soft);}
+@media screen and (max-width:800px){
+  .plans-grid{grid-template-columns:1fr;}
+}
+
+/* Администрирование. */
+.admin-wrap{max-width:1100px;}
+.admin-table-wrap{overflow-x:auto;}
+.admin-table{width:100%;border-collapse:collapse;font-size:14px;}
+.admin-table th{text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 8px;border-bottom:1px solid var(--rule);}
+.admin-table td{padding:10px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);}
+.admin-table select{padding:6px 8px;border:1px solid var(--border-input);border-radius:6px;background:var(--panel);color:var(--ink);font-family:inherit;}
+.admin-table button{margin:0;padding:6px 12px;font-size:13px;}
+.admin-sub{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+.admin-tag{font-size:11px;color:var(--warn);}
+.admin-empty{text-align:center;color:var(--ink-soft);}
+#adminCard[hidden]{display:none;}
+#accountLogout{margin-top:16px;}
