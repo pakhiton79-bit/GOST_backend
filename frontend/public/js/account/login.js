@@ -9,7 +9,7 @@ const AUTH_MODES = {
     switchHtml: 'Нет аккаунта? <a data-mode="register">Зарегистрироваться</a>',
   },
   register: {
-    title: 'Создайте аккаунт', sub: 'Бесплатно, карта не нужна.', submit: 'Создать аккаунт',
+    title: 'Создайте аккаунт', sub: '', submit: 'Создать аккаунт',
     fields: ['email', 'password', 'password2'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
     switchHtml: 'Уже есть аккаунт? <a data-mode="login">Войти</a>',
   },
