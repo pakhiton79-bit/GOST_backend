@@ -106,6 +106,24 @@ function siteThicknessHtml(){
     <div class="thickness-checkbox-list" id="siteThicknessList">${boxes}</div>`;
 }
 
+// Сброс всех толщин (по указанию пользователя): после подтверждения
+// очищаются общие толщины и толщины, выбранные внутри каждого типа (ключи
+// <префикс><тип>-available-thickness), страница перезагружается - везде
+// расчёт строго по ГОСТ, пока толщины не выберут заново.
+function resetAllThicknesses(){
+  if(!window.confirm('Сбросить все толщины? Общие толщины и толщины, выбранные внутри типов ящиков, будут сняты - везде расчёт строго по ГОСТ, пока не выберете толщины заново.')) return;
+  saveSiteSetting('availableThickness', []);
+  try{
+    const keys = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(SITE_STORAGE_PREFIX) === 0 && /-available-thickness$/.test(k)) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+  }catch(e){}
+  location.reload();
+}
+
 // Сброс всех настроек сайта (по указанию пользователя): после подтверждения
 // удаляются все ключи сайта в localStorage, страница перезагружается -
 // всё возвращается к значениям по умолчанию.
@@ -139,6 +157,10 @@ const SITE_SETTINGS_SECTIONS = [
       hint: 'По умолчанию берутся во всех типах ящиков. Толщины, выбранные внутри типа, - в приоритете. Ничего не выбрано - расчёт строго по ГОСТ.',
       control: siteThicknessHtml,
       wide: true,
+    }, {
+      title: 'Сбросить все толщины',
+      hint: 'Снимаются и общие толщины, и толщины, выбранные внутри типов ящиков, - везде расчёт строго по ГОСТ, пока не выберете толщины заново.',
+      control: () => '<button type="button" class="btn-secondary" id="siteThicknessReset">Сбросить</button>',
     }],
   },
   {
@@ -247,6 +269,7 @@ function initSiteSettings(){
     const opt = e.target.closest('.theme-switch-option');
     if(opt) selectTheme(opt);
     if(e.target.closest('#siteSettingsReset')) resetAllSiteSettings();
+    if(e.target.closest('#siteThicknessReset')) resetAllThicknesses();
     const all = e.target.closest('[data-site-thickness-all]');
     if(all){
       const on = all.dataset.siteThicknessAll === '1';
