@@ -134,15 +134,80 @@ function renderStats(){
 // ---------- Аккаунты ----------
 function esc(s){ return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
+// Выпадающий список в стиле сайта (раскрытый список браузерного <select>
+// оформить нельзя - по указанию пользователя свой): кнопка + список
+// вариантов; значение - в data-value. Клавиатура: стрелки, Enter, Esc.
+function uiSelect(options, value, label){
+  const cur = options.find(o => o.id === value) || options[0];
+  return `<div class="ui-select" data-value="${esc(cur.id)}">
+      <button type="button" class="ui-select-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(label)}"><span>${esc(cur.name)}</span></button>
+      <ul class="ui-select-list" role="listbox" hidden>${options.map(o => `<li role="option" tabindex="-1" data-value="${esc(o.id)}" aria-selected="${o.id === cur.id}">${esc(o.name)}</li>`).join('')}</ul>
+    </div>`;
+}
+function closeSelects(except){
+  document.querySelectorAll('.ui-select-list:not([hidden])').forEach(l => {
+    if(l.parentNode === except) return;
+    l.hidden = true;
+    l.parentNode.querySelector('.ui-select-btn').setAttribute('aria-expanded', 'false');
+  });
+}
+function openSelect(sel){
+  closeSelects(sel);
+  const btn = sel.querySelector('.ui-select-btn'), list = sel.querySelector('.ui-select-list');
+  const r = btn.getBoundingClientRect();
+  list.hidden = false;
+  list.style.minWidth = r.width + 'px';
+  list.style.left = r.left + 'px';
+  // Не помещается снизу - открыть вверх.
+  const below = window.innerHeight - r.bottom;
+  list.style.top = (below < list.offsetHeight + 8 ? r.top - list.offsetHeight - 4 : r.bottom + 4) + 'px';
+  btn.setAttribute('aria-expanded', 'true');
+  (list.querySelector('[aria-selected="true"]') || list.firstElementChild).focus({ preventScroll: true });
+}
+function chooseOption(li){
+  const sel = li.closest('.ui-select');
+  sel.dataset.value = li.dataset.value;
+  sel.querySelector('.ui-select-btn span').textContent = li.textContent;
+  sel.querySelectorAll('li').forEach(x => x.setAttribute('aria-selected', String(x === li)));
+  closeSelects();
+  sel.querySelector('.ui-select-btn').focus();
+}
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.ui-select-btn');
+  const li = e.target.closest('.ui-select-list li');
+  if(li) return chooseOption(li);
+  if(btn){
+    const sel = btn.closest('.ui-select');
+    return sel.querySelector('.ui-select-list').hidden ? openSelect(sel) : closeSelects();
+  }
+  closeSelects();
+});
+document.addEventListener('keydown', e => {
+  const btn = e.target.closest && e.target.closest('.ui-select-btn');
+  if(btn && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){ e.preventDefault(); openSelect(btn.closest('.ui-select')); return; }
+  const li = e.target.closest && e.target.closest('.ui-select-list li');
+  if(!li) return;
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    e.preventDefault();
+    const items = [...li.parentNode.children], i = items.indexOf(li);
+    items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus({ preventScroll: true });
+  } else if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault(); chooseOption(li);
+  } else if(e.key === 'Escape' || e.key === 'Tab'){
+    closeSelects(); li.closest('.ui-select').querySelector('.ui-select-btn').focus();
+  }
+});
+// Прокрутили страницу или таблицу - список закрывается (он привязан к месту кнопки).
+window.addEventListener('scroll', e => { if(!(e.target.closest && e.target.closest('.ui-select-list'))) closeSelects(); }, { passive: true, capture: true });
+
 function renderUsers(){
   const q = $('adminSearch').value.trim().toLowerCase();
   const rows = adminData.users.filter(u => !q || u.email.includes(q));
   $('adminRows').innerHTML = rows.map(u => {
-    const opts = adminData.plans.map(p => `<option value="${p.id}"${p.id === u.quota.plan ? ' selected' : ''}>${p.name}</option>`).join('');
     const seen = u.lastSeen ? 'вход ' + fmtDate(u.lastSeen) : 'входов нет';
     return `<tr data-email="${esc(u.email)}">
       <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div></td>
-      <td><span class="select-wrap"><select class="admin-plan" aria-label="Подписка">${opts}</select></span><div class="admin-sub">с ${fmtDate(u.planSince)}</div></td>
+      <td>${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}<div class="admin-sub">с ${fmtDate(u.planSince)}</div></td>
       <td>${u.quota.used} из ${fmtNum(u.quota.monthly)}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
@@ -179,7 +244,7 @@ $('adminRows').addEventListener('click', async e => {
   btn.disabled = true;
   try{
     if(btn.classList.contains('admin-save')){
-      const d = await api('plan', { email, plan: tr.querySelector('.admin-plan').value });
+      const d = await api('plan', { email, plan: tr.querySelector('.ui-select').dataset.value });
       showMsg(`${email}: подписка ${d.quota.planName} с этого момента.`, true);
     } else {
       await api('delete', { email });
@@ -189,7 +254,7 @@ $('adminRows').addEventListener('click', async e => {
   }catch(err){ showMsg(err.message); btn.disabled = false; }
 });
 let resizeTimer = null;
-window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderStats, 150); });
+window.addEventListener('resize', () => { closeSelects(); clearTimeout(resizeTimer); resizeTimer = setTimeout(renderStats, 150); });
 window.addEventListener('scroll', () => { $('chartTip').hidden = true; }, { passive: true });
 
 load();

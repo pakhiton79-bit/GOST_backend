@@ -61,8 +61,9 @@ function renderSiteSub(user){
   }
   const q = user.quota;
   const days = Math.max(1, Math.ceil((new Date(q.periodEnd) - Date.now()) / 86400000));
+  const upgrade = nextPlanId(q.plan);
   let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'} · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}</div></div>`
-    + '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a></div>';
+    + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить подписку</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
   html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
   if(q.welcomeLeft > 0 || q.plan === 'free'){
     const used = q.welcomeTotal - q.welcomeLeft;
@@ -91,10 +92,60 @@ function initSettingsSubscription(){
   });
 }
 
+// ---------- Предложения подписки (по указанию пользователя - к месту, не
+// везде): после расчёта - только когда расчётов осталось мало; в настройках
+// и на странице аккаунта - у Free. Числа подписок - с сервера (/api/plans).
+let plansPromise = null;
+function loadPlans(){
+  if(!plansPromise) plansPromise = fetch('/api/plans').then(r => r.json()).then(d => {
+    const by = {}; (d.plans || []).forEach(p => { by[p.id] = p; }); return by;
+  }).catch(() => ({}));
+  return plansPromise;
+}
+// Следующая подписка для предложения: Free -> Pro, Pro -> Team, Team - нет.
+function nextPlanId(plan){ return plan === 'free' ? 'pro' : plan === 'pro' ? 'team' : null; }
+function calcWord(n){ return plural(n, 'расчёт', 'расчёта', 'расчётов'); }
+
+// Под кнопкой «Рассчитать» после успешного расчёта: осталось 5 и меньше
+// (или 10% и меньше у платных) - сколько осталось и что даст следующая подписка.
+function showQuotaHint(q){
+  const err = document.getElementById('err');
+  if(!err) return;
+  let hint = document.getElementById('quotaHint');
+  if(!hint){
+    hint = document.createElement('div');
+    hint.id = 'quotaHint';
+    hint.className = 'quota-hint';
+    err.insertAdjacentElement('afterend', hint);
+  }
+  hint.hidden = true;
+  if(!q) return;
+  const low = q.plan === 'free' ? q.left <= 5 : q.left <= Math.max(5, Math.round(q.monthly * 0.1));
+  if(!low) return;
+  const reset = new Date(q.periodEnd).toLocaleDateString('ru-RU');
+  const next = nextPlanId(q.plan);
+  loadPlans().then(plans => {
+    const np = next && plans[next];
+    const head = q.left === 0 ? `Это был последний расчёт в этом месяце, новые будут ${reset}.`
+      : `В этом месяце осталось ${q.left} ${calcWord(q.left)}.`;
+    hint.innerHTML = '';
+    hint.append(head + ' ');
+    if(np){
+      const a = document.createElement('a');
+      a.href = 'plans.html';
+      a.textContent = `С подпиской ${np.name}`;
+      hint.append(a, ` - ${np.monthly.toLocaleString('ru-RU')} ${calcWord(np.monthly)} в месяц` + (np.devices > q.devices ? ` и ${np.devices} устройства.` : '.'));
+    }
+    hint.hidden = false;
+  });
+}
+
 // Ошибка расчёта от сервера со ссылкой (не вошли - «Войти» с возвратом на
 // эту страницу, закончились расчёты - «Подписки»): ссылка после текста
 // ошибки (#err на страницах расчёта).
 function appendCalcErrorLink(link){
+  const hint = document.getElementById('quotaHint');
+  if(hint) hint.hidden = true;
   const err = document.getElementById('err');
   if(!err || !link || !/^[a-z0-9-]+\.html$/.test(link.href)) return;
   const a = document.createElement('a');

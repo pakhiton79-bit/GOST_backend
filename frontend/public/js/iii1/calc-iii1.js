@@ -87,6 +87,7 @@ async function calculateNow(){
 
   document.getElementById('results').style.display = 'block';
   setCalcStatus('check');
+  showQuotaHint(calc.quota); // осталось мало расчётов - подсказка, common-account.js
 }
 
 ['L','W','H','M'].forEach(id=>{

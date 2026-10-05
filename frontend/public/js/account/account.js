@@ -14,6 +14,19 @@ function renderQuota(q){
   $('quotaWelcomeRow').hidden = !(q.welcomeLeft > 0);
   $('quotaWelcome').textContent = q.welcomeLeft;
   $('quotaReset').textContent = fmtDate(q.periodEnd);
+  // Есть подписка больше - одна строка с предложением (Team - без неё).
+  const next = nextPlanId(q.plan);
+  if(next) loadPlans().then(plans => {
+    const np = plans[next];
+    if(!np) return;
+    const box = $('quotaUpsell');
+    box.textContent = 'Нужно больше расчётов? ';
+    const a = document.createElement('a');
+    a.href = 'plans.html';
+    a.textContent = `Подписка ${np.name}`;
+    box.append(a, `: ${np.monthly.toLocaleString('ru-RU')} в месяц` + (np.devices > q.devices ? `, до ${np.devices} устройств.` : '.'));
+    box.hidden = false;
+  });
 }
 
 function renderDevices(list, limit, planName){
