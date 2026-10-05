@@ -1,0 +1,29 @@
+// Реквизиты оператора персональных данных и владельца сайта - подставляются
+// в юридические документы (privacy.html, consent.html, terms.html,
+// marketing.html) на место <span data-legal="...">. Заполнить один раз здесь;
+// пустое значение показывается в документах как «[укажите ...]».
+const LEGAL = {
+  operator: '',        // ФИО индивидуального предпринимателя / самозанятого или наименование организации
+  status: '',          // например: «индивидуальный предприниматель», «плательщик НПД (самозанятый)», «ООО»
+  inn: '',             // ИНН
+  ogrn: '',            // ОГРН / ОГРНИП (для самозанятого - не нужен, оставить пустым)
+  address: '',         // адрес (для ИП и самозанятых - можно город и почтовый адрес для обращений)
+  email: '',           // почта для обращений по персональным данным и вопросам по сайту
+  site: 'Тара+',       // название сайта
+  version: '05.10.2026', // дата редакции документов (при изменении текста - поменять и LEGAL_VERSION на сервере)
+};
+const LEGAL_HINTS = {
+  operator: 'ФИО или наименование оператора', status: 'статус оператора', inn: 'ИНН', ogrn: 'ОГРН / ОГРНИП',
+  address: 'адрес оператора', email: 'почту для обращений', site: 'название сайта', version: 'дату редакции',
+};
+
+function fillLegal(){
+  document.querySelectorAll('[data-legal]').forEach(el => {
+    const k = el.dataset.legal, v = LEGAL[k];
+    if(v){ el.textContent = v; el.classList.remove('legal-missing'); }
+    else if(k === 'ogrn'){ el.closest('.legal-ogrn') && (el.closest('.legal-ogrn').hidden = true); }
+    else { el.textContent = '[укажите ' + (LEGAL_HINTS[k] || k) + ']'; el.classList.add('legal-missing'); }
+  });
+}
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fillLegal);
+else fillLegal();

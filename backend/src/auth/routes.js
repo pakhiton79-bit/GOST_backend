@@ -2,7 +2,8 @@
 // подтверждения на почту при регистрации (и при восстановлении пароля).
 // Лимиты и подписки - следующими этапами.
 //
-//   POST /api/auth/register { email, password }        - аккаунт + код на почту
+//   POST /api/auth/register { email, password, consents } - аккаунт + код на почту
+//                                                        (consents: terms, pd - обязательно; marketing - legal.js)
 //   POST /api/auth/verify   { email, code }            - подтверждение почты, вход
 //   POST /api/auth/resend   { email, purpose }         - код ещё раз
 //   POST /api/auth/login    { email, password }        - вход (почта не подтверждена - код)
@@ -14,6 +15,7 @@
 //                                                        выйти на устройстве id и войти
 //   GET  /api/auth/devices                             - устройства, где выполнен вход
 //   POST /api/auth/devices/logout { id }               - выйти на устройстве
+//   POST /api/auth/delete   { password }               - удалить свой аккаунт
 //
 // Вход, когда устройств уже столько, сколько разрешает подписка (по
 // указанию пользователя): вместо входа - список устройств, пользователь
@@ -25,6 +27,7 @@ const { sendCode } = require('./mailer');
 const { startSession, endSession } = require('./session');
 const { planOf, quotaInfo, syncUser } = require('./plans');
 const stats = require('./stats');
+const { consentsFromRequest } = require('./legal');
 
 const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
 const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -131,11 +134,14 @@ router.post('/register', rateLimit, async (req, res, next) => {
     if (!email) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
     const pErr = checkPassword(req.body.password);
     if (pErr) return res.status(400).json({ error: pErr });
+    const legal = consentsFromRequest(req);
+    if (legal.error) return res.status(400).json({ error: legal.error });
     let user = store.findUserByEmail(email);
     if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите или восстановите пароль.' });
     // Почта ещё не подтверждена - регистрацию можно пройти заново.
     if (user) store.updateUser(user, { passHash: hashPassword(req.body.password) });
     else user = store.createUser(email, hashPassword(req.body.password));
+    store.updateUser(user, { consents: legal.consents });
     const err = await issueCode(email, 'register');
     res.json({ ok: true, needVerify: true, notice: err || undefined });
   } catch (e) { next(e); }
@@ -171,9 +177,13 @@ router.post('/resend', rateLimit, async (req, res, next) => {
 router.post('/login', rateLimit, async (req, res, next) => {
   try {
     const email = normEmail(req.body.email);
-    const user = email && store.findUserByEmail(email);
-    if (!user || !verifyPassword(String(req.body.password || ''), user.passHash)) {
-      return res.status(401).json({ error: 'Неверная почта или пароль.' });
+    if (!email) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
+    const user = store.findUserByEmail(email);
+    // По указанию пользователя: аккаунта нет - так и сообщаем (а не «неверные
+    // данные»), с предложением зарегистрироваться.
+    if (!user) return res.status(404).json({ error: 'Аккаунта с такой почтой нет. Проверьте адрес или зарегистрируйтесь.', noAccount: true });
+    if (!verifyPassword(String(req.body.password || ''), user.passHash)) {
+      return res.status(401).json({ error: 'Неверный пароль. Попробуйте ещё раз или восстановите пароль.' });
     }
     if (!user.verified) {
       const err = await issueCode(email, 'register');
@@ -206,6 +216,18 @@ router.post('/devices/logout', (req, res) => {
   if (id === req.sessionId) return res.status(400).json({ error: 'Чтобы выйти на этом устройстве, нажмите «Выйти».' });
   store.deleteSessionById(req.user.id, id);
   res.json({ ok: true, devices: publicDevices(req.user, req.sessionId) });
+});
+
+// Удаление своего аккаунта (по указанию пользователя) - с подтверждением
+// паролем. Удаляются аккаунт, подписка, счётчики, входы на всех устройствах.
+router.post('/delete', rateLimit, (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+  if (!verifyPassword(String(req.body.password || ''), req.user.passHash)) {
+    return res.status(401).json({ error: 'Неверный пароль.' });
+  }
+  store.deleteUser(req.user);
+  endSession(req, res);
+  res.json({ ok: true });
 });
 
 router.post('/logout', (req, res) => {

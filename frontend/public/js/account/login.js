@@ -10,7 +10,7 @@ const AUTH_MODES = {
   },
   register: {
     title: 'Создайте аккаунт', sub: '', submit: 'Создать аккаунт',
-    fields: ['email', 'password', 'password2'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
+    fields: ['email', 'password', 'password2', 'consents'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
     switchHtml: 'Уже есть аккаунт? <a data-mode="login">Войти</a>',
   },
   verify: {
@@ -49,11 +49,20 @@ function nextUrl(){
   return /^[a-z0-9-]+\.html(\?[^#]*)?$/i.test(n) ? n : 'index.html';
 }
 
-function showMsg(text, ok){
+// Сообщение над формой; linkMode - ссылка после текста (например,
+// «Зарегистрироваться», когда аккаунта с такой почтой нет).
+function showMsg(text, ok, linkMode, linkText){
   const m = $('authMsg');
   m.hidden = !text;
   m.textContent = text || '';
   m.className = 'auth-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error');
+  if(text && linkMode){
+    const a = document.createElement('a');
+    a.dataset.mode = linkMode;
+    a.className = 'auth-msg-link';
+    a.textContent = linkText;
+    m.append(' ', a);
+  }
 }
 
 // Пароль скрыт / показан - значок «глаз» в поле.
@@ -74,6 +83,7 @@ function setMode(mode, msg, ok){
   if(m.pwLabel){ $('authPasswordLabel').textContent = m.pwLabel; $('authPassword').autocomplete = m.pwAuto; }
   $('authForgot').hidden = !m.forgot;
   $('authCode').value = ''; $('authPassword').value = ''; $('authPassword2').value = '';
+  ['consentTerms', 'consentPd', 'consentMarketing'].forEach(id => { $(id).checked = false; });
   document.querySelectorAll('.auth-eye').forEach(b => setEye(b, false));
   const text = $('authText');
   text.hidden = !(mode === 'verify' || mode === 'reset');
@@ -86,7 +96,7 @@ function setMode(mode, msg, ok){
   $('authSwitch').innerHTML = m.switchHtml || '';
   showMsg(msg, ok);
   const first = m.fields.find(f => f !== 'email' || !$('authEmail').value) || m.fields[0];
-  const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2' }[first];
+  const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2', consents: 'consentTerms' }[first];
   if(input) $(input).focus();
 }
 
@@ -141,6 +151,7 @@ async function api(path, body){
   if(!r.ok){
     const err = new Error(data.error || 'Ошибка сервера. Попробуйте ещё раз.');
     err.devices = data.devices;
+    err.noAccount = !!data.noAccount;
     throw err;
   }
   return data;
@@ -155,6 +166,10 @@ async function onSubmit(e){
   const pw = $('authPassword').value, pw2 = $('authPassword2').value;
   const m = AUTH_MODES[authMode];
   if(m.fields.includes('password2') && pw !== pw2){ showMsg('Пароли не совпадают.'); return; }
+  if(m.fields.includes('consents') && !($('consentTerms').checked && $('consentPd').checked)){
+    showMsg('Чтобы зарегистрироваться, примите Пользовательское соглашение и дайте согласие на обработку персональных данных.');
+    return;
+  }
   btn.disabled = true;
   try{
     if(authMode === 'login'){
@@ -163,7 +178,9 @@ async function onSubmit(e){
       if(d.needVerify) return setMode('verify', d.notice || 'Почта ещё не подтверждена: мы отправили код.', !d.notice);
       afterLogin(d);
     } else if(authMode === 'register'){
-      const d = await api('register', { email, password: pw });
+      const d = await api('register', { email, password: pw, consents: {
+        terms: $('consentTerms').checked, pd: $('consentPd').checked, marketing: $('consentMarketing').checked,
+      } });
       authEmail = email;
       setMode('verify', d.notice, false);
     } else if(authMode === 'verify'){
@@ -177,14 +194,16 @@ async function onSubmit(e){
       location.href = nextUrl();
     }
   }catch(err){
-    showMsg(err.message);
+    if(err.noAccount) showMsg(err.message, false, 'register', 'Зарегистрироваться');
+    else showMsg(err.message);
   }finally{
     btn.disabled = false;
   }
 }
 
 $('authForm').addEventListener('submit', onSubmit);
-// Ссылки режимов и «Отправить код ещё раз» - в нескольких местах формы.
+// Ссылки режимов и «Отправить код ещё раз» - в нескольких местах формы
+// (в том числе в сообщении над формой).
 document.querySelector('.auth-box').addEventListener('click', async e => {
   const eye = e.target.closest('.auth-eye');
   if(eye) return setEye(eye, $(eye.dataset.eye).type === 'password');

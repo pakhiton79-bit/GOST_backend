@@ -46,6 +46,16 @@
       <div class="auth-devices" id="devicesList"></div>
       <button type="button" class="btn-secondary auth-submit" id="accountLogout">Выйти на этом устройстве</button>
     </div>
+    <div class="card auth-card account-danger">
+      <h2>Удаление аккаунта</h2>
+      <p class="auth-text">Аккаунт, подписка, счётчики расчётов и входы на всех устройствах будут удалены без возможности восстановления. Согласие на обработку персональных данных при этом отзывается.</p>
+      <div class="auth-msg" id="deleteMsg" hidden></div>
+      <div class="auth-field">
+        <label for="deletePassword">Пароль для подтверждения</label>
+        <input type="password" id="deletePassword" autocomplete="current-password" maxlength="200">
+      </div>
+      <button type="button" class="btn-secondary auth-submit account-delete-btn" id="accountDelete">Удалить аккаунт</button>
+    </div>
   </div>
 </div>
 <script src="/js/account/account.js"></script>

@@ -105,5 +105,22 @@ function appendCalcErrorLink(link){
   err.appendChild(a);
 }
 
-if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccountButton);
-else initAccountButton();
+// Подвал со ссылками на юридические документы (политика обработки
+// персональных данных должна быть доступна на сайте без ограничений, 152-ФЗ
+// ст. 18.1) - на всех страницах с .wrap.
+function initLegalFooter(){
+  const wrap = document.querySelector('.wrap');
+  if(!wrap || document.getElementById('siteLegalFooter')) return;
+  const f = document.createElement('footer');
+  f.id = 'siteLegalFooter';
+  f.className = 'site-legal-footer';
+  f.innerHTML = `<span>© Тара+, ${new Date().getFullYear()}</span>`
+    + '<a href="terms.html">Пользовательское соглашение</a>'
+    + '<a href="privacy.html">Политика обработки персональных данных</a>'
+    + '<a href="consent.html">Согласие на обработку персональных данных</a>';
+  wrap.insertAdjacentElement('afterend', f);
+}
+
+function initAccountPage(){ initAccountButton(); initLegalFooter(); }
+if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccountPage);
+else initAccountPage();

@@ -56,3 +56,19 @@ $('accountLogout').addEventListener('click', () => {
   fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
     .finally(() => { location.href = 'index.html'; });
 });
+
+// Удаление своего аккаунта: пароль + подтверждение.
+$('accountDelete').addEventListener('click', async () => {
+  const msg = $('deleteMsg'), pw = $('deletePassword').value;
+  const fail = text => { msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = text; };
+  if(!pw) return fail('Введите пароль, чтобы подтвердить удаление.');
+  if(!window.confirm('Удалить аккаунт без возможности восстановления?')) return;
+  const btn = $('accountDelete');
+  btn.disabled = true;
+  try{
+    const r = await fetch('/api/auth/delete', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
+    location.href = 'index.html';
+  }catch(e){ fail(e.message); btn.disabled = false; }
+});

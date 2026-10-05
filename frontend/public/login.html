@@ -70,12 +70,18 @@
             <button type="button" class="auth-eye" data-eye="authPassword2" aria-label="Показать пароль"></button>
           </div>
         </div>
+        <div class="auth-field auth-consents" data-field="consents">
+          <label class="auth-check"><input type="checkbox" id="consentTerms"><span>Я принимаю условия <a href="terms.html" target="_blank">Пользовательского соглашения</a> <span class="auth-req">*</span></span></label>
+          <label class="auth-check"><input type="checkbox" id="consentPd"><span>Даю <a href="consent.html" target="_blank">согласие на обработку персональных данных</a> и ознакомлен(а) с <a href="privacy.html" target="_blank">Политикой обработки персональных данных</a> <span class="auth-req">*</span></span></label>
+          <label class="auth-check"><input type="checkbox" id="consentMarketing"><span>Согласен(на) получать <a href="marketing.html" target="_blank">информационные и рекламные рассылки</a> (необязательно)</span></label>
+        </div>
         <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
       </form>
       <div class="auth-devices" id="authDevices" hidden></div>
       <div class="auth-links" id="authLinks"></div>
       <div class="auth-switch" id="authSwitch"></div>
       <a class="auth-home" href="index.html">← На главную</a>
+      <div class="auth-legal"><a href="terms.html">Пользовательское соглашение</a> · <a href="privacy.html">Политика обработки персональных данных</a></div>
     </div>
   </main>
 </div>

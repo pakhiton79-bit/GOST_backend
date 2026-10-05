@@ -28,6 +28,7 @@ router.get('/users', (req, res) => {
       planSince: new Date(u.planSince).toISOString(),
       quota: quotaInfo(u, now), devices: sessions.length,
       totalCalcs: u.totalCalcs || 0,
+      marketing: !!(u.consents && u.consents.marketing),
       lastCalcAt: u.lastCalcAt ? new Date(u.lastCalcAt).toISOString() : null,
       lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
       self: u.id === req.user.id,

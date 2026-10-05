@@ -257,6 +257,7 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 .admin-sub{font-size:12px;color:var(--ink-soft);margin-top:3px;}
 .admin-tag{font-size:11px;color:var(--warn);}
 .admin-tag-you{color:var(--accent);font-weight:600;}
+.admin-tag-ok{color:var(--ok);}
 .admin-empty{text-align:center;color:var(--ink-soft);}
 
 /* Выпадающий список в общем стиле сайта (поля ввода): своя стрелка. */
@@ -300,3 +301,37 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 .site-usage-bar div{height:100%;border-radius:999px;background:var(--accent);transition:width .3s ease;}
 .site-usage-high .site-usage-bar div{background:var(--warn);}
 .site-usage-full .site-usage-bar div{background:var(--error);}
+
+/* Юридические документы (privacy.html, consent.html, terms.html, marketing.html). */
+.legal-wrap{max-width:860px;}
+.legal{font-size:15px;line-height:1.6;color:var(--ink);}
+.legal h2{text-transform:none;letter-spacing:0;font-size:17px;margin:26px 0 10px;padding-bottom:6px;}
+.legal h2:first-child{margin-top:0;}
+.legal p{margin:0 0 10px;}
+.legal ul{margin:0 0 10px;padding-left:22px;}
+.legal li{margin:4px 0;}
+.legal a{color:var(--accent);}
+.legal-missing{background:color-mix(in srgb, var(--warn) 22%, transparent);border-radius:4px;padding:0 4px;font-weight:600;}
+.legal-ogrn[hidden]{display:none;}
+
+/* Подвал со ссылками на документы (страницы серверной версии). */
+.site-legal-footer{max-width:1100px;margin:40px auto 24px;padding:16px 24px 0;border-top:1px solid var(--rule);display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--ink-soft);}
+.site-legal-footer a{color:var(--ink-soft);text-decoration:none;}
+.site-legal-footer a:hover{color:var(--accent);text-decoration:underline;}
+@media print{.site-legal-footer{display:none !important;}}
+
+/* Галочки согласий при регистрации. */
+.auth-consents{display:flex;flex-direction:column;gap:10px;margin:6px 0 20px !important;}
+.auth-consents[hidden]{display:none;}
+.auth-page .auth-field label.auth-check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;line-height:1.45;color:var(--ink);margin:0;cursor:pointer;}
+.auth-check input{width:18px;height:18px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--accent);cursor:pointer;}
+.auth-check a{color:var(--accent);}
+.auth-msg-link{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.auth-legal{margin-top:14px;text-align:center;font-size:12px;color:var(--ink-soft);}
+.auth-legal a{color:var(--ink-soft);}
+.auth-legal a:hover{color:var(--accent);}
+
+/* Удаление аккаунта. */
+.account-danger h2{color:var(--error);}
+.account-delete-btn{color:var(--error);margin-top:4px;}
+.account-delete-btn:hover{border-color:var(--error);}

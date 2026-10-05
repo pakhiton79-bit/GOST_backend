@@ -141,7 +141,7 @@ function renderUsers(){
     const opts = adminData.plans.map(p => `<option value="${p.id}"${p.id === u.quota.plan ? ' selected' : ''}>${p.name}</option>`).join('');
     const seen = u.lastSeen ? 'вход ' + fmtDate(u.lastSeen) : 'входов нет';
     return `<tr data-email="${esc(u.email)}">
-      <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div></td>
+      <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div></td>
       <td><span class="select-wrap"><select class="admin-plan" aria-label="Подписка">${opts}</select></span><div class="admin-sub">с ${fmtDate(u.planSince)}</div></td>
       <td>${u.quota.used} из ${fmtNum(u.quota.monthly)}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
