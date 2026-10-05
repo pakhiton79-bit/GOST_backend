@@ -10,17 +10,35 @@ const FASTENING_STORAGE_KEY = 'gost10198-i4-fastening-type';
 const OPTIONS_STORAGE_PREFIX = 'gost10198-i4-opt-';             // галочки и настройки
 
 // ============ Толщины «в наличии» ============
+// Свои толщины у типа (THICKNESS_STORAGE_KEY), а пока их в типе не меняли
+// (ключа нет) - общие из окна «Настройки» (siteAvailableThicknesses в
+// common-settings.js; по указанию пользователя: свои у типа в приоритете).
+// thicknessFromSite - тип сейчас берёт общие.
+let thicknessFromSite = false;
 function loadAvailableThicknesses(){
   try{
     const raw = localStorage.getItem(THICKNESS_STORAGE_KEY);
-    if(!raw) return [];
+    thicknessFromSite = !raw;
+    if(!raw) return siteAvailableThicknesses().filter(v => AVAILABLE_THICKNESS_OPTIONS.includes(v));
     const arr = JSON.parse(raw).filter(v => AVAILABLE_THICKNESS_OPTIONS.includes(v));
     return arr.sort((a,b)=>a-b);
   }catch(e){ return []; }
 }
 function saveAvailableThicknesses(){
   try{ localStorage.setItem(THICKNESS_STORAGE_KEY, JSON.stringify(availableThicknesses)); }catch(e){}
+  thicknessFromSite = false;
 }
+// «Как в общих настройках»: свои толщины типа забываются, берутся общие.
+function useSiteThickness(){
+  try{ localStorage.removeItem(THICKNESS_STORAGE_KEY); }catch(e){}
+  availableThicknesses = loadAvailableThicknesses();
+  buildThicknessCheckboxList();
+  updateThicknessSummary();
+  invalidateCalc();
+}
+// Общие толщины поменяли в окне «Настройки» - тип, который берёт их,
+// обновляется сразу.
+window.addEventListener('site-thickness-change', () => { if(thicknessFromSite) useSiteThickness(); });
 
 let availableThicknesses = loadAvailableThicknesses();
 
@@ -80,6 +98,9 @@ function updateThicknessSummary(){
     label.textContent = `Выбрано (${availableThicknesses.length}): ${shown} мм${more}`;
     note.style.display = 'none';
   }
+  if(thicknessFromSite) label.textContent += ' (общие настройки)';
+  const useSite = document.getElementById('thicknessUseSite');
+  if(useSite) useSite.disabled = thicknessFromSite;
 }
 
 function toggleThicknessDropdown(){

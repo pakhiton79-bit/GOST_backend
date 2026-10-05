@@ -3,8 +3,11 @@
 // (по указанию пользователя): слева разделы, справа их настройки. Разделы:
 // «Оформление» - тема: как в системе / светлая / тёмная (по умолчанию - как
 // в системе), переключатель - три значка с плавно перемещающимся ползунком
-// (по образцу пользователя); «Сброс настроек» - отдельным разделом, сброс
-// всех сохранённых настроек сайта (resetAllSiteSettings). Справа - только
+// (по образцу пользователя); «Толщины в наличии» - общие для всех типов
+// ящиков (siteAvailableThicknesses; толщины, выбранные внутри типа, - в
+// приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
+// «Сброс настроек» - отдельным разделом, сброс всех сохранённых настроек
+// сайта (resetAllSiteSettings). Справа - только
 // выбранный слева раздел. Новые настройки - разделами в
 // SITE_SETTINGS_SECTIONS.
 // Настройки - одним объектом в localStorage, общие для всех страниц сайта.
@@ -19,6 +22,9 @@ const SITE_THEME_DEFAULT = 'system';
 // страниц типов (толщины, галочки, поля, «Тонкая настройка», нормы времени,
 // плотность).
 const SITE_STORAGE_PREFIX = SITE_SETTINGS_STORAGE_KEY.replace(/site-settings$/, '');
+// Общие толщины «в наличии» - тот же ряд, что у типов (AVAILABLE_THICKNESS_OPTIONS
+// в js/<тип>/options.js).
+const SITE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 
 // Значки - SVG (а не символы: те на части систем рисуются эмодзи или тофу).
 const siteIcon = body => `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
@@ -78,6 +84,28 @@ function siteThemeSwitchHtml(){
   return `<div class="theme-switch" role="radiogroup" aria-label="Тема оформления" style="--i:${idx}"><span class="theme-switch-thumb" aria-hidden="true"></span>${opts}</div>`;
 }
 
+// Общие толщины «в наличии» (по возрастанию; пусто - строго по ГОСТ).
+function siteAvailableThicknesses(){
+  const a = loadSiteSettings().availableThickness;
+  return Array.isArray(a) ? a.filter(v => SITE_THICKNESS_OPTIONS.includes(v)).sort((x, y) => x - y) : [];
+}
+// Сохранить общие толщины и сообщить странице типа (она обновит свои, если
+// берёт общие).
+function saveSiteThicknesses(arr){
+  saveSiteSetting('availableThickness', arr);
+  window.dispatchEvent(new Event('site-thickness-change'));
+}
+function siteThicknessHtml(){
+  const sel = siteAvailableThicknesses();
+  const boxes = SITE_THICKNESS_OPTIONS.map(t =>
+    `<label><input type="checkbox" value="${t}"${sel.includes(t) ? ' checked' : ''}> ${t} мм</label>`).join('');
+  return `<div class="thickness-dropdown-actions">
+      <button type="button" class="btn-secondary" data-site-thickness-all="1">Выбрать все</button>
+      <button type="button" class="btn-secondary" data-site-thickness-all="0">Снять все</button>
+    </div>
+    <div class="thickness-checkbox-list" id="siteThicknessList">${boxes}</div>`;
+}
+
 // Сброс всех настроек сайта (по указанию пользователя): после подтверждения
 // удаляются все ключи сайта в localStorage, страница перезагружается -
 // всё возвращается к значениям по умолчанию.
@@ -105,6 +133,15 @@ const SITE_SETTINGS_SECTIONS = [
     }],
   },
   {
+    id: 'thickness', title: 'Толщины в наличии',
+    rows: () => [{
+      title: 'Общие толщины в наличии',
+      hint: 'Берутся во всех типах ящиков, где толщины не меняли. Толщины, выбранные внутри типа, - в приоритете (вернуть общие - кнопкой «Как в общих настройках» в списке толщин типа). Ничего не выбрано - расчёт строго по ГОСТ.',
+      control: siteThicknessHtml,
+      wide: true,
+    }],
+  },
+  {
     id: 'reset', title: 'Сброс настроек',
     rows: () => [{
       title: 'Сбросить все настройки',
@@ -119,7 +156,7 @@ function siteSettingsContentHtml(){
     `<a class="site-settings-nav-item${i === 0 ? ' active' : ''}" href="#site-settings-${s.id}" data-section="${s.id}">${s.title}</a>`).join('');
   const sections = SITE_SETTINGS_SECTIONS.map((s, i) => `<section class="site-settings-section${i === 0 ? ' active' : ''}" id="site-settings-${s.id}">
       <h3>${s.title}</h3>
-      ${s.rows().map(r => `<div class="site-settings-row">
+      ${s.rows().map(r => `<div class="site-settings-row${r.wide ? ' site-settings-row-wide' : ''}">
         <div class="site-settings-row-text"><div class="site-settings-row-title">${r.title}</div><div class="site-settings-row-hint">${r.hint}</div></div>
         <div class="site-settings-row-control">${r.control()}</div>
       </div>`).join('')}
@@ -210,6 +247,17 @@ function initSiteSettings(){
     const opt = e.target.closest('.theme-switch-option');
     if(opt) selectTheme(opt);
     if(e.target.closest('#siteSettingsReset')) resetAllSiteSettings();
+    const all = e.target.closest('[data-site-thickness-all]');
+    if(all){
+      const on = all.dataset.siteThicknessAll === '1';
+      content.querySelectorAll('#siteThicknessList input').forEach(i => { i.checked = on; });
+      saveSiteThicknesses(on ? SITE_THICKNESS_OPTIONS.slice() : []);
+    }
+  });
+  // Галочки общих толщин - сохраняются сразу.
+  content.addEventListener('change', e => {
+    if(!e.target.closest('#siteThicknessList')) return;
+    saveSiteThicknesses(Array.from(content.querySelectorAll('#siteThicknessList input:checked')).map(i => parseInt(i.value, 10)));
   });
   // Стрелки - по вариантам, как у обычной группы переключателей.
   content.addEventListener('keydown', e => {

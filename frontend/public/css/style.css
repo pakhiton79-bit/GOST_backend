@@ -251,6 +251,9 @@
   .site-settings-row-title{font-size:16px;font-weight:500;color:var(--ink);}
   .site-settings-row-hint{margin-top:4px;font-size:13px;font-weight:400;line-height:1.45;color:var(--ink-soft);}
   .site-settings-row-control{flex:0 0 auto;}
+  /* Строка с крупным элементом (список общих толщин) - элемент под текстом,
+     во всю ширину. */
+  .site-settings-row-wide{flex-direction:column;align-items:stretch;gap:14px;}
   @media screen and (max-width:640px){
     .site-settings-overlay{padding:0;}
     .site-settings-dialog{width:100%;height:100%;border-radius:0;border:none;}
@@ -1163,6 +1166,7 @@
   .thickness-dropdown-panel.open{display:block;}
   .thickness-dropdown-actions{
     display:flex;
+    flex-wrap:wrap;
     gap:10px;
     margin-bottom:12px;
     padding-bottom:12px;
@@ -1173,6 +1177,8 @@
     padding:8px 14px;
     font-size:12px;
   }
+  /* «Как в общих настройках», когда тип и так берёт общие толщины. */
+  .thickness-dropdown-actions button:disabled{opacity:.45;cursor:default;pointer-events:none;}
   .thickness-checkbox-list{
     display:grid;
     /* Список стандартных толщин короткий (до 16 значений - у типов I-3/II-1,
