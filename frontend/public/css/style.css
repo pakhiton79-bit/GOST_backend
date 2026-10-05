@@ -1166,7 +1166,6 @@
   .thickness-dropdown-panel.open{display:block;}
   .thickness-dropdown-actions{
     display:flex;
-    flex-wrap:wrap;
     gap:10px;
     margin-bottom:12px;
     padding-bottom:12px;
@@ -1177,8 +1176,6 @@
     padding:8px 14px;
     font-size:12px;
   }
-  /* «Как в общих настройках», когда тип и так берёт общие толщины. */
-  .thickness-dropdown-actions button:disabled{opacity:.45;cursor:default;pointer-events:none;}
   .thickness-checkbox-list{
     display:grid;
     /* Список стандартных толщин короткий (до 16 значений - у типов I-3/II-1,

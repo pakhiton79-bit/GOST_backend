@@ -28,17 +28,15 @@ function saveAvailableThicknesses(){
   try{ localStorage.setItem(THICKNESS_STORAGE_KEY, JSON.stringify(availableThicknesses)); }catch(e){}
   thicknessFromSite = false;
 }
-// «Как в общих настройках»: свои толщины типа забываются, берутся общие.
-function useSiteThickness(){
-  try{ localStorage.removeItem(THICKNESS_STORAGE_KEY); }catch(e){}
+// Общие толщины поменяли в окне «Настройки» - тип, который берёт их,
+// обновляется сразу.
+window.addEventListener('site-thickness-change', () => {
+  if(!thicknessFromSite) return;
   availableThicknesses = loadAvailableThicknesses();
   buildThicknessCheckboxList();
   updateThicknessSummary();
   invalidateCalc();
-}
-// Общие толщины поменяли в окне «Настройки» - тип, который берёт их,
-// обновляется сразу.
-window.addEventListener('site-thickness-change', () => { if(thicknessFromSite) useSiteThickness(); });
+});
 
 let availableThicknesses = loadAvailableThicknesses();
 
@@ -99,8 +97,6 @@ function updateThicknessSummary(){
     note.style.display = 'none';
   }
   if(thicknessFromSite) label.textContent += ' (общие настройки)';
-  const useSite = document.getElementById('thicknessUseSite');
-  if(useSite) useSite.disabled = thicknessFromSite;
 }
 
 function toggleThicknessDropdown(){
