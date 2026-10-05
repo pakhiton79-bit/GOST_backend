@@ -14,6 +14,8 @@ const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
+const authRoutes = require('./src/auth/routes');
+const { attachUser } = require('./src/auth/session');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
 // Разделы таблицы деталей и их множители в итоговом объёме (щиты
@@ -41,7 +43,14 @@ function withTableEdits(result, rawEdits, sections, input, extra) {
 }
 
 const app = express();
+// Render и другие хостинги стоят за прокси: настоящий IP клиента и https -
+// из заголовков прокси (нужно для ограничения частоты запросов и cookie
+// Secure у аккаунтов).
+app.set('trust proxy', 1);
 app.use(express.json());
+// Аккаунты: кто вошёл (req.user) и /api/auth/* (см. src/auth/routes.js).
+app.use(attachUser);
+app.use('/api/auth', authRoutes);
 
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -
 // на входе в API фильтруем до допустимого сортаментного ряда и сортируем,

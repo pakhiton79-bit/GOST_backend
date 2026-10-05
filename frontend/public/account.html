@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аккаунт - Тара+</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-settings.js"></script>
+<script src="/js/common-account.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="index.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <div class="card auth-card" id="accountCard" hidden>
+    <h2>Аккаунт</h2>
+    <div class="account-row"><span>Почта</span><span id="accountEmail"></span></div>
+    <div class="account-row"><span>Подписка</span><span id="accountPlan"></span></div>
+    <div class="account-row"><span>Зарегистрирован</span><span id="accountCreated"></span></div>
+    <button type="button" class="btn-secondary auth-submit" id="accountLogout">Выйти</button>
+  </div>
+</div>
+<script src="/js/account/account.js"></script>
+</body>
+</html>

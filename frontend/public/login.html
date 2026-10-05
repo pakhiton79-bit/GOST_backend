@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Вход - Тара+</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-settings.js"></script>
+<script src="/js/common-account.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="index.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <div class="card auth-card">
+    <h2 id="authTitle">Вход</h2>
+    <div class="auth-msg" id="authMsg" hidden></div>
+    <form id="authForm" novalidate>
+      <p class="auth-text" id="authText" hidden></p>
+      <div class="auth-field" data-field="email">
+        <label for="authEmail">Электронная почта</label>
+        <input type="email" id="authEmail" autocomplete="email" maxlength="254">
+      </div>
+      <div class="auth-field" data-field="code">
+        <label for="authCode">Код из письма</label>
+        <input type="text" id="authCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6">
+      </div>
+      <div class="auth-field" data-field="password">
+        <label for="authPassword" id="authPasswordLabel">Пароль</label>
+        <input type="password" id="authPassword" autocomplete="current-password" maxlength="200">
+      </div>
+      <div class="auth-field" data-field="password2">
+        <label for="authPassword2">Пароль ещё раз</label>
+        <input type="password" id="authPassword2" autocomplete="new-password" maxlength="200">
+      </div>
+      <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
+    </form>
+    <div class="auth-links" id="authLinks"></div>
+  </div>
+</div>
+<script src="/js/account/login.js"></script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+/* Аккаунты (только серверная версия сайта): кнопка «Войти» / аккаунт в
+   верхней панели, страницы входа (login.html) и аккаунта (account.html).
+   Поверх общего style.css. */
+
+/* Кнопка аккаунта - как «Настройки», слева от неё. */
+.site-account-btn{text-decoration:none;}
+.site-account-btn + .site-settings-btn{margin-left:0;}
+.site-account-btn span{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* Узкий экран: у кнопок аккаунта и «Настройки» - только значки, иначе
+   панель не помещается по ширине. */
+@media screen and (max-width:480px){
+  .site-account-btn span, .site-account-btn + .site-settings-btn span{display:none;}
+  .site-account-btn, .site-account-btn + .site-settings-btn{padding:0 8px;}
+  .site-topbar-links a{white-space:nowrap;}
+}
+
+.auth-card{max-width:440px;margin:0 auto 24px;}
+.auth-card h2{margin-bottom:20px;}
+.auth-field{margin-bottom:16px;}
+.auth-field input{
+  width:100%;
+  box-sizing:border-box;
+  padding:12px 14px;
+  border:1px solid var(--border-input);
+  border-radius:8px;
+  font-family:inherit;
+  font-size:16px;
+  background:var(--panel);
+  color:var(--ink);
+}
+.auth-field input:focus{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-color:var(--accent);
+}
+.auth-text{font-size:14px;line-height:1.5;color:var(--ink);margin:0 0 16px;}
+.auth-text b{font-weight:600;}
+.auth-submit{width:100%;margin-top:4px;}
+.auth-submit:disabled{opacity:.6;cursor:progress;}
+.auth-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 16px;margin-top:18px;font-size:14px;}
+.auth-links a{color:var(--accent);text-decoration:none;cursor:pointer;}
+.auth-links a:hover{text-decoration:underline;}
+.auth-msg{font-size:14px;line-height:1.45;margin:0 0 16px;padding:10px 12px;border-radius:8px;}
+.auth-msg-error{color:var(--error);background:color-mix(in srgb, var(--error) 10%, transparent);}
+.auth-msg-ok{color:var(--ink);background:var(--accent-wash);}
+.auth-msg[hidden]{display:none;}
+
+/* Страница аккаунта: строки «название - значение». */
+.account-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--rule);font-size:15px;}
+.account-row:last-of-type{border-bottom:none;}
+.account-row span:first-child{color:var(--ink-soft);}
+.account-row span:last-child{color:var(--ink);font-weight:500;text-align:right;word-break:break-all;}
