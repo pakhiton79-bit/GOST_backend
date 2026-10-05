@@ -2,63 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Аккаунт - Тара+</title>
-<link rel="icon" type="image/png" href="/images/favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/account.css">
-<script src="/js/common-settings.js"></script>
-<script src="/js/common-account.js"></script>
+<!-- Аккаунт перенесён в окно «Настройки» (по указанию пользователя): старая
+     ссылка открывает главную сразу на разделе «Аккаунт». -->
+<meta http-equiv="refresh" content="0; url=index.html#account">
+<script>location.replace('index.html#account');</script>
 </head>
-<body>
-<div class="wrap">
-  <div class="top-nav">
-    <a href="index.html">← Назад</a>
-    <a href="index.html">Главная</a>
-  </div>
-  <div id="accountBox" hidden>
-    <div class="card auth-card">
-      <h2>Аккаунт</h2>
-      <div class="account-row"><span>Почта</span><span id="accountEmail"></span></div>
-      <div class="account-row"><span>Подписка</span><span id="accountPlan"></span></div>
-      <div class="account-row"><span>Зарегистрирован</span><span id="accountCreated"></span></div>
-      <div class="account-actions">
-        <a class="btn-secondary account-btn" href="plans.html">Подписки</a>
-        <a class="btn-secondary account-btn" href="admin.html" id="accountAdmin" hidden>Администрирование</a>
-      </div>
-    </div>
-    <div class="card auth-card">
-      <h2>Расчёты</h2>
-      <div class="account-quota">
-        <div class="account-quota-num"><span id="quotaLeft"></span><small id="quotaOf"></small></div>
-        <div class="account-quota-bar"><div id="quotaBar"></div></div>
-      </div>
-      <div class="account-row"><span>Осталось в этом месяце</span><span id="quotaMonthly"></span></div>
-      <div class="account-row" id="quotaWelcomeRow"><span>Бонус за регистрацию</span><span id="quotaWelcome"></span></div>
-      <div class="account-row"><span>Новые расчёты</span><span id="quotaReset"></span></div>
-      <p class="account-upsell" id="quotaUpsell" hidden></p>
-    </div>
-    <div class="card auth-card">
-      <h2>Устройства</h2>
-      <p class="auth-text" id="devicesNote"></p>
-      <div class="auth-devices" id="devicesList"></div>
-      <button type="button" class="btn-secondary auth-submit" id="accountLogout">Выйти на этом устройстве</button>
-    </div>
-    <div class="card auth-card account-danger">
-      <h2>Удаление аккаунта</h2>
-      <p class="auth-text">Аккаунт, подписка, счётчики расчётов и входы на всех устройствах будут удалены без возможности восстановления. Согласие на обработку персональных данных при этом отзывается.</p>
-      <div class="auth-msg" id="deleteMsg" hidden></div>
-      <div class="auth-field">
-        <label for="deletePassword">Пароль для подтверждения</label>
-        <input type="password" id="deletePassword" autocomplete="current-password" maxlength="200">
-      </div>
-      <button type="button" class="btn-secondary auth-submit account-delete-btn" id="accountDelete">Удалить аккаунт</button>
-    </div>
-  </div>
-</div>
-<script src="/js/account/account.js"></script>
-</body>
+<body></body>
 </html>

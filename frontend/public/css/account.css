@@ -3,21 +3,27 @@
    Поверх общего style.css. */
 
 /* Кнопка аккаунта - как «Настройки», слева от неё. */
-.site-account-btn{text-decoration:none;}
-.site-account-btn + .site-settings-btn{margin-left:0;}
+/* Для гостей: «Войти» и «Регистрация» (по указанию пользователя - больше
+   наверху ничего, остальное - в окне «Настройки»). */
+.site-account-btn, .site-register-btn{text-decoration:none;margin-right:-14px;}
+.site-register-btn{margin-left:0;background:var(--accent);border-color:var(--accent);color:#fff;}
+.site-register-btn:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff;}
+.site-account-btn ~ .site-settings-btn{margin-left:0;}
 .site-account-btn span{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* Узкий экран: у кнопок аккаунта и «Настройки» - только значки, иначе
    панель не помещается по ширине. */
 @media screen and (max-width:480px){
-  .site-account-btn span, .site-account-btn + .site-settings-btn span{display:none;}
-  .site-account-btn, .site-account-btn + .site-settings-btn{padding:0 8px;}
+  .site-account-btn span, .site-account-btn ~ .site-settings-btn span{display:none;}
+  .site-account-btn, .site-account-btn ~ .site-settings-btn{padding:0 8px;}
+  .site-account-btn{margin-right:-8px;}
+  .site-register-btn{display:none;}
   .site-topbar-links a{white-space:nowrap;}
 }
 
 .auth-card{max-width:440px;margin:0 auto 24px;}
 .auth-card h2{margin-bottom:20px;}
 .auth-field{margin-bottom:16px;}
-.auth-field input{
+.auth-field input:not([type=checkbox]){
   width:100%;
   box-sizing:border-box;
   padding:12px 14px;
@@ -28,7 +34,7 @@
   background:var(--panel);
   color:var(--ink);
 }
-.auth-field input:focus{
+.auth-field input:not([type=checkbox]):focus{
   outline:2px solid var(--accent);
   outline-offset:2px;
   border-color:var(--accent);
@@ -129,7 +135,7 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 .auth-label-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
 .auth-forgot{font-size:13px;color:var(--accent);text-decoration:none;cursor:pointer;}
 .auth-forgot:hover{text-decoration:underline;}
-.auth-page .auth-field input{border-radius:10px;padding:13px 16px;}
+.auth-page .auth-field input:not([type=checkbox]){border-radius:10px;padding:13px 16px;}
 .auth-page .auth-code{font-size:22px;letter-spacing:.35em;text-align:center;}
 .auth-pw{position:relative;}
 .auth-pw input{padding-right:48px !important;}
@@ -339,7 +345,8 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 .auth-consents{display:flex;flex-direction:column;gap:10px;margin:6px 0 20px !important;}
 .auth-consents[hidden]{display:none;}
 .auth-page .auth-field label.auth-check{display:flex;gap:10px;align-items:flex-start;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;line-height:1.45;color:var(--ink);margin:0;cursor:pointer;}
-.auth-check input{width:18px;height:18px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--accent);cursor:pointer;}
+.auth-check input{width:18px;height:18px;margin:1px 0 0;flex:0 0 auto;accent-color:var(--accent);cursor:pointer;outline:none;}
+.auth-check input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
 .auth-check a{color:var(--accent);}
 .auth-msg-link{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
 .auth-legal{margin-top:14px;text-align:center;font-size:12px;color:var(--ink-soft);}
@@ -362,3 +369,18 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 .site-sub-btn-main:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
 .plan-for{font-size:13px;color:var(--ink-soft);margin-top:2px;}
 .plans-note a{color:var(--accent);}
+
+/* Окно «Настройки», раздел «Аккаунт». */
+.site-acc-rows .account-row{padding:10px 0;font-size:14px;}
+.site-acc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+.site-acc-actions .site-sub-btn{margin-top:0;}
+.site-acc-actions button.site-sub-btn{padding:8px 14px;}
+.site-acc-block{border-top:1px solid var(--rule);margin-top:18px;padding-top:16px;}
+.site-acc-block .auth-devices{margin-top:10px;}
+.site-acc-block .auth-device button{margin:0;padding:7px 12px;font-size:13px;}
+.site-acc-danger .site-usage-title{color:var(--error);}
+.site-acc-del-btn{color:var(--error);margin-top:10px;}
+.site-acc-del-btn:hover{border-color:var(--error);}
+.site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}
+.site-acc-delete .auth-msg{margin:10px 0 0;}
+.site-acc-delete[hidden], .site-acc-del-btn[hidden]{display:none;}

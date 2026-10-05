@@ -4,9 +4,9 @@
 const PLAN_DEVICES = n => n === 1 ? '1 устройство' : n + ' устройства';
 // Для кого подписка - одна строка под названием.
 const PLAN_FOR = {
-  free: 'Попробовать калькуляторы',
-  pro: 'Для постоянной работы с тарой',
-  team: 'Для отдела или производства',
+  free: 'Попробовать',
+  pro: 'Для постоянной работы',
+  team: 'Для команды',
 };
 
 function planCard(p, current){
@@ -36,7 +36,7 @@ Promise.all([fetch('/api/plans').then(r => r.json()), fetchAccountUser()]).then(
 // подписку уже сейчас.
 if(typeof LEGAL !== 'undefined' && LEGAL.email){
   const note = document.getElementById('plansNote');
-  note.textContent = 'Оплата на сайте появится совсем скоро. Чтобы подключить Pro или Team уже сейчас, напишите на ';
+  note.textContent = 'Оплата на сайте скоро появится. Подключить Pro или Team сейчас: ';
   const a = document.createElement('a');
   a.href = 'mailto:' + LEGAL.email;
   a.textContent = LEGAL.email;

@@ -24,9 +24,8 @@ function calcQuota(req, res, next) {
     // Есть подписка больше - предложить её (по указанию пользователя).
     const next = q.plan === 'free' ? PLANS.pro : q.plan === 'pro' ? PLANS.team : null;
     return res.status(402).json({
-      error: `Расчёты по подписке ${q.planName} на этот месяц закончились. Новые будут ${fmtDate(q.periodEnd)}`
-        + (next ? `, а с подпиской ${next.name} можно считать дальше уже сейчас: ${next.monthly} расчётов в месяц.` : '.'),
-      errorLink: { href: 'plans.html', text: next ? 'Выбрать подписку' : 'Подписки' },
+      error: `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.`,
+      errorLink: next ? { href: 'plans.html', text: `Больше в ${next.name}` } : undefined,
     });
   }
   const type = req.params.type; // у обработчика расчёта req.params уже свои

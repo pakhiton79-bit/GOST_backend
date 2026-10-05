@@ -1,43 +1,55 @@
-// Аккаунты (только серверная версия сайта): кнопка в верхней панели слева от
-// «Настройки» - «Войти» (ведёт на login.html) или почта вошедшего (ведёт на
-// account.html). Подключается в <head> после common-settings.js: панель
-// строится там же по DOMContentLoaded, этот обработчик срабатывает следом.
+// Аккаунты (только серверная версия сайта). По указанию пользователя в
+// верхней панели - только «Войти» и «Регистрация» (для гостей), всё остальное
+// об аккаунте - в окне «Настройки»: разделы «Аккаунт» (почта, выход,
+// устройства, удаление) и «Подписка» (лимиты). Подключается в <head> после
+// common-settings.js: панель строится там же по DOMContentLoaded, этот
+// обработчик срабатывает следом.
 const ACCOUNT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
 
-// Кто вошёл: { email, plan, createdAt } или null (ошибка сети - тоже null).
+// Кто вошёл: { email, createdAt, quota, isAdmin } или null (ошибка сети - тоже null).
 function fetchAccountUser(){
   return fetch('/api/auth/me', { credentials: 'same-origin' })
     .then(r => r.ok ? r.json() : { user: null })
     .then(d => d.user || null)
     .catch(() => null);
 }
+// Ссылка на вход / регистрацию с возвратом на эту страницу.
+function authHref(mode){
+  const here = location.pathname.replace(/^\//, '') + location.search;
+  const q = [];
+  if(mode === 'register') q.push('mode=register');
+  if(here && !/^(login|account)\.html/.test(here)) q.push('next=' + encodeURIComponent(here));
+  return 'login.html' + (q.length ? '?' + q.join('&') : '');
+}
 
+// Кнопки «Войти» и «Регистрация» слева от «Настройки» - только для гостей.
 function initAccountButton(){
   const settingsBtn = document.getElementById('siteSettingsBtn');
   if(!settingsBtn || document.getElementById('siteAccountBtn')) return;
-  const a = document.createElement('a');
-  a.id = 'siteAccountBtn';
-  a.className = 'site-settings-btn site-account-btn';
-  const here = location.pathname.replace(/^\//, '') + location.search;
-  const loginHref = 'login.html' + (here && !/^(login|account)\.html/.test(here) ? '?next=' + encodeURIComponent(here) : '');
-  a.href = loginHref;
-  a.innerHTML = ACCOUNT_ICON + '<span>Войти</span>';
-  settingsBtn.parentNode.insertBefore(a, settingsBtn);
-  initSettingsSubscription();
+  initSettingsAccount();
   fetchAccountUser().then(user => {
     accountUserCache = user;
-    if(!user) return;
-    a.href = 'account.html';
-    a.querySelector('span').textContent = user.email;
-    a.title = 'Аккаунт: ' + user.email;
+    if(user) return;
+    const login = document.createElement('a');
+    login.id = 'siteAccountBtn';
+    login.className = 'site-settings-btn site-account-btn';
+    login.href = authHref('login');
+    login.innerHTML = ACCOUNT_ICON + '<span>Войти</span>';
+    const reg = document.createElement('a');
+    reg.className = 'site-settings-btn site-register-btn';
+    reg.href = authHref('register');
+    reg.innerHTML = '<span>Регистрация</span>';
+    settingsBtn.parentNode.insertBefore(login, settingsBtn);
+    settingsBtn.parentNode.insertBefore(reg, settingsBtn);
   });
 }
 
-// ---------- Раздел «Подписка» в окне «Настройки» ----------
-// (по указанию пользователя, по образцу Claude): подписка и полосы
-// использованного лимита - месячного и бонуса за регистрацию. Раздел
-// добавляется в SITE_SETTINGS_SECTIONS (common-settings.js) вторым, после
-// «Оформления»; данные - при каждом открытии окна.
+// ---------- Разделы «Аккаунт» и «Подписка» в окне «Настройки» ----------
+// «Аккаунт»: почта, дата регистрации, выход, администрирование (для
+// администратора), устройства, удаление аккаунта. «Подписка» (по образцу
+// Claude): подписка и полосы использованного лимита - месячного и бонуса за
+// регистрацию. Разделы добавляются в SITE_SETTINGS_SECTIONS
+// (common-settings.js) после «Оформления»; данные - при каждом открытии окна.
 let accountUserCache;
 function plural(n, one, few, many){
   const a = n % 10, b = n % 100;
@@ -55,15 +67,12 @@ function usageBlock(title, used, total, rightTop, leftBottom){
 function renderSiteSub(user){
   const box = document.getElementById('siteSubBox');
   if(!box) return;
-  if(!user){
-    box.innerHTML = '<p class="site-sub-text">Войдите, чтобы видеть подписку и сколько расчётов осталось.</p><a class="btn-secondary site-sub-btn" href="login.html">Войти</a>';
-    return;
-  }
+  if(!user){ box.innerHTML = guestHtml('Войдите, чтобы видеть подписку и сколько расчётов осталось.'); return; }
   const q = user.quota;
   const days = Math.max(1, Math.ceil((new Date(q.periodEnd) - Date.now()) / 86400000));
   const upgrade = nextPlanId(q.plan);
   let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'} · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}</div></div>`
-    + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить подписку</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
+    + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
   html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
   if(q.welcomeLeft > 0 || q.plan === 'free'){
     const used = q.welcomeTotal - q.welcomeLeft;
@@ -71,8 +80,94 @@ function renderSiteSub(user){
   }
   box.innerHTML = html;
 }
+function guestHtml(text){
+  return `<p class="site-sub-text">${text}</p><div class="site-acc-actions">`
+    + `<a class="site-sub-btn site-sub-btn-main" href="${authHref('login')}">Войти</a>`
+    + `<a class="btn-secondary site-sub-btn" href="${authHref('register')}">Регистрация</a></div>`;
+}
+const fmtAccDate = iso => new Date(iso).toLocaleDateString('ru-RU');
+const fmtAccDateTime = iso => fmtAccDate(iso) + ' ' + new Date(iso).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+function escHtml(s){ return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function renderSiteAccount(user){
+  const box = document.getElementById('siteAccountBox');
+  if(!box) return;
+  if(!user){ box.innerHTML = guestHtml('Войдите или зарегистрируйтесь, чтобы считать ящики.'); return; }
+  box.innerHTML = `<div class="site-acc-rows">
+      <div class="account-row"><span>Почта</span><span>${escHtml(user.email)}</span></div>
+      <div class="account-row"><span>Зарегистрирован</span><span>${fmtAccDate(user.createdAt)}</span></div>
+    </div>
+    <div class="site-acc-actions">
+      <button type="button" class="btn-secondary site-sub-btn" data-acc="logout">Выйти</button>
+      ${user.isAdmin ? '<a class="btn-secondary site-sub-btn" href="admin.html">Администрирование</a>' : ''}
+    </div>
+    <div class="site-acc-block">
+      <div class="site-usage-title">Устройства</div>
+      <p class="site-sub-text" id="siteAccDevNote"></p>
+      <div class="auth-devices" id="siteAccDevices"></div>
+    </div>
+    <div class="site-acc-block site-acc-danger">
+      <div class="site-usage-title">Удаление аккаунта</div>
+      <p class="site-sub-text">Аккаунт, подписка, счётчики и входы на всех устройствах удаляются без возможности восстановления.</p>
+      <div class="site-acc-delete" id="siteAccDelete" hidden>
+        <div class="auth-msg" id="siteAccDelMsg" hidden></div>
+        <div class="auth-field"><input type="password" id="siteAccDelPw" placeholder="Пароль для подтверждения" autocomplete="current-password" maxlength="200" aria-label="Пароль для подтверждения"></div>
+        <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-confirm">Удалить навсегда</button>
+      </div>
+      <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-open">Удалить аккаунт</button>
+    </div>`;
+  loadAccountDevices(user);
+}
+function loadAccountDevices(user){
+  fetch('/api/auth/devices', { credentials: 'same-origin' }).then(r => r.json())
+    .then(d => renderAccountDevices(d.devices || [], user.quota)).catch(() => {});
+}
+function renderAccountDevices(list, q){
+  const note = document.getElementById('siteAccDevNote'), box = document.getElementById('siteAccDevices');
+  if(!note || !box) return;
+  note.textContent = `По подписке ${q.planName}: ${q.devices === 1 ? '1 устройство' : 'до ' + q.devices + ' устройств'}, сейчас ${list.length}.`;
+  box.innerHTML = list.map(dev => `<div class="auth-device"><div><div class="auth-device-name">${escHtml(dev.label)}${dev.current ? ' (это устройство)' : ''}</div>`
+    + `<div class="auth-device-seen">Последний раз: ${fmtAccDateTime(dev.lastSeen)}</div></div>`
+    + (dev.current ? '' : `<button type="button" class="btn-secondary" data-acc="device-logout" data-id="${escHtml(dev.id)}">Выйти</button>`) + '</div>').join('');
+}
+
+// Действия в разделе «Аккаунт».
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-acc]');
+  if(!el || !el.closest('#siteAccountBox')) return;
+  const act = el.dataset.acc;
+  const post = (path, body) => fetch('/api/auth/' + path, { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  if(act === 'logout'){
+    el.disabled = true;
+    post('logout').finally(() => { location.href = 'index.html'; });
+  } else if(act === 'device-logout'){
+    el.disabled = true;
+    const d = await post('devices/logout', { id: el.dataset.id }).then(r => r.json()).catch(() => ({}));
+    if(d.devices && accountUserCache) renderAccountDevices(d.devices, accountUserCache.quota); else el.disabled = false;
+  } else if(act === 'delete-open'){
+    el.hidden = true;
+    document.getElementById('siteAccDelete').hidden = false;
+    document.getElementById('siteAccDelPw').focus();
+  } else if(act === 'delete-confirm'){
+    const msg = document.getElementById('siteAccDelMsg'), pw = document.getElementById('siteAccDelPw').value;
+    const fail = t => { msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = t; };
+    if(!pw) return fail('Введите пароль, чтобы подтвердить удаление.');
+    if(!window.confirm('Удалить аккаунт без возможности восстановления?')) return;
+    el.disabled = true;
+    try{
+      const r = await post('delete', { password: pw });
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
+      location.href = 'index.html';
+    }catch(err){ fail(err.message); el.disabled = false; }
+  }
+});
+
 if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
   SITE_SETTINGS_SECTIONS.splice(1, 0, {
+    id: 'account', title: 'Аккаунт',
+    rows: () => [{ title: 'Данные аккаунта', hint: '', control: () => '<div class="site-acc" id="siteAccountBox"></div>', wide: true }],
+  }, {
     id: 'subscription', title: 'Подписка',
     rows: () => [{
       title: 'Подписка и лимиты',
@@ -83,18 +178,28 @@ if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
   });
 }
 // Окно открыли - сразу последние известные данные, затем свежие с сервера.
-function initSettingsSubscription(){
+// Адрес с #account или #subscription (например, со старой страницы
+// account.html) - окно открывается сразу на этом разделе.
+function initSettingsAccount(){
   const btn = document.getElementById('siteSettingsBtn');
   if(!btn) return;
+  const render = u => { renderSiteAccount(u); renderSiteSub(u); };
   btn.addEventListener('click', () => {
-    if(accountUserCache !== undefined) renderSiteSub(accountUserCache);
-    fetchAccountUser().then(u => { accountUserCache = u; renderSiteSub(u); });
+    if(accountUserCache !== undefined) render(accountUserCache);
+    fetchAccountUser().then(u => { accountUserCache = u; render(u); });
   });
+  const section = location.hash.replace('#', '');
+  if(section === 'account' || section === 'subscription'){
+    btn.click();
+    const nav = document.querySelector(`.site-settings-nav-item[data-section="${section}"]`);
+    if(nav) nav.click();
+    history.replaceState(null, '', location.pathname + location.search);
+  }
 }
 
 // ---------- Предложения подписки (по указанию пользователя - к месту, не
-// везде): после расчёта - только когда расчётов осталось мало; в настройках
-// и на странице аккаунта - у Free. Числа подписок - с сервера (/api/plans).
+// везде и коротко): после расчёта - только когда расчётов осталось мало; в
+// настройках - кнопка «Улучшить». Числа подписок - с сервера (/api/plans).
 let plansPromise = null;
 function loadPlans(){
   if(!plansPromise) plansPromise = fetch('/api/plans').then(r => r.json()).then(d => {
@@ -107,7 +212,7 @@ function nextPlanId(plan){ return plan === 'free' ? 'pro' : plan === 'pro' ? 'te
 function calcWord(n){ return plural(n, 'расчёт', 'расчёта', 'расчётов'); }
 
 // Под кнопкой «Рассчитать» после успешного расчёта: осталось 5 и меньше
-// (или 10% и меньше у платных) - сколько осталось и что даст следующая подписка.
+// (или 10% и меньше у платных) - сколько осталось и ссылка на подписку больше.
 function showQuotaHint(q){
   const err = document.getElementById('err');
   if(!err) return;
@@ -126,15 +231,12 @@ function showQuotaHint(q){
   const next = nextPlanId(q.plan);
   loadPlans().then(plans => {
     const np = next && plans[next];
-    const head = q.left === 0 ? `Это был последний расчёт в этом месяце, новые будут ${reset}.`
-      : `В этом месяце осталось ${q.left} ${calcWord(q.left)}.`;
-    hint.innerHTML = '';
-    hint.append(head + ' ');
+    hint.textContent = q.left === 0 ? `Расчёты закончились до ${reset}.` : `Осталось ${q.left} ${calcWord(q.left)}.`;
     if(np){
       const a = document.createElement('a');
       a.href = 'plans.html';
-      a.textContent = `С подпиской ${np.name}`;
-      hint.append(a, ` - ${np.monthly.toLocaleString('ru-RU')} ${calcWord(np.monthly)} в месяц` + (np.devices > q.devices ? ` и ${np.devices} устройства.` : '.'));
+      a.textContent = `Больше в ${np.name}`;
+      hint.append(' ', a);
     }
     hint.hidden = false;
   });
