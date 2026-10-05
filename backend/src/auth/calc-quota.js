@@ -5,6 +5,7 @@
 // quota - сколько осталось.
 const store = require('./store');
 const { syncUser, quotaInfo, consume } = require('./plans');
+const stats = require('./stats');
 
 function fmtDate(iso) {
   const d = new Date(iso);
@@ -25,11 +26,14 @@ function calcQuota(req, res, next) {
       errorLink: { href: 'plans.html', text: 'Подписки' },
     });
   }
+  const type = req.params.type; // у обработчика расчёта req.params уже свои
   const json = res.json.bind(res);
   res.json = body => {
     if (body && typeof body === 'object' && !body.error && consume(user)) {
-      store.updateUser(user);
-      body.quota = quotaInfo(user, Date.now());
+      const t = Date.now();
+      store.updateUser(user, { totalCalcs: (user.totalCalcs || 0) + 1, lastCalcAt: t });
+      stats.recordCalc(type, user.id, t);
+      body.quota = quotaInfo(user, t);
     }
     return json(body);
   };

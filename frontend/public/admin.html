@@ -21,18 +21,45 @@
   </div>
   <header>
     <h1>Администрирование</h1>
-    <div class="subtitle">Аккаунты и подписки. Новая подписка действует с момента сохранения, месяц и счётчик расчётов начинаются заново.</div>
+    <div class="subtitle">Статистика, аккаунты и подписки. Данные - с последнего перезапуска сервера.</div>
   </header>
   <div class="auth-msg" id="adminMsg" hidden></div>
-  <div class="card" id="adminCard" hidden>
-    <div class="auth-field"><input type="search" id="adminSearch" placeholder="Поиск по почте" aria-label="Поиск по почте"></div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead><tr><th>Почта</th><th>Регистрация</th><th>Подписка</th><th>Расчёты</th><th>Устройства</th><th></th></tr></thead>
-        <tbody id="adminRows"></tbody>
-      </table>
+  <div id="adminBox" hidden>
+    <div class="admin-tiles" id="adminTiles"></div>
+    <div class="card">
+      <h2>Расчёты по дням</h2>
+      <p class="admin-chart-note">За последние 30 дней, по московскому времени.</p>
+      <div class="admin-chart" id="chartCalcs"></div>
+    </div>
+    <div class="admin-two">
+      <div class="card">
+        <h2>Регистрации по дням</h2>
+        <p class="admin-chart-note">За последние 30 дней.</p>
+        <div class="admin-chart admin-chart-small" id="chartRegs"></div>
+      </div>
+      <div class="card">
+        <h2>Расчёты по типам ящиков</h2>
+        <p class="admin-chart-note">За последние 30 дней.</p>
+        <div class="admin-hbars" id="typeBars"></div>
+      </div>
+    </div>
+    <details class="card admin-details">
+      <summary>Таблица по дням</summary>
+      <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>День</th><th>Расчёты</th><th>Регистрации</th></tr></thead><tbody id="dailyRows"></tbody></table></div>
+    </details>
+    <div class="card">
+      <h2>Аккаунты</h2>
+      <p class="admin-chart-note">Новая подписка действует с момента сохранения: месяц и счётчик расчётов начинаются заново.</p>
+      <div class="auth-field"><input type="search" id="adminSearch" placeholder="Поиск по почте" aria-label="Поиск по почте"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Почта</th><th>Подписка</th><th>Расчёты</th><th>Активность</th><th>Устройства</th><th></th></tr></thead>
+          <tbody id="adminRows"></tbody>
+        </table>
+      </div>
     </div>
   </div>
+  <div class="admin-tooltip" id="chartTip" hidden></div>
 </div>
 <script src="/js/account/admin.js"></script>
 </body>

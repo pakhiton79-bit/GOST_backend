@@ -23,11 +23,71 @@ function initAccountButton(){
   a.href = loginHref;
   a.innerHTML = ACCOUNT_ICON + '<span>Войти</span>';
   settingsBtn.parentNode.insertBefore(a, settingsBtn);
+  initSettingsSubscription();
   fetchAccountUser().then(user => {
+    accountUserCache = user;
     if(!user) return;
     a.href = 'account.html';
     a.querySelector('span').textContent = user.email;
     a.title = 'Аккаунт: ' + user.email;
+  });
+}
+
+// ---------- Раздел «Подписка» в окне «Настройки» ----------
+// (по указанию пользователя, по образцу Claude): подписка и полосы
+// использованного лимита - месячного и бонуса за регистрацию. Раздел
+// добавляется в SITE_SETTINGS_SECTIONS (common-settings.js) вторым, после
+// «Оформления»; данные - при каждом открытии окна.
+let accountUserCache;
+function plural(n, one, few, many){
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
+}
+function usageBlock(title, used, total, rightTop, leftBottom){
+  const pct = total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+  const level = pct >= 100 ? ' site-usage-full' : pct >= 80 ? ' site-usage-high' : '';
+  return `<div class="site-usage${level}">
+      <div class="site-usage-top"><span class="site-usage-title">${title}</span><span>${rightTop}</span></div>
+      <div class="site-usage-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><div style="width:${pct}%"></div></div>
+      <div class="site-usage-bottom"><span>${leftBottom}</span><span>${pct}% использовано</span></div>
+    </div>`;
+}
+function renderSiteSub(user){
+  const box = document.getElementById('siteSubBox');
+  if(!box) return;
+  if(!user){
+    box.innerHTML = '<p class="site-sub-text">Войдите, чтобы видеть подписку и сколько расчётов осталось.</p><a class="btn-secondary site-sub-btn" href="login.html">Войти</a>';
+    return;
+  }
+  const q = user.quota;
+  const days = Math.max(1, Math.ceil((new Date(q.periodEnd) - Date.now()) / 86400000));
+  let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'} · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}</div></div>`
+    + '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a></div>';
+  html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
+  if(q.welcomeLeft > 0 || q.plan === 'free'){
+    const used = q.welcomeTotal - q.welcomeLeft;
+    html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
+  }
+  box.innerHTML = html;
+}
+if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
+  SITE_SETTINGS_SECTIONS.splice(1, 0, {
+    id: 'subscription', title: 'Подписка',
+    rows: () => [{
+      title: 'Подписка и лимиты',
+      hint: 'Расчёт - одно нажатие «Рассчитать». Сначала тратятся расчёты месяца, потом бонус за регистрацию.',
+      control: () => '<div class="site-sub" id="siteSubBox"></div>',
+      wide: true,
+    }],
+  });
+}
+// Окно открыли - сразу последние известные данные, затем свежие с сервера.
+function initSettingsSubscription(){
+  const btn = document.getElementById('siteSettingsBtn');
+  if(!btn) return;
+  btn.addEventListener('click', () => {
+    if(accountUserCache !== undefined) renderSiteSub(accountUserCache);
+    fetchAccountUser().then(u => { accountUserCache = u; renderSiteSub(u); });
   });
 }
 

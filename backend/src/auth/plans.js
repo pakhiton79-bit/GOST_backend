@@ -62,7 +62,7 @@ function quotaInfo(user, now) {
   return {
     plan: user.plan, planName: p.name, devices: p.devices,
     monthly: p.monthly, used: user.used, monthlyLeft,
-    welcomeLeft: user.welcomeLeft, left: monthlyLeft + user.welcomeLeft,
+    welcomeLeft: user.welcomeLeft, welcomeTotal: WELCOME_CALCS, left: monthlyLeft + user.welcomeLeft,
     periodStart: new Date(start).toISOString(), periodEnd: new Date(end).toISOString(),
   };
 }

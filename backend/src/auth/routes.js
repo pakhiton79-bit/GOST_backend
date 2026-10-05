@@ -24,6 +24,7 @@ const { hashPassword, verifyPassword, newCode, newToken, sha256, hashCode, sameH
 const { sendCode } = require('./mailer');
 const { startSession, endSession } = require('./session');
 const { planOf, quotaInfo, syncUser } = require('./plans');
+const stats = require('./stats');
 
 const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
 const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -147,6 +148,7 @@ router.post('/verify', rateLimit, (req, res) => {
   const err = checkCode(email, 'register', req.body.code);
   if (err) return res.status(400).json({ error: err });
   store.updateUser(user, { verified: true });
+  stats.recordRegistration(Date.now());
   finishLogin(req, res, user);
 });
 

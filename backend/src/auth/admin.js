@@ -4,10 +4,13 @@
 //
 //   GET  /api/admin/users                 - аккаунты, подписки, счётчики
 //   POST /api/admin/plan { email, plan }  - сменить подписку (месяц - с этого момента)
+//   POST /api/admin/delete { email }      - удалить аккаунт (себя - нельзя)
+//   GET  /api/admin/stats                 - статистика (stats.js)
 const express = require('express');
 const store = require('./store');
 const { PLANS, planOf, quotaInfo, syncUser } = require('./plans');
 const { isAdmin } = require('./routes');
+const stats = require('./stats');
 
 const router = express.Router();
 router.use((req, res, next) => {
@@ -19,10 +22,15 @@ router.get('/users', (req, res) => {
   const now = Date.now();
   const users = store.listUsers().map(u => {
     if (syncUser(u, now)) store.updateUser(u);
+    const sessions = store.listUserSessions(u.id);
     return {
       email: u.email, verified: !!u.verified, createdAt: u.createdAt,
       planSince: new Date(u.planSince).toISOString(),
-      quota: quotaInfo(u, now), devices: store.listUserSessions(u.id).length,
+      quota: quotaInfo(u, now), devices: sessions.length,
+      totalCalcs: u.totalCalcs || 0,
+      lastCalcAt: u.lastCalcAt ? new Date(u.lastCalcAt).toISOString() : null,
+      lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
+      self: u.id === req.user.id,
     };
   });
   res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })) });
@@ -40,6 +48,19 @@ router.post('/plan', (req, res) => {
   store.updateUser(user, { plan, planSince: now, periodStart: now, used: 0 });
   store.listUserSessions(user.id).slice(planOf(user).devices).forEach(s => store.deleteSessionById(user.id, s.id));
   res.json({ ok: true, quota: quotaInfo(user, now) });
+});
+
+router.post('/delete', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  if (user.id === req.user.id) return res.status(400).json({ error: 'Свой аккаунт удалить нельзя.' });
+  store.deleteUser(user);
+  res.json({ ok: true });
+});
+
+router.get('/stats', (req, res) => {
+  res.json(stats.summary(Date.now(), 30));
 });
 
 module.exports = router;

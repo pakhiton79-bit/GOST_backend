@@ -205,14 +205,98 @@ body.auth-page{margin:0;padding:0;background:var(--bg);}
 
 /* Администрирование. */
 .admin-wrap{max-width:1100px;}
+#adminBox[hidden]{display:none;}
+.admin-chart-note{font-size:13px;color:var(--ink-soft);margin:-6px 0 14px;}
+
+/* Плитки с итогами. */
+.admin-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.admin-tile{padding:18px 20px;border:1px solid var(--rule);border-radius:12px;background:var(--panel);box-shadow:var(--shadow-sm);}
+.admin-tile-label{font-size:13px;color:var(--ink-soft);}
+.admin-tile-value{font-size:30px;font-weight:600;color:var(--ink);margin:4px 0 2px;}
+.admin-tile-sub{font-size:13px;color:var(--ink-soft);}
+
+/* Графики: одна величина, цвет - акцент сайта; сетка и оси приглушены. */
+.admin-two{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.admin-two .card{margin-bottom:24px;}
+.admin-chart{width:100%;min-height:240px;}
+.admin-chart-small{min-height:180px;}
+.admin-svg{display:block;max-width:100%;}
+.admin-grid{stroke:var(--rule);stroke-width:1;}
+.admin-baseline{stroke:var(--ink-soft);stroke-width:1;opacity:.5;}
+.admin-axis{fill:var(--ink-soft);font-size:11px;font-variant-numeric:tabular-nums;}
+.admin-value{fill:var(--ink);font-size:12px;font-weight:600;}
+.admin-bar{fill:var(--accent);transition:opacity .12s ease;}
+.admin-bar-dim{opacity:.35;}
+.admin-hit{fill:transparent;cursor:default;outline:none;}
+.admin-tooltip{position:fixed;z-index:50;pointer-events:none;padding:8px 12px;border-radius:8px;background:var(--panel);border:1px solid var(--rule);box-shadow:var(--shadow-lg);font-size:13px;color:var(--ink-soft);white-space:nowrap;}
+.admin-tooltip b{display:block;font-size:16px;color:var(--ink);font-weight:600;}
+.admin-tooltip[hidden]{display:none;}
+
+/* Расчёты по типам: горизонтальные полосы, значение - у конца. */
+.admin-hbars{display:flex;flex-direction:column;gap:10px;}
+.admin-hbar{display:grid;grid-template-columns:52px 1fr 48px;align-items:center;gap:10px;font-size:14px;}
+.admin-hbar-name{color:var(--ink);font-weight:500;}
+.admin-hbar-track{height:14px;}
+.admin-hbar-fill{height:100%;min-width:0;background:var(--accent);border-radius:0 4px 4px 0;}
+.admin-hbar-val{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+.admin-details summary{cursor:pointer;font-weight:600;color:var(--ink);}
+.admin-details[open] summary{margin-bottom:12px;}
+
+/* Таблица аккаунтов. */
 .admin-table-wrap{overflow-x:auto;}
-.admin-table{width:100%;border-collapse:collapse;font-size:14px;}
+.admin-table{width:100%;min-width:760px;border-collapse:collapse;font-size:14px;}
+.admin-details .admin-table{min-width:0;}
 .admin-table th{text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 8px;border-bottom:1px solid var(--rule);}
-.admin-table td{padding:10px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);}
-.admin-table select{padding:6px 8px;border:1px solid var(--border-input);border-radius:6px;background:var(--panel);color:var(--ink);font-family:inherit;}
-.admin-table button{margin:0;padding:6px 12px;font-size:13px;}
+.admin-table td{padding:12px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);font-variant-numeric:tabular-nums;}
+.admin-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:104px;}
+.admin-table button{margin:0;padding:7px 12px;font-size:13px;}
+.admin-delete{color:var(--error);}
+.admin-delete:hover{border-color:var(--error);}
+.admin-table button:disabled{opacity:.4;cursor:default;}
 .admin-sub{font-size:12px;color:var(--ink-soft);margin-top:3px;}
 .admin-tag{font-size:11px;color:var(--warn);}
+.admin-tag-you{color:var(--accent);font-weight:600;}
 .admin-empty{text-align:center;color:var(--ink-soft);}
-#adminCard[hidden]{display:none;}
+
+/* Выпадающий список в общем стиле сайта (поля ввода): своя стрелка. */
+.select-wrap{position:relative;display:inline-block;}
+.select-wrap::after{
+  content:'';position:absolute;right:12px;top:50%;width:7px;height:7px;margin-top:-6px;
+  border-right:1.6px solid var(--ink-soft);border-bottom:1.6px solid var(--ink-soft);
+  transform:rotate(45deg);pointer-events:none;
+}
+.select-wrap select{
+  -webkit-appearance:none;appearance:none;
+  min-width:110px;
+  padding:8px 34px 8px 12px;
+  border:1px solid var(--border-input);border-radius:8px;
+  background:var(--panel);color:var(--ink);
+  font-family:inherit;font-size:14px;font-weight:500;
+  cursor:pointer;
+}
+.select-wrap select:hover{border-color:var(--accent);}
+.select-wrap select:focus{outline:2px solid var(--accent);outline-offset:2px;border-color:var(--accent);}
+:root[data-theme="dark"] .select-wrap select{color-scheme:dark;}
+
+@media screen and (max-width:800px){
+  .admin-tiles{grid-template-columns:1fr 1fr;}
+  .admin-two{grid-template-columns:1fr;gap:0;}
+}
 #accountLogout{margin-top:16px;}
+
+/* Окно «Настройки», раздел «Подписка»: подписка и полосы лимита (по образцу
+   Claude). Полоса показывает использованную долю: обычная - акцент, от 80% -
+   предупреждение, 100% - ошибка. */
+.site-sub-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:6px;}
+.site-sub-plan{font-size:22px;font-weight:700;color:var(--ink);}
+.site-sub-text{font-size:13px;color:var(--ink-soft);margin:2px 0 0;}
+.site-sub-btn{display:inline-flex;align-items:center;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;margin-top:8px;}
+.site-sub-head .site-sub-btn{margin-top:0;}
+.site-usage{padding:16px 0 4px;border-top:1px solid var(--rule);margin-top:14px;}
+.site-usage-top, .site-usage-bottom{display:flex;justify-content:space-between;gap:12px;font-size:13px;color:var(--ink-soft);}
+.site-usage-title{font-size:14px;font-weight:600;color:var(--ink);}
+.site-usage-bar{height:8px;border-radius:999px;background:var(--rule);overflow:hidden;margin:10px 0 8px;}
+.site-usage-bar div{height:100%;border-radius:999px;background:var(--accent);transition:width .3s ease;}
+.site-usage-high .site-usage-bar div{background:var(--warn);}
+.site-usage-full .site-usage-bar div{background:var(--error);}

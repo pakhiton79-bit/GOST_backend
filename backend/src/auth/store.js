@@ -25,6 +25,8 @@ function load() {
   db.sessions = db.sessions && typeof db.sessions === 'object' ? db.sessions : {};
   db.codes = db.codes && typeof db.codes === 'object' ? db.codes : {};
   db.tickets = db.tickets && typeof db.tickets === 'object' ? db.tickets : {};
+  db.stats = db.stats && typeof db.stats === 'object' ? db.stats : {};
+  db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
   return db;
 }
@@ -58,6 +60,15 @@ function updateUser(user, fields) {
 }
 function listUsers() {
   return load().users.slice();
+}
+// Удалить аккаунт со всеми его входами, кодами и пропусками.
+function deleteUser(user) {
+  const d = load();
+  d.users = d.users.filter(u => u.id !== user.id);
+  Object.keys(d.sessions).forEach(k => { if (d.sessions[k].userId === user.id) delete d.sessions[k]; });
+  Object.keys(d.tickets).forEach(k => { if (d.tickets[k].userId === user.id) delete d.tickets[k]; });
+  Object.keys(d.codes).forEach(k => { if (k.endsWith(':' + user.email)) delete d.codes[k]; });
+  save();
 }
 
 // ---- Сессии (ключ - хэш токена из cookie) ----
@@ -139,8 +150,14 @@ function deleteTicket(ticketHash) {
   save();
 }
 
+// ---- Статистика по дням (см. stats.js) ----
+function statsData() {
+  return load().stats;
+}
+
 module.exports = {
-  findUserByEmail, findUserById, createUser, updateUser, listUsers,
+  save, statsData,
+  findUserByEmail, findUserById, createUser, updateUser, listUsers, deleteUser,
   createSession, touchSession, getSession, deleteSession, deleteUserSessions, listUserSessions, deleteSessionById,
   getCode, setCode, deleteCode,
   setTicket, getTicket, deleteTicket,
