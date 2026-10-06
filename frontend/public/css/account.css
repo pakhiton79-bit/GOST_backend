@@ -59,10 +59,11 @@
 
 /* ===== Страница входа и регистрации (login.html) =====
    Два столбца (по образцу пользователя): слева - коллаж из чертежей сайта
-   на светлом фирменном фоне, справа - форма. Верхней панели сайта нет
-   (на странице нет .wrap). На узком экране - только форма. */
-body.auth-page{margin:0;padding:0;background:var(--bg);}
-.auth-split{display:flex;min-height:100vh;}
+   на светлом фирменном фоне, справа - форма. Сверху - панель сайта, как
+   на главной (место под неё - body padding-top из style.css). На узком
+   экране - только форма. */
+body.auth-page{margin:0;background:var(--bg);}
+.auth-split{display:flex;min-height:calc(100vh - var(--topbar-h));}
 .auth-art{
   position:relative;
   flex:1 1 50%;
