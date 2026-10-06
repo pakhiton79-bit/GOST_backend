@@ -48,6 +48,16 @@
       <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>День</th><th>Расчёты</th><th>Регистрации</th></tr></thead><tbody id="dailyRows"></tbody></table></div>
     </details>
     <div class="card">
+      <h2>Заявки на внутренние стандарты <span class="admin-count" id="reqCount"></span></h2>
+      <p class="admin-chart-note">Из формы «Свой стандарт» на странице выбора ГОСТа. Новые сверху.</p>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-req-table">
+          <thead><tr><th>Дата</th><th>Аккаунт</th><th>Предприятие и стандарт</th><th>Контакт</th><th>Что рассчитывать</th></tr></thead>
+          <tbody id="reqRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
       <h2>Аккаунты</h2>
       <p class="admin-chart-note">Новая подписка действует с момента сохранения: месяц и счётчик расчётов начинаются заново.</p>
       <div class="auth-field"><input type="search" id="adminSearch" placeholder="Поиск по почте" aria-label="Поиск по почте"></div>

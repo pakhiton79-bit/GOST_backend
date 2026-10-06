@@ -9,6 +9,7 @@
 //                                           расчёты запрещены, входы на всех устройствах завершаются
 //   POST /api/admin/unblock { email }     - разблокировать
 //   GET  /api/admin/stats                 - статистика (stats.js)
+//   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js), новые сверху
 const express = require('express');
 const store = require('./store');
 const { PLANS, planOf, quotaInfo, syncUser } = require('./plans');
@@ -84,6 +85,10 @@ router.post('/unblock', (req, res) => {
   if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
   store.updateUser(user, { blocked: null });
   res.json({ ok: true });
+});
+
+router.get('/requests', (req, res) => {
+  res.json({ requests: store.listRequests().reverse() });
 });
 
 router.get('/stats', (req, res) => {

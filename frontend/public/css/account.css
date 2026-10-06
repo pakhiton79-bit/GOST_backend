@@ -431,3 +431,8 @@ body.auth-page{margin:0;background:var(--bg);}
 @media screen and (max-width:640px){
   .std-row{flex-direction:column;gap:0;}
 }
+
+/* Заявки на внутренние стандарты в админке. */
+.admin-count{font-weight:500;color:var(--ink-soft);}
+.admin-req-table .admin-req-details{white-space:pre-wrap;min-width:240px;max-width:420px;}
+.admin-req-table td a{color:var(--accent);}

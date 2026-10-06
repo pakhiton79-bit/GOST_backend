@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const fmtDate = iso => new Date(iso).toLocaleDateString('ru-RU');
 const fmtNum = n => Number(n).toLocaleString('ru-RU');
 const dayLabel = key => key.slice(8, 10) + '.' + key.slice(5, 7);           // 2026-10-05 -> 05.10
-let adminData = null, statsData = null;
+let adminData = null, statsData = null, reqData = null;
 
 function showMsg(text, ok){
   const m = $('adminMsg');
@@ -216,6 +216,20 @@ function renderUsers(){
   }).join('') || '<tr><td colspan="6" class="admin-empty">Аккаунтов нет</td></tr>';
 }
 
+// Заявки на внутренние стандарты (форма «Свой стандарт», standards.js).
+function renderRequests(){
+  const list = reqData.requests || [];
+  $('reqCount').textContent = list.length ? `(${list.length})` : '';
+  const planName = id => (adminData.plans.find(p => p.id === id) || {}).name || id;
+  $('reqRows').innerHTML = list.map(r => `<tr>
+      <td>${fmtDate(r.at)}</td>
+      <td>${esc(r.userEmail)}<div class="admin-sub">${esc(planName(r.plan))}</div></td>
+      <td>${esc(r.company)}<div class="admin-sub">${esc(r.standard)}</div></td>
+      <td>${esc(r.contact)}${r.phone ? `<div class="admin-sub">${esc(r.phone)}</div>` : ''}<div class="admin-sub"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div></td>
+      <td class="admin-req-details">${esc(r.details)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="admin-empty">Заявок пока нет</td></tr>';
+}
+
 async function api(path, body){
   const r = await fetch('/api/admin/' + path, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' });
   const d = await r.json();
@@ -225,13 +239,14 @@ async function api(path, body){
 
 async function load(){
   try{
-    [adminData, statsData] = await Promise.all([api('users'), api('stats')]);
+    [adminData, statsData, reqData] = await Promise.all([api('users'), api('stats'), api('requests')]);
   }catch(e){
     if(e.status === 403 && !(await fetchAccountUser())) return location.replace('login.html?next=admin.html');
     return showMsg(e.message);
   }
   $('adminBox').hidden = false;
   renderStats();
+  renderRequests();
   renderUsers();
 }
 
