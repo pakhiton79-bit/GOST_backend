@@ -3,7 +3,8 @@
 // своего предприятия, администрация добавляет его расчёт. Кнопка и форма -
 // на странице выбора ГОСТа (js/account/standards.js).
 //
-//   POST /api/standards/request { company, standard, details, contact, phone, email }
+//   POST /api/standards/request { company, standard, details, contact, email }
+//   (телефон не запрашиваем - по указанию пользователя, меньше персональных данных)
 //
 // Пока почта в тестовом режиме: заявка сохраняется в хранилище и пишется в
 // журнал сервера (mailer.js); письмо администратору - когда подключим почту.
@@ -13,7 +14,7 @@ const { planOf } = require('./plans');
 const { rateLimit } = require('./routes');
 const { sendStandardRequest } = require('./mailer');
 
-const FIELDS = { company: 200, standard: 300, details: 3000, contact: 200, phone: 50, email: 254 };
+const FIELDS = { company: 200, standard: 300, details: 3000, contact: 200, email: 254 };
 const REQUIRED = ['company', 'standard', 'details', 'contact', 'email'];
 
 const router = express.Router();

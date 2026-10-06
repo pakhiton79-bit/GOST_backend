@@ -12,10 +12,7 @@ function stdFormHtml(user){
       ${field('stdCompany', 'Предприятие', true, '<input id="stdCompany" maxlength="200" autocomplete="organization">')}
       ${field('stdStandard', 'Обозначение и название стандарта', true, '<input id="stdStandard" maxlength="300" placeholder="Например: СТО 12345-001-2024 «Ящики для оборудования»">')}
       ${field('stdDetails', 'Что нужно рассчитывать', true, '<textarea id="stdDetails" rows="4" maxlength="3000" placeholder="Типы ящиков, диапазон размеров и масс, чем стандарт отличается от ГОСТ"></textarea>')}
-      <div class="std-row">
-        ${field('stdContact', 'Контактное лицо', true, '<input id="stdContact" maxlength="200" autocomplete="name">')}
-        ${field('stdPhone', 'Телефон', false, '<input id="stdPhone" maxlength="50" type="tel" autocomplete="tel">')}
-      </div>
+      ${field('stdContact', 'Контактное лицо', true, '<input id="stdContact" maxlength="200" autocomplete="name">')}
       ${field('stdEmail', 'Почта для связи', true, `<input id="stdEmail" type="email" maxlength="254" autocomplete="email" value="${escHtml(user.email)}">`)}
       <p class="std-note">Сам документ (PDF, таблицы, чертежи) мы запросим по почте после заявки.</p>
       <div class="std-msg" id="stdMsg" hidden></div>
@@ -73,7 +70,7 @@ function initStandardsButton(){
     const msg = $('stdMsg'), submit = $('stdSubmit');
     const show = (text, ok) => { msg.hidden = false; msg.textContent = text; msg.className = 'std-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error'); };
     const data = { company: $('stdCompany').value, standard: $('stdStandard').value, details: $('stdDetails').value,
-      contact: $('stdContact').value, phone: $('stdPhone').value, email: $('stdEmail').value };
+      contact: $('stdContact').value, email: $('stdEmail').value };
     if(['company', 'standard', 'details', 'contact', 'email'].some(k => !data[k].trim())) return show('Заполните обязательные поля.');
     submit.disabled = true;
     try{

@@ -225,7 +225,7 @@ function renderRequests(){
       <td>${fmtDate(r.at)}</td>
       <td>${esc(r.userEmail)}<div class="admin-sub">${esc(planName(r.plan))}</div></td>
       <td>${esc(r.company)}<div class="admin-sub">${esc(r.standard)}</div></td>
-      <td>${esc(r.contact)}${r.phone ? `<div class="admin-sub">${esc(r.phone)}</div>` : ''}<div class="admin-sub"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div></td>
+      <td>${esc(r.contact)}<div class="admin-sub"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div></td>
       <td class="admin-req-details">${esc(r.details)}</td>
     </tr>`).join('') || '<tr><td colspan="5" class="admin-empty">Заявок пока нет</td></tr>';
 }

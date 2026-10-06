@@ -423,13 +423,11 @@ body.auth-page{margin:0;background:var(--bg);}
 .std-field input, .std-field textarea{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-input);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;}
 .std-field textarea{resize:vertical;min-height:90px;}
 .std-field input:focus, .std-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
-.std-row{display:flex;gap:12px;}
 .std-note{margin:2px 0 14px;font-size:13px;color:var(--ink-soft);}
 .std-msg{margin:0 0 12px;padding:10px 12px;border-radius:10px;font-size:14px;}
 .std-msg[hidden]{display:none;}
 .std-actions{display:flex;gap:10px;flex-wrap:wrap;}
 @media screen and (max-width:640px){
-  .std-row{flex-direction:column;gap:0;}
 }
 
 /* Заявки на внутренние стандарты в админке. */
