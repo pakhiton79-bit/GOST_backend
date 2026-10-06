@@ -91,9 +91,11 @@ function renderSiteSub(user){
   const q = user.quota;
   const days = Math.max(1, Math.ceil((new Date(q.periodEnd) - Date.now()) / 86400000));
   const upgrade = nextPlanId(q.plan);
-  let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'} · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}</div></div>`
+  // У пробной месячных расчётов нет (только за регистрацию) - без даты и полосы месяца.
+  const renew = q.monthly ? ` · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}` : '';
+  let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'}${renew}</div></div>`
     + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
-  html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
+  if(q.monthly) html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
   if(q.welcomeLeft > 0 || q.plan === 'free'){
     const used = q.welcomeTotal - q.welcomeLeft;
     html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
@@ -257,7 +259,7 @@ function showQuotaHint(q){
   const next = nextPlanId(q.plan);
   loadPlans().then(plans => {
     const np = next && plans[next];
-    hint.textContent = q.left === 0 ? `Расчёты закончились до ${reset}.` : `Осталось ${q.left} ${calcWord(q.left)}.`;
+    hint.textContent = q.left === 0 ? (q.monthly ? `Расчёты закончились до ${reset}.` : 'Пробные расчёты закончились.') : `Осталось ${q.left} ${calcWord(q.left)}.`;
     if(np){
       const a = document.createElement('a');
       a.href = 'plans.html';
