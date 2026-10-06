@@ -1,5 +1,5 @@
 /* Главная страница (index.html) для новых посетителей: первый экран с
-   анимацией сборки ящика, факты, возможности, шаги, сравнение, типы
+   витриной общих чертежей, возможности, шаги, сравнение, типы
    ящиков, для кого, подписки, вопросы. Цвета - токены style.css, тёмная
    тема - через них же. */
 .landing-wrap{max-width:1160px;}
@@ -18,29 +18,19 @@
 .lp-btn-main:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
 .lp-btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--border-btn);}
 .lp-btn-ghost:hover{border-color:var(--accent);}
-.lp-note{margin-top:14px;font-size:14px;color:var(--ink-soft);}
-.lp-note[hidden]{display:none;}
-
 .lp-hero-art{position:relative;padding:24px;border-radius:24px;background:var(--accent-wash);}
-.lp-box{display:block;width:100%;height:auto;overflow:visible;}
-.lp-part{transition:transform .75s cubic-bezier(.2,.8,.2,1), opacity .5s ease;}
-.lp-part.lp-instant{transition:none;}
-.lp-part polygon{fill:var(--panel);stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round;}
-.lp-part polygon.wood{fill:color-mix(in srgb, var(--accent) 22%, var(--panel));}
-.lp-part line.seam{stroke:var(--ink);stroke-width:1;opacity:.45;}
-.lp-part.lp-hl polygon{stroke:var(--accent);}
-.lp-steps-legend{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:14px 0 0;padding:0;counter-reset:lp;}
-.lp-steps-legend li{counter-increment:lp;font-size:13px;font-weight:600;color:var(--ink-soft);background:var(--panel);border:1px solid var(--rule);border-radius:999px;padding:6px 12px;transition:all .25s ease;}
-.lp-steps-legend li::before{content:counter(lp);display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;margin-right:6px;font-size:11px;background:var(--rule);color:var(--ink);}
-.lp-steps-legend li.done{color:var(--ink);}
-.lp-steps-legend li.active{color:#fff;background:var(--accent);border-color:var(--accent);}
-.lp-steps-legend li.active::before{background:#fff;color:var(--accent);}
-
-/* Факты. */
-.lp-facts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin-top:48px;background:var(--rule);border:1px solid var(--rule);border-radius:16px;overflow:hidden;}
-.lp-facts div{background:var(--panel);padding:20px 22px;}
-.lp-facts b{display:block;font-size:20px;font-weight:700;color:var(--ink);}
-.lp-facts span{display:block;font-size:14px;color:var(--ink-soft);margin-top:4px;}
+/* Витрина общих чертежей: картинки лежат друг на друге, видна одна (.on). */
+.lp-show-stage{position:relative;aspect-ratio:4/3;border-radius:16px;background:#fff;overflow:hidden;}
+.lp-show-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:18px;box-sizing:border-box;opacity:0;transform:scale(.97);transition:opacity .7s ease, transform 1.2s ease;}
+.lp-show-stage img.on{opacity:1;transform:scale(1);}
+.lp-show-name{margin:14px 0 10px;text-align:center;font-size:15px;font-weight:600;color:var(--ink);}
+.lp-show-thumbs{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
+.lp-show-thumbs button{width:52px;height:40px;padding:3px;border-radius:8px;border:1px solid var(--rule);background:#fff;cursor:pointer;opacity:.6;transition:opacity .2s ease, border-color .2s ease;}
+.lp-show-thumbs button:hover{opacity:1;}
+.lp-show-thumbs button.on{opacity:1;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+.lp-show-thumbs img{width:100%;height:100%;object-fit:contain;display:block;}
+:root[data-theme="dark"] .lp-show-stage, :root[data-theme="dark"] .lp-show-thumbs button{background:var(--panel-hover);}
+:root[data-theme="dark"] .lp-show-stage img, :root[data-theme="dark"] .lp-show-thumbs img{filter:invert(1);mix-blend-mode:screen;}
 
 /* Карточки. */
 .lp-cards{display:grid;gap:20px;}
@@ -113,7 +103,6 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-hero{grid-template-columns:1fr;gap:28px;}
   .lp-title{font-size:44px;}
   .lp-cards-4, .lp-types{grid-template-columns:repeat(2,1fr);}
-  .lp-facts{grid-template-columns:repeat(2,1fr);}
 }
 @media screen and (max-width:640px){
   .lp-title{font-size:36px;}
@@ -125,6 +114,6 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-final h2{font-size:26px;}
 }
 @media screen and (max-width:420px){
-  .lp-cards-4, .lp-types, .lp-facts{grid-template-columns:1fr;}
+  .lp-cards-4, .lp-types{grid-template-columns:1fr;}
   .lp-btn{width:100%;}
 }

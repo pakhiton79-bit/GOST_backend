@@ -30,24 +30,12 @@
         <a class="lp-btn lp-btn-main" href="login.html?mode=register&next=gosts.html">Попробовать бесплатно</a>
         <a class="lp-btn lp-btn-ghost" href="login.html?next=gosts.html">Войти</a>
       </div>
-      <div class="lp-note" id="lpHeroNote">50 расчётов при регистрации и 20 каждый месяц - бесплатно</div>
     </div>
-    <div class="lp-hero-art">
-      <svg class="lp-box" id="lpBox" role="img" aria-label="Ящик собирается из дна, торцевых и боковых щитов и крышки"></svg>
-      <ol class="lp-steps-legend" id="lpLegend">
-        <li data-step="1">Дно</li>
-        <li data-step="2">Щиты торцевые</li>
-        <li data-step="3">Щиты боковые</li>
-        <li data-step="4">Крышка</li>
-      </ol>
+    <div class="lp-hero-art lp-show" id="lpShow">
+      <div class="lp-show-stage" id="lpShowStage"></div>
+      <div class="lp-show-name" id="lpShowName"></div>
+      <div class="lp-show-thumbs" id="lpShowThumbs" role="tablist" aria-label="Типы ящиков"></div>
     </div>
-  </section>
-
-  <section class="lp-facts">
-    <div><b>7</b><span>типов ящиков по ГОСТ 10198-91</span></div>
-    <div><b>Таблицы ГОСТ</b><span>уже встроены в расчёт</span></div>
-    <div><b>Толщины в наличии</b><span>расчёт под ваш склад</span></div>
-    <div><b>Печать и PDF</b><span>готовые формы для цеха</span></div>
   </section>
 
   <section class="lp-section">
@@ -56,7 +44,7 @@
       <div class="lp-card">
         <div class="lp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M9 4v16"/></svg></div>
         <h3>Таблица деталей</h3>
-        <p>Каждая деталь дна, крышки, торцевых и боковых щитов: толщина, ширина, длина и количество.</p>
+        <p>Каждая деталь дна, крышки, торцевых и боковых щитов: толщина, ширина, длина и количество. С учётом толщин, которые есть у вас на складе.</p>
       </div>
       <div class="lp-card">
         <div class="lp-icon"><svg viewBox="0 0 24 24"><path d="M4 20 20 4M4 20h6M4 20v-6"/><rect x="12" y="12" width="8" height="8" rx="1"/></svg></div>
@@ -96,6 +84,9 @@
           <tr><td>Чертежи узлов с размерами</td><td class="lp-us"><i class="lp-yes"></i>сразу</td><td><i class="lp-no"></i></td><td>рисует чертёжник</td><td><i class="lp-no"></i></td></tr>
           <tr><td>Толщины, которые есть на складе</td><td class="lp-us"><i class="lp-yes"></i>учитываются</td><td>вручную</td><td>вручную</td><td>вручную</td></tr>
           <tr><td>Объём, масса, нормы времени</td><td class="lp-us"><i class="lp-yes"></i>сразу</td><td>если заложено в файл</td><td><i class="lp-no"></i></td><td>отдельный расчёт</td></tr>
+          <tr><td>Гибкие настройки расчёта</td><td class="lp-us"><i class="lp-yes"></i>толщины в наличии, раскосины, тонкая настройка и многое другое</td><td>почти нет</td><td>всё вручную</td><td>всё вручную</td></tr>
+          <tr><td>Создать такой инструмент самим</td><td class="lp-us"><i class="lp-yes"></i>уже готов</td><td>очень сложно сделать настолько же точным</td><td>долго и дорого</td><td>-</td></tr>
+          <tr><td>Цена ошибки человека</td><td class="lp-us"><i class="lp-yes"></i>расчёт по единому алгоритму</td><td>ошибка в формуле уходит во все расчёты</td><td>зависит от чертёжника</td><td>очень высокая</td></tr>
           <tr><td>Где работает</td><td class="lp-us">браузер, телефон</td><td>компьютер с файлом</td><td>компьютер с лицензией</td><td>бумага</td></tr>
           <tr><td>Обучение</td><td class="lp-us">не нужно</td><td>знать устройство файла</td><td>владеть САПР</td><td>знать ГОСТ</td></tr>
         </tbody>
@@ -128,9 +119,9 @@
     <div class="lp-faq">
       <details><summary>Чем это лучше таблицы в Excel?</summary><p>Таблицы ГОСТ, подбор сечений, раскладка планок и раскосин уже встроены и проверены. Кроме таблицы деталей сразу получаются чертежи узлов, объём, масса и нормы времени, а результат можно напечатать для цеха.</p></details>
       <details><summary>Можно ли пользоваться с телефона?</summary><p>Да, сайт работает в браузере на компьютере, планшете и телефоне. Ничего устанавливать не нужно.</p></details>
-      <details><summary>Насколько точны расчёты?</summary><p>Расчёт выполняется по таблицам и правилам ГОСТ. Результат справочный: перед изготовлением проверьте его на соответствие требованиям к перевозке вашего груза.</p></details>
+      <details><summary>Насколько точны расчёты?</summary><p>Расчёт выполняется строго по таблицам и правилам ГОСТ: подбор сечений, раскладка планок, раскосины и отступы делаются по единому алгоритму для каждого ящика, без ручного пересчёта.</p></details>
       <details><summary>Что будет, если расчёты закончатся?</summary><p>Новые расчёты начисляются каждый месяц от даты подключения подписки. Если нужно больше, подойдёт подписка Pro или Team.</p></details>
-      <details><summary>Какие стандарты поддерживаются?</summary><p>Сейчас ГОСТ 10198-91: семь типов ящиков. ГОСТ 2991-85 в работе.</p></details>
+      <details><summary>Какие стандарты поддерживаются?</summary><p>Сейчас ГОСТ 10198-91: семь типов ящиков. В работе ГОСТ 2991-85 и другие стандарты.</p></details>
     </div>
   </section>
 
