@@ -4,7 +4,7 @@
 // заполнены поля и т.п.) не списывается. В ответ расчёта добавляется
 // quota - сколько осталось.
 const store = require('./store');
-const { PLANS, syncUser, quotaInfo, consume } = require('./plans');
+const { PLANS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
 const stats = require('./stats');
 
 function fmtDate(iso) {
@@ -22,7 +22,7 @@ function calcQuota(req, res, next) {
   const q = quotaInfo(user, now);
   if (q.left <= 0) {
     // Есть подписка больше - предложить её (по указанию пользователя).
-    const next = q.plan === 'free' ? PLANS.pro : q.plan === 'pro' ? PLANS.team : null;
+    const next = PLANS[nextPlan(q.plan)];
     return res.status(402).json({
       error: `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.`,
       errorLink: next ? { href: 'plans.html', text: `Больше в ${next.name}` } : undefined,

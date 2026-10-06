@@ -64,11 +64,11 @@ function initAccountButton(){
 // регистрацию. Разделы добавляются в SITE_SETTINGS_SECTIONS
 // (common-settings.js) после «Оформления»; данные - при каждом открытии окна.
 let accountUserCache;
-// Водяной знак на печатном листе (печать и PDF) - только в Free: по указанию
-// пользователя в Pro и Team его нет. Класс на <html> попадает и в копию
+// Водяной знак на печатном листе (печать и PDF): по указанию пользователя в
+// Pro и Team его нет (в пробной и Base - есть). Класс на <html> попадает и в копию
 // страницы, которую снимает html2canvas для PDF (см. account.css).
 function applyPlanClass(user){
-  const paid = !!(user && user.quota && user.quota.plan && user.quota.plan !== 'free');
+  const paid = !!(user && user.quota && ['pro', 'team'].includes(user.quota.plan));
   document.documentElement.classList.toggle('plan-paid', paid);
 }
 function plural(n, one, few, many){
@@ -233,8 +233,8 @@ function loadPlans(){
   }).catch(() => ({}));
   return plansPromise;
 }
-// Следующая подписка для предложения: Free -> Pro, Pro -> Team, Team - нет.
-function nextPlanId(plan){ return plan === 'free' ? 'pro' : plan === 'pro' ? 'team' : null; }
+// Следующая подписка для предложения: пробная -> Base -> Pro -> Team, у Team - нет.
+function nextPlanId(plan){ return { free: 'base', base: 'pro', pro: 'team' }[plan] || null; }
 function calcWord(n){ return plural(n, 'расчёт', 'расчёта', 'расчётов'); }
 
 // Под кнопкой «Рассчитать» после успешного расчёта: осталось 5 и меньше

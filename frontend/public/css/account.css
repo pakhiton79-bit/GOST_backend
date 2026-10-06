@@ -193,7 +193,8 @@ body.auth-page{margin:0;background:var(--bg);}
 #accountBox[hidden], .account-row[hidden]{display:none;}
 
 /* Страница подписок. */
-.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch;}
+.plans-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:stretch;}
+@media screen and (max-width:1000px){.plans-grid{grid-template-columns:repeat(2,1fr);}}
 .plan-card{display:flex;flex-direction:column;padding:28px 24px;border:1px solid var(--rule);border-radius:16px;background:var(--panel);box-shadow:var(--shadow-sm);}
 .plan-card-accent{border-color:var(--accent);}
 .plan-card-current{outline:2px solid var(--accent);outline-offset:-1px;}

@@ -24,7 +24,7 @@ function el(tag, cls, text){
 function renderTiles(t){
   const tiles = [
     ['Аккаунтов', t.users, t.unverified ? `не подтвердили почту: ${t.unverified}` : 'все подтвердили почту'],
-    ['Платных подписок', t.byPlan.pro + t.byPlan.team, `Free ${t.byPlan.free} · Pro ${t.byPlan.pro} · Team ${t.byPlan.team}`],
+    ['Платных подписок', (t.byPlan.base || 0) + t.byPlan.pro + t.byPlan.team, `Пробная ${t.byPlan.free} · Base ${t.byPlan.base || 0} · Pro ${t.byPlan.pro} · Team ${t.byPlan.team}`],
     ['Расчётов сегодня', t.calcsToday, `за 7 дней: ${fmtNum(t.calcs7)}`],
     ['Расчётов за 30 дней', t.calcs30, `всего: ${fmtNum(t.calcsAll)}`],
     ['Считали за 7 дней', t.active7, `за 30 дней: ${t.active30}`],

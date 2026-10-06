@@ -1,19 +1,28 @@
 // Подписки и лимиты расчётов (по указанию пользователя). Пока без оплаты:
-// Pro и Team выдаёт администратор вручную (admin.html).
+// платные подписки выдаёт администратор вручную (admin.html).
 //
-//   Free - 20 расчётов в месяц + 50 за регистрацию (один раз, не сгорают,
-//          тратятся, когда кончились месячные), 1 устройство;
-//   Pro  - 500 расчётов в месяц, 1 устройство;
-//   Team - 2500 расчётов в месяц на аккаунт, 4 устройства.
+//   Пробная (id free) - 5 расчётов в месяц + 20 за регистрацию (один раз, не
+//          сгорают, тратятся, когда кончились месячные), 1 устройство, бесплатно;
+//   Base - 20 расчётов в месяц, 1 устройство, 5 000 ₽ в месяц;
+//   Pro  - 150 расчётов в месяц, 1 устройство, 10 000 ₽ в месяц;
+//   Team - 2500 расчётов в месяц на аккаунт, 4 устройства, 30 000 ₽ в месяц.
 // Расчёт - каждое успешное нажатие «Рассчитать». Месяц считается от даты
-// подключения подписки (у Free - от регистрации); неиспользованные расчёты
-// месяца не переносятся. Цены (price, ₽ в месяц) - пока не заданы.
+// подключения подписки (у пробной - от регистрации); неиспользованные расчёты
+// месяца не переносятся. id пробной - прежний «free» (так он записан у
+// существующих аккаунтов). Порядок ключей - порядок подписок на сайте.
 const PLANS = {
-  free: { name: 'Free', monthly: 20, devices: 1, price: null },
-  pro:  { name: 'Pro',  monthly: 500, devices: 1, price: null },
-  team: { name: 'Team', monthly: 2500, devices: 4, price: null },
+  free: { name: 'Пробная', monthly: 5, devices: 1, price: null },
+  base: { name: 'Base', monthly: 20, devices: 1, price: 5000 },
+  pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000 },
+  team: { name: 'Team', monthly: 2500, devices: 4, price: 30000 },
 };
-const WELCOME_CALCS = 50;
+const WELCOME_CALCS = 20;
+// Следующая подписка (для предложения «Больше в ...»): по порядку PLANS.
+function nextPlan(id) {
+  const ids = Object.keys(PLANS);
+  const i = ids.indexOf(id);
+  return i >= 0 && i < ids.length - 1 ? ids[i + 1] : null;
+}
 
 function planOf(user) {
   return PLANS[user.plan] || PLANS.free;
@@ -79,4 +88,4 @@ function publicPlans() {
   return Object.keys(PLANS).map(id => ({ id, ...PLANS[id], welcome: id === 'free' ? WELCOME_CALCS : 0 }));
 }
 
-module.exports = { PLANS, WELCOME_CALCS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans };
+module.exports = { PLANS, WELCOME_CALCS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans, nextPlan };

@@ -39,7 +39,7 @@ function summary(now, n) {
   const activeLast = m => new Set(keys.slice(-m).flatMap(k => (days[k] ? days[k].users : []))).size;
   const byType = Object.keys(TYPE_NAMES).map(t => ({ type: t, name: TYPE_NAMES[t], calcs: sumLast(n, d => d.byType[t] || 0) }));
   const users = store.listUsers();
-  const byPlan = { free: 0, pro: 0, team: 0 };
+  const byPlan = { free: 0, base: 0, pro: 0, team: 0 };
   users.forEach(u => { if (u.verified) byPlan[u.plan] = (byPlan[u.plan] || 0) + 1; });
   return {
     totals: {
