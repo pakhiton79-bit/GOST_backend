@@ -1,5 +1,5 @@
 /* Главная страница (index.html) для новых посетителей: первый экран с
-   витриной общих чертежей, возможности, шаги, сравнение, типы
+   роликом с примером расчёта, возможности, шаги, сравнение, типы
    ящиков, для кого, подписки, вопросы. Цвета - токены style.css, тёмная
    тема - через них же. */
 .landing-wrap{max-width:1160px;}
@@ -18,19 +18,108 @@
 .lp-btn-main:hover{background:var(--accent-hover);border-color:var(--accent-hover);}
 .lp-btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--border-btn);}
 .lp-btn-ghost:hover{border-color:var(--accent);}
+.lp-hero > *{min-width:0;}
 .lp-hero-art{position:relative;padding:24px;border-radius:24px;background:var(--accent-wash);}
-/* Витрина общих чертежей: картинки лежат друг на друге, видна одна (.on). */
-.lp-show-stage{position:relative;aspect-ratio:4/3;border-radius:16px;background:#fff;overflow:hidden;}
-.lp-show-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:18px;box-sizing:border-box;opacity:0;transform:scale(.97);transition:opacity .7s ease, transform 1.2s ease;}
-.lp-show-stage img.on{opacity:1;transform:scale(1);}
-.lp-show-name{margin:14px 0 10px;text-align:center;font-size:15px;font-weight:600;color:var(--ink);}
-.lp-show-thumbs{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;}
-.lp-show-thumbs button{width:52px;height:40px;padding:3px;border-radius:8px;border:1px solid var(--rule);background:#fff;cursor:pointer;opacity:.6;transition:opacity .2s ease, border-color .2s ease;}
-.lp-show-thumbs button:hover{opacity:1;}
-.lp-show-thumbs button.on{opacity:1;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
-.lp-show-thumbs img{width:100%;height:100%;object-fit:contain;display:block;}
-:root[data-theme="dark"] .lp-show-stage, :root[data-theme="dark"] .lp-show-thumbs button{background:var(--panel-hover);}
-:root[data-theme="dark"] .lp-show-stage img, :root[data-theme="dark"] .lp-show-thumbs img{filter:invert(1);mix-blend-mode:screen;}
+/* Ролик «как это работает»: макет страницы расчёта 560×400, на экране -
+   масштаб по ширине (transform: scale из landing.js). Цвета - токены сайта,
+   поэтому тёмная тема тоже работает. */
+.lpd-window{border-radius:14px;background:var(--panel);border:1px solid var(--rule);overflow:hidden;box-shadow:0 18px 40px -24px rgba(60,30,10,.45);}
+.lpd-bar{display:flex;align-items:center;gap:12px;padding:9px 12px;border-bottom:1px solid var(--rule);background:var(--bg);}
+.lpd-dots{display:flex;gap:6px;}
+.lpd-dots i{width:10px;height:10px;border-radius:50%;background:var(--rule);}
+.lpd-tab{font-size:12px;font-weight:600;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lpd-box{position:relative;overflow:hidden;}
+.lpd-view{position:absolute;left:0;top:0;width:560px;height:400px;transform-origin:0 0;overflow:hidden;background:var(--bg);transition:opacity .45s ease;}
+.lpd-view.lpd-fade{opacity:0;}
+.lpd-page{position:absolute;left:0;top:0;width:100%;padding:14px 16px 16px;box-sizing:border-box;font-size:11px;color:var(--ink);}
+.lpd-h1{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:2px 0 10px;}
+.lpd-card{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.lpd-card-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-bottom:6px;margin-bottom:8px;border-bottom:1px solid var(--rule);}
+.lpd-fields{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.lpd-field label{display:block;font-size:8.5px;font-weight:700;text-transform:uppercase;color:var(--ink-soft);margin-bottom:4px;}
+.lpd-input{height:26px;border:1px solid var(--border-input);border-radius:6px;padding:0 8px;display:flex;align-items:center;font-size:12px;font-weight:500;transition:border-color .15s, box-shadow .15s;}
+.lpd-input.focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-wash);}
+.lpd-input.focus span::after{content:'';display:inline-block;width:1px;height:13px;margin-left:1px;vertical-align:-2px;background:var(--ink);animation:lpdBlink .8s steps(1) infinite;}
+@keyframes lpdBlink{50%{opacity:0;}}
+.lpd-select{display:flex;justify-content:space-between;align-items:center;height:26px;border:1px solid var(--border-input);border-radius:6px;padding:0 10px;font-weight:600;transition:border-color .15s;}
+.lpd-select.pressed{border-color:var(--accent);}
+.lpd-select i{font-style:normal;font-size:9px;}
+.lpd-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease, opacity .25s ease, margin .3s ease;}
+.lpd-chips.open{max-height:80px;opacity:1;margin-top:8px;}
+.lpd-chip, .lpd-opt{display:inline-flex;align-items:center;gap:6px;}
+.lpd-chip{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-weight:500;}
+.lpd-chip b, .lpd-opt b{width:11px;height:11px;border:1.5px solid var(--border-btn);border-radius:3px;box-sizing:border-box;flex:none;position:relative;transition:background .15s, border-color .15s;}
+.lpd-chip.on b, .lpd-opt.on b{background:var(--accent);border-color:var(--accent);}
+.lpd-chip.on b::after, .lpd-opt.on b::after{content:'';position:absolute;left:3px;top:0;width:3px;height:6px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);}
+.lpd-chip.on{border-color:var(--accent);background:var(--accent-wash);}
+.lpd-opt{display:flex;padding:5px 0;font-size:11.5px;font-weight:600;}
+.lpd-actions{display:flex;align-items:center;gap:8px;}
+.lpd-btn{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 12px;border-radius:7px;border:1px solid var(--border-btn);background:var(--panel);font-weight:600;font-size:11px;transition:transform .12s, background .15s;}
+.lpd-btn-main{background:var(--accent);border-color:var(--accent);color:#fff;}
+.lpd-btn.pressed{transform:scale(.94);}
+.lpd-btn.busy{color:transparent;position:relative;}
+.lpd-btn.busy::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:lpdSpin .6s linear infinite;}
+@keyframes lpdSpin{to{transform:rotate(360deg);}}
+.lpd-status{display:inline-flex;align-items:center;gap:5px;color:var(--ok);font-weight:600;margin-right:auto;opacity:0;transition:opacity .3s;}
+.lpd-status.on{opacity:1;}
+.lpd-status b{width:12px;height:12px;border-radius:50%;background:var(--ok);position:relative;}
+.lpd-status b::after{content:'';position:absolute;left:4px;top:2px;width:3px;height:6px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);}
+.lpd-result{display:none;}
+.lpd-result.on{display:block;animation:lpdIn .5s ease both;}
+@keyframes lpdIn{from{opacity:0;transform:translateY(10px);}}
+.lpd-sum{display:grid;grid-template-columns:120px 1fr;gap:8px;}
+.lpd-sum-img{border:1px solid var(--rule);border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;padding:6px;}
+.lpd-sum-img img{max-width:100%;max-height:96px;}
+.lpd-tiles{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--rule);border-radius:8px;}
+.lpd-tiles div{padding:8px 10px;}
+.lpd-tiles div:nth-child(odd){border-right:1px solid var(--rule);}
+.lpd-tiles div:nth-child(-n+2){border-bottom:1px solid var(--rule);}
+.lpd-tiles label{display:block;font-size:8px;font-weight:700;text-transform:uppercase;color:var(--ink-soft);}
+.lpd-tiles b{display:block;font-size:15px;margin-top:4px;}
+.lpd-tiles small{font-size:8px;font-weight:500;color:var(--ink-soft);}
+.lpd-node{font-weight:700;font-size:12px;margin-bottom:6px;}
+.lpd-spec{display:grid;grid-template-columns:180px 1fr;gap:10px;align-items:center;}
+.lpd-drawing{background:#fff;border-radius:6px;padding:4px;}
+.lpd-drawing img{width:100%;display:block;}
+.lpd-table{width:100%;border-collapse:collapse;font-size:9.5px;}
+.lpd-table th{background:var(--table-header-bg);font-size:7.5px;font-weight:700;letter-spacing:0;text-transform:uppercase;text-align:right;padding:5px;color:var(--ink-soft);border:0;}
+.lpd-table th:first-child, .lpd-table td:first-child{text-align:left;}
+.lpd-table td{padding:4px 5px;font-size:9px;line-height:1.3;border:0;border-top:1px solid var(--rule);text-align:right;color:var(--ink);background:none;}
+.lpd-table tbody tr{opacity:0;transform:translateX(8px);transition:opacity .3s ease, transform .3s ease;}
+.lpd-table tbody tr.on{opacity:1;transform:none;}
+.lpd-sheet-wrap{position:absolute;inset:0;background:var(--overlay, rgba(0,0,0,.35));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;opacity:0;pointer-events:none;transition:opacity .35s ease;}
+.lpd-sheet-wrap.on{opacity:1;}
+.lpd-sheet{width:250px;height:300px;background:#fff;color:#1a1a1a;border-radius:4px 4px 0 0;padding:14px 14px 0;box-sizing:border-box;font-size:7px;overflow:hidden;transform:translateY(100%);transition:transform .6s cubic-bezier(.2,.8,.2,1);box-shadow:0 -8px 30px rgba(0,0,0,.25);}
+.lpd-sheet-wrap.on .lpd-sheet{transform:none;}
+.lpd-sheet-wrap.sent .lpd-sheet{transform:translateY(-130%) scale(.6);transition-duration:.7s;}
+.lpd-sheet-h{font-size:9px;font-weight:700;margin-bottom:3px;}
+.lpd-sheet-sum{color:#555;margin-bottom:6px;}
+.lpd-sheet-node{font-weight:700;margin:6px 0 3px;}
+.lpd-sheet-spec{display:grid;grid-template-columns:80px 1fr;gap:6px;align-items:center;}
+.lpd-sheet-spec img{width:100%;}
+.lpd-sheet .lpd-table{font-size:5.5px;}
+.lpd-sheet .lpd-table th{font-size:4.5px;padding:2px;background:#f2ece4;color:#555;}
+.lpd-sheet .lpd-table td{padding:1.5px 2px;font-size:5.5px;border-color:#e5e5e5;color:#1a1a1a;}
+.lpd-sheet .lpd-table tbody tr{opacity:1;transform:none;}
+.lpd-sheet-lines i{display:block;height:5px;border-radius:2px;background:#eee;margin:3px 0;}
+.lpd-sheet-lines i:nth-child(2n){width:80%;}
+.lpd-sheet-bar{width:100%;display:flex;justify-content:space-between;align-items:center;padding:8px 14px;box-sizing:border-box;background:var(--panel);border-top:1px solid var(--rule);font-weight:600;font-size:11px;color:var(--ink);transform:translateY(100%);transition:transform .4s ease .15s;}
+.lpd-sheet-wrap.on .lpd-sheet-bar{transform:none;}
+.lpd-toast{position:absolute;left:50%;top:14px;transform:translate(-50%,-160%);display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:11.5px;font-weight:600;white-space:nowrap;transition:transform .45s cubic-bezier(.2,.8,.2,1);}
+.lpd-toast.on{transform:translate(-50%,0);}
+.lpd-toast span{position:relative;padding-bottom:4px;}
+.lpd-ic{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;}
+.lpd-bar-fill{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--accent);border-radius:1px;transition:width 1.1s ease;}
+.lpd-toast.on .lpd-bar-fill{width:100%;}
+.lpd-toast.done .lpd-bar-fill{background:var(--ok);}
+.lpd-cursor{position:absolute;left:0;top:0;width:20px;height:20px;margin:-2px 0 0 -3px;fill:var(--ink);stroke:var(--panel);stroke-width:1.5;stroke-linejoin:round;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));z-index:5;}
+.lpd-cursor.press{width:17px;height:17px;}
+.lpd-scenes{display:flex;gap:8px;margin-top:12px;}
+.lpd-scenes button{flex:1;min-width:0;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--rule);background:var(--panel);color:var(--ink-soft);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.lpd-scenes button.on{color:var(--ink);border-color:var(--accent);}
+.lpd-scenes span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lpd-scenes i{display:block;height:3px;border-radius:2px;background:var(--rule);margin-top:6px;overflow:hidden;}
+.lpd-scenes u{display:block;height:100%;width:0;background:var(--accent);transition:width .6s ease;}
 
 /* Карточки. */
 .lp-cards{display:grid;gap:20px;}
@@ -105,6 +194,8 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-cards-4, .lp-types{grid-template-columns:repeat(2,1fr);}
 }
 @media screen and (max-width:640px){
+  .lp-hero-art{padding:12px;border-radius:18px;}
+  .lpd-scenes span{white-space:normal;}
   .lp-title{font-size:36px;}
   .lp-lead{font-size:16px;}
   .lp-cards-3, .lp-plans{grid-template-columns:1fr;}

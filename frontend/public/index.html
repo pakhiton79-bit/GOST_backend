@@ -31,10 +31,19 @@
         <a class="lp-btn lp-btn-ghost" href="login.html?next=gosts.html">Войти</a>
       </div>
     </div>
-    <div class="lp-hero-art lp-show" id="lpShow">
-      <div class="lp-show-stage" id="lpShowStage"></div>
-      <div class="lp-show-name" id="lpShowName"></div>
-      <div class="lp-show-thumbs" id="lpShowThumbs" role="tablist" aria-label="Типы ящиков"></div>
+    <div class="lp-hero-art lp-demo" id="lpDemo" aria-label="Как выглядит расчёт: ввод размеров, расчёт, печать">
+      <div class="lpd-window">
+        <div class="lpd-bar"><span class="lpd-dots"><i></i><i></i><i></i></span><span class="lpd-tab" id="lpdTab"></span></div>
+        <div class="lpd-box" id="lpdBox">
+          <div class="lpd-view" id="lpdView">
+            <div class="lpd-page" id="lpdPage"></div>
+            <div class="lpd-sheet-wrap" id="lpdSheet"></div>
+            <div class="lpd-toast" id="lpdToast"></div>
+            <svg class="lpd-cursor" id="lpdCursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2l15 11-6.6 1.2 3.9 7.3-2.9 1.5-3.9-7.4L4 20z"/></svg>
+          </div>
+        </div>
+      </div>
+      <div class="lpd-scenes" id="lpdScenes" role="tablist" aria-label="Примеры расчёта"></div>
     </div>
   </section>
 
