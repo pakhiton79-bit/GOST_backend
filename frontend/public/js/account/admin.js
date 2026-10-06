@@ -206,12 +206,12 @@ function renderUsers(){
   $('adminRows').innerHTML = rows.map(u => {
     const seen = u.lastSeen ? 'вход ' + fmtDate(u.lastSeen) : 'входов нет';
     return `<tr data-email="${esc(u.email)}">
-      <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div></td>
+      <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}${u.blocked ? ' <span class="admin-tag admin-tag-blocked">заблокирован</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div>${u.blocked ? `<div class="admin-sub">заблокирован ${fmtDate(u.blocked.at)}${u.blocked.reason ? ': ' + esc(u.blocked.reason) : ''}</div>` : ''}</td>
       <td>${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}<div class="admin-sub">с ${fmtDate(u.planSince)}</div></td>
       <td>${u.quota.used} из ${fmtNum(u.quota.monthly)}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
-      <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button><button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
+      <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button>${u.blocked ? '<button type="button" class="btn-secondary admin-unblock">Разблокировать</button>' : `<button type="button" class="btn-secondary admin-block"${u.self ? ' disabled title="Свой аккаунт заблокировать нельзя"' : ''}>Заблокировать</button>`}<button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="6" class="admin-empty">Аккаунтов нет</td></tr>';
 }
@@ -237,13 +237,26 @@ async function load(){
 
 $('adminSearch').addEventListener('input', renderUsers);
 $('adminRows').addEventListener('click', async e => {
-  const btn = e.target.closest('.admin-save, .admin-delete');
+  const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock');
   if(!btn || btn.disabled) return;
   const tr = btn.closest('tr'), email = tr.dataset.email;
   if(btn.classList.contains('admin-delete') && !window.confirm(`Удалить аккаунт ${email}? Его подписка, счётчики и входы будут удалены без возможности восстановления.`)) return;
+  // Блокировка: причина (можно пустую) - её увидит пользователь при попытке войти.
+  let reason = '';
+  if(btn.classList.contains('admin-block')){
+    reason = window.prompt(`Заблокировать ${email}? Вход и расчёты будут запрещены, входы на всех устройствах завершатся.\n\nПричина (её увидит пользователь при входе, можно оставить пустой):`, '');
+    if(reason === null) return;
+  }
+  if(btn.classList.contains('admin-unblock') && !window.confirm(`Разблокировать ${email}?`)) return;
   btn.disabled = true;
   try{
-    if(btn.classList.contains('admin-save')){
+    if(btn.classList.contains('admin-block')){
+      await api('block', { email, reason });
+      showMsg(`Аккаунт ${email} заблокирован.`, true);
+    } else if(btn.classList.contains('admin-unblock')){
+      await api('unblock', { email });
+      showMsg(`Аккаунт ${email} разблокирован.`, true);
+    } else if(btn.classList.contains('admin-save')){
       const d = await api('plan', { email, plan: tr.querySelector('.ui-select').dataset.value });
       showMsg(`${email}: подписка ${d.quota.planName} с этого момента.`, true);
     } else {

@@ -160,6 +160,7 @@ async function api(path, body){
     const err = new Error(data.error || 'Ошибка сервера. Попробуйте ещё раз.');
     err.devices = data.devices;
     err.noAccount = !!data.noAccount;
+    err.exists = !!data.exists;
     throw err;
   }
   return data;
@@ -203,6 +204,7 @@ async function onSubmit(e){
     }
   }catch(err){
     if(err.noAccount) showMsg(err.message, false, 'register', 'Зарегистрироваться');
+    else if(err.exists) showMsg(err.message, false, 'login', 'Войти');
     else showMsg(err.message);
   }finally{
     btn.disabled = false;

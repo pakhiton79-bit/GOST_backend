@@ -109,9 +109,16 @@ function publicDevices(user, currentId) {
   }));
 }
 
+// Заблокированный аккаунт (admin.js): вход запрещён, причина - в сообщении.
+function blockedError(user) {
+  const why = user.blocked.reason ? ` Причина: ${user.blocked.reason}.` : '';
+  return { error: `Аккаунт заблокирован.${why} Если вы считаете это ошибкой, напишите на почту, указанную в Пользовательском соглашении.`, blocked: true };
+}
+
 // Вход (пароль или код уже проверены): если устройств уже столько, сколько
 // разрешает подписка, - пропуск и список устройств, иначе сессия.
 function finishLogin(req, res, user) {
+  if (user.blocked) return res.status(403).json(blockedError(user));
   const limit = planOf(user).devices;
   if (store.listUserSessions(user.id).length >= limit) {
     const ticket = newToken();
@@ -137,7 +144,7 @@ router.post('/register', rateLimit, async (req, res, next) => {
     const legal = consentsFromRequest(req);
     if (legal.error) return res.status(400).json({ error: legal.error });
     let user = store.findUserByEmail(email);
-    if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите или восстановите пароль.' });
+    if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
     // Почта ещё не подтверждена - регистрацию можно пройти заново.
     if (user) store.updateUser(user, { passHash: hashPassword(req.body.password) });
     else user = store.createUser(email, hashPassword(req.body.password));
@@ -262,6 +269,7 @@ router.post('/reset', rateLimit, (req, res) => {
   // на почту - значит, почта подтверждена.
   store.updateUser(user, { passHash: hashPassword(req.body.password), verified: true });
   store.deleteUserSessions(user.id);
+  if (user.blocked) return res.status(403).json(blockedError(user));
   startSession(req, res, user.id);
   res.json({ ok: true, user: publicUser(user) });
 });

@@ -62,7 +62,7 @@ function attachUser(req, res, next) {
     const hash = sha256(token);
     const s = store.getSession(hash);
     const user = s && store.findUserById(s.userId);
-    if (user && user.verified) {
+    if (user && user.verified && !user.blocked) {
       const now = Date.now();
       if (syncUser(user, now)) store.updateUser(user);
       if (!s.lastSeen || now - s.lastSeen > TOUCH_MS) store.touchSession(hash, now);

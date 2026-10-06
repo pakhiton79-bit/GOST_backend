@@ -31,7 +31,7 @@ openSettingsSection = section => { location.href = 'gosts.html#' + section; };
 // «уменьшении движения» в системе - сразу готовый результат, без анимации.
 const LPD_SCENES = [
   {
-    type: 'I-1', short: 'I-1', dims: [1000, 800, 600], mass: 300,
+    type: 'I-1', short: 'I-1', dims: [1000, 800, 600], mass: 300, thick: [25, 50],
     opts: [['Полоз нужен', true, false], ['Округлить ширину досок', false, false], ['Добавить раскосины', false, true], ['X-образные раскосины', false, false]],
     sum: ['1100 × 900 × 725', '0.148', '103.4', '2.5'],
     image: '/images/box_i1.jpg',
@@ -44,7 +44,7 @@ const LPD_SCENES = [
     finish: 'print',
   },
   {
-    type: 'II-1', short: 'II-1', dims: [1600, 1000, 900], mass: 800,
+    type: 'II-1', short: 'II-1', dims: [1600, 1000, 900], mass: 800, thick: [25, 40, 50, 75],
     opts: [['Округлить ширину досок', false, true], ['Добавить раскосины', false, false], ['Погрузка авто/электропогрузчиком', false, true], ['Добавить пергамин', false, false]],
     sum: ['1700 × 1100 × 1115', '0.343', '240.4', '5.8'],
     image: '/images/box_ii1.png',
@@ -57,7 +57,7 @@ const LPD_SCENES = [
     finish: 'pdf',
   },
   {
-    type: 'I-3', short: 'I-3', dims: [1200, 1000, 800], mass: 1000,
+    type: 'I-3', short: 'I-3', dims: [1200, 1000, 800], mass: 1000, thick: [25, 40, 50, 100],
     opts: [['Округлить ширину досок', false, false], ['X-образные раскосины', false, true], ['Погрузка авто/электропогрузчиком', false, true], ['Добавить ленту обшивки торцов', false, false]],
     sum: ['1300 × 1100 × 1025', '0.258', '180.5', '4.3'],
     image: '/images/box.png',
@@ -70,9 +70,9 @@ const LPD_SCENES = [
     finish: 'print',
   },
 ];
-// Толщины в наличии - во всех примерах одни (по указанию пользователя):
-// 25, 40, 50, 100 и все толще.
-const LPD_PICK = [25, 40, 50, 100, 125, 150, 175, 200, 225, 250];
+// thick - толщины в наличии примера: по указанию пользователя отмечаются
+// только те, что есть в результате (с ними расчёт тот же, что и с полным
+// набором 25, 40, 50, 100 и толще - проверено).
 const LPD_THICK = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 // Подпись выпадающего списка - как на странице расчёта.
 const lpdPicked = list => `Выбрано (${list.length}): ${list.slice(0, 8).join(', ')} мм${list.length > 8 ? `, ещё ${list.length - 8} знач.` : ''}`;
@@ -197,8 +197,8 @@ function lpDemo(){
   const still = (i) => {
     const sc = setup(i);
     ['L', 'W', 'H', 'M'].forEach((k, n) => { q(`[data-f="${k}"] span`).textContent = n < 3 ? sc.dims[n] : sc.mass; });
-    page.querySelectorAll('.lpd-chip').forEach(c => c.classList.toggle('on', LPD_PICK.includes(+c.dataset.t)));
-    q('[data-sel] span').textContent = lpdPicked(LPD_PICK);
+    page.querySelectorAll('.lpd-chip').forEach(c => c.classList.toggle('on', sc.thick.includes(+c.dataset.t)));
+    q('[data-sel] span').textContent = lpdPicked(sc.thick);
     sc.opts.forEach(([, , tick], n) => { if(tick) q(`[data-o="${n}"]`).classList.add('on'); });
     q('[data-status]').classList.add('on');
     page.querySelectorAll('.lpd-result').forEach(r => r.classList.add('on'));
@@ -224,16 +224,16 @@ function lpDemo(){
     await move(sel, tk); await click(tk, sel);
     q('[data-chips]').classList.add('open');
     await sleep(250, tk);
-    for(const [n, t] of LPD_PICK.entries()){
+    for(const [n, t] of sc.thick.entries()){
       const chip = q(`.lpd-chip[data-t="${t}"]`);
-      await move(chip, tk, n ? 230 : 450); await click(tk); chip.classList.add('on');
-      q('[data-sel] span').textContent = lpdPicked(LPD_PICK.slice(0, n + 1));
+      await move(chip, tk, n ? 320 : 450); await click(tk); chip.classList.add('on');
+      q('[data-sel] span').textContent = lpdPicked(sc.thick.slice(0, n + 1));
     }
     await sleep(250, tk);
     q('[data-chips]').classList.remove('open');
     progress(i, 34);
     // 3. Опции.
-    await scrollTo(q('[data-o="0"]').parentNode, tk);
+    await scrollTo(q('[data-o="0"]').parentNode, tk, 450);
     for(const [n, [, , tick]] of sc.opts.entries()){
       if(!tick) continue;
       const o = q(`[data-o="${n}"]`);
@@ -252,16 +252,16 @@ function lpDemo(){
     await sleep(500, tk);
     progress(i, 62);
     // 5. Итог, чертёж и таблица деталей.
-    await scrollTo(q('[data-sum]'), tk, 900);
-    await sleep(1500, tk);
+    await scrollTo(q('[data-sum]'), tk, 550);
+    await sleep(1100, tk);
     // Таблицы уже на месте - листаем узлы по очереди.
     for(const node of page.querySelectorAll('[data-node]')){
-      await scrollTo(node, tk, 800, 10);
-      await sleep(1100, tk);
+      await scrollTo(node, tk, 450, 10);
+      await sleep(700, tk);
     }
     progress(i, 80);
     // 6. Печать или PDF.
-    await scrollTo(q('.lpd-actions'), tk, 900, 120);
+    await scrollTo(q('.lpd-actions'), tk, 550, 120);
     if(sc.finish === 'print'){
       const pr = q('[data-print]');
       await move(pr, tk); await click(tk, pr);

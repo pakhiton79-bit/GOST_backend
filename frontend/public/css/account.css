@@ -254,9 +254,14 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-table-wrap{overflow-x:auto;}
 .admin-table{width:100%;min-width:760px;border-collapse:collapse;font-size:14px;}
 .admin-details .admin-table{min-width:0;}
+/* Общие ширины колонок таблиц деталей (style.css, 34% + 16.5%...) здесь не нужны:
+   ширина - по содержимому, столбец кнопок - по самой длинной кнопке. */
+.admin-table th, .admin-table td{width:auto;}
+.admin-table td:last-child{width:1%;}
+.admin-table td:first-child{overflow-wrap:anywhere;}
 .admin-table th{text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 8px;border-bottom:1px solid var(--rule);}
 .admin-table td{padding:12px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);font-variant-numeric:tabular-nums;}
-.admin-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:104px;}
+.admin-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:136px;}
 .admin-table button{margin:0;padding:7px 12px;font-size:13px;}
 .admin-delete{color:var(--error);}
 .admin-delete:hover{border-color:var(--error);}
@@ -265,6 +270,7 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-tag{font-size:11px;color:var(--warn);}
 .admin-tag-you{color:var(--accent);font-weight:600;}
 .admin-tag-ok{color:var(--ok);}
+.admin-tag-blocked{color:var(--error);font-weight:600;}
 .admin-empty{text-align:center;color:var(--ink-soft);}
 
 /* Выпадающий список в стиле сайта (uiSelect в admin.js): кнопка - как поле

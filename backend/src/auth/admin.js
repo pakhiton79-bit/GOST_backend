@@ -5,6 +5,9 @@
 //   GET  /api/admin/users                 - аккаунты, подписки, счётчики
 //   POST /api/admin/plan { email, plan }  - сменить подписку (месяц - с этого момента)
 //   POST /api/admin/delete { email }      - удалить аккаунт (себя - нельзя)
+//   POST /api/admin/block { email, reason } - заблокировать (себя - нельзя): вход и
+//                                           расчёты запрещены, входы на всех устройствах завершаются
+//   POST /api/admin/unblock { email }     - разблокировать
 //   GET  /api/admin/stats                 - статистика (stats.js)
 const express = require('express');
 const store = require('./store');
@@ -32,6 +35,7 @@ router.get('/users', (req, res) => {
       lastCalcAt: u.lastCalcAt ? new Date(u.lastCalcAt).toISOString() : null,
       lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
       self: u.id === req.user.id,
+      blocked: u.blocked ? { at: new Date(u.blocked.at).toISOString(), reason: u.blocked.reason || '' } : null,
     };
   });
   res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })) });
@@ -57,6 +61,28 @@ router.post('/delete', (req, res) => {
   if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
   if (user.id === req.user.id) return res.status(400).json({ error: 'Свой аккаунт удалить нельзя.' });
   store.deleteUser(user);
+  res.json({ ok: true });
+});
+
+// Блокировка (по указанию пользователя - «забанить / разбанить»). Аккаунт и
+// его данные остаются (Пользовательское соглашение, раздел 10), но войти и
+// считать нельзя; причина показывается пользователю при попытке входа.
+router.post('/block', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  if (user.id === req.user.id) return res.status(400).json({ error: 'Свой аккаунт заблокировать нельзя.' });
+  const reason = String(req.body.reason || '').trim().slice(0, 300);
+  store.updateUser(user, { blocked: { at: Date.now(), reason } });
+  store.deleteUserSessions(user.id);
+  res.json({ ok: true });
+});
+
+router.post('/unblock', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  store.updateUser(user, { blocked: null });
   res.json({ ok: true });
 });
 
