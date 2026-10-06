@@ -44,36 +44,42 @@
     --switch-thumb: #FFFFFF;
     --overlay: rgba(9,17,53,.45);    /* затемнение под окнами */
   }
-  /* Тёмная тема (кнопка «Настройки» вверху страницы): те же токены,
-     нейтральные графитовые фоны без синевы (по указанию пользователя - как
-     на образце переключателя темы), светлый текст; акцент - тот же
-     коричневый, чуть светлее, чтобы читался на тёмном. color-scheme -
-     тёмные системные элементы (галочки, полосы прокрутки). */
+  /* Тёмная тема (кнопка «Настройки» вверху страницы): те же токены.
+     По указанию пользователя («цвета не нравятся, сделай поприятнее») -
+     тёплый графит вместо холодного серого: фоны с лёгким коричневым
+     оттенком в тон акценту, мягкий тёплый белый текст вместо чисто белого,
+     акцент - тот же коричневый, светлее, чтобы читался на тёмном.
+     color-scheme - тёмные системные элементы (галочки, полосы прокрутки). */
   :root[data-theme="dark"]{
     color-scheme:dark;
-    --bg: #151515;
-    --panel: #1E1E1E;
-    --panel-hover: #262626;
-    --table-header-bg: #262626;
-    --ink: #EDEDED;
-    --ink-soft: #A3A3A3;
-    --rule: #2F2F2F;
-    --border-input: #3B3B3B;
-    --border-btn: #3B3B3B;
-    --secondary-hover: #2A2A2A;
-    --accent: #B8733F;
-    --accent-hover: #CB8650;
-    --accent-wash: #3A2B20;
-    --manual-ink: #F2BE94;
-    --ok: #5DBB6A;
-    --warn: #E3A94B;
-    --warn-wash: #2F2716;
-    --error: #EF6B5C;
-    --switch-bg: #151515;
-    --switch-thumb: #333333;
-    --overlay: rgba(0,0,0,.6);
+    --bg: #151311;
+    --panel: #1D1A17;
+    --panel-hover: #24201C;
+    --table-header-bg: #27221E;
+    --ink: #ECE5DC;
+    --ink-soft: #A69C91;
+    --rule: #2F2A25;
+    --border-input: #3D3630;
+    --border-btn: #3D3630;
+    --secondary-hover: #2A2520;
+    --accent: #C17F4A;
+    --accent-hover: #D08F5A;
+    --accent-wash: #2B231C;
+    --manual-ink: #F0C29A;
+    --ok: #6CBF78;
+    --warn: #E0A955;
+    --warn-wash: #2B2418;
+    --error: #EB7262;
+    --switch-bg: #151311;
+    --switch-thumb: #3A332D;
+    --overlay: rgba(8,6,4,.65);
   }
-  /* Светлые островки в тёмной теме: свой (светлый) фон и текст. */
+  /* Светлые островки в тёмной теме: свой (светлый) фон и текст. Чтобы не
+     слепили на тёмном фоне - чуть приглушены до тёплого «бумажного» тона
+     (только на экране; печатный лист #printArea не затрагивается). */
+  :root[data-theme="dark"] #boardTables .diagram-slot,
+  :root[data-theme="dark"] .box-view,
+  :root[data-theme="dark"] .type-image{filter:brightness(.86) sepia(.08);}
   /* Подложка чертежа чуть шире слота (box-shadow, раскладку не меняет) -
      подписи размеров стоят у самого края слота. */
   :root[data-theme="dark"] #boardTables .diagram-slot{
