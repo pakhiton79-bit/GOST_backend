@@ -46,7 +46,7 @@ let deviceTicket = '';
 
 function nextUrl(){
   const n = new URLSearchParams(location.search).get('next') || '';
-  return /^[a-z0-9-]+\.html(\?[^#]*)?$/i.test(n) ? n : 'index.html';
+  return /^[a-z0-9-]+\.html(\?[^#]*)?$/i.test(n) ? n : 'gosts.html'; // по умолчанию - к выбору ГОСТ
 }
 
 // Сообщение над формой; linkMode - ссылка после текста (например,
