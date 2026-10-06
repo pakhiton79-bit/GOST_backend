@@ -14,9 +14,17 @@
 <script src="/js/common-account.js"></script>
 </head>
 <body class="auth-page">
-<!-- Источник верхней панели (common-settings.js строит её по .wrap):
-     ширина - как на главной. Сам блок пустой и скрыт. -->
-<div class="wrap" hidden style="max-width:1160px"></div>
+<!-- Источник верхней панели (common-settings.js строит её по .wrap): по
+     указанию пользователя панель на всю ширину окна (логотип - у левого края,
+     над коллажем) и со ссылками «Назад / Главная» из .top-nav. «Назад» -
+     на предыдущую страницу сайта, если пришли с неё, иначе на главную.
+     Сам блок скрыт. -->
+<div class="wrap" hidden style="max-width:none">
+  <div class="top-nav">
+    <a href="index.html" onclick="if(document.referrer.indexOf(location.origin + '/') === 0 &amp;&amp; history.length > 1){ history.back(); return false; }">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+</div>
 <div class="auth-split">
   <!-- Слева - коллаж из чертежей сайта (декоративный). -->
   <aside class="auth-art" aria-hidden="true">
