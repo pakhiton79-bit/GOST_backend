@@ -30,6 +30,7 @@ function initAccountButton(){
   initSettingsAccount();
   fetchAccountUser().then(user => {
     accountUserCache = user;
+    applyPlanClass(user);
     if(user){
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -63,6 +64,13 @@ function initAccountButton(){
 // регистрацию. Разделы добавляются в SITE_SETTINGS_SECTIONS
 // (common-settings.js) после «Оформления»; данные - при каждом открытии окна.
 let accountUserCache;
+// Водяной знак на печатном листе (печать и PDF) - только в Free: по указанию
+// пользователя в Pro и Team его нет. Класс на <html> попадает и в копию
+// страницы, которую снимает html2canvas для PDF (см. account.css).
+function applyPlanClass(user){
+  const paid = !!(user && user.quota && user.quota.plan && user.quota.plan !== 'free');
+  document.documentElement.classList.toggle('plan-paid', paid);
+}
 function plural(n, one, few, many){
   const a = n % 10, b = n % 100;
   return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many;
@@ -198,7 +206,7 @@ function initSettingsAccount(){
   const render = u => { renderSiteAccount(u); renderSiteSub(u); };
   btn.addEventListener('click', () => {
     if(accountUserCache !== undefined) render(accountUserCache);
-    fetchAccountUser().then(u => { accountUserCache = u; render(u); });
+    fetchAccountUser().then(u => { accountUserCache = u; applyPlanClass(u); render(u); });
   });
   const section = location.hash.replace('#', '');
   if(section === 'account' || section === 'subscription'){

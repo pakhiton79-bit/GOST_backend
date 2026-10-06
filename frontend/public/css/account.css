@@ -400,3 +400,6 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}
 .site-acc-delete .auth-msg{margin:10px 0 0;}
 .site-acc-delete[hidden], .site-acc-del-btn[hidden]{display:none;}
+
+/* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */
+.plan-paid #printArea .print-watermark{display:none;}
