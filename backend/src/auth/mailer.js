@@ -17,7 +17,7 @@ async function sendCode(email, code, purpose) {
 // Заявка на внутренний стандарт завода (standards.js). Пока тестовый режим:
 // письмо не отправляется, заявка - в журнале сервера (и в хранилище).
 async function sendStandardRequest(rec) {
-  console.log(`[заявка на стандарт, тестовый режим] ${rec.email}: ${rec.company} / ${rec.standard} / ${rec.contact}\n  ${rec.details}`);
+  console.log(`[заявка на стандарт, тестовый режим] ${rec.userEmail}: ${rec.company} / ${rec.standard}\n  ${rec.details}`);
 }
 
 module.exports = { sendCode, sendStandardRequest };

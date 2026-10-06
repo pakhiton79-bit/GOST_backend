@@ -3,8 +3,9 @@
 // своего предприятия, администрация добавляет его расчёт. Кнопка и форма -
 // на странице выбора ГОСТа (js/account/standards.js).
 //
-//   POST /api/standards/request { company, standard, details, contact, email }
-//   (телефон не запрашиваем - по указанию пользователя, меньше персональных данных)
+//   POST /api/standards/request { company, standard, details }
+//   Телефон, контактное лицо и отдельную почту не запрашиваем (по указанию
+//   пользователя - меньше персональных данных): ответ - на почту аккаунта.
 //
 // Пока почта в тестовом режиме: заявка сохраняется в хранилище и пишется в
 // журнал сервера (mailer.js); письмо администратору - когда подключим почту.
@@ -14,8 +15,8 @@ const { planOf } = require('./plans');
 const { rateLimit } = require('./routes');
 const { sendStandardRequest } = require('./mailer');
 
-const FIELDS = { company: 200, standard: 300, details: 3000, contact: 200, email: 254 };
-const REQUIRED = ['company', 'standard', 'details', 'contact', 'email'];
+const FIELDS = { company: 200, standard: 300, details: 3000 };
+const REQUIRED = ['company', 'standard', 'details'];
 
 const router = express.Router();
 
@@ -32,7 +33,6 @@ router.post('/request', rateLimit, async (req, res, next) => {
       rec[k] = v;
     }
     if (REQUIRED.some(k => !rec[k])) return res.status(400).json({ error: 'Заполните обязательные поля.' });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rec.email)) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
     Object.assign(rec, { userEmail: req.user.email, plan: req.user.plan, at: new Date().toISOString() });
     store.addRequest(rec);
     await sendStandardRequest(rec);

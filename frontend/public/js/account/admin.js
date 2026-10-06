@@ -223,11 +223,10 @@ function renderRequests(){
   const planName = id => (adminData.plans.find(p => p.id === id) || {}).name || id;
   $('reqRows').innerHTML = list.map(r => `<tr>
       <td>${fmtDate(r.at)}</td>
-      <td>${esc(r.userEmail)}<div class="admin-sub">${esc(planName(r.plan))}</div></td>
+      <td><a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a><div class="admin-sub">${esc(planName(r.plan))}</div></td>
       <td>${esc(r.company)}<div class="admin-sub">${esc(r.standard)}</div></td>
-      <td>${esc(r.contact)}<div class="admin-sub"><a href="mailto:${esc(r.email)}">${esc(r.email)}</a></div></td>
       <td class="admin-req-details">${esc(r.details)}</td>
-    </tr>`).join('') || '<tr><td colspan="5" class="admin-empty">Заявок пока нет</td></tr>';
+    </tr>`).join('') || '<tr><td colspan="4" class="admin-empty">Заявок пока нет</td></tr>';
 }
 
 async function api(path, body){
