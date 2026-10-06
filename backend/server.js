@@ -16,6 +16,7 @@ const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { router: authRoutes } = require('./src/auth/routes');
 const adminRoutes = require('./src/auth/admin');
+const standardsRoutes = require('./src/auth/standards');
 const { calcQuota } = require('./src/auth/calc-quota');
 const { publicPlans } = require('./src/auth/plans');
 const { attachUser } = require('./src/auth/session');
@@ -55,6 +56,7 @@ app.use(express.json());
 app.use(attachUser);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/standards', standardsRoutes);
 app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
 // Расчёты - только после входа и в пределах лимита подписки.
 app.post('/api/:type/calculate', calcQuota);

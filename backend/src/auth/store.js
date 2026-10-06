@@ -27,6 +27,7 @@ function load() {
   db.tickets = db.tickets && typeof db.tickets === 'object' ? db.tickets : {};
   db.stats = db.stats && typeof db.stats === 'object' ? db.stats : {};
   db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
+  db.requests = Array.isArray(db.requests) ? db.requests : [];
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
   return db;
 }
@@ -150,6 +151,15 @@ function deleteTicket(ticketHash) {
   save();
 }
 
+// ---- Заявки на внутренние стандарты заводов (см. standards.js) ----
+function addRequest(rec) {
+  load().requests.push(rec);
+  save();
+}
+function listRequests() {
+  return load().requests.slice();
+}
+
 // ---- Статистика по дням (см. stats.js) ----
 function statsData() {
   return load().stats;
@@ -161,4 +171,5 @@ module.exports = {
   createSession, touchSession, getSession, deleteSession, deleteUserSessions, listUserSessions, deleteSessionById,
   getCode, setCode, deleteCode,
   setTicket, getTicket, deleteTicket,
+  addRequest, listRequests,
 };

@@ -16,6 +16,7 @@ function planCard(p, current){
     `${p.monthly.toLocaleString('ru-RU')} расчётов в месяц`,
     ...(p.welcome ? [`+${p.welcome} расчётов при регистрации`] : []),
     PLAN_DEVICES(p.devices),
+    ...(p.customStandards ? ['Внутренние стандарты вашего завода'] : []),
   ];
   const btn = current ? '<button type="button" class="btn-secondary plan-btn" disabled>Ваша подписка</button>'
     : p.id === 'free' ? '' : '<button type="button" class="plan-btn" disabled>Скоро</button>';

@@ -14,4 +14,10 @@ async function sendCode(email, code, purpose) {
   console.log(`[почта, тестовый режим] ${email}: код ${code} (${PURPOSE_TEXT[purpose] || purpose})`);
 }
 
-module.exports = { sendCode };
+// Заявка на внутренний стандарт завода (standards.js). Пока тестовый режим:
+// письмо не отправляется, заявка - в журнале сервера (и в хранилище).
+async function sendStandardRequest(rec) {
+  console.log(`[заявка на стандарт, тестовый режим] ${rec.email}: ${rec.company} / ${rec.standard} / ${rec.contact} ${rec.phone}\n  ${rec.details}`);
+}
+
+module.exports = { sendCode, sendStandardRequest };

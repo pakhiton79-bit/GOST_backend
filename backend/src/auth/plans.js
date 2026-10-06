@@ -8,13 +8,15 @@
 //   Team - 2500 расчётов в месяц на аккаунт, 4 устройства, 30 000 ₽ в месяц.
 // Расчёт - каждое успешное нажатие «Рассчитать». Месяц считается от даты
 // подключения подписки (у пробной - от регистрации); неиспользованные расчёты
-// месяца не переносятся. id пробной - прежний «free» (так он записан у
+// месяца не переносятся. customStandards - можно прислать заявку на
+// внутренний стандарт своего завода (standards.js; по указанию пользователя -
+// во всех подписках, кроме пробной). id пробной - прежний «free» (так он записан у
 // существующих аккаунтов). Порядок ключей - порядок подписок на сайте.
 const PLANS = {
-  free: { name: 'Пробная', monthly: 5, devices: 1, price: null },
-  base: { name: 'Base', monthly: 20, devices: 1, price: 5000 },
-  pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000 },
-  team: { name: 'Team', monthly: 2500, devices: 4, price: 30000 },
+  free: { name: 'Пробная', monthly: 5, devices: 1, price: null, customStandards: false },
+  base: { name: 'Base', monthly: 20, devices: 1, price: 5000, customStandards: true },
+  pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000, customStandards: true },
+  team: { name: 'Team', monthly: 2500, devices: 4, price: 30000, customStandards: true },
 };
 const WELCOME_CALCS = 20;
 // Следующая подписка (для предложения «Больше в ...»): по порядку PLANS.

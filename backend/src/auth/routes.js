@@ -274,4 +274,4 @@ router.post('/reset', rateLimit, (req, res) => {
   res.json({ ok: true, user: publicUser(user) });
 });
 
-module.exports = { router, isAdmin };
+module.exports = { router, isAdmin, rateLimit };

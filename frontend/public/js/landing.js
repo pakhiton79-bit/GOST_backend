@@ -320,7 +320,7 @@ function lpRenderPlans(){
     document.getElementById('lpPlans').innerHTML = (d.plans || []).map(p => `<div class="lp-plan${p.id === 'pro' ? ' lp-plan-accent' : ''}">
         <div class="lp-plan-name">${p.name}</div>
         <div class="lp-plan-price">${p.price ? p.price.toLocaleString('ru-RU') + ' ₽ в месяц' : (p.id === 'free' ? 'Бесплатно' : 'Цена уточняется')}</div>
-        <ul><li>${p.monthly.toLocaleString('ru-RU')} расчётов в месяц</li>${p.welcome ? `<li>+${p.welcome} при регистрации</li>` : ''}<li>${p.devices} ${word(p.devices)}</li></ul>
+        <ul><li>${p.monthly.toLocaleString('ru-RU')} расчётов в месяц</li>${p.welcome ? `<li>+${p.welcome} при регистрации</li>` : ''}<li>${p.devices} ${word(p.devices)}</li>${p.customStandards ? '<li>Внутренние стандарты вашего завода</li>' : ''}</ul>
       </div>`).join('');
   }).catch(() => {});
 }

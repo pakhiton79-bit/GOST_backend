@@ -9,6 +9,9 @@
 .site-register-btn{margin-left:0;background:var(--accent);border-color:var(--accent);color:#fff;}
 .site-register-btn:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff;}
 .site-account-btn ~ .site-settings-btn{margin-left:0;}
+/* «Свой стандарт» (standards.js, страница выбора ГОСТа) - первая справа, остальные кнопки вплотную за ней. */
+.site-std-btn{margin-right:-14px;}
+.site-std-btn ~ .site-settings-btn{margin-left:0;}
 .site-account-btn span{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* Узкий экран: у кнопок аккаунта и «Настройки» - только значки, иначе
    панель не помещается по ширине. */
@@ -16,6 +19,8 @@
   .site-account-btn span, .site-account-btn ~ .site-settings-btn span{display:none;}
   .site-account-btn, .site-account-btn ~ .site-settings-btn{padding:0 8px;}
   .site-account-btn{margin-right:-8px;}
+  .site-std-btn span{display:none;}
+  .site-std-btn{padding:0 8px;margin-right:-8px;}
   .site-register-btn{display:none;}
   .site-topbar-links a{white-space:nowrap;}
 }
@@ -404,3 +409,25 @@ body.auth-page{margin:0;background:var(--bg);}
 
 /* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */
 .plan-paid #printArea .print-watermark{display:none;}
+
+/* Заявка на внутренний стандарт завода (js/account/standards.js): окно поверх страницы выбора ГОСТа. */
+.std-overlay{position:fixed;inset:0;z-index:60;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:16px;}
+.std-overlay[hidden]{display:none;}
+.std-dialog{width:100%;max-width:580px;max-height:calc(100vh - 32px);overflow:auto;background:var(--panel);border:1px solid var(--rule);border-radius:16px;}
+.std-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid var(--rule);}
+.std-head h2{margin:0;font-size:19px;font-weight:700;color:var(--ink);text-transform:none;letter-spacing:0;padding:0;border:0;}
+.std-body{padding:20px 22px 22px;}
+.std-text{margin:0 0 14px;font-size:14px;line-height:1.55;color:var(--ink);}
+.std-field{margin-bottom:14px;flex:1;min-width:0;}
+.std-field label{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px;}
+.std-field input, .std-field textarea{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-input);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;}
+.std-field textarea{resize:vertical;min-height:90px;}
+.std-field input:focus, .std-field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
+.std-row{display:flex;gap:12px;}
+.std-note{margin:2px 0 14px;font-size:13px;color:var(--ink-soft);}
+.std-msg{margin:0 0 12px;padding:10px 12px;border-radius:10px;font-size:14px;}
+.std-msg[hidden]{display:none;}
+.std-actions{display:flex;gap:10px;flex-wrap:wrap;}
+@media screen and (max-width:640px){
+  .std-row{flex-direction:column;gap:0;}
+}
