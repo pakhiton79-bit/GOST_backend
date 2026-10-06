@@ -52,7 +52,6 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
     {type:'line', x1:stubR, y1:botY, x2:dimFarX, y2:botY},
     {type:'double', x1:dblArrowX, y1:topY, x2:dblArrowX, y2:botY, lx:dblArrowX+2*px, ly:(topY+botY)/2, text: dim+' мм', vertical:true},
 
-    {type:'single', x1:thickTailX, y1:thickTailY, x2:p1L, y2:thickTargetY, lx:thickTailX, ly:thickTailY, text: plankT+' мм'},
 
     {type:'line', x1:stubL, y1:topY, x2:stubL, y2:topLineY},
     {type:'line', x1:stubR, y1:topY, x2:stubR, y2:topLineY},
@@ -71,6 +70,11 @@ function diagramPanel(g, dimVal, plankTVal, edgeVal, gapVal, boardLenVal, partTi
   // Промежуток между досками - размер слева от щита у первого промежутка
   // (у сплошного щита его нет).
   if(g.gap) records.push(...boardGapRecords(stubL, stubL - 22*px, g.gap.y1, g.gap.y2, 24*px, 6*px, g.gap.value));
+
+  // Выступ планки сверху (у дна планки вровень с досками - plankTVal null, подписи нет).
+  if(plankTVal != null){
+    records.push({type:'single', x1:thickTailX, y1:thickTailY, x2:p1L, y2:thickTargetY, lx:thickTailX, ly:thickTailY, text: plankT+' мм'});
+  }
 
   if(bottomTVal > 0){
     const lastR = stubR - (p1L - stubL); // правая кромка крайней правой планки
@@ -94,7 +98,8 @@ function diagramKryshka(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plank
   return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Крышка', framePx);
 }
 function diagramDno(widthVal, plankTVal, edgeVal, gapVal, boardLenVal, plankQty, hasRaskosinaVal, xRaskosinaVal, framePx, boardGap){
-  const g = panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal, boardGap);
+  // Планки дна вровень с досками (flush): планка дна той же длины, что и щит.
+  const g = panelGenerated(Math.round(plankQty), hasRaskosinaVal, xRaskosinaVal, boardGap, true);
   if(!g) return diagramTooDense();
   return diagramPanel(g, widthVal, plankTVal, edgeVal, gapVal, boardLenVal, 'Дно', framePx);
 }

@@ -34,8 +34,26 @@ function panelPhotoKey(plankQty, hasRaskosinaVal){
   return (hasRaskosinaVal ? '1' : '0') + '_' + n;
 }
 
-function panelPhoto(plankQty, hasRaskosinaVal, xRaskosinaVal){
+// Те же фото для дна: планки вровень с досками, без выступов сверху и снизу
+// (по указанию пользователя), калибровка та же.
+const PANEL_PHOTOS_DNO = {
+  '0_2': "/images/bok_i1_2planks_dno.jpg",
+  '0_3': "/images/bok_i1_3planks_dno.jpg",
+  '0_4': "/images/bok_i1_4planks_dno.jpg",
+  '1_2': "/images/bok_i1_2planks_1raskosina_dno.jpg",
+  '1_3': "/images/bok_i1_3planks_2raskosina_dno.jpg",
+  '1_4': "/images/bok_i1_4planks_3raskosina_dno.jpg",
+};
+const PANEL_PHOTOS_DNO_X = {
+  '1_2': "/images/bok_i1_2planks_1raskosina_x_dno.jpg",
+  '1_3': "/images/bok_i1_3planks_2raskosina_x_dno.jpg",
+  '1_4': "/images/bok_i1_4planks_3raskosina_x_dno.jpg",
+};
+
+function panelPhoto(plankQty, hasRaskosinaVal, xRaskosinaVal, flush){
   const key = panelPhotoKey(plankQty, hasRaskosinaVal);
   const g = PANEL_PHOTOS[key];
-  return (xRaskosinaVal && PANEL_PHOTOS_X[key]) ? Object.assign({}, g, {img: PANEL_PHOTOS_X[key]}) : g;
+  const x = xRaskosinaVal && PANEL_PHOTOS_X[key];
+  const img = flush ? (x ? PANEL_PHOTOS_DNO_X[key] : PANEL_PHOTOS_DNO[key]) : (x ? PANEL_PHOTOS_X[key] : g.img);
+  return img === g.img ? g : Object.assign({}, g, {img});
 }

@@ -52,10 +52,12 @@ function renderBoardTables(calc, manualOverrides){
 
   let html = '';
   html += renderPartBlock('Дно',
-    diagramDno(calc.dnoWidth, calc.drawPlankT.dno, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    // Дно и крышка: справа - ширина груза + 2 доски бока (calc.dnoWidth); у дна
+    // планки не выступают за доски - подписи выступа нет (null).
+    diagramDno(calc.dnoWidth, null, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
     renderPartTable(calc.dno, 'dno', manualOverrides));
   html += renderPartBlock('Крышка',
-    diagramKryshka(calc.kPlankaKryshka, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
+    diagramKryshka(calc.dnoWidth, calc.drawPlankT.kryshka, edge, calc.plankGap, calc.kLen, calc.plankQty, calc.kryshkaDnoHasRaskosina, calc.xRaskosina, kdFramePx),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock('Щит торцевой (2 шт.)',
     diagramTorec(calc.H, calc.W, calc.raskosinaNeeded, calc.xRaskosina, torecFramePx),

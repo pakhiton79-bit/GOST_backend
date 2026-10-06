@@ -66,7 +66,10 @@ function buildDno(g) {
     width = W + T.bokBoard * 2;
     rows.push({ name: 'Полоз', t: skidT, w: PLANK_W, l: width, qty: plankQty, overrideKey: 't9Value' });
   } else {
-    width = W + (T.bokBoard + T.bokPlanka) * 2;
+    // По указанию пользователя: планка дна - как полоз и как значение справа
+    // на чертежах дна и крышки: ширина груза + 2 доски бокового щита (планки
+    // бока стоят снаружи по её торцам).
+    width = W + T.bokBoard * 2;
     rows.push({ name: 'Планка', t: T.dnoPlanka, w: PLANK_W, l: width, qty: plankQty, overrideKey: 'tDnoPlanka' });
   }
   rows.push(...boardRows('Доска дна', T.dnoBoard, W + T.bokBoard * 2, kLen, roundBoardWidths, 'tDnoBoard', boardGapShare));

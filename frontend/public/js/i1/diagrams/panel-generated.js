@@ -43,7 +43,7 @@ function braceStrip(l, r, top, bot, rising, PW, hTop, hBot, fmt){
 // Чертёж на n планок - в том же формате, что и записи PANEL_PHOTOS.
 // Раскосины: левая половина промежутков «/», правая «\» (при нечётном числе
 // центральный - «/»); X-образные - встречная рисуется под исходной.
-function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
+function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal, flush){
   const G = PANEL_GEN;
   const x0 = G.stubL + G.edge, x1 = G.stubR - G.edge;
   let plankW = PANEL_GEN_PLANK_W;
@@ -67,7 +67,9 @@ function panelGenerated(n, hasRaskosinaVal, xRaskosinaVal){
     }
   }
   for(let i=0; i<n; i++){
-    shapes += `<rect x="${f(px(i))}" y="${f(G.plankTop)}" width="${f(plankW)}" height="${f(G.plankBot-G.plankTop)}"/>`;
+    // flush - планка вровень с досками (дно), иначе выступает сверху и снизу.
+    const pt = flush ? G.topY : G.plankTop, pb = flush ? G.botY : G.plankBot;
+    shapes += `<rect x="${f(px(i))}" y="${f(pt)}" width="${f(plankW)}" height="${f(pb-pt)}"/>`;
   }
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${G.IH}" viewBox="0 0 ${G.IW} ${G.IH}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
