@@ -32,21 +32,19 @@ openSettingsSection = section => { location.href = 'gosts.html#' + section; };
 const LPD_SCENES = [
   {
     type: 'I-1', short: 'I-1', dims: [1000, 800, 600], mass: 300,
-    thick: [22, 25],
     opts: [['Полоз нужен', true, false], ['Округлить ширину досок', false, false], ['Добавить раскосины', false, true], ['X-образные раскосины', false, false]],
-    sum: ['1088 × 888 × 716', '0.130', '90.8', '2.2'],
+    sum: ['1100 × 900 × 725', '0.148', '103.4', '2.5'],
     image: '/images/box_i1.jpg',
     nodes: [
-      ['Дно', [['Полоз', 50, 100, 844, 2], ['Доска дна', 22, 100, 1088, 6], ['Доска дна (дополнительная) 1', 22, 81, 1088, 2], ['Доска дна (дополнительная) 2', 22, 82, 1088, 1], ['Раскосина', 22, 100, 993, 1]]],
-      ['Крышка', [['Планка', 22, 100, 888, 2], ['Доска крышки', 22, 100, 1088, 6], ['Доска крышки (дополнительная) 1', 22, 81, 1088, 2], ['Доска крышки (дополнительная) 2', 22, 82, 1088, 1], ['Раскосина', 22, 100, 1031, 1]]],
-      ['Щит торцевой (2 шт.)', [['Вертикальная планка', 22, 100, 600, 2], ['Горизонтальная планка', 22, 100, 600, 2], ['Доска торцевого щита', 22, 100, 800, 6], ['Раскосина', 22, 100, 566, 1]]],
-      ['Щит боковой (2 шт.)', [['Планка', 22, 100, 694, 2], ['Доска бокового щита', 22, 100, 1088, 6], ['Раскосина', 22, 100, 797, 1]]],
+      ['Дно', [['Полоз', 50, 100, 850, 2], ['Доска дна', 25, 100, 1100, 7], ['Доска дна (дополнительная)', 25, 75, 1100, 2], ['Раскосина', 25, 100, 1003, 1]]],
+      ['Крышка', [['Планка', 25, 100, 900, 2], ['Доска крышки', 25, 100, 1100, 7], ['Доска крышки (дополнительная)', 25, 75, 1100, 2], ['Раскосина', 25, 100, 1045, 1]]],
+      ['Щит торцевой (2 шт.)', [['Вертикальная планка', 25, 100, 600, 2], ['Горизонтальная планка', 25, 100, 600, 2], ['Доска торцевого щита', 25, 100, 800, 6], ['Раскосина', 25, 100, 566, 1]]],
+      ['Щит боковой (2 шт.)', [['Планка', 25, 100, 700, 2], ['Доска бокового щита', 25, 100, 1100, 6], ['Раскосина', 25, 100, 802, 1]]],
     ],
     finish: 'print',
   },
   {
     type: 'II-1', short: 'II-1', dims: [1600, 1000, 900], mass: 800,
-    thick: [25, 40, 50, 100],
     opts: [['Округлить ширину досок', false, true], ['Добавить раскосины', false, false], ['Погрузка авто/электропогрузчиком', false, true], ['Добавить пергамин', false, false]],
     sum: ['1700 × 1100 × 1115', '0.343', '240.4', '5.8'],
     image: '/images/box_ii1.png',
@@ -58,8 +56,26 @@ const LPD_SCENES = [
     ],
     finish: 'pdf',
   },
+  {
+    type: 'I-3', short: 'I-3', dims: [1200, 1000, 800], mass: 1000,
+    opts: [['Округлить ширину досок', false, false], ['X-образные раскосины', false, true], ['Погрузка авто/электропогрузчиком', false, true], ['Добавить ленту обшивки торцов', false, false]],
+    sum: ['1300 × 1100 × 1025', '0.258', '180.5', '4.3'],
+    image: '/images/box.png',
+    nodes: [
+      ['Дно', [['Полоз', 100, 100, 1300, 2], ['Подполозная доска', 50, 100, 900, 2], ['Торцовый брус дна', 50, 100, 1000, 2], ['Доска дна', 25, 100, 1000, 10]]],
+      ['Крышка', [['Планка', 25, 100, 1050, 2], ['Доска крышки', 25, 100, 1300, 9], ['Доска крышки (дополнительная)', 25, 75, 1300, 2], ['Внутренний поперечный брус', 40, 100, 1000, 2]]],
+      ['Щит торцевой (2 шт.)', [['Вертикальная планка', 25, 100, 625, 2], ['Горизонтальная планка', 25, 100, 1000, 2], ['Раскосина', 25, 100, 1015, 1], ['Раскосина (дополнительная)', 25, 100, 458, 2], ['Доска торца', 25, 100, 1000, 6], ['Доска торца (дополнительная)', 25, 75, 1000, 3]]],
+      ['Щит боковой (2 шт.)', [['Вертикальная планка', 25, 100, 892, 2], ['Доска бока', 25, 100, 1300, 6], ['Доска бока (дополнительная)', 25, 75, 1300, 3], ['Раскосина', 25, 100, 1126, 1], ['Раскосина (дополнительная)', 25, 100, 513, 2]]],
+    ],
+    finish: 'print',
+  },
 ];
-const LPD_THICK = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100];
+// Толщины в наличии - во всех примерах одни (по указанию пользователя):
+// 25, 40, 50, 100 и все толще.
+const LPD_PICK = [25, 40, 50, 100, 125, 150, 175, 200, 225, 250];
+const LPD_THICK = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
+// Подпись выпадающего списка - как на странице расчёта.
+const lpdPicked = list => `Выбрано (${list.length}): ${list.slice(0, 8).join(', ')} мм${list.length > 8 ? `, ещё ${list.length - 8} знач.` : ''}`;
 const LPD_W = 560, LPD_H = 400; // размер макета; на экране - масштаб по ширине
 
 // Чертёж узла n примера: images/landing/demo-<тип>-<n>.png.
@@ -109,7 +125,7 @@ function lpDemo(){
   fit();
   if(window.ResizeObserver) new ResizeObserver(fit).observe(box); else addEventListener('resize', fit);
 
-  scenes.innerHTML = LPD_SCENES.map((sc, i) => `<button type="button" role="tab" data-i="${i}"><span>Тип ${sc.short} · ${sc.dims.join('×')} мм · ${sc.mass} кг</span><i><u></u></i></button>`).join('');
+  scenes.innerHTML = LPD_SCENES.map((sc, i) => `<button type="button" role="tab" data-i="${i}"><span>Тип ${sc.short} · ${sc.dims.join('×')}</span><i><u></u></i></button>`).join('');
   const sceneBtns = [...scenes.children];
 
   // Прерывание: смена примера кнопкой - текущий сценарий останавливается.
@@ -181,8 +197,8 @@ function lpDemo(){
   const still = (i) => {
     const sc = setup(i);
     ['L', 'W', 'H', 'M'].forEach((k, n) => { q(`[data-f="${k}"] span`).textContent = n < 3 ? sc.dims[n] : sc.mass; });
-    page.querySelectorAll('.lpd-chip').forEach(c => c.classList.toggle('on', sc.thick.includes(+c.dataset.t)));
-    q('[data-sel] span').textContent = `Выбрано (${sc.thick.length}): ${sc.thick.join(', ')} мм`;
+    page.querySelectorAll('.lpd-chip').forEach(c => c.classList.toggle('on', LPD_PICK.includes(+c.dataset.t)));
+    q('[data-sel] span').textContent = lpdPicked(LPD_PICK);
     sc.opts.forEach(([, , tick], n) => { if(tick) q(`[data-o="${n}"]`).classList.add('on'); });
     q('[data-status]').classList.add('on');
     page.querySelectorAll('.lpd-result').forEach(r => r.classList.add('on'));
@@ -208,10 +224,10 @@ function lpDemo(){
     await move(sel, tk); await click(tk, sel);
     q('[data-chips]').classList.add('open');
     await sleep(250, tk);
-    for(const t of sc.thick){
+    for(const [n, t] of LPD_PICK.entries()){
       const chip = q(`.lpd-chip[data-t="${t}"]`);
-      await move(chip, tk, 380); await click(tk); chip.classList.add('on');
-      q('[data-sel] span').textContent = `Выбрано (${sc.thick.indexOf(t) + 1}): ${sc.thick.slice(0, sc.thick.indexOf(t) + 1).join(', ')} мм`;
+      await move(chip, tk, n ? 230 : 450); await click(tk); chip.classList.add('on');
+      q('[data-sel] span').textContent = lpdPicked(LPD_PICK.slice(0, n + 1));
     }
     await sleep(250, tk);
     q('[data-chips]').classList.remove('open');

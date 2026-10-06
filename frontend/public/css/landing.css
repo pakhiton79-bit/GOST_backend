@@ -45,9 +45,9 @@
 .lpd-select.pressed{border-color:var(--accent);}
 .lpd-select i{font-style:normal;font-size:9px;}
 .lpd-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:0;overflow:hidden;opacity:0;transition:max-height .3s ease, opacity .25s ease, margin .3s ease;}
-.lpd-chips.open{max-height:80px;opacity:1;margin-top:8px;}
+.lpd-chips.open{max-height:110px;opacity:1;margin-top:8px;}
 .lpd-chip, .lpd-opt{display:inline-flex;align-items:center;gap:6px;}
-.lpd-chip{padding:4px 8px;border:1px solid var(--rule);border-radius:6px;font-weight:500;}
+.lpd-chip{padding:3px 7px;border:1px solid var(--rule);border-radius:6px;font-weight:500;}
 .lpd-chip b, .lpd-opt b{width:11px;height:11px;border:1.5px solid var(--border-btn);border-radius:3px;box-sizing:border-box;flex:none;position:relative;transition:background .15s, border-color .15s;}
 .lpd-chip.on b, .lpd-opt.on b{background:var(--accent);border-color:var(--accent);}
 .lpd-chip.on b::after, .lpd-opt.on b::after{content:'';position:absolute;left:3px;top:0;width:3px;height:6px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);}
@@ -113,7 +113,7 @@
 .lpd-scenes{display:flex;gap:8px;margin-top:12px;}
 .lpd-scenes button{flex:1;min-width:0;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--rule);background:var(--panel);color:var(--ink-soft);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
 .lpd-scenes button.on{color:var(--ink);border-color:var(--accent);}
-.lpd-scenes span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lpd-scenes span{display:block;}
 .lpd-scenes i{display:block;height:3px;border-radius:2px;background:var(--rule);margin-top:6px;overflow:hidden;}
 .lpd-scenes u{display:block;height:100%;width:0;background:var(--accent);transition:width .6s ease;}
 
@@ -191,7 +191,6 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
 }
 @media screen and (max-width:640px){
   .lp-hero-art{padding:12px;border-radius:18px;}
-  .lpd-scenes span{white-space:normal;}
   .lp-title{font-size:36px;}
   .lp-lead{font-size:16px;}
   .lp-cards-3, .lp-plans{grid-template-columns:1fr;}
