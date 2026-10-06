@@ -35,8 +35,13 @@ const LPD_SCENES = [
     thick: [22, 25],
     opts: [['Полоз нужен', true, false], ['Округлить ширину досок', false, false], ['Добавить раскосины', false, true], ['X-образные раскосины', false, false]],
     sum: ['1088 × 888 × 716', '0.130', '90.8', '2.2'],
-    image: '/images/box_i1.jpg', node: 'Дно', drawing: '/images/landing/demo-i1-dno.png',
-    rows: [['Полоз', 50, 100, 844, 2], ['Доска дна', 22, 100, 1088, 6], ['Доска дна (дополнительная) 1', 22, 81, 1088, 2], ['Доска дна (дополнительная) 2', 22, 82, 1088, 1], ['Раскосина', 22, 100, 993, 1]],
+    image: '/images/box_i1.jpg',
+    nodes: [
+      ['Дно', [['Полоз', 50, 100, 844, 2], ['Доска дна', 22, 100, 1088, 6], ['Доска дна (дополнительная) 1', 22, 81, 1088, 2], ['Доска дна (дополнительная) 2', 22, 82, 1088, 1], ['Раскосина', 22, 100, 993, 1]]],
+      ['Крышка', [['Планка', 22, 100, 888, 2], ['Доска крышки', 22, 100, 1088, 6], ['Доска крышки (дополнительная) 1', 22, 81, 1088, 2], ['Доска крышки (дополнительная) 2', 22, 82, 1088, 1], ['Раскосина', 22, 100, 1031, 1]]],
+      ['Щит торцевой (2 шт.)', [['Вертикальная планка', 22, 100, 600, 2], ['Горизонтальная планка', 22, 100, 600, 2], ['Доска торцевого щита', 22, 100, 800, 6], ['Раскосина', 22, 100, 566, 1]]],
+      ['Щит боковой (2 шт.)', [['Планка', 22, 100, 694, 2], ['Доска бокового щита', 22, 100, 1088, 6], ['Раскосина', 22, 100, 797, 1]]],
+    ],
     finish: 'print',
   },
   {
@@ -44,17 +49,24 @@ const LPD_SCENES = [
     thick: [25, 40, 50, 100],
     opts: [['Округлить ширину досок', false, true], ['Добавить раскосины', false, false], ['Погрузка авто/электропогрузчиком', false, true], ['Добавить пергамин', false, false]],
     sum: ['1700 × 1100 × 1115', '0.343', '240.4', '5.8'],
-    image: '/images/box_ii1.png', node: 'Дно', drawing: '/images/landing/demo-ii1-dno.png',
-    rows: [['Полоз', 75, 100, 1700, 2], ['Подполозная доска', 50, 100, 1300, 2], ['Торцовый брус дна', 50, 100, 1000, 2], ['Доска дна', 25, 100, 1000, 14]],
+    image: '/images/box_ii1.png',
+    nodes: [
+      ['Дно', [['Полоз', 75, 100, 1700, 2], ['Подполозная доска', 50, 100, 1300, 2], ['Торцовый брус дна', 50, 100, 1000, 2], ['Доска дна', 25, 100, 1000, 14]]],
+      ['Крышка', [['Внутренний поперечный брус', 40, 100, 1000, 2], ['Доска крышки', 25, 100, 1700, 11]]],
+      ['Щит торцевой (2 шт.)', [['Стойка', 25, 100, 725, 3], ['Горизонтальный брус', 25, 100, 1050, 2], ['Раскосина', 25, 100, 817, 2], ['Доска', 25, 100, 925, 11]]],
+      ['Щит боковой (2 шт.)', [['Стойка', 25, 100, 725, 3], ['Горизонтальный брус', 25, 100, 1600, 2], ['Раскосина', 25, 100, 974, 2], ['Опорная планка', 25, 60, 1600, 2], ['Доска', 25, 100, 925, 17]]],
+    ],
     finish: 'pdf',
   },
 ];
 const LPD_THICK = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100];
 const LPD_W = 560, LPD_H = 400; // размер макета; на экране - масштаб по ширине
 
-function lpdTable(sc){
+// Чертёж узла n примера: images/landing/demo-<тип>-<n>.png.
+const lpdDrawing = (sc, n) => `/images/landing/demo-${sc.short.toLowerCase().replace('-', '')}-${n}.png`;
+function lpdTable(rows){
   return `<table class="lpd-table"><thead><tr><th>Деталь</th><th>Толщина</th><th>Ширина</th><th>Длина</th><th>Кол-во</th></tr></thead><tbody>`
-    + sc.rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') + '</tbody></table>';
+    + rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') + '</tbody></table>';
 }
 function lpdPageHtml(sc){
   const f = (id, label) => `<div class="lpd-field"><label>${label}</label><div class="lpd-input" data-f="${id}"><span></span></div></div>`;
@@ -75,16 +87,14 @@ function lpdPageHtml(sc){
         <div><label>Масса ящика</label><b>${sc.sum[2]} <small>кг</small></b></div>
         <div><label>Норма времени</label><b>${sc.sum[3]} <small>ч</small></b></div></div></div></div>
     <div class="lpd-card lpd-result" data-spec><div class="lpd-card-title">Спецификация досок</div>
-      <div class="lpd-node">${sc.node}</div>
-      <div class="lpd-spec"><div class="lpd-drawing"><img src="${sc.drawing}" alt=""></div>${lpdTable(sc)}</div></div>`;
+      ${sc.nodes.map(([title, rows], n) => `<div class="lpd-node" data-node="${n}">${title}</div>
+      <div class="lpd-spec"><div class="lpd-drawing"><img src="${lpdDrawing(sc, n)}" alt=""></div>${lpdTable(rows)}</div>`).join('')}</div>`;
 }
 function lpdSheetHtml(sc){
   return `<div class="lpd-sheet"><div class="lpd-sheet-h">ГОСТ 10198-91 тип ${sc.type} · груз ${sc.dims.join(' × ')} мм, ${sc.mass} кг</div>
     <div class="lpd-sheet-sum">Наружные ${sc.sum[0]} мм · ${sc.sum[1]} м³ · ${sc.sum[2]} кг · ${sc.sum[3]} ч</div>
-    <div class="lpd-sheet-node">${sc.node}</div><div class="lpd-sheet-spec"><img src="${sc.drawing}" alt="">${lpdTable(sc)}</div>
-    <div class="lpd-sheet-node">Крышка</div><div class="lpd-sheet-lines"><i></i><i></i><i></i><i></i></div>
-    <div class="lpd-sheet-node">Щит торцевой</div><div class="lpd-sheet-lines"><i></i><i></i><i></i></div></div>
-    <div class="lpd-sheet-bar"><span>Печать · 2 листа</span><span class="lpd-btn lpd-btn-main" data-go>Печать</span></div>`;
+    <div class="lpd-sheet-grid">${sc.nodes.map(([title, rows], n) => `<div><div class="lpd-sheet-node">${title}</div><img src="${lpdDrawing(sc, n)}" alt="">${lpdTable(rows)}</div>`).join('')}</div></div>
+    <div class="lpd-sheet-bar"><span>Предпросмотр печати</span><span class="lpd-btn lpd-btn-main" data-go>Печать</span></div>`;
 }
 
 function lpDemo(){
@@ -133,7 +143,10 @@ function lpDemo(){
     cursor.classList.remove('press'); if(el) el.classList.remove('pressed');
   };
   const scrollTo = async (el, tk, ms = 700, off = 12) => {
-    const y = Math.max(0, Math.min(el.offsetTop - off, page.offsetHeight - LPD_H));
+    // Положение от верха макета (offsetTop считается от ближайшей
+    // карточки, поэтому - по getBoundingClientRect).
+    const top = (el.getBoundingClientRect().top - page.getBoundingClientRect().top) / scale;
+    const y = Math.max(0, Math.min(top - off, page.offsetHeight - LPD_H));
     const dy = y - scrollY; scrollY = y;
     page.style.transition = `transform ${ms}ms cubic-bezier(.45,0,.2,1)`;
     page.style.transform = `translateY(${-y}px)`;
@@ -173,8 +186,7 @@ function lpDemo(){
     sc.opts.forEach(([, , tick], n) => { if(tick) q(`[data-o="${n}"]`).classList.add('on'); });
     q('[data-status]').classList.add('on');
     page.querySelectorAll('.lpd-result').forEach(r => r.classList.add('on'));
-    page.querySelectorAll('.lpd-table tr').forEach(r => r.classList.add('on'));
-    page.style.transform = `translateY(${-Math.min(q('[data-sum]').offsetTop - 12, page.offsetHeight - LPD_H)}px)`;
+    page.style.transform = `translateY(${-Math.min(q('[data-sum]').offsetTop - 12, page.offsetHeight - LPD_H)}px)`; // карточка - прямо в макете, offsetTop от него
     cursor.style.display = 'none';
     progress(i, 100);
   };
@@ -226,9 +238,11 @@ function lpDemo(){
     // 5. Итог, чертёж и таблица деталей.
     await scrollTo(q('[data-sum]'), tk, 900);
     await sleep(1500, tk);
-    await scrollTo(q('[data-spec]'), tk, 900);
-    for(const r of page.querySelectorAll('.lpd-table tbody tr')){ r.classList.add('on'); await sleep(140, tk); }
-    await sleep(1800, tk);
+    // Таблицы уже на месте - листаем узлы по очереди.
+    for(const node of page.querySelectorAll('[data-node]')){
+      await scrollTo(node, tk, 800, 10);
+      await sleep(1100, tk);
+    }
     progress(i, 80);
     // 6. Печать или PDF.
     await scrollTo(q('.lpd-actions'), tk, 900, 120);
@@ -241,7 +255,7 @@ function lpDemo(){
       await move(go, tk); await click(tk, go);
       sheet.classList.add('sent');
       await sleep(500, tk);
-      showToast('<b class="lpd-ic">✓</b>Отправлено на печать: 2 листа');
+      showToast('<b class="lpd-ic">✓</b>Отправлено на печать');
     } else {
       const pdf = q('[data-pdf]');
       await move(pdf, tk); await click(tk, pdf);
