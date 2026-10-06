@@ -6,8 +6,10 @@
 // промежутками (светло-серые; промежутки - в реальной доле, но не уже
 // четверти пролёта на доску); без промежутков - доски вплотную; «Убрать
 // доски дна» - досок нет. Подписи - величины дна II-1: длина полоза, ширина
-// дна (ширина груза + 2 стойки), отступ торцового бруса от конца (стойка +
-// обшивка), промежуток между досками дна. BOX_II2_IMG_B64 - общий вид ящика.
+// дна (ширина груза + 2 стойки), отступ досок дна и торцовых брусьев от
+// наружного края полоза сбоку (стойка, как на дне II-1 - по указанию
+// пользователя), отступ торцового бруса от конца (стойка + обшивка),
+// промежуток между досками дна. BOX_II2_IMG_B64 - общий вид ящика.
 const BOX_II2_IMG_B64 = "/images/box_ii2.png";
 const DNO_II2_LEN = 1000, DNO_II2_RATIO = 0.55, DNO_II2_U = 50;
 const DNO_II2_IW = 2008, DNO_II2_STROKE = 6;
@@ -22,9 +24,9 @@ function dnoII2Proj(x, y, z){
 
 // skidCount - число полозьев, hasSub - есть подполозные доски, boardQty -
 // число досок дна (0 - убраны), gap - промежуток досок дна ({ gap, share })
-// или null; lenVal, widthVal, insetVal - подписи, мм; insetRatio - отступ
-// торцового бруса к его ширине (для рисунка).
-function diagramDnoII2Generated(skidCount, hasSub, boardQty, gap, lenVal, widthVal, insetVal, insetRatio){
+// или null; lenVal, widthVal, sideVal, insetVal - подписи, мм; insetRatio -
+// отступ торцового бруса к его ширине (для рисунка).
+function diagramDnoII2Generated(skidCount, hasSub, boardQty, gap, lenVal, widthVal, sideVal, insetVal, insetRatio){
   if(!(skidCount >= 1) || skidCount > DNO_II2_MAX_SKIDS) return diagramTooDense();
   const u = DNO_II2_U, L = DNO_II2_LEN, W = L * DNO_II2_RATIO;
   const subH = hasSub ? 0.35*u : 0, skidH = u, skidTop = subH + skidH;
@@ -32,6 +34,8 @@ function diagramDnoII2Generated(skidCount, hasSub, boardQty, gap, lenVal, widthV
   const inset = u * Math.min(1, Math.max(0.3, insetRatio));
   const skidW = Math.min(u, W / (skidCount + 0.5*(skidCount - 1)));
   if(skidW < 0.25*u) return diagramTooDense();
+  // Отступ досок и торцовых брусьев от наружного края полоза - условный.
+  const e = 0.6*skidW, y0 = e, y1 = W - e;
   const skidY = skidCount === 1 ? [(W - skidW)/2] : Array.from({length: skidCount}, (_, i) => i*(W - skidW)/(skidCount - 1));
 
   // Доски дна между торцовыми брусьями: ширина доски b и промежуток g по
@@ -56,9 +60,9 @@ function diagramDnoII2Generated(skidCount, hasSub, boardQty, gap, lenVal, widthV
     if(hasSub) boxes.push({ b:[subX0, subX0 + subLen, y + 0.05*skidW, y + 0.95*skidW, 0, subH] });
     boxes.push({ b:[0, L, y, y + skidW, subH, skidTop] });
   });
-  boxes.push({ b:[L - inset - endW, L - inset, 0, W, skidTop, endTop] });  // дальний торцовый брус
-  boards.slice().reverse().forEach(([x0, x1]) => boxes.push({ b:[x0, x1, 0, W, skidTop, boardTop], fill: gap ? II2_BOARD_FILL : '' }));
-  boxes.push({ b:[inset, inset + endW, 0, W, skidTop, endTop] });          // ближний
+  boxes.push({ b:[L - inset - endW, L - inset, y0, y1, skidTop, endTop] });  // дальний торцовый брус
+  boards.slice().reverse().forEach(([x0, x1]) => boxes.push({ b:[x0, x1, y0, y1, skidTop, boardTop], fill: gap ? II2_BOARD_FILL : '' }));
+  boxes.push({ b:[inset, inset + endW, y0, y1, skidTop, endTop] });          // ближний
 
   const pts = [];
   boxes.forEach(({b})=>{ [b[0], b[1]].forEach(x=>[b[2], b[3]].forEach(y=>[b[4], b[5]].forEach(z=>pts.push(dnoII2Proj(x, y, z))))); });
@@ -95,18 +99,29 @@ function diagramDnoII2Generated(skidCount, hasSub, boardQty, gap, lenVal, widthV
   // уровне верха полоза влево за дальний край, перемычка, стрелка сверху.
   const yL = W + d*1.1;
   line(P(0, W, skidTop), P(0, yL + 0.3*u, skidTop));
-  line(P(inset, W, skidTop), P(inset, yL + 0.3*u, skidTop));
+  line(P(inset, y1, skidTop), P(inset, yL + 0.3*u, skidTop));
   line(P(0, yL, skidTop), P(inset, yL, skidTop));
   const tip = P(inset/2, yL, skidTop), from = P(inset/2, yL, skidTop + 2.6*u);
   rec.push({type:'single', x1:from[0], y1:from[1], x2:tip[0], y2:tip[1]});
   const lab = P(inset/2, yL, skidTop + 3.4*u);
   rec.push({lx:lab[0], ly:lab[1], text:dimLabel(insetVal)+' мм'});
+  // Отступ досок от наружного края ближнего полоза - у дальнего конца, как
+  // на дне I-4: выносные линии по верху полоза за его конец, перемычка,
+  // стрелка сверху.
+  const xS = L + d*0.9;
+  line(P(L - inset, 0, skidTop), P(xS + 0.3*u, 0, skidTop));
+  line(P(L - inset, y0, skidTop), P(xS + 0.3*u, y0, skidTop));
+  line(P(xS, 0, skidTop), P(xS, y0, skidTop));
+  const st = P(xS, y0/2, skidTop), sf = P(xS, y0/2, skidTop + 2.6*u);
+  rec.push({type:'single', x1:sf[0], y1:sf[1], x2:st[0], y2:st[1]});
+  const sl = P(xS, y0/2, skidTop + 3.4*u);
+  rec.push({lx:sl[0], ly:sl[1], text:dimLabel(sideVal)+' мм'});
   // Промежуток между досками дна - у середины дна, за дальним краем:
   // выносные линии от кромок досок, перемычка, стрелка сверху.
   if(gap && boards.length > 1){
     const gi = Math.floor((boards.length - 1)/2), xa = boards[gi][1], xb = boards[gi+1][0], yG = W + d*0.8;
-    line(P(xa, W, boardTop), P(xa, yG + 0.3*u, boardTop));
-    line(P(xb, W, boardTop), P(xb, yG + 0.3*u, boardTop));
+    line(P(xa, y1, boardTop), P(xa, yG + 0.3*u, boardTop));
+    line(P(xb, y1, boardTop), P(xb, yG + 0.3*u, boardTop));
     line(P(xa, yG, boardTop), P(xb, yG, boardTop));
     const gt = P((xa + xb)/2, yG, boardTop), gf = P((xa + xb)/2, yG, boardTop + 2.6*u);
     rec.push({type:'single', x1:gf[0], y1:gf[1], x2:gt[0], y2:gt[1]});
@@ -124,5 +139,5 @@ function diagramDnoII2(calc){
   const endW = endRow && parseFloat(endRow.w) > 0 ? parseFloat(endRow.w) : 100;
   const inset = calc.t_stojka + calc.skin.value;
   return diagramDnoII2Generated(dnoSkidCount(rows), rows.some(r => r.name === 'Подполозная доска'), boardQty,
-    calc.boardGaps.dno, calc.k9Base, calc.W + calc.t_stojka*2, inset, inset / endW);
+    calc.boardGaps.dno, calc.k9Base, calc.W + calc.t_stojka*2, calc.t_stojka, inset, inset / endW);
 }
