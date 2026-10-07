@@ -6,8 +6,8 @@
 //
 //   POST /api/feedback/error { gost, type, description, page, inputs }
 //
-// Пока почта в тестовом режиме: сообщение сохраняется в хранилище и пишется
-// в журнал сервера (mailer.js); список - в админке.
+// Сообщение сохраняется в хранилище (список - в админке) и уходит письмом на
+// SUPPORT_EMAIL (mailer.js; без настроек почты - в журнал сервера).
 const express = require('express');
 const store = require('./store');
 const { rateLimit } = require('./routes');

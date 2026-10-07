@@ -78,7 +78,14 @@ async function issueCode(email, purpose) {
   }
   const code = newCode();
   store.setCode(email, purpose, { hash: hashCode(email, code), expires: Date.now() + CODE_TTL_MS, attempts: 0, sentAt: Date.now() });
-  await sendCode(email, code, purpose);
+  try {
+    await sendCode(email, code, purpose);
+  } catch (e) {
+    // Письмо не ушло - код не действует, повторный запрос сразу.
+    console.error(`[почта] код не отправлен (${email}): ${e.message}`);
+    store.deleteCode(email, purpose);
+    return 'Не удалось отправить письмо с кодом. Попробуйте ещё раз через минуту.';
+  }
   return null;
 }
 
