@@ -49,7 +49,7 @@ function fbFormHtml(user){
       <div class="std-field"><label for="fbText">Что не так <span class="auth-req">*</span></label>
         <textarea id="fbText" rows="5" maxlength="3000" placeholder="Например: на чертеже бокового щита размер не совпадает с таблицей; ожидал ..., получил ..."></textarea></div>
       ${inputs ? `<label class="fb-check"><input type="checkbox" id="fbInputs" checked> Приложить введённые размеры и массу: ${escHtml(inputsText)}</label>` : ''}
-      <p class="std-note">${user ? `Если понадобится уточнить, ответим на почту аккаунта <b>${escHtml(user.email)}</b>.` : sessionEndedText() + 'Вы не вошли в аккаунт, поэтому ответить вам мы не сможем. Чтобы получить ответ, войдите или напишите в поддержку (раздел «Помощь»).'}</p>
+      <p class="std-note">Если понадобится уточнить, ответим на почту аккаунта <b>${escHtml(user.email)}</b>.</p>
       <div class="std-msg" id="fbMsg" hidden></div>
       <div class="std-actions"><button type="submit" class="site-sub-btn site-sub-btn-main" id="fbSubmit">Отправить</button></div>
     </form>`;
@@ -109,7 +109,14 @@ function openErrorReport(){
   const body = fbOverlay.querySelector('#fbBody');
   body.innerHTML = '<p class="std-text">Загрузка...</p>';
   fbOverlay.hidden = false;
+  // Сообщить об ошибке можно только из аккаунта (по указанию пользователя:
+  // обращения к администрации - только после входа, без входа - «Помощь»).
   fetchAccountUser().then(user => {
+    if(!user){
+      body.innerHTML = `<p class="std-text">${sessionEndedText()}Сообщить об ошибке можно после входа в аккаунт.</p><div class="std-actions">`
+        + `<a class="site-sub-btn site-sub-btn-main" href="${authHref('login')}">Войти</a><a class="btn-secondary site-sub-btn" href="${authHref('register')}">Регистрация</a></div>`;
+      return;
+    }
     body.innerHTML = fbFormHtml(user);
     body.querySelector('#fbText').focus();
   });

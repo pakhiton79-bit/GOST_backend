@@ -22,8 +22,8 @@ function stdFormHtml(user){
 
 function stdBodyHtml(user){
   const intro = '<p class="std-text">Работаете по стандарту своего предприятия (СТО, ТУ, внутренние таблицы)? Пришлите заявку, и мы добавим его расчёт в ваш аккаунт.</p>';
-  if(!user) return intro + `<p class="std-text">${sessionEndedText()}Доступно в подписках Base, Pro и Team.</p><div class="std-actions">`
-    + `<a class="site-sub-btn site-sub-btn-main" href="${authHref('login')}">Войти</a><a class="btn-secondary site-sub-btn" href="plans.html">Подписки</a></div>`;
+  if(!user) return intro + `<p class="std-text">${sessionEndedText()}Отправить заявку можно после входа в аккаунт. Доступно в подписках Base, Pro и Team.</p><div class="std-actions">`
+    + `<a class="site-sub-btn site-sub-btn-main" href="${authHref('login')}">Войти</a><a class="btn-secondary site-sub-btn" href="${authHref('register')}">Регистрация</a></div>`;
   if(['free'].includes(user.quota.plan)) return intro + `<p class="std-text">Доступно в подписках Base, Pro и Team. Сейчас у вас подписка ${escHtml(user.quota.planName)}.</p>`
     + '<div class="std-actions"><a class="site-sub-btn site-sub-btn-main" href="plans.html">Подписки</a></div>';
   return intro + stdFormHtml(user);
