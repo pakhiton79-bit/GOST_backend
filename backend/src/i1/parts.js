@@ -116,7 +116,10 @@ function addRaskosiny(parts, g, plankGap, withLidBottom, xRaskosina) {
   if (!(qty > 0)) return null;
   parts.bokovoy.push(...raskosinaRows(diagonal(H, plankGap), qty, T.bokRask, 'tBokRask', xRaskosina));
   if (!withLidBottom) return null;
-  parts.kryshka.push(...raskosinaRows(diagonal(kryshkaPlankLen(g), plankGap), qty, T.krRask, 'tKrRask', xRaskosina));
+  // Раскосины крышки и дна одинаковые (по указанию пользователя): лежат на
+  // досках между планками, поле досок у обоих - ширина груза + 2 доски бока
+  // (планка крышки длиннее - заходит на планки бока, раскосина - нет).
+  parts.kryshka.push(...raskosinaRows(diagonal(W + T.bokBoard * 2, plankGap), qty, T.krRask, 'tKrRask', xRaskosina));
   parts.dno.push(...raskosinaRows(diagonal(W + T.bokBoard * 2, plankGap), qty, T.dnoRask, 'tDnoRask', xRaskosina));
   return null;
 }
