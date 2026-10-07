@@ -236,9 +236,11 @@ function computeGost10198I2(input) {
     dnoWidth: dno.width, kLen, plank, plankQty, plankGap, raskosinaNeeded, kryshkaDnoHasRaskosina,
     xRaskosina: !!xRaskosina, kPlankaKryshka: parts.kryshkaPlankLen(g), H, W, wall,
     // Толщина, подписанная у выступающего угла планки: у дна - доска бокового
-    // щита, у крышки - планка крышки, у бока сверху - доска крышки, снизу -
-    // полоз (без полоза - планка дна).
-    drawPlankT: { dno: T.bokBoard, kryshka: T.krPlanka, bokovoy: T.krBoard, bokovoyBottom: skidEnabled ? skidT : T.dnoPlanka },
+    // щита, у крышки - планка крышки, у бока сверху - доска крышки,
+    // снизу - по указанию пользователя полный
+    // выступ, доска дна + полоз (без полоза - планка дна); так подписи
+    // чертежа складываются в длину планки из таблицы.
+    drawPlankT: { dno: T.bokBoard, kryshka: T.krPlanka, bokovoy: T.krBoard, bokovoyBottom: (skidEnabled ? skidT : T.dnoPlanka) + T.dnoBoard },
     standardPlankCount, standardPlankGap,
     endTape: addEndTape ? parts.endTapeRows(g) : [],
     // Промежутки обшивки по щитам: { qty, gap, share } или null - щит сплошной.
