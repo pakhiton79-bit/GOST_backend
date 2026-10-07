@@ -3,13 +3,6 @@
 // (gosts.html); с ?about («О сервисе») страница показывается и им - с
 // кнопкой «Перейти к расчётам» вместо регистрации.
 
-// ---------- Настройки ----------
-// По указанию пользователя на главной в «Настройках» - только тема. Окно
-// строится по DOMContentLoaded, этот скрипт выполняется раньше. Кнопка
-// аккаунта (вошедшим) ведёт к разделу «Аккаунт» на странице выбора ГОСТ.
-SITE_SETTINGS_SECTIONS.splice(1);
-openSettingsSection = section => { location.href = 'gosts.html#' + section; };
-
 // ---------- Вошедшие ----------
 (function(){
   const about = new URLSearchParams(location.search).has('about');

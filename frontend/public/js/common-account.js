@@ -1,9 +1,17 @@
-// Аккаунты (только серверная версия сайта). По указанию пользователя в
-// верхней панели - только «Войти» и «Регистрация» (для гостей), всё остальное
-// об аккаунте - в окне «Настройки»: разделы «Аккаунт» (почта, выход,
-// устройства, удаление) и «Подписка» (лимиты). Подключается в <head> после
-// common-settings.js: панель строится там же по DOMContentLoaded, этот
-// обработчик срабатывает следом.
+// Аккаунт и всё вокруг него в общих частях страниц. Подключается в <head>
+// после common-settings.js: панель строится там же по DOMContentLoaded, этот
+// обработчик срабатывает следом (initAccountPage в конце файла).
+//
+// Содержание:
+//   - кто вошёл (fetchAccountUser) и кнопка аккаунта в верхней панели: для
+//     гостей «Войти» и «Регистрация», для вошедших - почта, открывает
+//     «Настройки» на разделе «Аккаунт»;
+//   - разделы окна «Настройки»: «Аккаунт» (почта, выход, устройства,
+//     удаление), «Подписка» (лимиты), «Помощь» (почта поддержки);
+//   - подсказки о лимите расчётов и ссылки на подписки;
+//   - нижняя строка со ссылками на юридические документы;
+//   - вид страницы (sitePageMode): на главной и на входе в «Настройках» только
+//     тема, на входе нет кнопки аккаунта и нижней строки.
 const ACCOUNT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
 
 // Кто вошёл: { email, createdAt, quota, isAdmin } или null.
@@ -297,8 +305,10 @@ function initSettingsAccount(){
     history.replaceState(null, '', location.pathname + location.search);
   }
 }
-// Открыть окно «Настройки» сразу на разделе.
+// Открыть окно «Настройки» сразу на разделе. На главной разделов аккаунта
+// нет (только тема) - переход на страницу выбора ГОСТа с этим разделом.
 function openSettingsSection(section){
+  if(sitePageMode() === 'landing'){ location.href = 'gosts.html#' + section; return; }
   const btn = document.getElementById('siteSettingsBtn');
   if(!btn) return;
   btn.click();
@@ -386,12 +396,27 @@ function initLegalFooter(){
 // Кнопки «Сообщить об ошибке» и «Помощь» (js/account/feedback.js) - на всех
 // страницах, кроме главной и входа.
 function loadFeedbackButtons(){
-  if(document.body.matches('.landing, .auth-page') || document.getElementById('siteFeedbackJs')) return;
+  if(sitePageMode() !== 'full' || document.getElementById('siteFeedbackJs')) return;
   // Сначала списки в стиле сайта (ui-select.js), потом кнопки - по порядку.
   const add = (id, src) => { const s = document.createElement('script'); s.id = id; s.src = src; s.async = false; document.body.appendChild(s); };
   if(typeof uiSelect !== 'function') add('siteUiSelectJs', '/js/account/ui-select.js');
   add('siteFeedbackJs', '/js/account/feedback.js');
 }
-function initAccountPage(){ initAccountButton(); initLegalFooter(); loadFeedbackButtons(); }
+// Вид страницы для общих частей сайта (по классу <body>):
+//   'landing' - главная (index.html): в «Настройках» только тема (по указанию
+//               пользователя), кнопка аккаунта ведёт к разделу на gosts.html;
+//   'auth'    - вход и регистрация (login.html): в «Настройках» только тема,
+//               без кнопки аккаунта и нижней строки (ссылки - под формой);
+//   'full'    - остальные страницы.
+function sitePageMode(){
+  const cl = document.body.classList;
+  return cl.contains('landing') ? 'landing' : cl.contains('auth-page') ? 'auth' : 'full';
+}
+function initAccountPage(){
+  const mode = sitePageMode();
+  if(mode !== 'full') SITE_SETTINGS_SECTIONS.splice(1); // только «Оформление»
+  if(mode !== 'auth'){ initAccountButton(); initLegalFooter(); }
+  loadFeedbackButtons();
+}
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccountPage);
 else initAccountPage();

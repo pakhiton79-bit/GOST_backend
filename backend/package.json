@@ -2,7 +2,7 @@
   "name": "gost10198-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "ГОСТ 10198-91: расчётный API (тип I-3, тип I-1) + статическая раздача фронтенда.",
+  "description": "Тара+: расчёт ящиков по ГОСТ 10198-91 (7 типов), аккаунты и подписки, раздача сайта.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
