@@ -243,10 +243,11 @@ if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
       wide: true,
     }],
   });
-  // «Помощь» (по указанию пользователя) - последним разделом: почта поддержки
-  // (из js/legal-config.js, та же, что в юридических документах) и кнопка
-  // «Сообщить об ошибке» (js/account/feedback.js). На главной и на входе
-  // разделы, кроме темы, убираются (landing.js, login.js).
+  // «Помощь» (по указанию пользователя) - последним разделом, на всех
+  // страницах: почта поддержки (после проверки «Я не робот», см.
+  // renderSiteHelp) и, кроме главной и входа, кнопка «Сообщить об ошибке»
+  // (js/account/feedback.js). На главной и на входе остаются только
+  // «Оформление» и «Помощь» (initAccountPage).
   SITE_SETTINGS_SECTIONS.push({
     id: 'help', title: 'Помощь',
     rows: () => [{
@@ -254,38 +255,62 @@ if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
       hint: 'Вопросы о расчётах, подписке и аккаунте.',
       control: () => '<div class="site-help-email" id="siteHelpEmail"></div>',
       wide: true,
-    }, {
+    }].concat(sitePageMode() !== 'full' ? [] : [{
       title: 'Сообщить об ошибке',
       hint: 'Нашли неверный размер, деталь или чертёж? ГОСТ и тип ящика подставятся сами.',
       control: () => '<button type="button" class="btn-secondary" id="siteHelpBug">Сообщить</button>',
-    }],
+    }]),
   });
 }
-// Реквизиты и почта поддержки - в js/legal-config.js (const LEGAL); на
-// страницах без юридических документов он подгружается при открытии «Помощи».
-let legalPromise = null;
-function loadLegal(){
-  if(typeof LEGAL !== 'undefined') return Promise.resolve(LEGAL);
-  if(!legalPromise) legalPromise = new Promise(resolve => {
+// Почта поддержки (по указанию пользователя) - только после проверки «Я не
+// робот», чтобы адрес не собирали боты: браузер решает задачу сервера
+// (js/account/pow.js), с ответом сервер отдаёт адрес
+// (POST /api/feedback/contact, backend/src/auth/feedback.js). Адрес
+// запоминается до перезагрузки страницы.
+let helpEmailPromise = null;
+function loadPow(){
+  if(typeof powSolve === 'function') return Promise.resolve();
+  return new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = '/js/legal-config.js';
-    s.onload = () => resolve(typeof LEGAL !== 'undefined' ? LEGAL : {});
-    s.onerror = () => resolve({});
+    s.src = '/js/account/pow.js';
+    s.onload = resolve;
+    s.onerror = reject;
     document.head.appendChild(s);
   });
-  return legalPromise;
 }
+const HELP_POW_TEXT = { work: 'Проверяем, что вы не робот...', ok: 'Проверка пройдена, загружаем адрес...', fail: 'Проверка «Я не робот» не удалась.' };
 function renderSiteHelp(){
   const el = document.getElementById('siteHelpEmail');
   if(!el) return;
-  loadLegal().then(L => {
-    el.innerHTML = L.email
-      ? `<a class="site-help-mail" href="mailto:${escHtml(L.email)}">${escHtml(L.email)}</a>`
-      : '<span class="site-sub-text">Почта поддержки скоро появится. Пока сообщите о проблеме кнопкой «Сообщить об ошибке».</span>';
+  const showState = state => {
+    el.innerHTML = `<div class="auth-pow" data-state="${state}"><span class="auth-pow-icon" aria-hidden="true"></span><span role="status">${HELP_POW_TEXT[state]}</span></div>`;
+  };
+  if(!helpEmailPromise){
+    helpEmailPromise = loadPow()
+      .then(() => powSolve(state => { if(document.getElementById('siteHelpEmail') === el) showState(state); }))
+      .then(captchaToken => fetch('/api/feedback/contact', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ captchaToken }) }))
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('contact ' + r.status)))
+      .then(d => d.email || '');
+    helpEmailPromise.catch(() => { helpEmailPromise = null; }); // при следующем открытии - заново
+  }
+  showState('work');
+  helpEmailPromise.then(email => {
+    const box = document.getElementById('siteHelpEmail');
+    if(!box) return;
+    box.innerHTML = email
+      ? `<a class="site-help-mail" href="mailto:${escHtml(email)}">${escHtml(email)}</a>`
+      : `<span class="site-sub-text">Почта поддержки скоро появится.${sitePageMode() === 'full' ? ' Пока сообщите о проблеме кнопкой «Сообщить об ошибке».' : ''}</span>`;
+  }).catch(() => {
+    const box = document.getElementById('siteHelpEmail');
+    if(box) box.innerHTML = '<span class="site-sub-text">Не удалось показать адрес. Закройте и откройте «Помощь» ещё раз.</span>';
   });
 }
 document.addEventListener('click', e => {
-  if(e.target.closest && e.target.closest('#siteHelpBug') && typeof openErrorReport === 'function') openErrorReport();
+  if(!e.target.closest) return;
+  if(e.target.closest('#siteHelpBug') && typeof openErrorReport === 'function') openErrorReport();
+  // Раздел «Помощь» открыли (кнопкой «Помощь» или слева в «Настройках») -
+  // проверка «Я не робот» и адрес поддержки.
+  if(e.target.closest('.site-settings-nav-item[data-section="help"]')) renderSiteHelp();
 });
 // Окно открыли - сразу последние известные данные, затем свежие с сервера.
 // Адрес с #account или #subscription (например, со старой страницы
@@ -294,7 +319,6 @@ function initSettingsAccount(){
   const btn = document.getElementById('siteSettingsBtn');
   if(!btn) return;
   const render = u => { renderSiteAccount(u); renderSiteSub(u); };
-  btn.addEventListener('click', renderSiteHelp);
   btn.addEventListener('click', () => {
     if(accountUserCache !== undefined) render(accountUserCache);
     fetchAccountUser().then(render);
@@ -308,7 +332,7 @@ function initSettingsAccount(){
 // Открыть окно «Настройки» сразу на разделе. На главной разделов аккаунта
 // нет (только тема) - переход на страницу выбора ГОСТа с этим разделом.
 function openSettingsSection(section){
-  if(sitePageMode() === 'landing'){ location.href = 'gosts.html#' + section; return; }
+  if(sitePageMode() === 'landing' && section !== 'help'){ location.href = 'gosts.html#' + section; return; }
   const btn = document.getElementById('siteSettingsBtn');
   if(!btn) return;
   btn.click();
@@ -393,13 +417,14 @@ function initLegalFooter(){
   wrap.insertAdjacentElement('afterend', f);
 }
 
-// Кнопки «Сообщить об ошибке» и «Помощь» (js/account/feedback.js) - на всех
-// страницах, кроме главной и входа.
+// Кнопки «Помощь» (на всех страницах) и «Сообщить об ошибке» (кроме главной
+// и входа) - js/account/feedback.js.
 function loadFeedbackButtons(){
-  if(sitePageMode() !== 'full' || document.getElementById('siteFeedbackJs')) return;
-  // Сначала списки в стиле сайта (ui-select.js), потом кнопки - по порядку.
+  if(document.getElementById('siteFeedbackJs')) return;
+  // Сначала списки в стиле сайта (ui-select.js, нужны форме сообщения об
+  // ошибке), потом кнопки - по порядку.
   const add = (id, src) => { const s = document.createElement('script'); s.id = id; s.src = src; s.async = false; document.body.appendChild(s); };
-  if(typeof uiSelect !== 'function') add('siteUiSelectJs', '/js/account/ui-select.js');
+  if(sitePageMode() === 'full' && typeof uiSelect !== 'function') add('siteUiSelectJs', '/js/account/ui-select.js');
   add('siteFeedbackJs', '/js/account/feedback.js');
 }
 // Вид страницы для общих частей сайта (по классу <body>):
@@ -414,7 +439,10 @@ function sitePageMode(){
 }
 function initAccountPage(){
   const mode = sitePageMode();
-  if(mode !== 'full') SITE_SETTINGS_SECTIONS.splice(1); // только «Оформление»
+  if(mode !== 'full'){ // только «Оформление» и «Помощь»
+    const keep = SITE_SETTINGS_SECTIONS.filter(s => s.id === 'appearance' || s.id === 'help');
+    SITE_SETTINGS_SECTIONS.splice(0, SITE_SETTINGS_SECTIONS.length, ...keep);
+  }
   if(mode !== 'auth'){ initAccountButton(); initLegalFooter(); }
   loadFeedbackButtons();
 }

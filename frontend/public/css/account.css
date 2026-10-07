@@ -25,11 +25,23 @@
   .site-std-btn span{display:none;}
   .site-std-btn{padding:0 8px;margin-right:-8px;}
   .site-fb-btn{padding:0 8px;margin-right:-8px;}
-  /* На телефоне «Помощь» - только в «Настройках», иначе панель не помещается. */
-  .site-help-btn{display:none;}
   .site-register-btn{display:none;}
   .site-topbar-links a{white-space:nowrap;}
   .site-topbar-links{gap:10px;}
+  /* «Помощь» - на всех страницах (по указанию пользователя), поэтому на
+     телефоне панель плотнее: значки компактнее, «Главная» скрыта (логотип
+     ведёт туда же). */
+  .site-topbar-inner{padding:0 12px;gap:10px;}
+  .site-topbar-links a + a{display:none;}
+  .site-fb-btn, .site-std-btn, .site-account-btn, .site-account-btn ~ .site-settings-btn{padding:0 7px;margin-right:-6px;}
+  .site-settings-btn{height:32px;}
+  .site-settings-btn svg{width:16px;height:16px;}
+}
+/* Совсем узкие телефоны: у ссылки «Назад» - только стрелка. */
+@media screen and (max-width:380px){
+  .site-topbar-links a:first-child{font-size:0;}
+  .site-topbar-links a:first-child::before{content:'←';font-size:16px;}
+  .site-topbar-inner{gap:8px;}
 }
 
 .auth-card{max-width:440px;margin:0 auto 24px;}

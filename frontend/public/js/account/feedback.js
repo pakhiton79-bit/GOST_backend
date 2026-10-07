@@ -1,6 +1,6 @@
 // Кнопки «Сообщить об ошибке» и «Помощь» в верхней панели (по указанию
-// пользователя). Подключается из common-account.js на всех страницах, кроме
-// главной и входа (там в панели только тема).
+// пользователя). Подключается из common-account.js на всех страницах;
+// «Помощь» - везде, «Сообщить об ошибке» - кроме главной и входа.
 //   «Сообщить об ошибке» - окно: ГОСТ и тип ящика (по умолчанию - по
 //     странице), описание, по желанию - введённые размеры и масса;
 //     POST /api/feedback/error (backend/src/auth/feedback.js).
@@ -124,13 +124,15 @@ function openErrorReport(){
 
 function initFeedbackButtons(){
   const settingsBtn = document.getElementById('siteSettingsBtn');
-  if(!settingsBtn || document.getElementById('siteBugBtn')) return;
-  const bug = fbButton('siteBugBtn', 'site-bug-btn', FB_ICONS.bug, 'Сообщить об ошибке');
-  const help = fbButton('siteHelpBtn', 'site-help-btn', FB_ICONS.help, 'Помощь');
+  if(!settingsBtn || document.getElementById('siteHelpBtn')) return;
   const before = settingsBtn.parentNode.querySelector('#siteAccountBtn') || settingsBtn;
-  settingsBtn.parentNode.insertBefore(bug, before);
+  if(sitePageMode() === 'full'){
+    const bug = fbButton('siteBugBtn', 'site-bug-btn', FB_ICONS.bug, 'Сообщить об ошибке');
+    settingsBtn.parentNode.insertBefore(bug, before);
+    bug.addEventListener('click', openErrorReport);
+  }
+  const help = fbButton('siteHelpBtn', 'site-help-btn', FB_ICONS.help, 'Помощь');
   settingsBtn.parentNode.insertBefore(help, before);
-  bug.addEventListener('click', openErrorReport);
   help.addEventListener('click', () => openSettingsSection('help'));
 }
 
