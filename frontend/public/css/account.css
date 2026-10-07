@@ -284,6 +284,7 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-tag-you{color:var(--accent);font-weight:600;}
 .admin-tag-ok{color:var(--ok);}
 .admin-tag-blocked{color:var(--error);font-weight:600;}
+.admin-tag-priority{color:var(--accent);font-weight:600;}
 .admin-empty{text-align:center;color:var(--ink-soft);}
 
 /* Выпадающий список в стиле сайта (uiSelect в admin.js): кнопка - как поле

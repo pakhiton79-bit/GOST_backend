@@ -34,7 +34,7 @@ router.post('/error', rateLimit, async (req, res, next) => {
       INPUT_KEYS.forEach(k => { const n = Number(b.inputs[k]); if (Number.isFinite(n) && n > 0) inputs[k] = n; });
       if (Object.keys(inputs).length) rec.inputs = inputs;
     }
-    Object.assign(rec, { userEmail: req.user ? req.user.email : null, at: new Date().toISOString() });
+    Object.assign(rec, { userEmail: req.user ? req.user.email : null, plan: req.user ? req.user.plan : null, at: new Date().toISOString() });
     store.addReport(rec);
     await sendErrorReport(rec);
     res.json({ ok: true });

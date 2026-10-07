@@ -9,11 +9,16 @@
 //                                           расчёты запрещены, входы на всех устройствах завершаются
 //   POST /api/admin/unblock { email }     - разблокировать
 //   GET  /api/admin/stats                 - статистика (stats.js)
-//   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js), новые сверху
-//   GET  /api/admin/reports               - сообщения об ошибках (feedback.js), новые сверху
+//   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js)
+//   GET  /api/admin/reports               - сообщения об ошибках (feedback.js)
+//                                           (Pro и Team - первыми с пометкой priority, дальше новые сверху)
 const express = require('express');
 const store = require('./store');
 const { PLANS, planOf, quotaInfo, syncUser } = require('./plans');
+// Приоритетное обслуживание (Pro и Team): такие заявки и сообщения - первыми,
+// внутри групп - новые сверху.
+const withPriority = list => list.map(r => ({ ...r, priority: !!(PLANS[r.plan] && PLANS[r.plan].prioritySupport) }))
+  .reverse().sort((a, b) => b.priority - a.priority);
 const { isAdmin } = require('./routes');
 const stats = require('./stats');
 
@@ -89,11 +94,11 @@ router.post('/unblock', (req, res) => {
 });
 
 router.get('/requests', (req, res) => {
-  res.json({ requests: store.listRequests().reverse() });
+  res.json({ requests: withPriority(store.listRequests()) });
 });
 
 router.get('/reports', (req, res) => {
-  res.json({ reports: store.listReports().reverse() });
+  res.json({ reports: withPriority(store.listReports()) });
 });
 
 router.get('/stats', (req, res) => {

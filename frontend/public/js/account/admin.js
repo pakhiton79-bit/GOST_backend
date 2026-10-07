@@ -223,20 +223,22 @@ function renderRequests(){
   const planName = id => (adminData.plans.find(p => p.id === id) || {}).name || id;
   $('reqRows').innerHTML = list.map(r => `<tr>
       <td>${fmtDate(r.at)}</td>
-      <td><a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a><div class="admin-sub">${esc(planName(r.plan))}</div></td>
+      <td><a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a>${r.priority ? ' <span class="admin-tag admin-tag-priority">приоритет</span>' : ''}<div class="admin-sub">${esc(planName(r.plan))}</div></td>
       <td>${esc(r.company)}<div class="admin-sub">${esc(r.standard)}</div></td>
       <td class="admin-req-details">${esc(r.details)}</td>
     </tr>`).join('') || '<tr><td colspan="4" class="admin-empty">Заявок пока нет</td></tr>';
 }
 
-// Сообщения об ошибках (кнопка «Сообщить об ошибке», feedback.js).
+const planNameOf = id => ((adminData && adminData.plans.find(p => p.id === id)) || {}).name || id;
+// Сообщения об ошибках (кнопка «Сообщить об ошибке», feedback.js). Pro и
+// Team (приоритетное обслуживание) - первыми, с пометкой.
 function renderReports(){
   const list = repData.reports || [];
   $('repCount').textContent = list.length ? `(${list.length})` : '';
   const dims = i => i ? `${i.L || '-'} × ${i.W || '-'} × ${i.H || '-'} мм<div class="admin-sub">${i.M ? i.M + ' кг' : ''}</div>` : '<span class="admin-sub">не приложены</span>';
   $('repRows').innerHTML = list.map(r => `<tr>
       <td>${fmtDate(r.at)}</td>
-      <td>${r.userEmail ? `<a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a>` : '<span class="admin-sub">гость</span>'}</td>
+      <td>${r.userEmail ? `<a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a>` : '<span class="admin-sub">гость</span>'}${r.priority ? ' <span class="admin-tag admin-tag-priority">приоритет</span>' : ''}${r.plan ? `<div class="admin-sub">${esc(planNameOf(r.plan))}</div>` : ''}</td>
       <td>${esc(r.gost)}<div class="admin-sub">${esc(r.type)}</div><div class="admin-sub">${esc(r.page)}</div></td>
       <td>${dims(r.inputs)}</td>
       <td class="admin-req-details">${esc(r.description)}</td>
