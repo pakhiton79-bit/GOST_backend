@@ -12,6 +12,9 @@
 /* «Свой стандарт» (standards.js, страница выбора ГОСТа) - первая справа, остальные кнопки вплотную за ней. */
 .site-std-btn{margin-right:-14px;}
 .site-std-btn ~ .site-settings-btn{margin-left:0;}
+/* «Сообщить об ошибке» и «Помощь» (feedback.js) - значки с подсказкой; первая справа - с отступом auto. */
+.site-fb-btn{margin-right:-14px;padding:0 10px;}
+.site-fb-btn ~ .site-settings-btn{margin-left:0;}
 .site-account-btn span{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 /* Узкий экран: у кнопок аккаунта и «Настройки» - только значки, иначе
    панель не помещается по ширине. */
@@ -21,8 +24,12 @@
   .site-account-btn{margin-right:-8px;}
   .site-std-btn span{display:none;}
   .site-std-btn{padding:0 8px;margin-right:-8px;}
+  .site-fb-btn{padding:0 8px;margin-right:-8px;}
+  /* На телефоне «Помощь» - только в «Настройках», иначе панель не помещается. */
+  .site-help-btn{display:none;}
   .site-register-btn{display:none;}
   .site-topbar-links a{white-space:nowrap;}
+  .site-topbar-links{gap:10px;}
 }
 
 .auth-card{max-width:440px;margin:0 auto 24px;}
@@ -434,3 +441,13 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-count{font-weight:500;color:var(--ink-soft);}
 .admin-req-table .admin-req-details{white-space:pre-wrap;min-width:240px;max-width:420px;}
 .admin-req-table td a{color:var(--accent);}
+
+/* Сообщение об ошибке (feedback.js) - то же окно, что у заявки на стандарт, плюс списки и галочка. */
+.std-field select{width:100%;box-sizing:border-box;padding:10px 34px 10px 12px;border:1px solid var(--border-input);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer;}
+.std-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
+.std-row{display:flex;gap:12px;}
+.fb-check{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:13px;line-height:1.45;color:var(--ink);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;}
+.fb-check input{margin-top:2px;accent-color:var(--accent);}
+.site-help-mail{font-weight:600;color:var(--accent);text-decoration:none;}
+.site-help-mail:hover{text-decoration:underline;}
+@media screen and (max-width:640px){.std-row{flex-direction:column;gap:0;}}

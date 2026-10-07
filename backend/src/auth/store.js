@@ -28,6 +28,7 @@ function load() {
   db.stats = db.stats && typeof db.stats === 'object' ? db.stats : {};
   db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
   db.requests = Array.isArray(db.requests) ? db.requests : [];
+  db.reports = Array.isArray(db.reports) ? db.reports : [];
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
   return db;
 }
@@ -160,6 +161,15 @@ function listRequests() {
   return load().requests.slice();
 }
 
+// ---- Сообщения об ошибках (см. feedback.js) ----
+function addReport(rec) {
+  load().reports.push(rec);
+  save();
+}
+function listReports() {
+  return load().reports.slice();
+}
+
 // ---- Статистика по дням (см. stats.js) ----
 function statsData() {
   return load().stats;
@@ -172,4 +182,5 @@ module.exports = {
   getCode, setCode, deleteCode,
   setTicket, getTicket, deleteTicket,
   addRequest, listRequests,
+  addReport, listReports,
 };

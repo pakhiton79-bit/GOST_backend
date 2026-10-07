@@ -5,7 +5,7 @@ const $ = id => document.getElementById(id);
 const fmtDate = iso => new Date(iso).toLocaleDateString('ru-RU');
 const fmtNum = n => Number(n).toLocaleString('ru-RU');
 const dayLabel = key => key.slice(8, 10) + '.' + key.slice(5, 7);           // 2026-10-05 -> 05.10
-let adminData = null, statsData = null, reqData = null;
+let adminData = null, statsData = null, reqData = null, repData = null;
 
 function showMsg(text, ok){
   const m = $('adminMsg');
@@ -229,6 +229,20 @@ function renderRequests(){
     </tr>`).join('') || '<tr><td colspan="4" class="admin-empty">Заявок пока нет</td></tr>';
 }
 
+// Сообщения об ошибках (кнопка «Сообщить об ошибке», feedback.js).
+function renderReports(){
+  const list = repData.reports || [];
+  $('repCount').textContent = list.length ? `(${list.length})` : '';
+  const dims = i => i ? `${i.L || '-'} × ${i.W || '-'} × ${i.H || '-'} мм<div class="admin-sub">${i.M ? i.M + ' кг' : ''}</div>` : '<span class="admin-sub">не приложены</span>';
+  $('repRows').innerHTML = list.map(r => `<tr>
+      <td>${fmtDate(r.at)}</td>
+      <td>${r.userEmail ? `<a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a>` : '<span class="admin-sub">гость</span>'}</td>
+      <td>${esc(r.gost)}<div class="admin-sub">${esc(r.type)}</div><div class="admin-sub">${esc(r.page)}</div></td>
+      <td>${dims(r.inputs)}</td>
+      <td class="admin-req-details">${esc(r.description)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="admin-empty">Сообщений пока нет</td></tr>';
+}
+
 async function api(path, body){
   const r = await fetch('/api/admin/' + path, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' });
   const d = await r.json();
@@ -238,13 +252,14 @@ async function api(path, body){
 
 async function load(){
   try{
-    [adminData, statsData, reqData] = await Promise.all([api('users'), api('stats'), api('requests')]);
+    [adminData, statsData, reqData, repData] = await Promise.all([api('users'), api('stats'), api('requests'), api('reports')]);
   }catch(e){
     if(e.status === 403 && !(await fetchAccountUser())) return location.replace('login.html?next=admin.html');
     return showMsg(e.message);
   }
   $('adminBox').hidden = false;
   renderStats();
+  renderReports();
   renderRequests();
   renderUsers();
 }

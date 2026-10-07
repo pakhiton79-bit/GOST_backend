@@ -48,6 +48,16 @@
       <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>День</th><th>Расчёты</th><th>Регистрации</th></tr></thead><tbody id="dailyRows"></tbody></table></div>
     </details>
     <div class="card">
+      <h2>Сообщения об ошибках <span class="admin-count" id="repCount"></span></h2>
+      <p class="admin-chart-note">Из кнопки «Сообщить об ошибке» в верхней панели. Новые сверху.</p>
+      <div class="admin-table-wrap">
+        <table class="admin-table admin-req-table">
+          <thead><tr><th>Дата</th><th>От кого</th><th>ГОСТ и тип</th><th>Размеры, масса</th><th>Что не так</th></tr></thead>
+          <tbody id="repRows"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
       <h2>Заявки на внутренние стандарты <span class="admin-count" id="reqCount"></span></h2>
       <p class="admin-chart-note">Из формы «Свой стандарт» на странице выбора ГОСТа. Новые сверху.</p>
       <div class="admin-table-wrap">

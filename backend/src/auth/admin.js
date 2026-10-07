@@ -10,6 +10,7 @@
 //   POST /api/admin/unblock { email }     - разблокировать
 //   GET  /api/admin/stats                 - статистика (stats.js)
 //   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js), новые сверху
+//   GET  /api/admin/reports               - сообщения об ошибках (feedback.js), новые сверху
 const express = require('express');
 const store = require('./store');
 const { PLANS, planOf, quotaInfo, syncUser } = require('./plans');
@@ -89,6 +90,10 @@ router.post('/unblock', (req, res) => {
 
 router.get('/requests', (req, res) => {
   res.json({ requests: store.listRequests().reverse() });
+});
+
+router.get('/reports', (req, res) => {
+  res.json({ reports: store.listReports().reverse() });
 });
 
 router.get('/stats', (req, res) => {

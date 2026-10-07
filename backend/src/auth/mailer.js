@@ -20,4 +20,9 @@ async function sendStandardRequest(rec) {
   console.log(`[заявка на стандарт, тестовый режим] ${rec.userEmail}: ${rec.company} / ${rec.standard}\n  ${rec.details}`);
 }
 
-module.exports = { sendCode, sendStandardRequest };
+// Сообщение об ошибке (feedback.js). Пока тестовый режим - в журнал сервера.
+async function sendErrorReport(rec) {
+  console.log(`[сообщение об ошибке, тестовый режим] ${rec.userEmail || 'гость'}: ${rec.gost} ${rec.type} (${rec.page})${rec.inputs ? ' ' + JSON.stringify(rec.inputs) : ''}\n  ${rec.description}`);
+}
+
+module.exports = { sendCode, sendStandardRequest, sendErrorReport };
