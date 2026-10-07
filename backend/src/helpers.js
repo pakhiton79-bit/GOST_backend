@@ -93,9 +93,9 @@ function fillBoards(space, roundWidths) {
 
 // Округление вверх до ближайшей выбранной толщины "в наличии". availableThicknesses
 // пуст -> округление не выполняется, толщина возвращается как есть (строго по ГОСТ).
-// Если расчётная толщина превышает даже максимальную из выбранных "в наличии" -
-// значение не занижается, а остаётся расчётным по ГОСТ - вызывающая сторона должна
-// сама взвести предупреждение, если понадобится (см. makeRoundUpToAvailable).
+// Если расчётная толщина больше даже максимальной из выбранных "в наличии" -
+// берётся максимальная из наличия (тоньше ГОСТ, по указанию пользователя), а
+// вызывающая сторона выводит предупреждение (state.exceeded / state.parts).
 // label (необязательно) - название детали: тогда превышение попадает не в общий
 // флаг exceeded, а в state.parts, и предупреждение называет деталь и толщину.
 function makeRoundUpToAvailable(availableThicknesses) {
@@ -108,18 +108,18 @@ function makeRoundUpToAvailable(availableThicknesses) {
     for (const a of availableThicknesses) { if (t <= a) return a; }
     if (!label) state.exceeded = true;
     else state.parts.push({ label, t });
-    return t;
+    return availableThicknesses[availableThicknesses.length - 1];
   };
   fn.state = state;
   return fn;
 }
 
 // Предупреждения по деталям, толщина которых по ГОСТ больше максимальной
-// «в наличии» (см. label в makeRoundUpToAvailable).
+// «в наличии» и заменена на неё (см. label в makeRoundUpToAvailable).
 function thicknessPartWarnings(round, availableThicknesses) {
   const max = availableThicknesses[availableThicknesses.length - 1];
   return round.state.parts.map(p =>
-    `${p.label}: по ГОСТ ${p.t} мм, это больше максимальной «в наличии» (${max} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
+    `${p.label}: по ГОСТ ${p.t} мм, в наличии максимум ${max} мм - использовано ${max} мм, это тоньше ГОСТ.`);
 }
 
 // Ищет первое отрицательное число где угодно в результате расчёта - и в

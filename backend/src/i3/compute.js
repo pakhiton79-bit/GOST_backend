@@ -104,7 +104,7 @@ function computeGost10198I3(input) {
     warnings.push('Щит торцевой (2 этажа, без раскосины): чертёж приблизительный - показан чертёж одного этажа.');
   }
   if (round.state.exceeded) {
-    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
+    warnings.push(`Расчётная толщина детали больше максимальной «в наличии» - использована самая толстая из наличия (${availableThicknesses[availableThicknesses.length - 1]} мм), это тоньше ГОСТ.`);
   }
   warnings.push(...thicknessPartWarnings(round, availableThicknesses));
   Object.values(belowGost).forEach(b => {
