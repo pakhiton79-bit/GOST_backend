@@ -49,7 +49,7 @@ function fbFormHtml(user){
       <div class="std-field"><label for="fbText">Что не так <span class="auth-req">*</span></label>
         <textarea id="fbText" rows="5" maxlength="3000" placeholder="Например: на чертеже бокового щита размер не совпадает с таблицей; ожидал ..., получил ..."></textarea></div>
       ${inputs ? `<label class="fb-check"><input type="checkbox" id="fbInputs" checked> Приложить введённые размеры и массу: ${escHtml(inputsText)}</label>` : ''}
-      <p class="std-note">${user ? `Если понадобится уточнить, ответим на почту аккаунта <b>${escHtml(user.email)}</b>.` : 'Вы не вошли в аккаунт, поэтому ответить вам мы не сможем. Чтобы получить ответ, войдите или напишите в поддержку (раздел «Помощь»).'}</p>
+      <p class="std-note">${user ? `Если понадобится уточнить, ответим на почту аккаунта <b>${escHtml(user.email)}</b>.` : sessionEndedText() + 'Вы не вошли в аккаунт, поэтому ответить вам мы не сможем. Чтобы получить ответ, войдите или напишите в поддержку (раздел «Помощь»).'}</p>
       <div class="std-msg" id="fbMsg" hidden></div>
       <div class="std-actions"><button type="submit" class="site-sub-btn site-sub-btn-main" id="fbSubmit">Отправить</button></div>
     </form>`;

@@ -53,6 +53,8 @@ const app = express();
 // Secure у аккаунтов).
 app.set('trust proxy', 1);
 app.use(express.json());
+// Ответы API не кэшируются (кто вошёл, лимиты, расчёты - всегда свежие).
+app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 // Аккаунты: кто вошёл (req.user) и /api/auth/* (см. src/auth/routes.js).
 app.use(attachUser);
 app.use('/api/auth', authRoutes);

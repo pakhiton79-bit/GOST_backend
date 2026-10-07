@@ -6,12 +6,34 @@
 // обработчик срабатывает следом.
 const ACCOUNT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>';
 
-// Кто вошёл: { email, createdAt, quota, isAdmin } или null (ошибка сети - тоже null).
+// Кто вошёл: { email, createdAt, quota, isAdmin } или null.
+// По замечанию пользователя («вошёл, а просит войти»): ошибка связи (сервер
+// на Render перезапускается или «просыпается») - не повод считать человека
+// гостем. Запрос повторяется; если сервер так и не ответил - остаётся то, что
+// было известно. Ответ «не вошёл» при известном входе (аккаунты стёрлись при
+// перезапуске или вход на другом устройстве) - панель переключается на
+// «Войти» и объясняет причину (noteAccountUser).
 function fetchAccountUser(){
-  return fetch('/api/auth/me', { credentials: 'same-origin' })
-    .then(r => r.ok ? r.json() : { user: null })
-    .then(d => d.user || null)
-    .catch(() => null);
+  const once = () => fetch('/api/auth/me', { credentials: 'same-origin', cache: 'no-store' })
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => d.user || null);
+  const attempt = left => once().catch(err => left > 0
+    ? new Promise(res => setTimeout(res, 1500)).then(() => attempt(left - 1))
+    : Promise.reject(err));
+  return attempt(2)
+    .then(user => { noteAccountUser(user); return user; })
+    .catch(() => (accountUserCache !== undefined ? accountUserCache : null));
+}
+// Вход завершился, пока страница была открыта (сообщение в окнах вместо
+// обычного «Войдите»).
+let accountSessionEnded = false;
+let accountButtonEnabled = false; // кнопка аккаунта есть на этой странице (initAccountButton)
+function noteAccountUser(user){
+  if(accountUserCache && !user) accountSessionEnded = true;
+  if(user) accountSessionEnded = false;
+  accountUserCache = user;
+  applyPlanClass(user);
+  renderAccountButton(user);
 }
 // Ссылка на вход / регистрацию с возвратом на эту страницу.
 function authHref(mode){
@@ -28,33 +50,44 @@ function initAccountButton(){
   const settingsBtn = document.getElementById('siteSettingsBtn');
   if(!settingsBtn || document.getElementById('siteAccountBtn')) return;
   initSettingsAccount();
-  fetchAccountUser().then(user => {
-    accountUserCache = user;
-    applyPlanClass(user);
-    if(user){
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.id = 'siteAccountBtn';
-      btn.className = 'site-settings-btn site-account-btn';
-      btn.title = 'Аккаунт: ' + user.email;
-      btn.innerHTML = ACCOUNT_ICON + '<span></span>';
-      btn.querySelector('span').textContent = user.email;
-      btn.addEventListener('click', () => openSettingsSection('account'));
-      settingsBtn.parentNode.insertBefore(btn, settingsBtn);
-      return;
-    }
-    const login = document.createElement('a');
-    login.id = 'siteAccountBtn';
-    login.className = 'site-settings-btn site-account-btn';
-    login.href = authHref('login');
-    login.innerHTML = ACCOUNT_ICON + '<span>Войти</span>';
-    const reg = document.createElement('a');
-    reg.className = 'site-settings-btn site-register-btn';
-    reg.href = authHref('register');
-    reg.innerHTML = '<span>Регистрация</span>';
-    settingsBtn.parentNode.insertBefore(login, settingsBtn);
-    settingsBtn.parentNode.insertBefore(reg, settingsBtn);
-  });
+  accountButtonEnabled = true;
+  fetchAccountUser();
+}
+// Кнопка (кнопки) аккаунта по состоянию входа; перерисовывается, только
+// если состояние поменялось.
+function renderAccountButton(user){
+  const settingsBtn = document.getElementById('siteSettingsBtn');
+  if(!accountButtonEnabled || !settingsBtn) return;
+  const state = user ? 'user:' + user.email : 'guest';
+  const cur = document.getElementById('siteAccountBtn');
+  if(cur && cur.dataset.state === state) return;
+  if(cur) cur.remove();
+  document.querySelectorAll('.site-register-btn').forEach(el => el.remove());
+  if(user){
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'siteAccountBtn';
+    btn.className = 'site-settings-btn site-account-btn';
+    btn.title = 'Аккаунт: ' + user.email;
+    btn.innerHTML = ACCOUNT_ICON + '<span></span>';
+    btn.querySelector('span').textContent = user.email;
+    btn.dataset.state = state;
+    btn.addEventListener('click', () => openSettingsSection('account'));
+    settingsBtn.parentNode.insertBefore(btn, settingsBtn);
+    return;
+  }
+  const login = document.createElement('a');
+  login.id = 'siteAccountBtn';
+  login.dataset.state = state;
+  login.className = 'site-settings-btn site-account-btn';
+  login.href = authHref('login');
+  login.innerHTML = ACCOUNT_ICON + '<span>Войти</span>';
+  const reg = document.createElement('a');
+  reg.className = 'site-settings-btn site-register-btn';
+  reg.href = authHref('register');
+  reg.innerHTML = '<span>Регистрация</span>';
+  settingsBtn.parentNode.insertBefore(login, settingsBtn);
+  settingsBtn.parentNode.insertBefore(reg, settingsBtn);
 }
 
 // ---------- Разделы «Аккаунт» и «Подписка» в окне «Настройки» ----------
@@ -102,8 +135,12 @@ function renderSiteSub(user){
   }
   box.innerHTML = html;
 }
+// Пояснение, если вход завершился, пока страница была открыта.
+function sessionEndedText(){
+  return accountSessionEnded ? 'Вход завершён: сервер обновлялся или в аккаунт вошли на другом устройстве. ' : '';
+}
 function guestHtml(text){
-  return `<p class="site-sub-text">${text}</p><div class="site-acc-actions">`
+  return `<p class="site-sub-text">${sessionEndedText()}${text}</p><div class="site-acc-actions">`
     + `<a class="site-sub-btn site-sub-btn-main" href="${authHref('login')}">Войти</a>`
     + `<a class="btn-secondary site-sub-btn" href="${authHref('register')}">Регистрация</a></div>`;
 }
@@ -252,7 +289,7 @@ function initSettingsAccount(){
   btn.addEventListener('click', renderSiteHelp);
   btn.addEventListener('click', () => {
     if(accountUserCache !== undefined) render(accountUserCache);
-    fetchAccountUser().then(u => { accountUserCache = u; applyPlanClass(u); render(u); });
+    fetchAccountUser().then(render);
   });
   const section = location.hash.replace('#', '');
   if(section === 'account' || section === 'subscription' || section === 'help'){
