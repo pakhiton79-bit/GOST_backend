@@ -24,17 +24,23 @@ function buildEndPanel(c, t12) {
 
   // Секции по ширине: добавляются, пока угол раскосины меньше 20° (и есть
   // место под ещё одну вертикальную планку). Раскосины нет у низкого или
-  // узкого щита (≤ 600 мм) и у одной секции с углом больше 60°.
+  // узкого щита (≤ 600 мм) и у одной секции с углом больше 60°. Галочка
+  // «Добавить раскосины» (c.addRaskosina, по указанию пользователя) ставит
+  // их всегда, независимо от ГОСТ; угол вне 20–60° - предупреждение.
+  const gostRaskosina = H > 600 && W > 600;
   const sectionWidth = n => (W - PLANK_W * (n + 1)) / n;
   const angleDeg = n => Math.atan2(vertLen, sectionWidth(n)) * 180 / Math.PI;
   let sections = 1;
-  if (H > 600 && W > 600) {
+  if (gostRaskosina || c.addRaskosina) {
     while (angleDeg(sections) < MIN_ANGLE && sectionWidth(sections + 1) > 0) sections++;
     if (angleDeg(sections) < MIN_ANGLE) {
       warnings.push(`Щит торцевой: угол раскосины <20° даже при максимуме секций (${sections}) - больше не добавить, не хватает места (по ${PLANK_W} мм на планку).`);
     }
   }
-  const hasRaskosina = H > 600 && W > 600 && !(sections === 1 && angleDeg(1) > MAX_ANGLE);
+  const hasRaskosina = c.addRaskosina || (gostRaskosina && !(sections === 1 && angleDeg(1) > MAX_ANGLE));
+  if (c.addRaskosina && angleDeg(sections) > MAX_ANGLE) {
+    warnings.push(`Щит торцевой: угол раскосины ${Math.round(angleDeg(sections))}° больше 60° (раскосины добавлены вручную) - нужна консультация конструктора.`);
+  }
   const vertQty = (sections + 1) * floors;
   const rask = { l: Math.sqrt(Math.pow(sectionWidth(sections), 2) + Math.pow(vertLen, 2)), qty: hasRaskosina ? sections * floors : 0 };
 

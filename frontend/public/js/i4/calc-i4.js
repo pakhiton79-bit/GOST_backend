@@ -33,6 +33,7 @@ function buildCalcInput(){
     solidRigidBase: document.getElementById('solidRigidBase').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
+    addRaskosina: document.getElementById('addRaskosina').checked,
     addEndTape: document.getElementById('addEndTape').checked,
     boardGapMax: readBoardGapMax(), // наибольший промежуток между досками обшивки, мм (board-gaps.js)
     plankLayoutMode,

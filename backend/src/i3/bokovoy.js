@@ -16,9 +16,14 @@ function buildBokovoy(c, p) {
   const { len, t12, skidT, plankQty, sectionW } = p;
   const hFull = H + t12;
 
-  // Раскосины - у щита выше 600 мм и с 2+ поясами. 2 этажа - по высоте груза
-  // (как у торца) или если на 1 этаже угол раскосины вышел бы больше 60°.
-  const hasRaskosina = H > 600 && plankQty > 1;
+  // Раскосины - у щита выше 600 мм и с 2+ поясами (галочка «Добавить
+  // раскосины» - при любой высоте; при 1 поясе раскосину ставить некуда).
+  // 2 этажа - по высоте груза (как у торца) или если на 1 этаже угол
+  // раскосины вышел бы больше 60°.
+  const hasRaskosina = (H > 600 || c.addRaskosina) && plankQty > 1;
+  if (c.addRaskosina && plankQty <= 1) {
+    warnings.push('Щит боковой: раскосину не поставить - у крышки один пояс планок (нужно хотя бы два).');
+  }
   const angle1FloorDeg = sectionW > 0 ? Math.atan2(hFull, sectionW) * 180 / Math.PI : null;
   const floors = (floorsForHeight(H) === 2 || (hasRaskosina && angle1FloorDeg !== null && angle1FloorDeg > 60)) ? 2 : 1;
 
