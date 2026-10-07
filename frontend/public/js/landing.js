@@ -118,7 +118,7 @@ function lpDemo(){
   fit();
   if(window.ResizeObserver) new ResizeObserver(fit).observe(box); else addEventListener('resize', fit);
 
-  scenes.innerHTML = LPD_SCENES.map((sc, i) => `<button type="button" role="tab" data-i="${i}"><span>Тип ${sc.short} · ${sc.dims.join('×')}</span><i><u></u></i></button>`).join('');
+  scenes.innerHTML = LPD_SCENES.map((sc, i) => `<button type="button" role="tab" data-i="${i}"><span><b>Тип ${sc.short}</b><em> · </em><small>${sc.dims.join('×<wbr>')}</small></span><i><u></u></i></button>`).join('');
   const sceneBtns = [...scenes.children];
 
   // Прерывание: смена примера кнопкой - текущий сценарий останавливается.

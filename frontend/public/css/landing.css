@@ -115,6 +115,17 @@
 .lpd-scenes button{flex:1;min-width:0;text-align:left;padding:8px 10px;border-radius:10px;border:1px solid var(--rule);background:var(--panel);color:var(--ink-soft);font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
 .lpd-scenes button.on{color:var(--ink);border-color:var(--accent);}
 .lpd-scenes span{display:block;}
+.lpd-scenes b,.lpd-scenes small{font:inherit;}
+.lpd-scenes em{font-style:normal;}
+@media (max-width:520px){
+  .lpd-scenes{gap:6px;}
+  .lpd-scenes button{padding:8px 6px;}
+  .lpd-scenes em{display:none;}
+  .lpd-scenes small{display:block;font-size:10px;font-weight:500;letter-spacing:-.3px;font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:2px;}
+}
+@media (max-width:350px){
+  .lpd-scenes small{white-space:normal;}
+}
 .lpd-scenes i{display:block;height:3px;border-radius:2px;background:var(--rule);margin-top:6px;overflow:hidden;}
 .lpd-scenes u{display:block;height:100%;width:0;background:var(--accent);transition:width .6s ease;}
 
