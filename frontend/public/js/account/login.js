@@ -44,32 +44,18 @@ let authMode = 'login';
 let authEmail = '';
 let deviceTicket = '';
 
-// Yandex SmartCaptcha (регистрация и восстановление пароля): ключ клиента
-// приходит с сервера (/api/auth/config); нет ключа - капчи нет (поле
-// скрыто, сервер её не проверяет). Токен одноразовый - после каждой
-// отправки формы виджет сбрасывается.
-let captchaKey = '';
-let captchaWidget = null;
-function initCaptcha(){
-  fetch('/api/auth/config', { credentials: 'same-origin' }).then(r => r.json()).then(cfg => {
-    if(!cfg.captchaKey) return;
-    captchaKey = cfg.captchaKey;
-    window.onSmartCaptchaLoad = () => {
-      captchaWidget = window.smartCaptcha.render('authCaptcha', { sitekey: captchaKey, hl: 'ru' });
-    };
-    const s = document.createElement('script');
-    s.src = cfg.captchaScript;
-    s.defer = true;
-    document.head.appendChild(s);
-    // Только показать поле капчи (setMode очистил бы уже введённое).
-    document.querySelector('.auth-field[data-field="captcha"]').hidden = !AUTH_MODES[authMode].fields.includes('captcha');
-  }).catch(() => {});
+// Капча «Я не робот» на регистрации и восстановлении пароля (js/account/pow.js):
+// задача решается сразу, как только форма показана; ответ одноразовый -
+// после каждой отправки формы решается новая.
+let powPromise = null;
+const POW_TEXT = { work: 'Проверяем, что вы не робот...', ok: 'Проверка «Я не робот» пройдена', fail: 'Проверка «Я не робот» не удалась. Попробуйте ещё раз.' };
+function setPowState(state){
+  $('authPow').dataset.state = state;
+  $('authPowText').textContent = POW_TEXT[state];
 }
-function captchaToken(){
-  return captchaWidget !== null && window.smartCaptcha ? window.smartCaptcha.getResponse(captchaWidget) : '';
-}
-function resetCaptcha(){
-  if(captchaWidget !== null && window.smartCaptcha) window.smartCaptcha.reset(captchaWidget);
+function startPow(){
+  powPromise = powSolve(setPowState);
+  powPromise.catch(() => {});
 }
 
 function nextUrl(){
@@ -107,9 +93,8 @@ function setMode(mode, msg, ok){
   $('authSub').textContent = m.sub;
   document.title = m.title + ' - Тара+';
   $('authSubmit').textContent = m.submit;
-  document.querySelectorAll('.auth-field').forEach(f => {
-    f.hidden = !m.fields.includes(f.dataset.field) || (f.dataset.field === 'captcha' && !captchaKey);
-  });
+  document.querySelectorAll('.auth-field').forEach(f => { f.hidden = !m.fields.includes(f.dataset.field); });
+  if(m.fields.includes('captcha') && !powPromise) startPow();
   if(m.pwLabel){ $('authPasswordLabel').textContent = m.pwLabel; $('authPassword').autocomplete = m.pwAuto; }
   $('authForgot').hidden = !m.forgot;
   $('authCode').value = ''; $('authPassword').value = ''; $('authPassword2').value = '';
@@ -201,13 +186,14 @@ async function onSubmit(e){
     showMsg('Чтобы зарегистрироваться, примите Пользовательское соглашение и дайте согласие на обработку персональных данных.');
     return;
   }
-  const withCaptcha = m.fields.includes('captcha') && captchaKey;
-  if(withCaptcha && !captchaToken()){
-    showMsg(captchaWidget === null ? 'Проверка «Я не робот» не загрузилась. Обновите страницу.' : 'Подтвердите, что вы не робот.');
-    return;
-  }
-  const bot = { website: $('authWebsite').value, captchaToken: withCaptcha ? captchaToken() : '' };
+  const withCaptcha = m.fields.includes('captcha');
   btn.disabled = true;
+  let captchaToken = '';
+  if(withCaptcha){
+    try{ captchaToken = await powPromise; }
+    catch(err){ showMsg(POW_TEXT.fail); btn.disabled = false; startPow(); return; } // новая задача - для следующей попытки
+  }
+  const bot = { website: $('authWebsite').value, captchaToken };
   try{
     if(authMode === 'login'){
       const d = await api('login', { email, password: pw });
@@ -236,7 +222,10 @@ async function onSubmit(e){
     else showMsg(err.message);
   }finally{
     btn.disabled = false;
-    if(withCaptcha) resetCaptcha();
+    if(withCaptcha){
+      powPromise = null;
+      if(AUTH_MODES[authMode].fields.includes('captcha')) startPow();
+    }
   }
 }
 
@@ -258,4 +247,3 @@ document.querySelector('.auth-box').addEventListener('click', async e => {
 // Уже вошли - сразу дальше.
 fetchAccountUser().then(user => { if(user) location.replace(nextUrl()); });
 setMode(new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login');
-initCaptcha();

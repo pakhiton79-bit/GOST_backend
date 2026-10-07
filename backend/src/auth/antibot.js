@@ -8,15 +8,18 @@
 //   2. Одноразовые почтовые ящики (temp-mail и т.п.) при регистрации не
 //      принимаются. Дополнить список можно переменной окружения
 //      BLOCKED_EMAIL_DOMAINS (домены через запятую).
-//   3. Yandex SmartCaptcha («Я не робот»). Включается, когда в окружении
-//      заданы оба ключа из консоли Yandex Cloud:
-//        YANDEX_CAPTCHA_CLIENT_KEY - ключ клиента (виден на странице);
-//        YANDEX_CAPTCHA_SERVER_KEY - ключ сервера (секретный).
-//      Без ключей капча не показывается и не проверяется. Если сервис капчи
-//      недоступен (сбой сети, ошибка на их стороне), запрос пропускается,
-//      чтобы люди не остались без регистрации (ловушка и лимит запросов
-//      продолжают работать).
-const CAPTCHA_HOST = process.env.YANDEX_CAPTCHA_HOST || 'smartcaptcha.cloud.yandex.ru';
+//   3. Своя капча (по указанию пользователя - без сторонних сервисов, данные
+//      никуда не передаются): «доказательство работы», как в открытом
+//      проекте ALTCHA. Сервер выдаёт задачу (GET /api/auth/challenge): соль
+//      и SHA-256 от «соль + число», где число - случайное от 0 до POW_MAX,
+//      плюс подпись HMAC. Браузер перебирает числа, пока хеш не совпадёт
+//      (около секунды на телефоне), и присылает ответ с формой. Сервер
+//      проверяет хеш, подпись, срок (10 минут) и что ответ ещё не
+//      использовался. Ботам массовые запросы становятся дорогими.
+//      CAPTCHA_SECRET (необязательно) - ключ подписи; без него ключ
+//      случайный при каждом запуске (задачи, выданные до перезапуска,
+//      просто перевыдаются).
+const crypto = require('crypto');
 
 const DISPOSABLE_DOMAINS = new Set([
   '10minutemail.com', '10minutemail.net', '20minutemail.com', '1secmail.com', '1secmail.net', '1secmail.org',
@@ -49,43 +52,40 @@ function honeypotFilled(req) {
   return String((req.body || {}).website || '').trim() !== '';
 }
 
-function captchaConfig() {
-  const client = process.env.YANDEX_CAPTCHA_CLIENT_KEY || '';
-  const server = process.env.YANDEX_CAPTCHA_SERVER_KEY || '';
-  return { enabled: Boolean(client && server), client, server };
-}
-// Для страницы входа: ключ клиента и адрес скрипта (пусто - капчи нет).
-function captchaPublic() {
-  const cfg = captchaConfig();
-  return cfg.enabled ? { captchaKey: cfg.client, captchaScript: `https://${CAPTCHA_HOST}/captcha.js?render=onload&onload=onSmartCaptchaLoad` } : { captchaKey: '' };
+const POW_MAX = 100000;
+const POW_TTL_MS = 10 * 60 * 1000;
+const POW_SECRET = process.env.CAPTCHA_SECRET || crypto.randomBytes(32).toString('hex');
+const powUsed = new Map(); // подпись -> срок; повторно ответ не принимается
+
+const sha256hex = s => crypto.createHash('sha256').update(s).digest('hex');
+const powSign = challenge => crypto.createHmac('sha256', POW_SECRET).update(challenge).digest('hex');
+
+function createChallenge() {
+  const salt = crypto.randomBytes(12).toString('hex') + '.' + (Date.now() + POW_TTL_MS);
+  const challenge = sha256hex(salt + crypto.randomInt(0, POW_MAX + 1));
+  return { salt, challenge, signature: powSign(challenge), maxnumber: POW_MAX };
 }
 
-// true - проверка пройдена (или капча выключена / сервис недоступен).
-async function verifyCaptcha(req) {
-  const cfg = captchaConfig();
-  if (!cfg.enabled) return true;
-  const token = String((req.body || {}).captchaToken || '');
-  if (!token) return false;
-  try {
-    const res = await fetch(`https://${CAPTCHA_HOST}/validate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret: cfg.server, token, ip: req.ip || '' }).toString(),
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) {
-      console.error(`[капча] сервис ответил ${res.status} - запрос пропущен`);
-      return true;
-    }
-    const data = await res.json().catch(() => ({}));
-    return data.status === 'ok';
-  } catch (e) {
-    console.error(`[капча] сервис недоступен (${e.message}) - запрос пропущен`);
-    return true;
-  }
+// true - ответ на задачу верный. Токен - base64 от JSON
+// { salt, number, challenge, signature }.
+function verifyCaptcha(req) {
+  let p;
+  try { p = JSON.parse(Buffer.from(String((req.body || {}).captchaToken || ''), 'base64').toString('utf8')); } catch (e) { return false; }
+  if (!p || typeof p.salt !== 'string' || typeof p.challenge !== 'string' || typeof p.signature !== 'string') return false;
+  if (!Number.isInteger(p.number) || p.number < 0 || p.number > POW_MAX) return false;
+  const expires = Number(p.salt.split('.')[1]);
+  const now = Date.now();
+  if (!(expires > now)) return false;
+  if (sha256hex(p.salt + p.number) !== p.challenge) return false;
+  const sig = powSign(p.challenge);
+  if (sig.length !== p.signature.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(p.signature))) return false;
+  for (const [k, t] of powUsed) if (t <= now) powUsed.delete(k);
+  if (powUsed.has(sig)) return false;
+  powUsed.set(sig, expires);
+  return true;
 }
 
-const CAPTCHA_ERROR = 'Подтвердите, что вы не робот.';
+const CAPTCHA_ERROR = 'Проверка «Я не робот» не пройдена. Попробуйте ещё раз.';
 const DISPOSABLE_ERROR = 'Временные (одноразовые) почтовые ящики не принимаются. Укажите постоянную почту.';
 
-module.exports = { isDisposableEmail, honeypotFilled, captchaPublic, verifyCaptcha, CAPTCHA_ERROR, DISPOSABLE_ERROR };
+module.exports = { isDisposableEmail, honeypotFilled, createChallenge, verifyCaptcha, CAPTCHA_ERROR, DISPOSABLE_ERROR };

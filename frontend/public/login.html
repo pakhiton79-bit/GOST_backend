@@ -86,7 +86,7 @@
           <label class="auth-check"><input type="checkbox" id="consentPd"><span>Даю <a href="consent.html" target="_blank">согласие на обработку персональных данных</a> и ознакомлен(а) с <a href="privacy.html" target="_blank">Политикой обработки персональных данных</a> <span class="auth-req">*</span></span></label>
           <label class="auth-check"><input type="checkbox" id="consentMarketing"><span>Согласен(на) получать <a href="marketing.html" target="_blank">информационные и рекламные рассылки</a> (необязательно)</span></label>
         </div>
-        <div class="auth-field auth-captcha" data-field="captcha"><div id="authCaptcha"></div></div>
+        <div class="auth-field auth-pow" data-field="captcha" id="authPow" data-state="work"><span class="auth-pow-icon" aria-hidden="true"></span><span id="authPowText" role="status">Проверяем, что вы не робот...</span></div>
         <!-- Поле-ловушка для ботов: человек его не видит и не заполняет (backend/src/auth/antibot.js). -->
         <div class="auth-hp" aria-hidden="true"><label for="authWebsite">Сайт</label><input type="text" id="authWebsite" name="website" tabindex="-1" autocomplete="off"></div>
         <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
@@ -99,6 +99,7 @@
     </div>
   </main>
 </div>
+<script src="/js/account/pow.js"></script>
 <script src="/js/account/login.js"></script>
 </body>
 </html>

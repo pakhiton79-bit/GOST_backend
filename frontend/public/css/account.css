@@ -35,7 +35,15 @@
 .auth-card{max-width:440px;margin:0 auto 24px;}
 .auth-card h2{margin-bottom:20px;}
 .auth-field{margin-bottom:16px;}
-.auth-captcha{min-height:102px;}
+.auth-pow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--panel);font-size:13px;color:var(--ink-soft);}
+.auth-pow[hidden]{display:none;}
+.auth-pow-icon{flex:0 0 18px;width:18px;height:18px;border-radius:50%;border:2px solid var(--rule);border-top-color:var(--accent);box-sizing:border-box;animation:auth-pow-spin .8s linear infinite;}
+.auth-pow[data-state="ok"] .auth-pow-icon{animation:none;border:none;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat;}
+.auth-pow[data-state="ok"]{color:var(--ink);}
+.auth-pow[data-state="fail"]{color:var(--error);}
+.auth-pow[data-state="fail"] .auth-pow-icon{animation:none;border-color:var(--error);}
+@keyframes auth-pow-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion:reduce){.auth-pow-icon{animation-duration:2.4s;}}
 .auth-hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;}
 .auth-field input:not([type=checkbox]){
   width:100%;

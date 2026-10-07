@@ -2,11 +2,11 @@
 // подтверждения на почту при регистрации (и при восстановлении пароля).
 // Лимиты и подписки - следующими этапами.
 //
-//   GET  /api/auth/config                              - ключ капчи для страницы входа (antibot.js)
+//   GET  /api/auth/challenge                           - задача капчи «Я не робот» (antibot.js)
 //   POST /api/auth/register { email, password, consents, website, captchaToken }
 //                                                      - аккаунт + код на почту
 //                                                        (consents: terms, pd - обязательно; marketing - legal.js;
-//                                                        website - поле-ловушка, captchaToken - SmartCaptcha)
+//                                                        website - поле-ловушка, captchaToken - ответ капчи)
 //   POST /api/auth/verify   { email, code }            - подтверждение почты, вход
 //   POST /api/auth/resend   { email, purpose }         - код ещё раз
 //   POST /api/auth/login    { email, password }        - вход (почта не подтверждена - код)
@@ -146,8 +146,8 @@ router.get('/me', (req, res) => {
   res.json({ user: req.user ? publicUser(req.user) : null });
 });
 
-router.get('/config', (req, res) => {
-  res.json(antibot.captchaPublic());
+router.get('/challenge', (req, res) => {
+  res.json(antibot.createChallenge());
 });
 
 router.post('/register', rateLimit, async (req, res, next) => {
@@ -160,7 +160,7 @@ router.post('/register', rateLimit, async (req, res, next) => {
     if (legal.error) return res.status(400).json({ error: legal.error });
     // Бот заполнил поле-ловушку - ответ как при успехе, но ничего не делаем.
     if (antibot.honeypotFilled(req)) return res.json({ ok: true, needVerify: true });
-    if (!(await antibot.verifyCaptcha(req))) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
+    if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     if (antibot.isDisposableEmail(email)) return res.status(400).json({ error: antibot.DISPOSABLE_ERROR });
     let user = store.findUserByEmail(email);
     if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
@@ -266,7 +266,7 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
     const email = normEmail(req.body.email);
     if (!email) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
     if (antibot.honeypotFilled(req)) return res.json({ ok: true });
-    if (!(await antibot.verifyCaptcha(req))) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
+    if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     const user = store.findUserByEmail(email);
     // Ответ одинаковый, есть аккаунт или нет, - чтобы по нему нельзя было
     // проверять чужие почты.
