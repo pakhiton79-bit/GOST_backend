@@ -96,16 +96,30 @@ function fillBoards(space, roundWidths) {
 // Если расчётная толщина превышает даже максимальную из выбранных "в наличии" -
 // значение не занижается, а остаётся расчётным по ГОСТ - вызывающая сторона должна
 // сама взвести предупреждение, если понадобится (см. makeRoundUpToAvailable).
+// label (необязательно) - название детали: тогда превышение попадает не в общий
+// флаг exceeded, а в state.parts, и предупреждение называет деталь и толщину.
 function makeRoundUpToAvailable(availableThicknesses) {
-  const state = { exceeded: false };
-  const fn = function (t) {
+  const state = { exceeded: false, parts: [] };
+  // Для детали с label учитывается последний вызов (размеры II-1/III-1
+  // уточняются в цикле - промежуточные значения не должны давать предупреждение).
+  const fn = function (t, label) {
+    if (label) state.parts = state.parts.filter(p => p.label !== label);
     if (!availableThicknesses || availableThicknesses.length === 0) return t;
     for (const a of availableThicknesses) { if (t <= a) return a; }
-    state.exceeded = true;
+    if (!label) state.exceeded = true;
+    else state.parts.push({ label, t });
     return t;
   };
   fn.state = state;
   return fn;
+}
+
+// Предупреждения по деталям, толщина которых по ГОСТ больше максимальной
+// «в наличии» (см. label в makeRoundUpToAvailable).
+function thicknessPartWarnings(round, availableThicknesses) {
+  const max = availableThicknesses[availableThicknesses.length - 1];
+  return round.state.parts.map(p =>
+    `${p.label}: по ГОСТ ${p.t} мм, это больше максимальной «в наличии» (${max} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
 }
 
 // Ищет первое отрицательное число где угодно в результате расчёта - и в
@@ -224,6 +238,7 @@ module.exports = {
   roundup, ceilInt, vol, fillBoards,
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
+  thicknessPartWarnings,
   findNegativeField,
   computeNormaVremeni,
   applyTableEdits,

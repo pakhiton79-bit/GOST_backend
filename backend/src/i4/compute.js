@@ -18,7 +18,7 @@
 // (t21Value) - подставляются везде, где участвуют. Полоз (t9Value) и торцовый
 // брус дна (t11Value) - только число в таблице: их сечение - табличная пара
 // толщина×ширина, в объёме и размерах остаётся расчётное.
-const { makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
+const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { wallThickness } = require('../i3/tables');
 const { buildDno } = require('./dno');
 const { buildKryshka } = require('./kryshka');
@@ -118,6 +118,7 @@ function computeGost10198I4(input) {
   if (round.state.exceeded) {
     warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
+  warnings.push(...thicknessPartWarnings(round, availableThicknesses));
   Object.values(belowGost).forEach(b => {
     warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) - использовано введённое значение.`);
   });

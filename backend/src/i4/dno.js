@@ -8,8 +8,8 @@ const {
 } = require('../i3/tables');
 
 // Полозья: при сплошном жёстком основании груза - сечение по п.1.6.5 и число
-// по ширине (п.1.6.2), иначе - по Табл. 19. Толщина полоза не округляется до
-// «в наличии».
+// по ширине (п.1.6.2), иначе - по Табл. 19. Толщина полоза округляется вверх
+// до «в наличии», ширина - по таблице.
 function chooseSkids(c, skidLen, skidCalcWidth) {
   const { W, MASS, warnings } = c;
   if (c.solidRigidBase) {
@@ -18,7 +18,7 @@ function chooseSkids(c, skidLen, skidCalcWidth) {
       warnings.push('Масса вне диапазона п.1.6.5 (500–20000 кг) - сечение полоза принято по крайнему значению.');
     }
     const count = Math.max((W > 1100) ? 3 : 2, minSkidsByWidth162(skidCalcWidth, poloz.w));
-    return { count, t: poloz.h, w: poloz.w };
+    return { count, t: c.round(poloz.h, 'Полоз'), w: poloz.w };
   }
   const sel = selectSkid19(MASS, skidLen, skidCalcWidth, c.availableThicknesses);
   if (sel.massSnapped) {
@@ -31,7 +31,7 @@ function chooseSkids(c, skidLen, skidCalcWidth) {
     // +1 полоз сверх таблицы - штатно; больше - уже отклонение от правила.
     warnings.push(`Табл. 19: не хватает полозьев для шага осей ≤1200 мм (п.1.6.2) - добавлен ещё того же сечения (${sel.count} шт. итого).`);
   }
-  return { count: sel.count, t: sel.h, w: sel.w };
+  return { count: sel.count, t: c.round(sel.h, 'Полоз'), w: sel.w };
 }
 
 // Толщина доски дна: при креплении к доскам дна - по Табл. 4 (удельная
@@ -87,7 +87,7 @@ function buildDno(c) {
   if (endBeam.exceeded) {
     warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
-  const beam = { t: round(endBeam.h), w: endBeam.w, l: W, qty: 2 };
+  const beam = { t: round(endBeam.h, 'Торцовый брус дна'), w: endBeam.w, l: W, qty: 2 };
   rows.push({ name: 'Торцовый брус дна', t: ov('t11Value', beam.t, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11Value' });
 
   // Доски дна - между торцовыми брусьями, поперёк ящика.

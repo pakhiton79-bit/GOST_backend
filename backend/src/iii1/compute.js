@@ -16,7 +16,7 @@
 // Ручные толщины из таблицы (manualOverrides) подставляются везде, где
 // участвуют, кроме полоза (t9) и торцового бруса дна (t11): их сечение -
 // табличная пара толщина×ширина, ручное значение - только число в таблице.
-const { makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
+const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { skinThickness } = require('./logic');
 const { stabilizeSizes } = require('./sizing');
 const { buildDno } = require('./dno');
@@ -224,6 +224,7 @@ function computeGost10198III1(input) {
   if (round.state.exceeded) {
     warnings.push(`Расчётная толщина детали больше максимальной «в наличии» (${availableThicknesses[availableThicknesses.length - 1]} мм) - использовано значение по ГОСТ (нужен пиломатериал большей толщины).`);
   }
+  warnings.push(...thicknessPartWarnings(round, availableThicknesses));
   Object.values(belowGost).forEach(b => {
     warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) - использовано введённое значение.`);
   });

@@ -22,7 +22,7 @@ function buildDno(c, s, subLengthWarn) {
   if (endBeam.exceeded) {
     warnings.push('Масса вне диапазона п.1.6.8 (≤20000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
-  const beamGostT = round(endBeam.h);
+  const beamGostT = round(endBeam.h, 'Торцовый брус дна');
   const beam = { t: ov('t11', beamGostT, 'Толщина торцового бруса дна', { cell: false }), w: endBeam.w, l: W, qty: 2 };
   rows.push({ name: 'Торцовый брус дна', t: ov('t11', beamGostT, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
 
