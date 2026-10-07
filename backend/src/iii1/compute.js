@@ -14,8 +14,7 @@
 //   4. объём, норма времени, предупреждения.
 //
 // Ручные толщины из таблицы (manualOverrides) подставляются везде, где
-// участвуют, кроме полоза (t9) и торцового бруса дна (t11): их сечение -
-// табличная пара толщина×ширина, ручное значение - только число в таблице.
+// участвуют.
 const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { skinThickness } = require('./logic');
 const { stabilizeSizes } = require('./sizing');
@@ -57,8 +56,7 @@ function fineThicknessOverrides(fineThickness) {
 
 // Ручные толщины: правка ячейки таблицы деталей (manualOverrides) главнее
 // поля «Тонкая настройка» (fine), то - главнее расчёта по ГОСТ (как у
-// II-1). opts.cell = false - не учитывать правку ячейки (полоз и торцовый
-// брус дна: правка ячейки - только число в таблице). Значение из цикла
+// II-1). opts.cell = false - не учитывать правку ячейки. Значение из цикла
 // согласования читается на каждой итерации, поэтому «меньше ГОСТ» не
 // пишется в предупреждения сразу, а копится в belowGost.
 function makeThicknessOverrides(manualOverrides, fine) {

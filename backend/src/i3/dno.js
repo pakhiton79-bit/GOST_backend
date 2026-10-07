@@ -59,11 +59,11 @@ function buildDno(c) {
   const skidCalcWidth = W + wall * 2;
   const skidLen = L + (wall + wall) * 2; // длина груза + (планка + доска торца) × 2
 
-  // Полоз. Ручная толщина (t9Value) меняет только число в таблице - в объёме
-  // и наружной высоте остаётся расчётная (сечение полоза - табличная пара
-  // толщина×ширина).
+  // Полоз. Ручная толщина (t9Value) - и в таблице, и в расчёте (объём,
+  // наружная высота, длина планки бока).
   const skid = chooseSkids(c, skidLen, skidCalcWidth);
-  rows.push({ name: 'Полоз', t: ov('t9Value', skid.t, 'Толщина полоза'), w: skid.w, l: skidLen, qty: skid.count, overrideKey: 't9Value' });
+  skid.t = ov('t9Value', skid.t, 'Толщина полоза');
+  rows.push({ name: 'Полоз', t: skid.t, w: skid.w, l: skidLen, qty: skid.count, overrideKey: 't9Value' });
 
   // Подполозная доска (п.1.6.11): длина = полоз - 400 мм; при погрузке
   // погрузчиком - не тоньше 50 мм и не короче 300 мм. Невозможная длина
@@ -81,13 +81,13 @@ function buildDno(c) {
     rows.push({ name: 'Подполозная доска', t: sub.t, w: sub.w, l: (sub.l <= 0 || forkliftFail) ? '⚠' : sub.l, qty: sub.qty, overrideKey: 't10Value' });
   }
 
-  // Торцовый брус дна (п.1.6.8). Ручная толщина (t11Value) - только в таблице.
+  // Торцовый брус дна (п.1.6.8). Ручная толщина (t11Value) - и в таблице, и в объёме.
   const endBeam = endBeamSection(MASS);
   if (endBeam.exceeded) {
     warnings.push('Масса вне диапазона п.1.6.8 (≤5000 кг) - сечение торцового бруса дна принято по крайнему значению.');
   }
-  const beam = { t: round(endBeam.h, 'Торцовый брус дна'), w: endBeam.w, l: W, qty: 2 };
-  rows.push({ name: 'Торцовый брус дна', t: ov('t11Value', beam.t, 'Толщина торцового бруса дна'), w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11Value' });
+  const beam = { t: ov('t11Value', round(endBeam.h, 'Торцовый брус дна'), 'Толщина торцового бруса дна'), w: endBeam.w, l: W, qty: 2 };
+  rows.push({ name: 'Торцовый брус дна', t: beam.t, w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11Value' });
 
   // Доски дна - между торцовыми брусьями, поперёк ящика.
   const floorGostT = floorBoardGostThickness(c, skid, skidCalcWidth);

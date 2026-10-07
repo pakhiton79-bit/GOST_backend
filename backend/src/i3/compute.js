@@ -9,9 +9,8 @@
 //
 // Ручные толщины из таблицы (manualOverrides): толщина стенок (wallValue),
 // доска дна (t12Value), подполозная доска (t10Value), поперечный брус крышки
-// (t21Value) - подставляются везде, где участвуют. Полоз (t9Value) и торцовый
-// брус дна (t11Value) - только число в таблице: их сечение - табличная пара
-// толщина×ширина, в объёме и размерах остаётся расчётное.
+// (t21Value), полоз (t9Value) и торцовый брус дна (t11Value) - подставляются
+// везде, где участвуют.
 const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, computeNormaVremeni } = require('../helpers');
 const { wallThickness } = require('./tables');
 const { buildDno } = require('./dno');
