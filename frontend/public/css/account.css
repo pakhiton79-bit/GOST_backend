@@ -465,3 +465,40 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-help-mail{font-weight:600;color:var(--accent);text-decoration:none;}
 .site-help-mail:hover{text-decoration:underline;}
 @media screen and (max-width:640px){.std-row{flex-direction:column;gap:0;}}
+
+/* Невысокие экраны (по указанию пользователя - форма входа и регистрации
+   без прокрутки, в один экран): отступы, поля и шрифты плотнее; на самых
+   низких - без логотипа над заголовком (он есть в верхней панели) и без
+   ссылки «На главную» (есть в верхней панели). */
+@media screen and (max-height:960px){
+  .auth-main{padding-top:16px;padding-bottom:16px;}
+  .auth-logo{margin-bottom:10px;}
+  .auth-title{font-size:28px;margin-bottom:6px;}
+  .auth-sub{margin-bottom:16px;}
+  .auth-sub:empty{margin-bottom:10px;}
+  .auth-page .auth-field{margin-bottom:12px;}
+  .auth-page .auth-field label{font-size:14px;margin-bottom:5px;}
+  .auth-page .auth-field input:not([type=checkbox]){padding:10px 14px;}
+  .auth-consents{gap:6px;margin:2px 0 12px !important;}
+  .auth-page .auth-field label.auth-check{font-size:12.5px;line-height:1.4;}
+  .auth-pow{padding:7px 12px;}
+  .auth-page .auth-submit{padding:11px 24px;margin-top:4px;}
+  .auth-msg{margin-bottom:10px;padding:8px 12px;}
+  .auth-page .auth-links{margin-top:10px;}
+  .auth-switch{margin-top:14px;font-size:14px;}
+  .auth-home{margin-top:10px;}
+  .auth-legal{margin-top:10px;}
+}
+@media screen and (max-height:800px){
+  .auth-logo, .auth-home{display:none;}
+  .auth-title{font-size:26px;}
+  .auth-page .auth-field{margin-bottom:10px;}
+  .auth-page .auth-field input:not([type=checkbox]){padding:8px 14px;}
+  .auth-switch{margin-top:10px;}
+  .auth-main{padding-top:10px;padding-bottom:10px;}
+  .auth-sub:empty{margin-bottom:6px;}
+  .auth-page .auth-field{margin-bottom:8px;}
+  .auth-page .auth-field label.auth-check{font-size:12px;line-height:1.35;}
+  .auth-msg{font-size:13px;line-height:1.35;padding:6px 10px;margin-bottom:8px;}
+  .auth-legal{margin-top:6px;}
+}
