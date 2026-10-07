@@ -31,12 +31,10 @@ function fbInputs(){
   ['L', 'W', 'H', 'M'].forEach(k => { const el = document.getElementById(k); const n = el ? parseFloat(el.value) : NaN; if(n > 0) out[k] = n; });
   return Object.keys(out).length ? out : null;
 }
-function fbTypeOptions(gost, value){
-  const types = FB_GOSTS[gost] || [];
-  return [...types.map(t => `Тип ${t}`), FB_NO_TYPE].map(t => {
-    const v = t.replace(/^Тип /, '');
-    return `<option value="${escHtml(v)}"${v === value ? ' selected' : ''}>${escHtml(t)}</option>`;
-  }).join('');
+// Списки ГОСТа и типа - uiSelect (js/account/ui-select.js), как везде на сайте.
+function fbTypeSelect(gost, value){
+  const opts = [...(FB_GOSTS[gost] || []).map(t => ({ id: t, name: `Тип ${t}` })), { id: FB_NO_TYPE, name: FB_NO_TYPE }];
+  return uiSelect(opts, value, 'Тип ящика');
 }
 
 function fbFormHtml(user){
@@ -45,8 +43,8 @@ function fbFormHtml(user){
   const inputsText = inputs ? `${inputs.L || '-'} × ${inputs.W || '-'} × ${inputs.H || '-'} мм, ${inputs.M || '-'} кг` : '';
   return `<form id="fbForm" novalidate>
       <div class="std-row">
-        <div class="std-field"><label for="fbGost">ГОСТ</label><select id="fbGost">${gosts.map(g => `<option${g === d.gost ? ' selected' : ''}>${escHtml(g)}</option>`).join('')}</select></div>
-        <div class="std-field"><label for="fbType">Тип ящика</label><select id="fbType">${fbTypeOptions(d.gost, d.type)}</select></div>
+        <div class="std-field"><label>ГОСТ</label><div id="fbGost">${uiSelect(gosts.map(g => ({ id: g, name: g })), d.gost, 'ГОСТ')}</div></div>
+        <div class="std-field"><label>Тип ящика</label><div id="fbType">${fbTypeSelect(d.gost, d.type)}</div></div>
       </div>
       <div class="std-field"><label for="fbText">Что не так <span class="auth-req">*</span></label>
         <textarea id="fbText" rows="5" maxlength="3000" placeholder="Например: на чертеже бокового щита размер не совпадает с таблицей; ожидал ..., получил ..."></textarea></div>
@@ -79,13 +77,14 @@ function openErrorReport(){
         <div class="std-body" id="fbBody"></div>
       </div>`;
     document.body.appendChild(fbOverlay);
-    const close = () => { fbOverlay.hidden = true; };
+    const close = () => { closeSelects(); fbOverlay.hidden = true; };
     fbOverlay.addEventListener('click', e => { if(e.target === fbOverlay) close(); });
     fbOverlay.querySelector('.std-close').addEventListener('click', close);
     document.addEventListener('keydown', e => { if(e.key === 'Escape' && !fbOverlay.hidden) close(); });
     const body = fbOverlay.querySelector('#fbBody');
-    body.addEventListener('change', e => {
-      if(e.target.id === 'fbGost') body.querySelector('#fbType').innerHTML = fbTypeOptions(e.target.value, FB_NO_TYPE);
+    // Сменили ГОСТ - список типов этого ГОСТа.
+    body.addEventListener('ui-select-change', e => {
+      if(e.target.closest('#fbGost')) body.querySelector('#fbType').innerHTML = fbTypeSelect(e.target.dataset.value, FB_NO_TYPE);
     });
     body.addEventListener('submit', async e => {
       e.preventDefault();
@@ -98,7 +97,7 @@ function openErrorReport(){
       submit.disabled = true;
       try{
         const r = await fetch('/api/feedback/error', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ gost: $('fbGost').value, type: $('fbType').value, description, page: fbPage(), inputs: withInputs ? fbInputs() : null }) });
+          body: JSON.stringify({ gost: $('fbGost').querySelector('.ui-select').dataset.value, type: $('fbType').querySelector('.ui-select').dataset.value, description, page: fbPage(), inputs: withInputs ? fbInputs() : null }) });
         const d = await r.json().catch(() => ({}));
         if(!r.ok) throw new Error(d.error || 'Ошибка сервера. Попробуйте ещё раз.');
         body.innerHTML = '<p class="std-text"><b>Спасибо, сообщение отправлено.</b> Мы проверим расчёт и исправим ошибку.</p>'

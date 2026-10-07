@@ -350,10 +350,10 @@ function initLegalFooter(){
 // страницах, кроме главной и входа.
 function loadFeedbackButtons(){
   if(document.body.matches('.landing, .auth-page') || document.getElementById('siteFeedbackJs')) return;
-  const s = document.createElement('script');
-  s.id = 'siteFeedbackJs';
-  s.src = '/js/account/feedback.js';
-  document.body.appendChild(s);
+  // Сначала списки в стиле сайта (ui-select.js), потом кнопки - по порядку.
+  const add = (id, src) => { const s = document.createElement('script'); s.id = id; s.src = src; s.async = false; document.body.appendChild(s); };
+  if(typeof uiSelect !== 'function') add('siteUiSelectJs', '/js/account/ui-select.js');
+  add('siteFeedbackJs', '/js/account/feedback.js');
 }
 function initAccountPage(){ initAccountButton(); initLegalFooter(); loadFeedbackButtons(); }
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccountPage);

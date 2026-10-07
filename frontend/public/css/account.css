@@ -287,7 +287,8 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-tag-priority{color:var(--accent);font-weight:600;}
 .admin-empty{text-align:center;color:var(--ink-soft);}
 
-/* Выпадающий список в стиле сайта (uiSelect в admin.js): кнопка - как поле
+/* Выпадающий список в стиле сайта (uiSelect в js/account/ui-select.js; на
+   сайте только он, браузерный <select> не используем): кнопка - как поле
    ввода, список - карточка с тенью, выбранный вариант - с галочкой. */
 .ui-select{display:inline-block;}
 .ui-select-btn{
@@ -307,7 +308,7 @@ body.auth-page{margin:0;background:var(--bg);}
 .ui-select-btn[aria-expanded="true"]{border-color:var(--accent);}
 .ui-select-btn[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:-2px;}
 .ui-select-list{
-  position:fixed;z-index:60;margin:0;padding:4px;list-style:none;
+  position:fixed;z-index:70;margin:0;padding:4px;list-style:none;
   background:var(--panel);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--shadow-lg);
 }
 .ui-select-list[hidden]{display:none;}
@@ -444,8 +445,10 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-req-table td a{color:var(--accent);}
 
 /* Сообщение об ошибке (feedback.js) - то же окно, что у заявки на стандарт, плюс списки и галочка. */
-.std-field select{width:100%;box-sizing:border-box;padding:10px 34px 10px 12px;border:1px solid var(--border-input);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink-soft) 50%),linear-gradient(135deg,var(--ink-soft) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer;}
-.std-field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
+/* Списки в формах - только uiSelect (ui-select.js), не браузерный <select>:
+   его раскрытый список не оформить в стиле сайта. Ширина - как у полей. */
+.std-field .ui-select{display:block;}
+.std-field .ui-select-btn{width:100%;padding:10px 34px 10px 12px;border-radius:10px;}
 .std-row{display:flex;gap:12px;}
 .fb-check{display:flex;gap:10px;align-items:flex-start;margin:0 0 12px;font-size:13px;line-height:1.45;color:var(--ink);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;}
 .fb-check input{margin-top:2px;accent-color:var(--accent);}
