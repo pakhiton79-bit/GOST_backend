@@ -90,7 +90,7 @@ function diagramBokovoyGen(boardLenVal, overhangVal, edgeDistVal, heightPlusFloo
       {type:'line', x1:px(0), y1:PH, x2:-Math.max(160, 12*k), y2:PH},
       {type:'double', x1:-Math.max(120, 8*k), y1:innerH, x2:-Math.max(120, 8*k), y2:PH, lx:-Math.max(135, 9*k), ly:(innerH+PH)/2, text: dimLabel(upperSpanVal + midPlankWidthVal - overhangVal)+' мм', vertical:true},
       {type:'line', x1:px(0), y1:0, x2:-Math.max(150, 30*k), y2:0},
-      {type:'double', x1:-Math.max(40, 27*k), y1:0, x2:-Math.max(40, 27*k), y2:innerH, lx:-Math.max(100, 28*k), ly:innerH/2, text: dimLabel(upperSpanVal)+' мм', vertical:true}
+      {type:'double', x1:-Math.max(40, 27*k), y1:0, x2:-Math.max(40, 27*k), y2:innerH, lx:-Math.max(100, 28*k), ly:innerH/2, text: dimLabel(upperSpanVal - lidBoardTVal)+' мм', vertical:true}
     );
   }
   // Зазор между кромками соседних поясов (по указанию пользователя, как у

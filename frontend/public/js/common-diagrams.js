@@ -73,6 +73,14 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, l
         shapes += `<line x1="${headStart.bx.toFixed(1)}" y1="${headStart.by.toFixed(1)}" x2="${headEnd.bx.toFixed(1)}" y2="${headEnd.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;
         shapes += `<polygon points="${headStart.poly}" fill="#8A4B26"/>`;
         shapes += `<polygon points="${headEnd.poly}" fill="#8A4B26"/>`;
+      } else if(r.type==='plankTop'){
+        // Верх планки, выступающий над краем фото (x1-x2 - кромки планки по
+        // осям линий фото, y1 - верх выступа, y2 - линия края щита на фото,
+        // r.w - толщина линий фото): белая заливка закрывает линию края щита
+        // внутри планки, чёрный контур продолжает кромки планки.
+        const h = r.w/2;
+        shapes += `<rect x="${r.x1+h}" y="${r.y1+h}" width="${r.x2-r.x1-2*h}" height="${r.y2-r.y1+r.w+1}" fill="#fff"/>`;
+        shapes += `<path d="M${r.x1},${r.y2+h} V${r.y1} H${r.x2} V${r.y2+h}" fill="none" stroke="#000" stroke-width="${r.w}" stroke-linejoin="miter"/>`;
       } else if(r.type==='single'){
         const head = headTriangle(r.x1,r.y1,r.x2,r.y2,scale);
         shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${head.bx.toFixed(1)}" y2="${head.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;

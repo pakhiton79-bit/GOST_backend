@@ -32,7 +32,9 @@ function buildBokovoy(c, p) {
   const horiz = { l: len, qty: floors === 2 ? 1 : 0 };
   // Вертикальные планки заходят на полоз на 2/3 его толщины (не более 70 мм).
   const overhang = Math.min(skidT * 2 / 3, MAX_OVERHANG);
-  const plankFull = hFull + overhang;
+  // Сверху планки выступают над щитом на толщину доски крышки (закрывают её
+  // торец, по указанию пользователя) - входит в длину.
+  const plankFull = hFull + overhang + wall;
   const vert = { l: floors === 2 ? (plankFull - PLANK_W) / 2 : plankFull, qty: plankQty * floors };
 
   const fb = fillGapBoards(hFull, c.roundBoardWidths, c.boardGapMax, 'Щит боковой', warnings);
