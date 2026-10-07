@@ -42,6 +42,15 @@ function isAdmin(user) {
 const CODE_TTL_MS = 15 * 60 * 1000;   // код действует 15 минут
 const CODE_MAX_ATTEMPTS = 5;          // столько попыток ввести код
 const CODE_RESEND_MS = 60 * 1000;     // новый код - не чаще раза в минуту
+// Защита от подбора кода через повторные запросы: не больше CODE_DAY_FAILS
+// неверных кодов за сутки на почту и назначение, дальше - пауза до конца суток
+// (счётчик переносится в каждый новый код).
+const CODE_DAY_MS = 24 * 3600 * 1000;
+const CODE_DAY_FAILS = 15;
+// Подбор пароля: после LOGIN_MAX_FAILS неверных паролей подряд вход в этот
+// аккаунт - через LOGIN_LOCK_MS (восстановление пароля снимает паузу).
+const LOGIN_MAX_FAILS = 10;
+const LOGIN_LOCK_MS = 15 * 60 * 1000;
 const PASSWORD_MIN = 8;
 
 // Ограничение частоты запросов с одного IP (защита от подбора паролей и
@@ -49,6 +58,11 @@ const PASSWORD_MIN = 8;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 30;
 const hits = new Map();
+// Раз в 10 минут - убрать IP без свежих запросов (таблица не растёт без конца).
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, list] of hits) if (!list.length || now - list[list.length - 1] >= RATE_WINDOW_MS) hits.delete(ip);
+}, RATE_WINDOW_MS).unref();
 function rateLimit(req, res, next) {
   const now = Date.now();
   const list = (hits.get(req.ip) || []).filter(t => now - t < RATE_WINDOW_MS);
@@ -74,20 +88,32 @@ function checkPassword(v) {
 
 // Новый код на почту; не чаще раза в CODE_RESEND_MS. Возвращает текст ошибки
 // или null.
+function codeDayWindow(rec, now) {
+  return rec && rec.dayStart && now - rec.dayStart < CODE_DAY_MS ? { dayStart: rec.dayStart, dayFails: rec.dayFails || 0 } : { dayStart: now, dayFails: 0 };
+}
+function codeLockText(rec, now) {
+  const w = codeDayWindow(rec, now);
+  if (w.dayFails < CODE_DAY_FAILS) return null;
+  return `Слишком много неверных кодов. Попробуйте через ${Math.ceil((w.dayStart + CODE_DAY_MS - now) / 3600000)} ч.`;
+}
 async function issueCode(email, purpose) {
   const prev = store.getCode(email, purpose);
+  const lock = codeLockText(prev, Date.now());
+  if (lock) return lock;
   if (prev && Date.now() - prev.sentAt < CODE_RESEND_MS) {
     const sec = Math.ceil((CODE_RESEND_MS - (Date.now() - prev.sentAt)) / 1000);
     return `Новый код можно запросить через ${sec} с.`;
   }
   const code = newCode();
-  store.setCode(email, purpose, { hash: hashCode(email, code), expires: Date.now() + CODE_TTL_MS, attempts: 0, sentAt: Date.now() });
+  const rec = { hash: hashCode(email, code), expires: Date.now() + CODE_TTL_MS, attempts: 0, sentAt: Date.now(), ...codeDayWindow(prev, Date.now()) };
+  store.setCode(email, purpose, rec);
   try {
     await sendCode(email, code, purpose);
   } catch (e) {
-    // Письмо не ушло - код не действует, повторный запрос сразу.
+    // Письмо не ушло - код не действует, повторный запрос сразу (счётчик
+    // неверных кодов за сутки сохраняется).
     console.error(`[почта] код не отправлен (${email}): ${e.message}`);
-    store.deleteCode(email, purpose);
+    store.setCode(email, purpose, { ...rec, expires: 0, sentAt: 0 });
     return 'Не удалось отправить письмо с кодом. Попробуйте ещё раз через минуту.';
   }
   return null;
@@ -96,10 +122,14 @@ async function issueCode(email, purpose) {
 // Проверка кода. Возвращает текст ошибки или null (код верный, удалён).
 function checkCode(email, purpose, code) {
   const rec = store.getCode(email, purpose);
-  if (!rec || rec.expires < Date.now()) return 'Код устарел или не запрашивался. Запросите новый.';
+  const now = Date.now();
+  const lock = codeLockText(rec, now);
+  if (lock) return lock;
+  if (!rec || rec.expires < now) return 'Код устарел или не запрашивался. Запросите новый.';
   if (rec.attempts >= CODE_MAX_ATTEMPTS) return 'Слишком много неверных попыток. Запросите новый код.';
   if (!sameHash(rec.hash, hashCode(email, String(code || '').trim()))) {
-    rec.attempts += 1;
+    const w = codeDayWindow(rec, now);
+    Object.assign(rec, { attempts: rec.attempts + 1, dayStart: w.dayStart, dayFails: w.dayFails + 1 });
     store.setCode(email, purpose, rec);
     return 'Неверный код.';
   }
@@ -162,11 +192,14 @@ router.post('/register', rateLimit, async (req, res, next) => {
     if (antibot.honeypotFilled(req)) return res.json({ ok: true, needVerify: true });
     if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     if (antibot.isDisposableEmail(email)) return res.status(400).json({ error: antibot.DISPOSABLE_ERROR });
+    // Хеш - до обращения к хранилищу: дальше без await, чтобы два
+    // одновременных запроса не создали два аккаунта с одной почтой.
+    const passHash = await hashPassword(req.body.password);
     let user = store.findUserByEmail(email);
     if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
     // Почта ещё не подтверждена - регистрацию можно пройти заново.
-    if (user) store.updateUser(user, { passHash: hashPassword(req.body.password) });
-    else user = store.createUser(email, hashPassword(req.body.password));
+    if (user) store.updateUser(user, { passHash });
+    else user = store.createUser(email, passHash);
     store.updateUser(user, { consents: legal.consents });
     const err = await issueCode(email, 'register');
     res.json({ ok: true, needVerify: true, notice: err || undefined });
@@ -208,9 +241,20 @@ router.post('/login', rateLimit, async (req, res, next) => {
     // По указанию пользователя: аккаунта нет - так и сообщаем (а не «неверные
     // данные»), с предложением зарегистрироваться.
     if (!user) return res.status(404).json({ error: 'Аккаунта с такой почтой нет. Проверьте адрес или зарегистрируйтесь.', noAccount: true });
-    if (!verifyPassword(String(req.body.password || ''), user.passHash)) {
+    const lockLeft = (user.loginLockUntil || 0) - Date.now();
+    if (lockLeft > 0) {
+      return res.status(429).json({ error: `Слишком много неверных паролей. Попробуйте через ${Math.ceil(lockLeft / 60000)} мин. или восстановите пароль.` });
+    }
+    if (!(await verifyPassword(String(req.body.password || ''), user.passHash))) {
+      const fails = (user.loginFails || 0) + 1;
+      if (fails >= LOGIN_MAX_FAILS) {
+        store.updateUser(user, { loginFails: 0, loginLockUntil: Date.now() + LOGIN_LOCK_MS });
+        return res.status(429).json({ error: `Слишком много неверных паролей. Попробуйте через ${LOGIN_LOCK_MS / 60000} мин. или восстановите пароль.` });
+      }
+      store.updateUser(user, { loginFails: fails });
       return res.status(401).json({ error: 'Неверный пароль. Попробуйте ещё раз или восстановите пароль.' });
     }
+    if (user.loginFails || user.loginLockUntil) store.updateUser(user, { loginFails: 0, loginLockUntil: 0 });
     if (!user.verified) {
       const err = await issueCode(email, 'register');
       return res.json({ ok: true, needVerify: true, notice: err || undefined });
@@ -246,14 +290,16 @@ router.post('/devices/logout', (req, res) => {
 
 // Удаление своего аккаунта (по указанию пользователя) - с подтверждением
 // паролем. Удаляются аккаунт, подписка, счётчики, входы на всех устройствах.
-router.post('/delete', rateLimit, (req, res) => {
-  if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
-  if (!verifyPassword(String(req.body.password || ''), req.user.passHash)) {
-    return res.status(401).json({ error: 'Неверный пароль.' });
-  }
-  store.deleteUser(req.user);
-  endSession(req, res);
-  res.json({ ok: true });
+router.post('/delete', rateLimit, async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+    if (!(await verifyPassword(String(req.body.password || ''), req.user.passHash))) {
+      return res.status(401).json({ error: 'Неверный пароль.' });
+    }
+    store.deleteUser(req.user);
+    endSession(req, res);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
 });
 
 router.post('/logout', (req, res) => {
@@ -278,21 +324,26 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
-router.post('/reset', rateLimit, (req, res) => {
-  const email = normEmail(req.body.email);
-  const user = email && store.findUserByEmail(email);
-  const pErr = checkPassword(req.body.password);
-  if (pErr) return res.status(400).json({ error: pErr });
-  if (!user) return res.status(400).json({ error: 'Код устарел или не запрашивался. Запросите новый.' });
-  const err = checkCode(email, 'reset', req.body.code);
-  if (err) return res.status(400).json({ error: err });
-  // Новый пароль: прежние входы на всех устройствах завершаются. Код пришёл
-  // на почту - значит, почта подтверждена.
-  store.updateUser(user, { passHash: hashPassword(req.body.password), verified: true });
-  store.deleteUserSessions(user.id);
-  if (user.blocked) return res.status(403).json(blockedError(user));
-  startSession(req, res, user.id);
-  res.json({ ok: true, user: publicUser(user) });
+router.post('/reset', rateLimit, async (req, res, next) => {
+  try {
+    const pErr = checkPassword(req.body.password);
+    if (pErr) return res.status(400).json({ error: pErr });
+    // Хеш - заранее, дальше без await (см. /register).
+    const passHash = await hashPassword(req.body.password);
+    const email = normEmail(req.body.email);
+    const user = email && store.findUserByEmail(email);
+    if (!user) return res.status(400).json({ error: 'Код устарел или не запрашивался. Запросите новый.' });
+    const err = checkCode(email, 'reset', req.body.code);
+    if (err) return res.status(400).json({ error: err });
+    // Новый пароль: прежние входы на всех устройствах завершаются, пауза
+    // после неверных паролей снимается. Код пришёл на почту - значит,
+    // почта подтверждена.
+    store.updateUser(user, { passHash, verified: true, loginFails: 0, loginLockUntil: 0 });
+    store.deleteUserSessions(user.id);
+    if (user.blocked) return res.status(403).json(blockedError(user));
+    startSession(req, res, user.id);
+    res.json({ ok: true, user: publicUser(user) });
+  } catch (e) { next(e); }
 });
 
 module.exports = { router, isAdmin, rateLimit };

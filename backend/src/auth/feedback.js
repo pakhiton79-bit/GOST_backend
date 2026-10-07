@@ -17,11 +17,15 @@ const { sendErrorReport } = require('./mailer');
 const MAX = { gost: 60, type: 60, description: 3000, page: 200 };
 const INPUT_KEYS = ['L', 'W', 'H', 'M'];
 
+const DAY_MAX = 20; // сообщений в сутки от одного пользователя
 const router = express.Router();
 
 router.post('/error', rateLimit, async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт, чтобы сообщить об ошибке.' });
+    if (store.countRecentByUser(store.listReports(), req.user.email, Date.now()) >= DAY_MAX) {
+      return res.status(429).json({ error: `За сутки можно отправить не больше ${DAY_MAX} сообщений. Если ошибок больше, напишите в поддержку (раздел «Помощь»).` });
+    }
     const b = req.body || {};
     const rec = {};
     for (const [k, max] of Object.entries(MAX)) {

@@ -4,16 +4,21 @@ const crypto = require('crypto');
 
 const SCRYPT_KEYLEN = 64;
 
-function hashPassword(password) {
+// scrypt - асинхронно (около 50 мс на хеш): пока считается, сервер отвечает
+// другим посетителям (при потоке входов сайт не подвисает).
+function scrypt(password, salt, len) {
+  return new Promise((resolve, reject) => crypto.scrypt(password, salt, len, (err, key) => err ? reject(err) : resolve(key)));
+}
+async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
-  const hash = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
+  const hash = await scrypt(password, salt, SCRYPT_KEYLEN);
   return 'scrypt$' + salt.toString('hex') + '$' + hash.toString('hex');
 }
-function verifyPassword(password, stored) {
+async function verifyPassword(password, stored) {
   const parts = String(stored || '').split('$');
   if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
   const expected = Buffer.from(parts[2], 'hex');
-  const hash = crypto.scryptSync(password, Buffer.from(parts[1], 'hex'), expected.length);
+  const hash = await scrypt(password, Buffer.from(parts[1], 'hex'), expected.length);
   return crypto.timingSafeEqual(hash, expected);
 }
 

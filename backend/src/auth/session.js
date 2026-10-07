@@ -17,7 +17,10 @@ function parseCookies(header) {
     const i = part.indexOf('=');
     if (i < 0) return;
     const k = part.slice(0, i).trim();
-    if (k) out[k] = decodeURIComponent(part.slice(i + 1).trim());
+    if (!k) return;
+    // Испорченное значение (не по правилам кодирования) - пропускаем, а не
+    // роняем запрос.
+    try { out[k] = decodeURIComponent(part.slice(i + 1).trim()); } catch (e) { /* пропуск */ }
   });
   return out;
 }

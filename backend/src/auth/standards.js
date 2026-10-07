@@ -18,6 +18,7 @@ const { sendStandardRequest } = require('./mailer');
 const FIELDS = { company: 200, standard: 300, details: 3000 };
 const REQUIRED = ['company', 'standard', 'details'];
 
+const DAY_MAX = 10; // заявок в сутки от одного пользователя
 const router = express.Router();
 
 router.post('/request', rateLimit, async (req, res, next) => {
@@ -25,6 +26,9 @@ router.post('/request', rateLimit, async (req, res, next) => {
     if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт, чтобы отправить заявку.' });
     if (!planOf(req.user).customStandards) {
       return res.status(403).json({ error: 'Внутренние стандарты доступны в подписках Base, Pro и Team.' });
+    }
+    if (store.countRecentByUser(store.listRequests(), req.user.email, Date.now()) >= DAY_MAX) {
+      return res.status(429).json({ error: `За сутки можно отправить не больше ${DAY_MAX} заявок. Остальное напишите в поддержку (раздел «Помощь»).` });
     }
     const rec = {};
     for (const [k, max] of Object.entries(FIELDS)) {

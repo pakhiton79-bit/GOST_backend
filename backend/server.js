@@ -348,6 +348,16 @@ app.post('/api/iii1/calculate', (req, res) => {
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
 app.use(express.static(FRONTEND_DIR));
 
+// Ошибки: посетителю - короткий текст без подробностей (раньше Express
+// показывал стек с путями к файлам), подробности - только в журнал сервера.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Неверный формат запроса.' });
+  if (err.type === 'entity.too.large') return res.status(413).json({ error: 'Слишком большой запрос.' });
+  console.error(`[ошибка] ${req.method} ${req.originalUrl}:`, err);
+  res.status(err.status && err.status < 500 ? err.status : 500).json({ error: 'Ошибка сервера. Попробуйте ещё раз.' });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`GOST 10198-91 backend listening on port ${PORT}`);

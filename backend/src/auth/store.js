@@ -153,8 +153,12 @@ function deleteTicket(ticketHash) {
 }
 
 // ---- Заявки на внутренние стандарты заводов (см. standards.js) ----
+// Хранятся последние LIST_MAX заявок и сообщений (файл не растёт без конца).
+const LIST_MAX = 2000;
 function addRequest(rec) {
-  load().requests.push(rec);
+  const d = load();
+  d.requests.push(rec);
+  if (d.requests.length > LIST_MAX) d.requests.splice(0, d.requests.length - LIST_MAX);
   save();
 }
 function listRequests() {
@@ -163,8 +167,15 @@ function listRequests() {
 
 // ---- Сообщения об ошибках (см. feedback.js) ----
 function addReport(rec) {
-  load().reports.push(rec);
+  const d = load();
+  d.reports.push(rec);
+  if (d.reports.length > LIST_MAX) d.reports.splice(0, d.reports.length - LIST_MAX);
   save();
+}
+// Сколько записей пользователь отправил за последние сутки (лимит в сутки -
+// в feedback.js и standards.js).
+function countRecentByUser(list, email, now) {
+  return list.filter(r => r.userEmail === email && now - Date.parse(r.at) < 24 * 3600 * 1000).length;
 }
 function listReports() {
   return load().reports.slice();
@@ -182,5 +193,5 @@ module.exports = {
   getCode, setCode, deleteCode,
   setTicket, getTicket, deleteTicket,
   addRequest, listRequests,
-  addReport, listReports,
+  addReport, listReports, countRecentByUser,
 };
