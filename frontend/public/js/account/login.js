@@ -10,7 +10,7 @@ const AUTH_MODES = {
   },
   register: {
     title: 'Создайте аккаунт', sub: '', submit: 'Создать аккаунт',
-    fields: ['email', 'password', 'password2', 'consents'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
+    fields: ['email', 'password', 'password2', 'consents', 'captcha'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
     switchHtml: 'Уже есть аккаунт? <a data-mode="login">Войти</a>',
   },
   verify: {
@@ -20,7 +20,7 @@ const AUTH_MODES = {
   },
   forgot: {
     title: 'Восстановление пароля', sub: 'Пришлём на почту код, чтобы задать новый пароль.', submit: 'Получить код',
-    fields: ['email'],
+    fields: ['email', 'captcha'],
     switchHtml: 'Вспомнили пароль? <a data-mode="login">Войти</a>',
   },
   // Вход сверх лимита устройств подписки: список устройств, где выйти.
@@ -43,6 +43,34 @@ const $ = id => document.getElementById(id);
 let authMode = 'login';
 let authEmail = '';
 let deviceTicket = '';
+
+// Yandex SmartCaptcha (регистрация и восстановление пароля): ключ клиента
+// приходит с сервера (/api/auth/config); нет ключа - капчи нет (поле
+// скрыто, сервер её не проверяет). Токен одноразовый - после каждой
+// отправки формы виджет сбрасывается.
+let captchaKey = '';
+let captchaWidget = null;
+function initCaptcha(){
+  fetch('/api/auth/config', { credentials: 'same-origin' }).then(r => r.json()).then(cfg => {
+    if(!cfg.captchaKey) return;
+    captchaKey = cfg.captchaKey;
+    window.onSmartCaptchaLoad = () => {
+      captchaWidget = window.smartCaptcha.render('authCaptcha', { sitekey: captchaKey, hl: 'ru' });
+    };
+    const s = document.createElement('script');
+    s.src = cfg.captchaScript;
+    s.defer = true;
+    document.head.appendChild(s);
+    // Только показать поле капчи (setMode очистил бы уже введённое).
+    document.querySelector('.auth-field[data-field="captcha"]').hidden = !AUTH_MODES[authMode].fields.includes('captcha');
+  }).catch(() => {});
+}
+function captchaToken(){
+  return captchaWidget !== null && window.smartCaptcha ? window.smartCaptcha.getResponse(captchaWidget) : '';
+}
+function resetCaptcha(){
+  if(captchaWidget !== null && window.smartCaptcha) window.smartCaptcha.reset(captchaWidget);
+}
 
 function nextUrl(){
   const n = new URLSearchParams(location.search).get('next') || '';
@@ -79,7 +107,9 @@ function setMode(mode, msg, ok){
   $('authSub').textContent = m.sub;
   document.title = m.title + ' - Тара+';
   $('authSubmit').textContent = m.submit;
-  document.querySelectorAll('.auth-field').forEach(f => { f.hidden = !m.fields.includes(f.dataset.field); });
+  document.querySelectorAll('.auth-field').forEach(f => {
+    f.hidden = !m.fields.includes(f.dataset.field) || (f.dataset.field === 'captcha' && !captchaKey);
+  });
   if(m.pwLabel){ $('authPasswordLabel').textContent = m.pwLabel; $('authPassword').autocomplete = m.pwAuto; }
   $('authForgot').hidden = !m.forgot;
   $('authCode').value = ''; $('authPassword').value = ''; $('authPassword2').value = '';
@@ -171,6 +201,12 @@ async function onSubmit(e){
     showMsg('Чтобы зарегистрироваться, примите Пользовательское соглашение и дайте согласие на обработку персональных данных.');
     return;
   }
+  const withCaptcha = m.fields.includes('captcha') && captchaKey;
+  if(withCaptcha && !captchaToken()){
+    showMsg(captchaWidget === null ? 'Проверка «Я не робот» не загрузилась. Обновите страницу.' : 'Подтвердите, что вы не робот.');
+    return;
+  }
+  const bot = { website: $('authWebsite').value, captchaToken: withCaptcha ? captchaToken() : '' };
   btn.disabled = true;
   try{
     if(authMode === 'login'){
@@ -179,7 +215,7 @@ async function onSubmit(e){
       if(d.needVerify) return setMode('verify', d.notice || 'Почта ещё не подтверждена: мы отправили код.', !d.notice);
       afterLogin(d);
     } else if(authMode === 'register'){
-      const d = await api('register', { email, password: pw, consents: {
+      const d = await api('register', { email, password: pw, ...bot, consents: {
         terms: $('consentTerms').checked, pd: $('consentPd').checked, marketing: $('consentMarketing').checked,
       } });
       authEmail = email;
@@ -187,7 +223,7 @@ async function onSubmit(e){
     } else if(authMode === 'verify'){
       afterLogin(await api('verify', { email: authEmail, code }));
     } else if(authMode === 'forgot'){
-      await api('forgot', { email });
+      await api('forgot', { email, ...bot });
       authEmail = email;
       setMode('reset');
     } else if(authMode === 'reset'){
@@ -200,6 +236,7 @@ async function onSubmit(e){
     else showMsg(err.message);
   }finally{
     btn.disabled = false;
+    if(withCaptcha) resetCaptcha();
   }
 }
 
@@ -221,3 +258,4 @@ document.querySelector('.auth-box').addEventListener('click', async e => {
 // Уже вошли - сразу дальше.
 fetchAccountUser().then(user => { if(user) location.replace(nextUrl()); });
 setMode(new URLSearchParams(location.search).get('mode') === 'register' ? 'register' : 'login');
+initCaptcha();

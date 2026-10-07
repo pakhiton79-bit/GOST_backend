@@ -35,6 +35,8 @@
 .auth-card{max-width:440px;margin:0 auto 24px;}
 .auth-card h2{margin-bottom:20px;}
 .auth-field{margin-bottom:16px;}
+.auth-captcha{min-height:102px;}
+.auth-hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;}
 .auth-field input:not([type=checkbox]){
   width:100%;
   box-sizing:border-box;

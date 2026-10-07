@@ -83,6 +83,7 @@ backend/            Express-сервер: расчётный API + раздач�
     stats.js         статистика по дням
     standards.js     заявки на внутренние стандарты заводов (/api/standards/request)
     feedback.js      сообщения об ошибках (/api/feedback/error)
+    antibot.js       защита от ботов: ловушка, одноразовые почты, SmartCaptcha
 tools/make_dno_images.py  картинки дна на 3-8 полозьев из фото (images/dno_*skids.png)
 frontend/public/     статический фронтенд (HTML/CSS/JS, отдаётся Express'ом как есть)
   index.html          главная для новых посетителей (ролик с примером расчёта, подписки, вопросы)
@@ -330,6 +331,16 @@ npm start
   сообщения об ошибках тоже только в журнале (и в админке).
 - Запросы `/api/auth/*` (кроме `me`/`logout`) - не больше 30 за 10 минут с
   одного IP.
+- Защита от ботов на регистрации и «Забыли пароль» (`backend/src/auth/antibot.js`):
+  - скрытое поле-ловушка `website`: заполнено - запрос молча «принимается»,
+    но аккаунт не создаётся и письмо не уходит;
+  - одноразовые почтовые ящики (yopmail, temp-mail и т.п.) при регистрации
+    не принимаются; дополнить список - переменная `BLOCKED_EMAIL_DOMAINS`
+    (домены через запятую);
+  - Yandex SmartCaptcha «Я не робот» - включается переменными
+    `YANDEX_CAPTCHA_CLIENT_KEY` (ключ клиента) и `YANDEX_CAPTCHA_SERVER_KEY`
+    (ключ сервера) из консоли Yandex Cloud; без них капчи нет. Если сервис
+    капчи недоступен, запрос пропускается (в журнале - строка `[капча]`).
 
 API: `POST /api/auth/register`, `verify`, `resend`, `login`, `logout`,
 `forgot`, `reset`, `device-replace`, `devices/logout`; `GET /api/auth/me`,

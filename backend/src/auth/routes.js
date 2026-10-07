@@ -2,14 +2,17 @@
 // подтверждения на почту при регистрации (и при восстановлении пароля).
 // Лимиты и подписки - следующими этапами.
 //
-//   POST /api/auth/register { email, password, consents } - аккаунт + код на почту
-//                                                        (consents: terms, pd - обязательно; marketing - legal.js)
+//   GET  /api/auth/config                              - ключ капчи для страницы входа (antibot.js)
+//   POST /api/auth/register { email, password, consents, website, captchaToken }
+//                                                      - аккаунт + код на почту
+//                                                        (consents: terms, pd - обязательно; marketing - legal.js;
+//                                                        website - поле-ловушка, captchaToken - SmartCaptcha)
 //   POST /api/auth/verify   { email, code }            - подтверждение почты, вход
 //   POST /api/auth/resend   { email, purpose }         - код ещё раз
 //   POST /api/auth/login    { email, password }        - вход (почта не подтверждена - код)
 //   POST /api/auth/logout                              - выход
 //   GET  /api/auth/me                                  - кто вошёл
-//   POST /api/auth/forgot   { email }                  - код для нового пароля
+//   POST /api/auth/forgot   { email, website, captchaToken } - код для нового пароля
 //   POST /api/auth/reset    { email, code, password }  - новый пароль, вход
 //   POST /api/auth/device-replace { ticket, id }       - вход сверх лимита устройств:
 //                                                        выйти на устройстве id и войти
@@ -28,6 +31,7 @@ const { startSession, endSession } = require('./session');
 const { planOf, quotaInfo, syncUser } = require('./plans');
 const stats = require('./stats');
 const { consentsFromRequest } = require('./legal');
+const antibot = require('./antibot');
 
 const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
 const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -142,6 +146,10 @@ router.get('/me', (req, res) => {
   res.json({ user: req.user ? publicUser(req.user) : null });
 });
 
+router.get('/config', (req, res) => {
+  res.json(antibot.captchaPublic());
+});
+
 router.post('/register', rateLimit, async (req, res, next) => {
   try {
     const email = normEmail(req.body.email);
@@ -150,6 +158,10 @@ router.post('/register', rateLimit, async (req, res, next) => {
     if (pErr) return res.status(400).json({ error: pErr });
     const legal = consentsFromRequest(req);
     if (legal.error) return res.status(400).json({ error: legal.error });
+    // Бот заполнил поле-ловушку - ответ как при успехе, но ничего не делаем.
+    if (antibot.honeypotFilled(req)) return res.json({ ok: true, needVerify: true });
+    if (!(await antibot.verifyCaptcha(req))) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
+    if (antibot.isDisposableEmail(email)) return res.status(400).json({ error: antibot.DISPOSABLE_ERROR });
     let user = store.findUserByEmail(email);
     if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
     // Почта ещё не подтверждена - регистрацию можно пройти заново.
@@ -253,6 +265,8 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
   try {
     const email = normEmail(req.body.email);
     if (!email) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
+    if (antibot.honeypotFilled(req)) return res.json({ ok: true });
+    if (!(await antibot.verifyCaptcha(req))) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     const user = store.findUserByEmail(email);
     // Ответ одинаковый, есть аккаунт или нет, - чтобы по нему нельзя было
     // проверять чужие почты.
