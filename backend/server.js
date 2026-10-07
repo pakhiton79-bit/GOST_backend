@@ -52,6 +52,24 @@ const app = express();
 // из заголовков прокси (нужно для ограничения частоты запросов и cookie
 // Secure у аккаунтов).
 app.set('trust proxy', 1);
+// Защитные заголовки (по указанию пользователя):
+//  - не называем движок сервера (X-Powered-By: Express);
+//  - сайт нельзя встроить в чужую страницу (кликджекинг); свои фреймы
+//    (печать, PDF - common-print.js, html2canvas) разрешены: SAMEORIGIN;
+//  - браузер не угадывает тип файлов (nosniff);
+//  - адрес страницы уходит на другие сайты только без пути и параметров;
+//  - по https браузер запоминает, что сайт только https (HSTS, 180 дней).
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({
+    'X-Frame-Options': 'SAMEORIGIN',
+    'Content-Security-Policy': "frame-ancestors 'self'",
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+  });
+  if (req.secure) res.set('Strict-Transport-Security', 'max-age=15552000');
+  next();
+});
 app.use(express.json());
 // Ответы API не кэшируются (кто вошёл, лимиты, расчёты - всегда свежие).
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
