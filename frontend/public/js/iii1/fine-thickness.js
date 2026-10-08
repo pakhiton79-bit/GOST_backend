@@ -17,7 +17,7 @@ const FINE_THICKNESS_FIELDS = [
   { key: 'frame',    label: 'Каркас (стойки, брусья и раскосины)' },
   { key: 'skin',     label: 'Доски обшивки' },
   { key: 'lidBeam',  label: 'Брусья крышки' },
-];
+].filter(f => !(III1_OPTIMIZED && f.key === 'dnoBeam')); // в оптимальном варианте продольных брусьев дна нет
 const FINE_THICKNESS_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'fineThickness';
 
 function fineThicknessInputId(key){

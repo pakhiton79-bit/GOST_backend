@@ -27,7 +27,9 @@ function dnoIII1Proj(x, y, z){
 // skidCount - число полозьев, hasSub - есть подполозные доски, lenVal,
 // widthVal, insetVal - подписи (наружные длина и ширина, отступ торцового
 // бруса), мм; insetRatio - отступ к ширине торцового бруса (для рисунка).
-function diagramDnoIII1Generated(skidCount, hasSub, lenVal, widthVal, insetVal, insetRatio, widthPx, labelScale){
+// noLongBeams - без продольных брусьев дна (оптимальный вариант III-1):
+// полозья - по всей ширине.
+function diagramDnoIII1Generated(skidCount, hasSub, lenVal, widthVal, insetVal, insetRatio, widthPx, labelScale, noLongBeams){
   if(!(skidCount >= 1) || skidCount > DNO_III1_MAX_SKIDS) return diagramTooDense();
   const u = DNO_III1_U;
   const L = DNO_III1_LEN;
@@ -38,7 +40,7 @@ function diagramDnoIII1Generated(skidCount, hasSub, lenVal, widthVal, insetVal, 
   // u от верха полозьев.
   const subH = hasSub ? 0.35*u : 0, skidH = u;
   const skidTop = subH + skidH;
-  const beamW = 0.8*u, beamH = 0.45*u;
+  const beamW = noLongBeams ? 0 : 0.8*u, beamH = noLongBeams ? 0 : 0.45*u;
   const slabTop = skidTop + 0.35*u;
   const endW = u, endTop = skidTop + u;
   const inset = u * Math.min(1, Math.max(0.3, insetRatio));
@@ -61,8 +63,10 @@ function diagramDnoIII1Generated(skidCount, hasSub, lenVal, widthVal, insetVal, 
     if(hasSub) lower.push({ b:[subX0, subX0 + subLen, y + 0.05*skidW, y + 0.95*skidW, 0, subH], depth:y, order:0 });
     lower.push({ b:[0, L, y, y + skidW, subH, skidTop], depth:y, order:1 });
   });
-  lower.push({ b:[0, L, 0, beamW, skidTop - beamH, skidTop], depth:0, order:1 });
-  lower.push({ b:[0, L, W - beamW, W, skidTop - beamH, skidTop], depth:W - beamW, order:1 });
+  if(!noLongBeams){
+    lower.push({ b:[0, L, 0, beamW, skidTop - beamH, skidTop], depth:0, order:1 });
+    lower.push({ b:[0, L, W - beamW, W, skidTop - beamH, skidTop], depth:W - beamW, order:1 });
+  }
   lower.sort((a, b) => (b.depth - a.depth) || (a.order - b.order));
   lower.forEach(o => boxes.push(o.b));
   boxes.push([0, L, 0, W, skidTop, slabTop]);                       // доски дна
@@ -127,5 +131,6 @@ function diagramDnoIII1(calc, widthPx){
   const endRow = rows.find(r => r.name === 'Торцовый брус дна');
   const inset = calc.skin.value + calc.torFrameT;
   const endW = endRow && parseFloat(endRow.w) > 0 ? parseFloat(endRow.w) : 100;
-  return diagramDnoIII1Generated(skidCount, hasSub, calc.outerL, calc.outerW, inset, inset / endW, widthPx, III1_PANEL_LABEL_SCALE);
+  const noLongBeams = !rows.some(r => r.name === 'Продольный брус дна');
+  return diagramDnoIII1Generated(skidCount, hasSub, calc.outerL, calc.outerW, inset, inset / endW, widthPx, III1_PANEL_LABEL_SCALE, noLongBeams);
 }

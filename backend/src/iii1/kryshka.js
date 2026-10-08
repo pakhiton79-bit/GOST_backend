@@ -9,8 +9,9 @@ function buildKryshka(c, s) {
   const { W, warnings, skinT } = c;
   const rows = [];
 
-  // Доски - поперёк ящика длиной по ширине груза, занимают наружную длину.
-  const boardLen = W;
+  // Доски - поперёк ящика на всю наружную ширину (ширина груза + стойки и
+  // обшивка боковых щитов, по указанию пользователя), занимают наружную длину.
+  const boardLen = s.outerW;
   const fb = fillBoards(s.len, c.roundBoardWidths);
   if (fb.mainQty > 0) rows.push({ name: 'Доска крышки', t: skinT, w: 100, l: boardLen, qty: fb.mainQty, overrideKey: 'skinValue' });
   fb.extra.forEach((e, i) => {
@@ -20,7 +21,9 @@ function buildKryshka(c, s) {
   if (fb.warn) warnings.push('Доска крышки: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска крышки: одна доска уже менее 100 мм.');
   let volume = vol(skinT, 100, boardLen, fb.mainQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty), 0);
-  const crossLen = W + skinT * 2;
+  // Поперечные брусья: ширина груза + обшивка боковых щитов; в оптимальном
+  // варианте (c.optimized) - по ширине груза.
+  const crossLen = c.optimized ? W : W + skinT * 2;
   rows.push({ name: 'Поперечный брус крышки', t: s.lidBeamT, w: s.beamW, l: crossLen, qty: s.crossBeamCount, overrideKey: 'tLidBeam' });
   volume += vol(s.lidBeamT, s.beamW, crossLen, s.crossBeamCount);
 

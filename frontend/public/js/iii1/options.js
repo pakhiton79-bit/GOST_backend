@@ -1,12 +1,17 @@
 // ГОСТ 10198-91, тип III-1: опции формы - толщины «в наличии», способ
 // крепления груза, взаимоисключающие галочки, запоминание галочек и
 // расположения досок крышки в localStorage (ключи - свои для типа III-1).
-const THICKNESS_STORAGE_KEY = 'gost10198-iii1-available-thickness';
+// Оптимальный вариант III-1 (страница iii1-opt.html задаёт
+// window.III1_OPTIMIZED) - та же страница со своими ключами: у III-1 ключи
+// прежние (gost10198-iii1-...), у оптимального - gost10198-iii1o-...
+const III1_OPTIMIZED = !!window.III1_OPTIMIZED;
+const III1_STORAGE_TYPE = III1_OPTIMIZED ? 'iii1o' : 'iii1';
+const THICKNESS_STORAGE_KEY = `gost10198-${III1_STORAGE_TYPE}-available-thickness`;
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
-const TIME_SETTINGS_STORAGE_KEY = 'gost10198-iii1-time-settings'; // шестерёнка «Нормы времени»
-const WOOD_DENSITY_STORAGE_KEY = 'gost10198-iii1-wood-density';   // шестерёнка «Массы ящика»
-const FASTENING_STORAGE_KEY = 'gost10198-iii1-fastening-type';
-const OPTIONS_STORAGE_PREFIX = 'gost10198-iii1-opt-';             // галочки и переключатели
+const TIME_SETTINGS_STORAGE_KEY = `gost10198-${III1_STORAGE_TYPE}-time-settings`; // шестерёнка «Нормы времени»
+const WOOD_DENSITY_STORAGE_KEY = `gost10198-${III1_STORAGE_TYPE}-wood-density`;   // шестерёнка «Массы ящика»
+const FASTENING_STORAGE_KEY = `gost10198-${III1_STORAGE_TYPE}-fastening-type`;
+const OPTIONS_STORAGE_PREFIX = `gost10198-${III1_STORAGE_TYPE}-opt-`;             // галочки и переключатели
 
 // ============ Толщины «в наличии» ============
 // Свои толщины у типа (THICKNESS_STORAGE_KEY), а пока их в типе не меняли

@@ -26,9 +26,12 @@ function buildDno(c, s, subLengthWarn) {
   const beam = { t: ov('t11', beamGostT, 'Толщина торцового бруса дна'), w: endBeam.w, l: W, qty: 2 };
 
   // Доски дна - поперёк ящика на всю наружную ширину, занимают наружную
-  // длину без ширины двух торцовых брусьев.
-  const floorT = s.floorBoardT, floorLen = outerW;
-  const fb = fillBoards(len - beam.w * 2, c.roundBoardWidths);
+  // длину без ширины двух торцовых брусьев. Оптимальный вариант
+  // (c.optimized): длиной по ширине груза, занимают длину груза без ширины
+  // двух торцовых брусьев.
+  const opt = !!c.optimized;
+  const floorT = s.floorBoardT, floorLen = opt ? W : outerW;
+  const fb = fillBoards((opt ? c.L : len) - beam.w * 2, c.roundBoardWidths);
   if (!removeFloorBoards) {
     if (fb.mainQty > 0) rows.push({ name: 'Доска дна', t: floorT, w: 100, l: floorLen, qty: fb.mainQty, overrideKey: 'floorBoardT' });
     fb.extra.forEach((e, i) => {
@@ -39,9 +42,10 @@ function buildDno(c, s, subLengthWarn) {
     if (fb.singleNarrow) warnings.push('Доска дна: одна доска уже менее 100 мм.');
   }
 
-  // Продольные брусья дна - как горизонтальный брус бокового щита.
-  const dnoBeam = { t: s.dnoBeamT, w: s.beamW, l: len, qty: 2 };
-  rows.push({ name: 'Продольный брус дна', t: dnoBeam.t, w: dnoBeam.w, l: dnoBeam.l, qty: dnoBeam.qty, overrideKey: 'tDnoBeam' });
+  // Продольные брусья дна - как горизонтальный брус бокового щита; в
+  // оптимальном варианте их нет.
+  const dnoBeam = { t: s.dnoBeamT, w: s.beamW, l: len, qty: opt ? 0 : 2 };
+  if (!opt) rows.push({ name: 'Продольный брус дна', t: dnoBeam.t, w: dnoBeam.w, l: dnoBeam.l, qty: dnoBeam.qty, overrideKey: 'tDnoBeam' });
   rows.push({ name: 'Торцовый брус дна', t: beam.t, w: beam.w, l: beam.l, qty: beam.qty, overrideKey: 't11' });
 
   const volume = vol(skid.t, skid.w, len, skid.count) + (removeSkidBoards ? 0 : vol(sub.t, sub.w, sub.l, sub.qty)) + vol(beam.t, beam.w, beam.l, beam.qty)

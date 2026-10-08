@@ -70,7 +70,7 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 10198-91 · тип III-1${boxNameHtml()}</h1>
+    <h1>ГОСТ 10198-91 · тип III-1${III1_OPTIMIZED ? ' (оптимальный)' : ''}${boxNameHtml()}</h1>
     <div class="print-subtitle">Каркасно-щитовой разборный плотный ящик</div>
 
     <div class="part-title">Общий вид ящика</div>

@@ -10,13 +10,14 @@ const FB_ICONS = {
   bug: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 16.5v.01"/><path d="M10.3 3.9 2.6 17.2a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
   help: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.3M12 16.5v.01"/></svg>',
 };
-const FB_GOSTS = { 'ГОСТ 10198-91': ['I-1', 'I-2', 'I-3', 'I-4', 'II-1', 'II-2', 'III-1'] };
+const FB_GOSTS = { 'ГОСТ 10198-91': ['I-1', 'I-2', 'I-3', 'I-4', 'II-1', 'II-2', 'III-1', 'III-1 (оптимальный)'] };
 const FB_NO_GOST = 'Не относится к ГОСТ / не знаю';
 const FB_NO_TYPE = 'Не относится к типу ящика';
 // Страница - ГОСТ и тип по умолчанию.
 const FB_PAGES = {
   'i1.html': 'I-1', 'i2.html': 'I-2', 'i3-skid.html': 'I-3', 'i4.html': 'I-4',
   'ii1.html': 'II-1', 'ii2.html': 'II-2', 'iii1.html': 'III-1',
+  'iii1-opt.html': 'III-1 (оптимальный)',
 };
 function fbPage(){ return location.pathname.replace(/^\//, '') || 'index.html'; }
 function fbDefaults(){

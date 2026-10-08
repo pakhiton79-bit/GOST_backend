@@ -5,7 +5,7 @@ const { vol, fillBoards } = require('../helpers');
 // c - контекст расчёта; s - согласованные размеры; frame - каркас (frame.js);
 // rask - толщина и ширина раскосины.
 function buildEndPanel(c, s, frame, rask) {
-  const { W, H, warnings, skinT } = c;
+  const { W, warnings, skinT } = c;
   // Каркас - горизонтальные брусья (низ и верх, + средний при 2 этажах) и
   // стойки одной толщины (Табл. 12).
   const horiz = { t: s.torFrameT, w: s.beamW, l: W, qty: frame.floors + 1 };
@@ -13,8 +13,9 @@ function buildEndPanel(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на всю высоту груза, занимают ширину груза.
-  const boardLen = H;
+  // Доски обшивки - на высоту щита (высота груза; в оптимальном варианте +
+  // толщина досок дна), занимают ширину груза.
+  const boardLen = c.panelH;
   const fb = fillBoards(W, c.roundBoardWidths);
   if (fb.warn) warnings.push('Доска обшивки торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска обшивки торца: одна доска уже менее 100 мм.');

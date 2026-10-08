@@ -37,6 +37,7 @@ function buildCalcInput(){
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
     addParchment: document.getElementById('addParchment').checked,
+    optimized: III1_OPTIMIZED,
     torecPostCount: manualCount.torec,
     bokPostCount: manualCount.bok,
     lidCrossBeamCount: manualCount.cross,

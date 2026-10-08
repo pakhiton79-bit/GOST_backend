@@ -332,6 +332,7 @@ app.post('/api/iii1/calculate', (req, res) => {
     addRaskosina: !!b.addRaskosina,
     xRaskosina: !!b.xRaskosina,
     addParchment: !!b.addParchment,
+    optimized: !!b.optimized,
     torecPostCount: toNum(b.torecPostCount),
     bokPostCount: toNum(b.bokPostCount),
     lidCrossBeamCount: toNum(b.lidCrossBeamCount),

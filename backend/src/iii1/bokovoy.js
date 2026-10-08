@@ -9,7 +9,7 @@ const OPORA_W = 75; // по ГОСТ, на имеющуюся ширину не 
 // c - контекст расчёта; s - согласованные размеры; frame - каркас (frame.js);
 // rask - толщина и ширина раскосины.
 function buildBokovoy(c, s, frame, rask) {
-  const { L, H, warnings, skinT } = c;
+  const { L, warnings, skinT } = c;
   // Каркас - горизонтальные брусья (низ и верх, + средний при 2 этажах) и
   // стойки одной толщины (Табл. 12).
   const horiz = { t: s.bokFrameT, w: s.beamW, l: s.len, qty: frame.floors + 1 };
@@ -17,8 +17,9 @@ function buildBokovoy(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на всю высоту груза, занимают наружную длину ящика.
-  const boardLen = H;
+  // Доски обшивки - на высоту щита (высота груза; в оптимальном варианте +
+  // толщина досок дна), занимают наружную длину ящика.
+  const boardLen = c.panelH;
   const fb = fillBoards(s.len, c.roundBoardWidths);
   if (fb.warn) warnings.push('Доска обшивки бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска обшивки бока: одна доска уже менее 100 мм.');
