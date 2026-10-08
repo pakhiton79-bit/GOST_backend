@@ -35,6 +35,7 @@ const stats = require('./stats');
 const { consentsFromRequest } = require('./legal');
 const antibot = require('./antibot');
 const mailLimits = require('./mail-limits');
+const { supportEmail } = require('./support-email');
 
 const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
 const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -175,7 +176,9 @@ function publicDevices(user, currentId) {
 // Заблокированный аккаунт (admin.js): вход запрещён, причина - в сообщении.
 function blockedError(user) {
   const why = user.blocked.reason ? ` Причина: ${user.blocked.reason}.` : '';
-  return { error: `Аккаунт заблокирован.${why} Если вы считаете это ошибкой, напишите на почту, указанную в Пользовательском соглашении.`, blocked: true };
+  const mail = supportEmail();
+  const where = mail ? `на ${mail}` : 'на почту, указанную в Пользовательском соглашении';
+  return { error: `Аккаунт заблокирован.${why} Если вы считаете это ошибкой, напишите ${where}.`, blocked: true };
 }
 
 // Вход (пароль или код уже проверены): если устройств уже столько, сколько

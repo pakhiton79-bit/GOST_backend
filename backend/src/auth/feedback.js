@@ -13,8 +13,6 @@ const express = require('express');
 const store = require('./store');
 const { rateLimit } = require('./routes');
 const { sendErrorReport } = require('./mailer');
-const fs = require('fs');
-const path = require('path');
 const antibot = require('./antibot');
 
 const MAX = { gost: 60, type: 60, description: 3000, page: 200 };
@@ -56,15 +54,7 @@ router.post('/error', rateLimit, async (req, res, next) => {
 // документах (поле email в frontend/public/js/legal-config.js), без него -
 // SUPPORT_EMAIL.
 //   POST /api/feedback/contact { captchaToken } -> { email }
-const LEGAL_CONFIG = path.join(__dirname, '..', '..', '..', 'frontend', 'public', 'js', 'legal-config.js');
-function supportEmail() {
-  let email = '';
-  try {
-    const m = fs.readFileSync(LEGAL_CONFIG, 'utf8').match(/^\s*email:\s*'([^']*)'/m);
-    if (m) email = m[1].trim();
-  } catch (e) { /* нет файла - ниже SUPPORT_EMAIL */ }
-  return email || process.env.SUPPORT_EMAIL || '';
-}
+const { supportEmail } = require('./support-email');
 router.post('/contact', rateLimit, (req, res) => {
   if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
   res.json({ email: supportEmail() });

@@ -68,7 +68,15 @@ function nextUrl(){
 function showMsg(text, ok, linkMode, linkText){
   const m = $('authMsg');
   m.hidden = !text;
-  m.textContent = text || '';
+  // Адрес почты в тексте (например, почта поддержки в сообщении о
+  // блокировке) - ссылкой mailto.
+  m.replaceChildren(...String(text || '').split(/([^\s@]+@[^\s@]+\.[a-z]{2,})/i).map((part, i) => {
+    if(i % 2 === 0) return document.createTextNode(part);
+    const a = document.createElement('a');
+    a.href = 'mailto:' + part;
+    a.textContent = part;
+    return a;
+  }));
   m.className = 'auth-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error');
   if(text && linkMode){
     const a = document.createElement('a');
