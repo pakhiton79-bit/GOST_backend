@@ -27,7 +27,7 @@ function buildCalcInput(){
     MASS: parseFloat(document.getElementById('M').value),
     skidEnabled: document.getElementById('skidEnabled').checked,
     skidThicknessRaw: skidThicknessValue,
-    roundBoardWidths: document.getElementById('roundBoardWidths').checked,
+    roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
     removeLidBottomRaskosina: document.getElementById('removeLidBottomRaskosina').checked,
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,

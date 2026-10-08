@@ -152,7 +152,7 @@ function persistCheckbox(id, onRestore){
   });
 }
 persistCheckbox('skidEnabled', showSkidThicknessRow);
-persistCheckbox('roundBoardWidths');
+persistCheckbox('noRoundBoardWidths');
 persistCheckbox('removeLidBottomRaskosina');
 persistCheckbox('xRaskosina');
 persistCheckbox('addEndTape');
