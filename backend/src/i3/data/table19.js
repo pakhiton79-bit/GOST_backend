@@ -4,6 +4,8 @@
 // количеству полозьев. Вынесено из tables.js в отдельный файл - самая
 // объёмная из табличных данных ГОСТа, менять её отдельно от остальных
 // формул/таблиц.
+const { stockWidth } = require('../../helpers');
+
 const T19_LENGTHS = [1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000];
 // Значения - как напечатано в источнике, в том числе выбивающиеся из ряда
 // (по решению пользователя - не исправлять): 500 кг, 3 полоза, 3000-4000 мм
@@ -133,7 +135,7 @@ function selectSkid19(mass, workingLengthMm, widthMm, availableThicknesses) {
     // нужно читать максимально точно, без перестановки.
     const nums = row.dims[bestI].split('x').map(Number);
     const h = nums[0];
-    const w = nums[1];
+    const w = stockWidth(nums[1]); // ширина - на имеющуюся (helpers.stockWidth)
     return { count: row.count, h, w, lengthUsed: T19_LENGTHS[bestI], lengthSnapped: lengthExceeded };
   }).filter(o => o !== null);
 

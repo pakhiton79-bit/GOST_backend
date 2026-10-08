@@ -25,6 +25,16 @@ function vol(t, w, l, qty) { // m3, dims in mm
 // собственный выбор 225/250мм - реальный, ранее не замеченный баг).
 const AVAILABLE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 
+// Ширина бруса/доски по ГОСТ - на имеющуюся (по указанию пользователя):
+// уже 100 мм - 100, от 100 до 150 мм - 150, шире 150 мм - как по ГОСТ.
+// Расчёт (объём, масса, раскладка) - по полученной ширине. Доски добора
+// (остаток щита) сюда не относятся.
+function stockWidth(w) {
+  if (w < 100) return 100;
+  if (w > 100 && w < 150) return 150;
+  return w;
+}
+
 // Норма времени = объём пиломатериала (м³) / базовая производительность
 // (м³/ч) × коэффициент времени. Оба параметра настраиваются шестерёнкой у
 // плитки "Норма времени" на клиенте (localStorage, см.
@@ -235,7 +245,7 @@ function sanitizeTableEdits(raw, sections) {
 }
 
 module.exports = {
-  roundup, ceilInt, vol, fillBoards,
+  roundup, ceilInt, vol, fillBoards, stockWidth,
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
   thicknessPartWarnings,

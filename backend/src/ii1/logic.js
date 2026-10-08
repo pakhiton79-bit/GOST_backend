@@ -8,6 +8,8 @@
 // (см. require() в compute.js). endBeamSection - НЕ общая (диапазон явно
 // продлён до 20000кг, в отличие от I-3, где верхняя граница - 5000кг) -
 // осталась здесь, отдельно от i3/sections.js.
+const { stockWidth } = require('../helpers');
+
 
 // Толщина досок обшивки (боковых/торцевых щитов и крышки) по массе груза.
 // ЧЕРНОВАЯ таблица - официальную таблицу в тексте ГОСТ не нашли (по прямому
@@ -48,8 +50,8 @@ function endBeamSection(mass) {
   if (mass <= 2000) return { h: 60, w: 100, exceeded: false };
   if (mass <= 3500) return { h: 75, w: 100, exceeded: false };
   if (mass <= 5000) return { h: 100, w: 100, exceeded: false };
-  if (mass <= 20000) return { h: 125, w: 125, exceeded: false };
-  return { h: 125, w: 125, exceeded: true };
+  if (mass <= 20000) return { h: 125, w: stockWidth(125), exceeded: false };
+  return { h: 125, w: stockWidth(125), exceeded: true };
 }
 
 // Общий принцип для ЛЮБОГО набора одинаковых брусков/стоек/полозьев,
@@ -88,7 +90,7 @@ function longBeamSection(crossBeamAxisMm, roundBoardWidths, axisSpacingMm) {
   if (row.wRoundOverride && colIdx === 0) {
     w = roundBoardWidths ? row.wRoundOverride : row.wRoundBase;
   }
-  return { t: row.t[colIdx], w, exceeded };
+  return { t: row.t[colIdx], w: stockWidth(w), exceeded };
 }
 
 module.exports = {

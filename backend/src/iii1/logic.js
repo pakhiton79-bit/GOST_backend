@@ -1,6 +1,8 @@
 // ГОСТ 10198-91, тип III-1: таблицы и формулы, специфичные для этого типа.
 // Общие с типами I-3 и II-1 таблицы дна (Табл. 4, 19, п.1.6.5, 1.6.11)
 // берутся из ../i3 (см. sizing.js).
+const { stockWidth } = require('../helpers');
+
 
 // Толщина досок обшивки стенок и крышки (п.1.6.13): не менее 16 мм; при
 // насыпном грузе или деталях, не связанных между собой и не закреплённых к
@@ -38,8 +40,8 @@ function endBeamSection(mass) {
   if (mass <= 2000) return { h: 60, w: 100, exceeded: false };
   if (mass <= 3500) return { h: 75, w: 100, exceeded: false };
   if (mass <= 5000) return { h: 100, w: 100, exceeded: false };
-  if (mass <= 20000) return { h: 125, w: 125, exceeded: false };
-  return { h: 125, w: 125, exceeded: true };
+  if (mass <= 20000) return { h: 125, w: stockWidth(125), exceeded: false };
+  return { h: 125, w: stockWidth(125), exceeded: true };
 }
 
 // Наименьшее число одинаковых элементов шириной memberWidth в пространстве
