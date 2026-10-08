@@ -87,6 +87,11 @@ systemctl status taraplus     # должно быть active (running)
 
 ## 5. Домен и HTTPS
 
+**Важно:** сайт должен работать только за nginx (в `env` - `HOST=127.0.0.1`).
+Ограничение частоты запросов и защита от подбора пароля опираются на
+настоящий IP посетителя, который передаёт nginx; если открыть порт 3000
+наружу напрямую, IP можно подделать заголовком.
+
 ```sh
 cp /opt/taraplus/deploy/nginx-taraplus.conf /etc/nginx/sites-available/taraplus
 nano /etc/nginx/sites-available/taraplus     # example.ru -> ваш домен (2 места)
