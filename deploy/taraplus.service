@@ -1,0 +1,24 @@
+# systemd: сайт работает как служба - запускается при старте сервера и
+# перезапускается при падении. Установка - см. README.md.
+[Unit]
+Description=Tara+ (GOST 10198-91)
+After=network.target
+
+[Service]
+Type=simple
+User=taraplus
+Group=taraplus
+WorkingDirectory=/opt/taraplus/backend
+EnvironmentFile=/etc/taraplus/env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# Защита: служба видит только свою папку данных на запись.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/taraplus
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

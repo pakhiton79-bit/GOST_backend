@@ -465,6 +465,11 @@ API: `POST /api/auth/register`, `verify`, `resend`, `login`, `logout`,
 - Цвета - только токены из `css/style.css` (светлая и тёмная тема).
 - В текстах сайта - дефис «-», не длинное тире.
 
+## Свой сервер (VPS рег.ру)
+
+Пошаговая инструкция и готовые файлы (служба systemd, nginx, HTTPS,
+резервные копии, обновление) - в папке [`deploy/`](deploy/README.md).
+
 ## Деплой на Render
 
 В репозитории есть `render.yaml` (Blueprint) — Render считывает его сам и

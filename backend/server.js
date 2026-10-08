@@ -361,7 +361,10 @@ app.use((err, req, res, next) => {
   res.status(err.status && err.status < 500 ? err.status : 500).json({ error: 'Ошибка сервера. Попробуйте ещё раз.' });
 });
 
+// HOST - адрес, на котором слушает сервер: на VPS за nginx - 127.0.0.1
+// (см. deploy/), без него - все адреса (как на Render).
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`GOST 10198-91 backend listening on port ${PORT}`);
+const HOST = process.env.HOST || undefined;
+app.listen(PORT, HOST, () => {
+  console.log(`GOST 10198-91 backend listening on ${HOST || '*'}:${PORT}`);
 });
