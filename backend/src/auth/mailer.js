@@ -102,6 +102,12 @@ async function sendToSupport(kind, rec, subject, fields) {
     console.log(`[${kind}, тестовый режим]\n${text}`);
     return;
   }
+  // Суточный лимит писем исчерпан - письмо не отправляется (запись уже в
+  // хранилище и видна в админке).
+  if (!require('./mail-limits').takeSupport(Date.now())) {
+    console.log(`[${kind}] суточный лимит писем исчерпан - только в админке`);
+    return;
+  }
   const html = layout(escapeHtml(subject), lines.map(([k, v]) =>
     `<p style="margin:0 0 8px"><b>${escapeHtml(k)}:</b> ${escapeHtml(v).replace(/\n/g, '<br>')}</p>`));
   try {

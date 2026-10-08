@@ -34,6 +34,7 @@ const { planOf, quotaInfo, syncUser } = require('./plans');
 const stats = require('./stats');
 const { consentsFromRequest } = require('./legal');
 const antibot = require('./antibot');
+const mailLimits = require('./mail-limits');
 
 const TICKET_TTL_MS = 10 * 60 * 1000; // выбрать устройство - в течение 10 минут
 const ADMIN_EMAILS = String(process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
@@ -113,7 +114,7 @@ function codeLockText(rec, now) {
   if (w.dayFails < CODE_DAY_FAILS) return null;
   return `Слишком много неверных кодов. Попробуйте через ${Math.ceil((w.dayStart + CODE_DAY_MS - now) / 3600000)} ч.`;
 }
-async function issueCode(email, purpose) {
+async function issueCode(email, purpose, ip) {
   const prev = store.getCode(email, purpose);
   const lock = codeLockText(prev, Date.now());
   if (lock) return lock;
@@ -121,6 +122,9 @@ async function issueCode(email, purpose) {
     const sec = Math.ceil((CODE_RESEND_MS - (Date.now() - prev.sentAt)) / 1000);
     return `Новый код можно запросить через ${sec} с.`;
   }
+  // Суточные лимиты писем (mail-limits.js): на почту, с IP и всего.
+  const limitErr = mailLimits.takeCode(email, ip || '', Date.now());
+  if (limitErr) return limitErr;
   const code = newCode();
   const rec = { hash: hashCode(email, code), expires: Date.now() + CODE_TTL_MS, attempts: 0, sentAt: Date.now(), ...codeDayWindow(prev, Date.now()) };
   store.setCode(email, purpose, rec);
@@ -130,6 +134,7 @@ async function issueCode(email, purpose) {
     // Письмо не ушло - код не действует, повторный запрос сразу (счётчик
     // неверных кодов за сутки сохраняется).
     console.error(`[почта] код не отправлен (${email}): ${e.message}`);
+    mailLimits.returnCode(email, ip || '');
     store.setCode(email, purpose, { ...rec, expires: 0, sentAt: 0 });
     return 'Не удалось отправить письмо с кодом. Попробуйте ещё раз через минуту.';
   }
@@ -218,7 +223,7 @@ router.post('/register', rateLimit, async (req, res, next) => {
     if (user) store.updateUser(user, { passHash });
     else user = store.createUser(email, passHash);
     store.updateUser(user, { consents: legal.consents });
-    const err = await issueCode(email, 'register');
+    const err = await issueCode(email, 'register', req.ip);
     res.json({ ok: true, needVerify: true, notice: err || undefined });
   } catch (e) { next(e); }
 });
@@ -244,7 +249,7 @@ router.post('/resend', rateLimit, async (req, res, next) => {
       if (purpose === 'reset') return res.json({ ok: true });
       return res.status(400).json({ error: 'Аккаунт не найден или уже подтверждён.' });
     }
-    const err = await issueCode(email, purpose);
+    const err = await issueCode(email, purpose, req.ip);
     if (err) return res.status(429).json({ error: err });
     res.json({ ok: true });
   } catch (e) { next(e); }
@@ -271,7 +276,7 @@ router.post('/login', rateLimit, async (req, res, next) => {
     loginFails.delete(req.ip);
     if (user.loginFails || user.loginLockUntil) store.updateUser(user, { loginFails: 0, loginLockUntil: 0 });
     if (!user.verified) {
-      const err = await issueCode(email, 'register');
+      const err = await issueCode(email, 'register', req.ip);
       return res.json({ ok: true, needVerify: true, notice: err || undefined });
     }
     finishLogin(req, res, user);
@@ -350,7 +355,7 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
     // Ответ одинаковый, есть аккаунт или нет, - чтобы по нему нельзя было
     // проверять чужие почты.
     if (user) {
-      const err = await issueCode(email, 'reset');
+      const err = await issueCode(email, 'reset', req.ip);
       if (err) return res.status(429).json({ error: err });
     }
     res.json({ ok: true });
