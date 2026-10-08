@@ -1405,6 +1405,9 @@
   #printArea .print-grid .spec-table td:first-child{white-space:normal;overflow-wrap:break-word;line-height:1.2;}
   #printArea .print-grid .spec-table th:not(:first-child), #printArea .print-grid .spec-table td:not(:first-child){width:12%;}
   #printArea .print-grid .part-title{font-size:calc(var(--pk)*16px);margin-bottom:0;}
+  /* Таблички под сеткой (лента, пергамин, болты) - тем же шрифтом, что и
+     таблицы узлов (по указанию пользователя). */
+  #printArea .spec-table.tape-table td{font-size:calc(var(--pk)*14px);padding:calc(var(--pk)*2px) calc(var(--pk)*3px);}
   /* ширина самих чертежей проставляется из JS (у них разный масштаб);
      остальное - общие правила .diagram-wrap/.diagram-arrows/.diagram-labels */
   /* Стрелки на чертежах - при печати заметно толще, чем на экране. --dk (по
