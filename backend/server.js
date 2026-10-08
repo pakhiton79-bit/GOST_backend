@@ -81,6 +81,8 @@ app.use('/api/admin', makeThrottle(), adminRoutes);
 app.use('/api/standards', standardsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
+// Проверка, что сервер жив (для самопинга ниже и мониторинга).
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Расчёты - только после входа и в пределах лимита подписки.
 // Не больше 60 расчётов в минуту с одного IP (сверх - ожидание, см. throttle.js).
 app.post('/api/:type/calculate', makeThrottle(), calcQuota);
@@ -374,6 +376,20 @@ app.use((err, req, res, next) => {
   console.error(`[ошибка] ${req.method} ${req.originalUrl}:`, err);
   res.status(err.status && err.status < 500 ? err.status : 500).json({ error: 'Ошибка сервера. Попробуйте ещё раз.' });
 });
+
+// Самопинг (по указанию пользователя): бесплатный Render усыпляет сервис
+// без входящих запросов ~15 минут - раз в 10 минут сервер сам обращается к
+// своему внешнему адресу. Адрес - KEEPALIVE_URL или RENDER_EXTERNAL_URL
+// (Render задаёт его сам); на своём сервере (VPS) их нет - самопинга нет.
+// KEEPALIVE=0 - отключить.
+const KEEPALIVE_BASE = process.env.KEEPALIVE_URL || process.env.RENDER_EXTERNAL_URL || '';
+if (KEEPALIVE_BASE && process.env.KEEPALIVE !== '0') {
+  const url = KEEPALIVE_BASE.replace(/\/+$/, '') + '/api/health';
+  setInterval(() => {
+    fetch(url, { signal: AbortSignal.timeout(15000) }).catch(e => console.error(`[самопинг] ${url}: ${e.message}`));
+  }, 10 * 60 * 1000).unref();
+  console.log(`[самопинг] каждые 10 минут: ${url}`);
+}
 
 // HOST - адрес, на котором слушает сервер: на VPS за nginx - 127.0.0.1
 // (см. deploy/), без него - все адреса (как на Render).
