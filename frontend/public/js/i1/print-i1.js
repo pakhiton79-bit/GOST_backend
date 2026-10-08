@@ -75,19 +75,17 @@ function buildPrintHtml(){
       <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_I1_IMG_B64}" alt=""></div></div>
       <div class="print-summary-col">
         <div class="print-summary-block">
-          <h2>Внутренние размеры груза, мм</h2>
+          <h2>Груз</h2>
           <table class="print-plain-table">
-            <tr><td class="k">Длина</td><td>${L}</td></tr>
-            <tr><td class="k">Ширина</td><td>${W}</td></tr>
-            <tr><td class="k">Высота</td><td>${H}</td></tr>
-            <tr><td class="k">Масса груза, кг</td><td>${M}</td></tr>
+            <tr><td class="k">Размеры, мм</td><td>${L} × ${W} × ${H}</td></tr>
+            <tr><td class="k">Масса, кг</td><td>${M}</td></tr>
           </table>
         </div>
         <div class="print-summary-block">
           <h2>Итог</h2>
           <table class="print-plain-table">
-            <tr><td class="k">Наружные размеры, мм</td><td>${outDimsText}</td></tr>
-            <tr><td class="k">Расход пило&shy;материала</td><td>${volumeText}</td></tr>
+            <tr><td class="k">Наружные, мм</td><td>${outDimsText.replace(/\s*мм$/, '')}</td></tr>
+            <tr><td class="k">Пиломатериал</td><td>${volumeText}</td></tr>
             <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
             <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
           </table>
