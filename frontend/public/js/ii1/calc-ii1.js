@@ -118,6 +118,9 @@ initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
 // красной рамкой (highlightErrorFields в common-calc-state.js).
 function errorFieldsFor(text){
+  // Границы входных данных (inputLimitsError в расчёте).
+  if(/Размеры груза - не больше/.test(text)) return ['L','W','H'].filter(id => parseFloat(document.getElementById(id).value) > 15000);
+  if(/Масса груза - не больше/.test(text)) return ['M'];
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   if(/не помеща\S* на торцевом щите/.test(text)) return ['torecPostsInput'];
   if(/не помеща\S* на боковом щите/.test(text)) return ['bokPostsInput'];

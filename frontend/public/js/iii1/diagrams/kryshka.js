@@ -62,5 +62,8 @@ function diagramKryshkaIII1Generated(crossCount, gapMm, lenVal, widthVal, widthP
 function diagramKryshkaIII1(calc, widthPx){
   const row = (calc.kryshka || []).find(r => r.name === 'Поперечный брус крышки');
   const n = row ? Math.round(parseFloat(row.qty)) : calc.crossBeamCount;
-  return diagramKryshkaIII1Generated(n, calc.gapDistCross, calc.outerL, calc.W, widthPx, III1_PANEL_LABEL_SCALE);
+  // Ширина крышки - фактическая длина доски крышки (наружная ширина ящика).
+  const board = (calc.kryshka || []).find(r => /^Доска крышки/.test(r.name));
+  const widthVal = board && parseFloat(board.l) > 0 ? parseFloat(board.l) : calc.outerW;
+  return diagramKryshkaIII1Generated(n, calc.gapDistCross, calc.outerL, widthVal, widthPx, III1_PANEL_LABEL_SCALE);
 }

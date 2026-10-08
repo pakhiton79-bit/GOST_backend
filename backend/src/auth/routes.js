@@ -19,6 +19,8 @@
 //   GET  /api/auth/devices                             - устройства, где выполнен вход
 //   POST /api/auth/devices/logout { id }               - выйти на устройстве
 //   POST /api/auth/delete   { password }               - удалить свой аккаунт
+//   POST /api/auth/password { current, password }      - сменить пароль (входы на
+//                                                        других устройствах завершаются)
 //
 // Вход, когда устройств уже столько, сколько разрешает подписка (по
 // указанию пользователя): вместо входа - список устройств, пользователь
@@ -47,10 +49,24 @@ const CODE_RESEND_MS = 60 * 1000;     // новый код - не чаще ра�
 // (счётчик переносится в каждый новый код).
 const CODE_DAY_MS = 24 * 3600 * 1000;
 const CODE_DAY_FAILS = 15;
-// Подбор пароля: после LOGIN_MAX_FAILS неверных паролей подряд вход в этот
-// аккаунт - через LOGIN_LOCK_MS (восстановление пароля снимает паузу).
+// Подбор пароля: после LOGIN_MAX_FAILS неверных паролей с одного IP вход с
+// этого IP (в любые аккаунты) - через LOGIN_LOCK_MS. По указанию
+// пользователя (после аудита) - по IP, а не по аккаунту: раньше чужой мог
+// нарочно заблокировать вход владельцу.
 const LOGIN_MAX_FAILS = 10;
 const LOGIN_LOCK_MS = 15 * 60 * 1000;
+const loginFails = new Map(); // ip -> { fails, lockUntil }
+function loginLockLeft(ip, now) {
+  const r = loginFails.get(ip);
+  return r && r.lockUntil > now ? r.lockUntil - now : 0;
+}
+function loginFailed(ip, now) {
+  const r = loginFails.get(ip) || { fails: 0, lockUntil: 0 };
+  r.fails += 1;
+  if (r.fails >= LOGIN_MAX_FAILS) { r.fails = 0; r.lockUntil = now + LOGIN_LOCK_MS; }
+  loginFails.set(ip, r);
+  return r.lockUntil > now;
+}
 const PASSWORD_MIN = 8;
 
 // Ограничение частоты запросов с одного IP (защита от подбора паролей и
@@ -62,6 +78,7 @@ const hits = new Map();
 setInterval(() => {
   const now = Date.now();
   for (const [ip, list] of hits) if (!list.length || now - list[list.length - 1] >= RATE_WINDOW_MS) hits.delete(ip);
+  for (const [ip, r] of loginFails) if (r.lockUntil <= now && !r.fails) loginFails.delete(ip);
 }, RATE_WINDOW_MS).unref();
 function rateLimit(req, res, next) {
   const now = Date.now();
@@ -241,19 +258,17 @@ router.post('/login', rateLimit, async (req, res, next) => {
     // По указанию пользователя: аккаунта нет - так и сообщаем (а не «неверные
     // данные»), с предложением зарегистрироваться.
     if (!user) return res.status(404).json({ error: 'Аккаунта с такой почтой нет. Проверьте адрес или зарегистрируйтесь.', noAccount: true });
-    const lockLeft = (user.loginLockUntil || 0) - Date.now();
+    const lockLeft = loginLockLeft(req.ip, Date.now());
     if (lockLeft > 0) {
       return res.status(429).json({ error: `Слишком много неверных паролей. Попробуйте через ${Math.ceil(lockLeft / 60000)} мин. или восстановите пароль.` });
     }
     if (!(await verifyPassword(String(req.body.password || ''), user.passHash))) {
-      const fails = (user.loginFails || 0) + 1;
-      if (fails >= LOGIN_MAX_FAILS) {
-        store.updateUser(user, { loginFails: 0, loginLockUntil: Date.now() + LOGIN_LOCK_MS });
+      if (loginFailed(req.ip, Date.now())) {
         return res.status(429).json({ error: `Слишком много неверных паролей. Попробуйте через ${LOGIN_LOCK_MS / 60000} мин. или восстановите пароль.` });
       }
-      store.updateUser(user, { loginFails: fails });
       return res.status(401).json({ error: 'Неверный пароль. Попробуйте ещё раз или восстановите пароль.' });
     }
+    loginFails.delete(req.ip);
     if (user.loginFails || user.loginLockUntil) store.updateUser(user, { loginFails: 0, loginLockUntil: 0 });
     if (!user.verified) {
       const err = await issueCode(email, 'register');
@@ -298,6 +313,24 @@ router.post('/delete', rateLimit, async (req, res, next) => {
     }
     store.deleteUser(req.user);
     endSession(req, res);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// Смена пароля в аккаунте (по указанию пользователя, после аудита): текущий
+// пароль + новый. Входы на других устройствах завершаются, это остаётся.
+router.post('/password', rateLimit, async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+    const pErr = checkPassword(req.body.password);
+    if (pErr) return res.status(400).json({ error: pErr });
+    const user = req.user, sessionId = req.sessionId;
+    if (!(await verifyPassword(String(req.body.current || ''), user.passHash))) {
+      return res.status(401).json({ error: 'Текущий пароль указан неверно.' });
+    }
+    const passHash = await hashPassword(req.body.password);
+    store.updateUser(user, { passHash });
+    store.listUserSessions(user.id).filter(s => s.id !== sessionId).forEach(s => store.deleteSessionById(user.id, s.id));
     res.json({ ok: true });
   } catch (e) { next(e); }
 });

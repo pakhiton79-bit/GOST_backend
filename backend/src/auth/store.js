@@ -181,13 +181,38 @@ function listReports() {
   return load().reports.slice();
 }
 
+// ---- Очистка (по указанию пользователя, после аудита; раз в сутки, см.
+// server.js): истёкшие входы и пропуски, коды, срок и суточный счётчик
+// которых прошли, неподтверждённые аккаунты старше UNVERIFIED_DAYS дней.
+// Возвращает, сколько записей удалено.
+const UNVERIFIED_DAYS = 7;
+const DAY_MS = 24 * 3600 * 1000;
+function cleanup(now) {
+  const d = load();
+  let removed = 0;
+  Object.keys(d.sessions).forEach(k => { if (!(d.sessions[k].expires > now)) { delete d.sessions[k]; removed++; } });
+  Object.keys(d.tickets).forEach(k => { if (!(d.tickets[k].expires > now)) { delete d.tickets[k]; removed++; } });
+  Object.keys(d.codes).forEach(k => {
+    const c = d.codes[k];
+    if (!(c.expires > now) && !(c.dayStart && now - c.dayStart < DAY_MS)) { delete d.codes[k]; removed++; }
+  });
+  const stale = d.users.filter(u => !u.verified && now - (Date.parse(u.createdAt) || now) > UNVERIFIED_DAYS * DAY_MS);
+  stale.forEach(u => {
+    d.users = d.users.filter(x => x.id !== u.id);
+    Object.keys(d.codes).forEach(k => { if (k.endsWith(':' + u.email)) delete d.codes[k]; });
+    removed++;
+  });
+  if (removed) save();
+  return removed;
+}
+
 // ---- Статистика по дням (см. stats.js) ----
 function statsData() {
   return load().stats;
 }
 
 module.exports = {
-  save, statsData,
+  save, statsData, cleanup,
   findUserByEmail, findUserById, createUser, updateUser, listUsers, deleteUser,
   createSession, touchSession, getSession, deleteSession, deleteUserSessions, listUserSessions, deleteSessionById,
   getCode, setCode, deleteCode,

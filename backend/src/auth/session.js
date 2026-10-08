@@ -5,7 +5,7 @@
 const crypto = require('crypto');
 const store = require('./store');
 const { newToken, sha256 } = require('./crypto');
-const { syncUser } = require('./plans');
+const { syncUser, planOf } = require('./plans');
 
 const COOKIE = 'sid';
 const SESSION_DAYS = 30;
@@ -67,7 +67,13 @@ function attachUser(req, res, next) {
     const user = s && store.findUserById(s.userId);
     if (user && user.verified && !user.blocked) {
       const now = Date.now();
-      if (syncUser(user, now)) store.updateUser(user);
+      if (syncUser(user, now)) {
+        store.updateUser(user);
+        // Подписка закончилась (стала пробной) - входов больше, чем разрешает
+        // подписка, быть не может: выход на самых давних.
+        store.listUserSessions(user.id).slice(planOf(user).devices).forEach(x => store.deleteSessionById(user.id, x.id));
+      }
+      if (!store.getSession(hash)) return next();
       if (!s.lastSeen || now - s.lastSeen > TOUCH_MS) store.touchSession(hash, now);
       req.user = user;
       req.sessionId = s.id;

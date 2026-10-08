@@ -132,5 +132,9 @@ function diagramDnoIII1(calc, widthPx){
   const inset = calc.skin.value + calc.torFrameT;
   const endW = endRow && parseFloat(endRow.w) > 0 ? parseFloat(endRow.w) : 100;
   const noLongBeams = !rows.some(r => r.name === 'Продольный брус дна');
-  return diagramDnoIII1Generated(skidCount, hasSub, calc.outerL, calc.outerW, inset, inset / endW, widthPx, III1_PANEL_LABEL_SCALE, noLongBeams);
+  // Ширина дна - фактическая длина доски дна (в оптимальном варианте - по
+  // ширине груза), без досок дна - наружная ширина.
+  const floor = rows.find(r => /^Доска дна/.test(r.name));
+  const widthVal = floor && parseFloat(floor.l) > 0 ? parseFloat(floor.l) : calc.outerW;
+  return diagramDnoIII1Generated(skidCount, hasSub, calc.outerL, widthVal, inset, inset / endW, widthPx, III1_PANEL_LABEL_SCALE, noLongBeams);
 }

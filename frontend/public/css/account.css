@@ -297,6 +297,8 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-table th{text-align:left;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 8px;border-bottom:1px solid var(--rule);}
 .admin-table td{padding:12px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);font-variant-numeric:tabular-nums;}
 .admin-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:136px;}
+/* Подписка и её срок (1 или 3 месяца) - рядом. */
+.admin-plan-pick{display:flex;gap:6px;flex-wrap:wrap;}
 .admin-table button{margin:0;padding:7px 12px;font-size:13px;}
 .admin-delete{color:var(--error);}
 .admin-delete:hover{border-color:var(--error);}
@@ -436,7 +438,8 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-del-btn:hover{border-color:var(--error);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}
 .site-acc-delete .auth-msg{margin:10px 0 0;}
-.site-acc-delete[hidden], .site-acc-del-btn[hidden]{display:none;}
+.site-acc-delete[hidden], .site-acc-del-btn[hidden], .site-acc-pw-btn[hidden]{display:none;}
+.site-acc-pw-btn{margin-top:10px;}
 
 /* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */
 .plan-paid #printArea .print-watermark{display:none;}

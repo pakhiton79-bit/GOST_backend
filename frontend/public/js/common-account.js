@@ -134,7 +134,9 @@ function renderSiteSub(user){
   const upgrade = nextPlanId(q.plan);
   // У пробной месячных расчётов нет (только за регистрацию) - без даты и полосы месяца.
   const renew = q.monthly ? ` · новые расчёты ${new Date(q.periodEnd).toLocaleDateString('ru-RU')}` : '';
-  let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'}${renew}</div></div>`
+  // Платная подписка - на срок (1 или 3 месяца), по окончании - пробная.
+  const until = q.planUntil ? ` · действует до ${new Date(q.planUntil).toLocaleDateString('ru-RU')}` : '';
+  let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'}${until}${renew}</div></div>`
     + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
   if(q.monthly) html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
   if(q.welcomeLeft > 0 || q.plan === 'free'){
@@ -172,6 +174,16 @@ function renderSiteAccount(user){
       <div class="site-usage-title">Устройства</div>
       <p class="site-sub-text" id="siteAccDevNote"></p>
       <div class="auth-devices" id="siteAccDevices"></div>
+    </div>
+    <div class="site-acc-block">
+      <div class="site-usage-title">Пароль</div>
+      <div class="site-acc-delete" id="siteAccPw" hidden>
+        <div class="auth-msg" id="siteAccPwMsg" hidden></div>
+        <div class="auth-field"><input type="password" id="siteAccPwOld" placeholder="Текущий пароль" autocomplete="current-password" maxlength="200" aria-label="Текущий пароль"></div>
+        <div class="auth-field"><input type="password" id="siteAccPwNew" placeholder="Новый пароль, не короче 8 символов" autocomplete="new-password" maxlength="200" aria-label="Новый пароль"></div>
+        <button type="button" class="btn-secondary site-sub-btn" data-acc="password-save">Сохранить пароль</button>
+      </div>
+      <button type="button" class="btn-secondary site-sub-btn site-acc-pw-btn" data-acc="password-open">Сменить пароль</button>
     </div>
     <div class="site-acc-block site-acc-danger">
       <div class="site-usage-title">Удаление аккаунта</div>
@@ -211,6 +223,27 @@ document.addEventListener('click', async e => {
     el.disabled = true;
     const d = await post('devices/logout', { id: el.dataset.id }).then(r => r.json()).catch(() => ({}));
     if(d.devices && accountUserCache) renderAccountDevices(d.devices, accountUserCache.quota); else el.disabled = false;
+  } else if(act === 'password-open'){
+    el.hidden = true;
+    document.getElementById('siteAccPw').hidden = false;
+    document.getElementById('siteAccPwOld').focus();
+  } else if(act === 'password-save'){
+    // Смена пароля: текущий + новый; входы на других устройствах завершаются.
+    const msg = document.getElementById('siteAccPwMsg');
+    const oldPw = document.getElementById('siteAccPwOld').value, newPw = document.getElementById('siteAccPwNew').value;
+    const show = (t, ok) => { msg.hidden = false; msg.className = 'auth-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error'); msg.textContent = t; };
+    if(!oldPw || !newPw) return show('Введите текущий и новый пароль.');
+    el.disabled = true;
+    try{
+      const r = await post('password', { current: oldPw, password: newPw });
+      const d = await r.json();
+      if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
+      document.getElementById('siteAccPwOld').value = '';
+      document.getElementById('siteAccPwNew').value = '';
+      show('Пароль изменён. На других устройствах выполнен выход.', true);
+      if(accountUserCache) loadAccountDevices(accountUserCache);
+    }catch(err){ show(err.message); }
+    el.disabled = false;
   } else if(act === 'delete-open'){
     el.hidden = true;
     document.getElementById('siteAccDelete').hidden = false;

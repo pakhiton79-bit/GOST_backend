@@ -11,7 +11,7 @@
 // Ручные толщины из таблицы (manualOverrides) подставляются везде, где
 // участвуют.
 // Таблицы и формулы, общие с типом I-3, берутся из ../i3.
-const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, computeNormaVremeni } = require('../helpers');
+const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, inputLimitsError, computeNormaVremeni } = require('../helpers');
 const { skinThickness } = require('./logic');
 const { stabilizeSizes } = require('./sizing');
 const { buildDno } = require('./dno');
@@ -88,6 +88,8 @@ function computeGost10198II1(input) {
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
     return { error: 'Заполните все поля положительными числами.' };
   }
+  const limitsError = inputLimitsError(input);
+  if (limitsError) return { error: limitsError };
   const warnings = [];
   if (MASS > 20000) {
     warnings.push('Масса груза вне диапазона типа II-1 (≤20000 кг) - расчёт продолжен по крайнему значению.');
@@ -258,7 +260,7 @@ function computeGost10198II1(input) {
   const negField = findNegativeField(result, '');
   if (negField) {
     console.warn('Расчёт дал отрицательное значение:', negField);
-    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
+    return { error: 'При таких размерах и массе груза получаются недопустимые размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }

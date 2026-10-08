@@ -142,7 +142,9 @@ function thicknessPartWarnings(round, availableThicknesses) {
 // (для сообщения об ошибке) либо null, если всё в порядке.
 function findNegativeField(value, path) {
   if (typeof value === 'number') {
-    return (Number.isFinite(value) && value < 0) ? path : null;
+    // NaN и бесконечность - тоже ошибка (по указанию пользователя, после
+    // аудита: такой результат уходил как успешный и списывал расчёт).
+    return (!Number.isFinite(value) || value < 0) ? path : null;
   }
   if (Array.isArray(value)) {
     for (let i = 0; i < value.length; i++) {
@@ -244,12 +246,31 @@ function sanitizeTableEdits(raw, sections) {
   return out;
 }
 
+// Границы входных данных (по указанию пользователя, после аудита): размеры
+// груза - до 15000 мм, масса - до 40000 кг, толщины, введённые вручную
+// (ячейки таблицы и «Тонкая настройка»), - до 250 мм. Без границ огромные
+// размеры давали бессмысленный результат, а у II-1, II-2 и III-1 - зависание
+// сервера. Возвращает текст ошибки или null.
+const INPUT_MAX_SIZE = 15000, INPUT_MAX_MASS = 40000, INPUT_MAX_THICKNESS = 250;
+function inputLimitsError(input) {
+  if ([input.L, input.W, input.H].some(v => v > INPUT_MAX_SIZE)) {
+    return `Размеры груза - не больше ${INPUT_MAX_SIZE} мм. Расчёт не выполняется.`;
+  }
+  if (input.MASS > INPUT_MAX_MASS) return `Масса груза - не больше ${INPUT_MAX_MASS} кг. Расчёт не выполняется.`;
+  const tooThick = obj => obj && typeof obj === 'object' && Object.keys(obj).some(k => Number(obj[k]) > INPUT_MAX_THICKNESS);
+  if (tooThick(input.manualOverrides) || tooThick(input.fineThickness)) {
+    return `Толщина, введённая вручную, - не больше ${INPUT_MAX_THICKNESS} мм. Расчёт не выполняется.`;
+  }
+  return null;
+}
+
 module.exports = {
   roundup, ceilInt, vol, fillBoards, stockWidth,
   AVAILABLE_THICKNESS_OPTIONS,
   makeRoundUpToAvailable,
   thicknessPartWarnings,
   findNegativeField,
+  inputLimitsError,
   computeNormaVremeni,
   applyTableEdits,
   sanitizeTableEdits,

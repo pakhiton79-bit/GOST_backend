@@ -3,7 +3,8 @@
 // через запятую; задаётся в Render → сервис → Environment).
 //
 //   GET  /api/admin/users                 - аккаунты, подписки, счётчики
-//   POST /api/admin/plan { email, plan }  - сменить подписку (месяц - с этого момента)
+//   POST /api/admin/plan { email, plan, months } - сменить подписку с этого
+//                                           момента; платная - на months (1 или 3) месяцев по 30 дней
 //   POST /api/admin/delete { email }      - удалить аккаунт (себя - нельзя)
 //   POST /api/admin/block { email, reason } - заблокировать (себя - нельзя): вход и
 //                                           расчёты запрещены, входы на всех устройствах завершаются
@@ -14,7 +15,7 @@
 //                                           (Pro и Team - первыми с пометкой priority, дальше новые сверху)
 const express = require('express');
 const store = require('./store');
-const { PLANS, planOf, quotaInfo, syncUser } = require('./plans');
+const { PLANS, PERIOD_MS, PLAN_TERMS, planOf, quotaInfo, syncUser } = require('./plans');
 // Приоритетное обслуживание (Pro и Team): такие заявки и сообщения - первыми,
 // внутри групп - новые сверху.
 const withPriority = list => list.map(r => ({ ...r, priority: !!(PLANS[r.plan] && PLANS[r.plan].prioritySupport) }))
@@ -45,7 +46,7 @@ router.get('/users', (req, res) => {
       blocked: u.blocked ? { at: new Date(u.blocked.at).toISOString(), reason: u.blocked.reason || '' } : null,
     };
   });
-  res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })) });
+  res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })), terms: PLAN_TERMS });
 });
 
 router.post('/plan', (req, res) => {
@@ -54,10 +55,14 @@ router.post('/plan', (req, res) => {
   const user = store.findUserByEmail(email);
   if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
   if (!PLANS[plan]) return res.status(400).json({ error: 'Нет такой подписки.' });
-  // Новая подписка: месяц и счётчик - с этого момента. Устройств больше,
-  // чем разрешает новая подписка, - выход на самых давних.
+  const months = Number(req.body.months);
+  if (plan !== 'free' && !PLAN_TERMS.includes(months)) return res.status(400).json({ error: 'Выберите срок подписки.' });
+  // Новая подписка: месяц и счётчик - с этого момента, платная - на срок
+  // months. Устройств больше, чем разрешает новая подписка, - выход на самых
+  // давних.
   const now = Date.now();
-  store.updateUser(user, { plan, planSince: now, periodStart: now, used: 0 });
+  const planUntil = plan === 'free' ? null : now + months * PERIOD_MS;
+  store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0 });
   store.listUserSessions(user.id).slice(planOf(user).devices).forEach(s => store.deleteSessionById(user.id, s.id));
   res.json({ ok: true, quota: quotaInfo(user, now) });
 });

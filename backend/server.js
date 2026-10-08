@@ -19,6 +19,7 @@ const adminRoutes = require('./src/auth/admin');
 const standardsRoutes = require('./src/auth/standards');
 const feedbackRoutes = require('./src/auth/feedback');
 const { calcQuota } = require('./src/auth/calc-quota');
+const { makeThrottle } = require('./src/auth/throttle');
 const { publicPlans } = require('./src/auth/plans');
 const { attachUser } = require('./src/auth/session');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
@@ -76,12 +77,13 @@ app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next
 // Аккаунты: кто вошёл (req.user) и /api/auth/* (см. src/auth/routes.js).
 app.use(attachUser);
 app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', makeThrottle(), adminRoutes);
 app.use('/api/standards', standardsRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
 // Расчёты - только после входа и в пределах лимита подписки.
-app.post('/api/:type/calculate', calcQuota);
+// Не больше 60 расчётов в минуту с одного IP (сверх - ожидание, см. throttle.js).
+app.post('/api/:type/calculate', makeThrottle(), calcQuota);
 
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -
 // на входе в API фильтруем до допустимого сортаментного ряда и сортируем,
@@ -347,6 +349,18 @@ app.post('/api/iii1/calculate', (req, res) => {
   res.json(withTableEdits(computeGost10198III1(input), b.tableEdits, III1_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
+
+// Очистка хранилища аккаунтов от устаревших записей - при запуске и раз в
+// сутки (store.cleanup).
+const accountStore = require('./src/auth/store');
+function runCleanup() {
+  try {
+    const n = accountStore.cleanup(Date.now());
+    if (n) console.log(`[очистка] удалено устаревших записей: ${n}`);
+  } catch (e) { console.error('[очистка] ошибка:', e); }
+}
+runCleanup();
+setInterval(runCleanup, 24 * 3600 * 1000).unref();
 
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
 app.use(express.static(FRONTEND_DIR));

@@ -8,7 +8,7 @@
 //   4. раскладка поясов планок под итоговые толщины;
 //   5. детали узлов (дно, крышка, боковой и торцевой щиты, раскосины);
 //   6. наружные размеры, объём, масса, норма времени, предупреждения.
-const { vol, makeRoundUpToAvailable, findNegativeField, computeNormaVremeni } = require('../helpers');
+const { vol, makeRoundUpToAvailable, findNegativeField, inputLimitsError, computeNormaVremeni } = require('../helpers');
 const { packingDensity, wallThicknessI1, stepDownGrade } = require('./thickness');
 const { plankLayout, requestedPlankCount, tooManyPlanksText } = require('./plank-layout');
 const parts = require('./parts');
@@ -108,6 +108,8 @@ function computeGost10198I1(input) {
   if (!L || !W || !H || !MASS || L <= 0 || W <= 0 || H <= 0 || MASS <= 0) {
     return { error: 'Заполните все поля положительными числами.' };
   }
+  const limitsError = inputLimitsError(input);
+  if (limitsError) return { error: limitsError };
   const warnings = [];
   if (MASS < 200) warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): менее 200 кг.');
   if (MASS > 1000) warnings.push('Масса груза вне диапазона типа I-1 (200–1000 кг): более 1000 кг.');
@@ -166,6 +168,9 @@ function computeGost10198I1(input) {
   // Полоз: не тоньше 50 мм и, в отличие от остальных деталей, без
   // округления до «в наличии».
   let skidT = null;
+  if (skidEnabled && !(skidThicknessRaw > 0)) {
+    return { error: 'Укажите толщину полоза - расчёт не выполняется.' };
+  }
   if (skidEnabled) {
     skidT = ov('t9Value', Math.max(skidThicknessRaw, MIN_SKID_T), 'Толщина полоза');
     if (skidThicknessRaw < MIN_SKID_T && !(manualOverrides.t9Value > 0)) {
@@ -235,7 +240,7 @@ function computeGost10198I1(input) {
   const negField = findNegativeField(result, '');
   if (negField) {
     console.warn('Расчёт дал отрицательное значение:', negField);
-    return { error: 'При таких размерах и массе груза получаются недопустимые (отрицательные) размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
+    return { error: 'При таких размерах и массе груза получаются недопустимые размеры деталей - рассчитать ящик нельзя. Проверьте введённые размеры и массу груза.' };
   }
   return result;
 }
