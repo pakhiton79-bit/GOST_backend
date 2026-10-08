@@ -20,7 +20,15 @@ const LEGAL_HINTS = {
 function fillLegal(){
   document.querySelectorAll('[data-legal]').forEach(el => {
     const k = el.dataset.legal, v = LEGAL[k];
-    if(v){ el.textContent = v; el.classList.remove('legal-missing'); }
+    if(v && k === 'email'){
+      // Почта - ссылкой, по нажатию открывается письмо (по указанию пользователя).
+      const a = document.createElement('a');
+      a.href = 'mailto:' + v;
+      a.textContent = v;
+      el.replaceChildren(a);
+      el.classList.remove('legal-missing');
+    }
+    else if(v){ el.textContent = v; el.classList.remove('legal-missing'); }
     else if(k === 'ogrn'){ el.closest('.legal-ogrn') && (el.closest('.legal-ogrn').hidden = true); }
     else { el.textContent = '[укажите ' + (LEGAL_HINTS[k] || k) + ']'; el.classList.add('legal-missing'); }
   });
