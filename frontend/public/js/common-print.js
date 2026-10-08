@@ -122,6 +122,18 @@ function buildAndSizePrintArea(){
       wrap.dataset.baseWidth = parseFloat(wrap.style.width) || 260;
     }
   });
+
+  // Узлы с чертежами - сеткой в две колонки, чертёж над таблицей (по
+  // указанию пользователя: так чертежи крупнее). Секции без чертежа (лента,
+  // болты) и комментарий остаются под сеткой на всю ширину листа.
+  const nodeSections = Array.from(scaleBox.querySelectorAll(':scope > .print-section'))
+    .filter(s => s.querySelector('.spec-row-diagram'));
+  if(nodeSections.length){
+    const grid = document.createElement('div');
+    grid.className = 'print-grid';
+    nodeSections[0].before(grid);
+    nodeSections.forEach(s => grid.appendChild(s));
+  }
 }
 
 function printBox(){
@@ -406,15 +418,18 @@ function fitPrintAreaToOnePage(printArea){
   // запас, оставленный на расхождения между замером и реальной печатью,
   // и лист начинает переполняться на реальной печати (уходит на 2-й лист),
   // даже когда на измерение в браузере всё ещё «влезало».
+  // Секции одной строки сетки получают одинаковый отступ, поэтому остаток
+  // делится на число строк, а не секций.
   const sections = Array.from(scaleBox.querySelectorAll('.print-section'));
   sections.forEach(s=>{ s.style.marginTop = '0px'; });
+  const rows = new Set(sections.map(s => Math.round(s.getBoundingClientRect().top))).size;
   const safeContentH = contentH * 0.97;
   const slack = safeContentH - scaleBox.scrollHeight;
-  if(sections.length && slack > 0){
-    const per = Math.floor((slack / sections.length) * 0.97);
+  if(rows && slack > 0){
+    const per = Math.floor((slack / rows) * 0.97);
     sections.forEach(s=>{ s.style.marginTop = per + 'px'; });
     if(scaleBox.scrollHeight > safeContentH){
-      const fix = Math.max(0, per - Math.ceil((scaleBox.scrollHeight - safeContentH) / sections.length) - 1);
+      const fix = Math.max(0, per - Math.ceil((scaleBox.scrollHeight - safeContentH) / rows) - 1);
       sections.forEach(s=>{ s.style.marginTop = fix + 'px'; });
     }
   }

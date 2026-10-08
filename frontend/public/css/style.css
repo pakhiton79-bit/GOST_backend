@@ -1388,6 +1388,23 @@
      правый вылет подписей (пропорциональным сжатием чертежа через --dk, а не
      обрезкой) резервируются из JS (fitDiagramsForPrint). */
   #printArea .diagram-slot{flex:0 0 calc(var(--pk)*300px);width:calc(var(--pk)*300px);margin-left:calc(var(--pk)*44px);position:relative;overflow:visible;}
+  /* Узлы - сеткой в две колонки (см. buildAndSizePrintArea): заголовок,
+     чертёж, таблица. Подсетка (subgrid) выравнивает их по строкам у обеих
+     ячеек ряда: чертежи в одной полосе, таблицы начинаются на одной высоте.
+     Чертёж - по центру своей ячейки (по горизонтали - из JS). */
+  #printArea .print-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:calc(var(--pk)*22px);row-gap:0;}
+  #printArea .print-grid > .print-section{display:grid;grid-row:span 3;grid-template-rows:subgrid;min-width:0;padding-top:calc(var(--pk)*8px);}
+  #printArea .print-grid .spec-row-diagram{display:grid;grid-row:span 2;grid-template-rows:subgrid;gap:0;min-width:0;align-items:stretch;}
+  #printArea .print-grid .diagram-slot{width:auto;margin-left:0;display:flex;flex-direction:column;justify-content:center;}
+  #printArea .print-grid .spec-table{margin-top:calc(var(--pk)*4px);align-self:start;}
+  #printArea .print-grid .spec-table th, #printArea .print-grid .spec-table td{font-size:calc(var(--pk)*14px);padding:calc(var(--pk)*2px) calc(var(--pk)*3px);}
+  #printArea .print-grid .spec-table th{font-size:calc(var(--pk)*9px);}
+  #printArea .print-grid .spec-table th:first-child, #printArea .print-grid .spec-table td:first-child{width:52%;}
+  /* Длинное название детали переносится на вторую строку - иначе оно одно
+     ограничивало масштаб всего листа. */
+  #printArea .print-grid .spec-table td:first-child{white-space:normal;overflow-wrap:break-word;line-height:1.2;}
+  #printArea .print-grid .spec-table th:not(:first-child), #printArea .print-grid .spec-table td:not(:first-child){width:12%;}
+  #printArea .print-grid .part-title{font-size:calc(var(--pk)*16px);margin-bottom:0;}
   /* ширина самих чертежей проставляется из JS (у них разный масштаб);
      остальное - общие правила .diagram-wrap/.diagram-arrows/.diagram-labels */
   /* Стрелки на чертежах - при печати заметно толще, чем на экране. --dk (по
