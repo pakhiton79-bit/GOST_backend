@@ -41,7 +41,9 @@ function beamLayout(len, minEdge, beamGapValue, beamCountValue) {
 function buildKryshka(c, len, outerW) {
   const { W, MASS, wall, ov, round, warnings } = c;
   const rows = [];
-  const width = W + wall * 2; // длина планки, ширина крышки
+  // Длина планки (по указанию пользователя): ширина груза + 2 толщины
+  // обшивки бока + 2 толщины боковой планки (обе - толщина стенки).
+  const width = W + (wall + wall) * 2;
 
   // Пояса планок. Штатная раскладка считается всегда - её число и зазор
   // клиент показывает центром ползунков ручной настройки.
