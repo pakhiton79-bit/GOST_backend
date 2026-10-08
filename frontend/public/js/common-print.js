@@ -207,23 +207,38 @@ function rasterizeDiagramArrows(printArea){
   const loads = svgs.map(svg => new Promise(resolve => {
     const wrap = svg.closest('.diagram-wrap');
     const vb = svg.viewBox.baseVal;
-    const lines = Array.from(svg.querySelectorAll('line'));
-    const polygons = Array.from(svg.querySelectorAll('polygon'));
+    // Все фигуры по порядку: линии и наконечники размеров, а также выступ
+    // планки над фото (rect + path, запись plankTop в renderDiagram) - без
+    // них выступ в PDF пропадал, оставался только размер.
+    const shapes = Array.from(svg.querySelectorAll('line, polygon, rect, path'));
+    const num = (el, a) => parseFloat(el.getAttribute(a)) || 0;
+    const pathPoints = d => {
+      // Пути plankTop - только абсолютные M/L/H/V.
+      const pts = []; let x = 0, y = 0;
+      (d.match(/[MLHV][^MLHV]*/g) || []).forEach(seg=>{
+        const c = seg[0], v = seg.slice(1).trim().split(/[\s,]+/).filter(Boolean).map(Number);
+        if(c === 'H') x = v[0]; else if(c === 'V') y = v[0]; else { x = v[0]; y = v[1]; }
+        pts.push([x, y]);
+      });
+      return pts;
+    };
 
     let minX = 0, minY = 0, maxX = vb.width, maxY = vb.height;
     const extend = (x, y) => {
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     };
-    lines.forEach(l=>{
-      extend(parseFloat(l.getAttribute('x1')), parseFloat(l.getAttribute('y1')));
-      extend(parseFloat(l.getAttribute('x2')), parseFloat(l.getAttribute('y2')));
-    });
-    polygons.forEach(p=>{
-      p.getAttribute('points').trim().split(/\s+/).forEach(pair=>{
-        const [x, y] = pair.split(',').map(Number);
-        extend(x, y);
-      });
+    shapes.forEach(el=>{
+      const t = el.tagName.toLowerCase();
+      if(t === 'line'){ extend(num(el,'x1'), num(el,'y1')); extend(num(el,'x2'), num(el,'y2')); }
+      else if(t === 'polygon'){
+        el.getAttribute('points').trim().split(/\s+/).forEach(pair=>{
+          const [x, y] = pair.split(',').map(Number);
+          extend(x, y);
+        });
+      }
+      else if(t === 'rect'){ extend(num(el,'x'), num(el,'y')); extend(num(el,'x') + num(el,'width'), num(el,'y') + num(el,'height')); }
+      else if(t === 'path'){ pathPoints(el.getAttribute('d') || '').forEach(([x, y]) => extend(x, y)); }
     });
     const pad = 6; // запас на саму толщину линии вокруг крайних точек
     minX -= pad; minY -= pad; maxX += pad; maxY += pad;
@@ -240,21 +255,34 @@ function rasterizeDiagramArrows(printArea){
     ctx.scale(scaleX * dpr, scaleY * dpr);
     ctx.translate(-minX, -minY);
 
-    lines.forEach(l=>{
-      ctx.beginPath();
-      ctx.moveTo(parseFloat(l.getAttribute('x1')), parseFloat(l.getAttribute('y1')));
-      ctx.lineTo(parseFloat(l.getAttribute('x2')), parseFloat(l.getAttribute('y2')));
-      ctx.strokeStyle = l.getAttribute('stroke') || '#8A4B26';
-      ctx.lineWidth = parseFloat(l.getAttribute('stroke-width')) || 1;
-      ctx.stroke();
-    });
-    polygons.forEach(p=>{
-      const pts = p.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number));
-      ctx.beginPath();
-      pts.forEach(([x, y], i)=>{ i===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-      ctx.closePath();
-      ctx.fillStyle = p.getAttribute('fill') || '#8A4B26';
-      ctx.fill();
+    shapes.forEach(el=>{
+      const t = el.tagName.toLowerCase();
+      if(t === 'line'){
+        ctx.beginPath();
+        ctx.moveTo(num(el,'x1'), num(el,'y1'));
+        ctx.lineTo(num(el,'x2'), num(el,'y2'));
+        ctx.strokeStyle = el.getAttribute('stroke') || '#8A4B26';
+        ctx.lineWidth = num(el,'stroke-width') || 1;
+        ctx.stroke();
+      } else if(t === 'polygon'){
+        const pts = el.getAttribute('points').trim().split(/\s+/).map(pair=>pair.split(',').map(Number));
+        ctx.beginPath();
+        pts.forEach(([x, y], i)=>{ i===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+        ctx.closePath();
+        ctx.fillStyle = el.getAttribute('fill') || '#8A4B26';
+        ctx.fill();
+      } else if(t === 'rect'){
+        ctx.fillStyle = el.getAttribute('fill') || '#000';
+        ctx.fillRect(num(el,'x'), num(el,'y'), num(el,'width'), num(el,'height'));
+      } else if(t === 'path'){
+        const pts = pathPoints(el.getAttribute('d') || '');
+        ctx.beginPath();
+        pts.forEach(([x, y], i)=>{ i===0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+        ctx.strokeStyle = el.getAttribute('stroke') || '#000';
+        ctx.lineWidth = num(el,'stroke-width') || 1;
+        ctx.lineJoin = 'miter';
+        ctx.stroke();
+      }
     });
 
     const img = document.createElement('img');
