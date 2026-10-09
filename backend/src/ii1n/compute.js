@@ -174,10 +174,15 @@ function computeGost10198II1N(input) {
   // показывает центром ползунков ручной настройки.
   const torecSpace = W + s.stojkaT * 2, bokSpace = L; // бок - по длине груза
   const torecManual = input.torecPostCount > 0, bokManual = input.bokPostCount > 0;
-  const torecStandard = buildFrame(torecSpace, panelHeightFull, H, 0, input.addRaskosina);
-  const bokStandard = buildFrame(bokSpace, panelHeightFull, H, 0, input.addRaskosina);
-  const torecFrame = torecManual ? buildFrame(torecSpace, panelHeightFull, H, input.torecPostCount, input.addRaskosina) : torecStandard;
-  const bokFrame = bokManual ? buildFrame(bokSpace, panelHeightFull, H, input.bokPostCount, input.addRaskosina) : bokStandard;
+  // II-1 (новая версия, по указанию пользователя): опорных планок нет -
+  // поперечные брусья крышки лежат на каркасе, поэтому каркас обоих щитов
+  // (стойки и раскосины) ниже на толщину поперечного бруса крышки; при 2
+  // этажах - поровну (стойки каждого этажа короче на половину толщины).
+  const frameHeight = panelHeightFull - s.crossBeamT;
+  const torecStandard = buildFrame(torecSpace, frameHeight, H, 0, input.addRaskosina);
+  const bokStandard = buildFrame(bokSpace, frameHeight, H, 0, input.addRaskosina);
+  const torecFrame = torecManual ? buildFrame(torecSpace, frameHeight, H, input.torecPostCount, input.addRaskosina) : torecStandard;
+  const bokFrame = bokManual ? buildFrame(bokSpace, frameHeight, H, input.bokPostCount, input.addRaskosina) : bokStandard;
   if (torecFrame.tooNarrow) {
     return { error: `Ширина груза ${W} мм слишком мала для минимум двух стоек торцевого щита (по 100мм) - расчёт не выполняется.` };
   }

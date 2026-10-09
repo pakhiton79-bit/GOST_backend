@@ -53,6 +53,8 @@ function renderTextRow(sectionKey, rows, defaultText){
 // чертежей подписи почти не вылетают за рамку, и автосжатие их не уменьшает.
 const II1_PANEL_WIDTH = 260, II1_PANEL_LABEL_SCALE = 0.8;
 
+// Выступ обшивки щитов над каркасом - продольный + поперечный брус крышки
+// (II-1 новая версия: опорных планок нет, каркас ниже на поперечный брус).
 function renderBoardTables(calc, manualOverrides){
   const torecW = calc.W + calc.t_stojka*2;
   let html = '';
@@ -63,10 +65,10 @@ function renderBoardTables(calc, manualOverrides){
     diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.lidOverhangLong, calc.lidOverhangCross, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross, crossBeamWidth(calc.kryshka), calc.gapDistCross),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Щит торцевой (2 шт.)</div>`,
-    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),
+    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam + calc.t21, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),
     renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
-    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina),
+    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam + calc.t21, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Пергамин - под всеми узлами, попадает и в печать.
   if(calc.parchment && calc.parchment.length){

@@ -11,7 +11,8 @@ function buildEndPanel(c, s, frame, rask) {
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
   // Доски обшивки - на каждый этаж, по наружной ширине ящика.
-  const boardLen = 100 * 2 + frame.len + s.longBeamT;
+  // + толщина поперечного бруса крышки (каркас ниже на неё - см. compute.js).
+  const boardLen = 100 * 2 + frame.len + s.longBeamT + s.crossBeamT;
   const fb = fillBoards(s.outerW, c.roundBoardWidths);
   const boardQty = fb.mainQty * frame.floors;
   if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
