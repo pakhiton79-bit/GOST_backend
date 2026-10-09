@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ГОСТ 2991-85 - Тара+</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-settings.js"></script>
+<script src="/js/common-account.js"></script>
+<style>
+  .type-card{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:24px;
+    padding:20px;
+    border:1px solid var(--border-input);
+    border-radius:12px;
+    background:var(--panel);
+    text-decoration:none;
+    color:var(--ink);
+    margin-bottom:16px;
+    transition:border-color .15s ease, background-color .15s ease;
+  }
+  .type-badge{
+    position:absolute;
+    top:-10px;
+    right:16px;
+    padding:4px 12px;
+    border-radius:999px;
+    background:var(--warn);
+    color:#ffffff;
+    font-size:12px;
+    font-weight:600;
+    line-height:1.4;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+    pointer-events:none;
+  }
+  /* Более яркий (красный) вариант обычной жёлтой плашки - для типа, который
+     ещё не проверен на чертежах вовсе (см. badgeDanger в TYPES ниже). */
+  .type-badge-danger{
+    background:var(--error);
+  }
+  /* Найденные расхождения у типа уже исправлены и подтверждены контрольным
+     примером - зелёная плашка вместо жёлтой (см. badgeOk в TYPES ниже). */
+  .type-badge-ok{
+    background:var(--ok);
+  }
+  .type-card:hover{
+    border-color:var(--accent);
+    background:var(--accent-wash);
+  }
+  .type-info{flex:1;min-width:0;}
+  .type-info h3{
+    font-size:18px;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  .type-image{
+    flex:0 0 160px;
+    width:160px;
+    height:120px;
+    border-radius:8px;
+    border:1px solid var(--border-input);
+    overflow:hidden;
+    background:#ffffff;
+  }
+  .type-image img{
+    display:block;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+  }
+  @media (max-width:560px){
+    .type-card{flex-direction:column;align-items:stretch;}
+    .type-image{width:100%;flex-basis:auto;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="gosts.html">← Назад</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <header>
+    <h1>ГОСТ 2991-85</h1>
+  </header>
+
+  <div id="types"></div>
+</div>
+
+<script>
+const TYPES = [
+  {
+    name: 'Тип I',
+    file: 'g2991-i.html',
+    badge: 'Не готово',
+    badgeDanger: true
+  }
+];
+
+(function(){
+  const root = document.getElementById('types');
+  let html = '';
+  TYPES.forEach(t => {
+    const badgeClass = 'type-badge' + (t.badgeDanger ? ' type-badge-danger' : t.badgeOk ? ' type-badge-ok' : '');
+    const badge = t.badge ? `<span class="${badgeClass}">${t.badge}</span>` : '';
+    html += `<a class="type-card" href="${t.file}">
+      ${badge}
+      <div class="type-info"><h3>${t.name}</h3></div>
+      ${t.image ? `<div class="type-image"><img src="${t.image}" alt="${t.name}"></div>` : ''}
+    </a>`;
+  });
+  root.innerHTML = html;
+})();
+</script>
+</body>
+</html>

@@ -14,6 +14,7 @@ const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
+const { computeGost2991I } = require('./src/g2991/i/compute');
 const { router: authRoutes } = require('./src/auth/routes');
 const adminRoutes = require('./src/auth/admin');
 const standardsRoutes = require('./src/auth/standards');
@@ -163,6 +164,16 @@ app.post('/api/i3/calculate', (req, res) => {
   };
   res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+// ГОСТ 2991-85, тип I (заготовка: пока только толщины досок по таблице 2).
+app.post('/api/g2991i/calculate', (req, res) => {
+  const b = req.body || {};
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    noLid: !!b.noLid,
+  };
+  res.json(computeGost2991I(input));
 });
 
 // Тип I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapMax).
