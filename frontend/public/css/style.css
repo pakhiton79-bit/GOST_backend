@@ -876,10 +876,10 @@
   .version-opt:hover{background:var(--accent-wash);color:var(--ink);}
   .version-opt.active{background:var(--accent);color:#fff;cursor:default;}
   /* статус версии - контурная плашка цвета статуса (на выбранной коричневой
-     кнопке - на светлом фоне, статус коричневым не заливается) */
+     кнопке - на белом фоне в обеих темах, статус коричневым не заливается) */
   .version-badge{display:inline-block;padding:1px 9px;border:1px solid var(--warn);border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;color:var(--warn);background:transparent;}
   .version-badge-danger{border-color:var(--error);color:var(--error);}
-  .version-opt.active .version-badge{background:var(--panel);}
+  .version-opt.active .version-badge{background:#fff;}
   @media (max-width:560px){.version-switch{display:flex;}.version-opt{flex:1 1 100%;justify-content:space-between;white-space:normal;}}
   @media print{.version-switch{display:none !important;}}
   .box-name-input{
