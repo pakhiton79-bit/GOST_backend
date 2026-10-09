@@ -216,7 +216,9 @@ function computeGost10198III1(input) {
   }
   // Раскосина - не тоньше 2/3 толщины стойки щита, ширина как у стойки
   // (п.1.7.7); каркас из «Тонкой настройки» задаёт и раскосины.
-  const rask = frameT => ({ t: ov('tRaskosina', round(frameT * 2 / 3), 'Толщина раскосины'), w: 100 });
+  // Толщина раскосины - как у стоек и горизонтальных брусьев щита (по
+  // указанию пользователя; раньше - 2/3 толщины каркаса).
+  const rask = frameT => ({ t: ov('tRaskosina', round(frameT), 'Толщина раскосины'), w: 100 });
   const endPanel = buildEndPanel(c, s, torecFrame, rask(s.torFrameT));
   const bokovoy = buildBokovoy(c, s, bokFrame, rask(s.bokFrameT));
 
