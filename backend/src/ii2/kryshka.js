@@ -9,11 +9,14 @@ function buildKryshka(c, s) {
   const { L, W, warnings, skinT, optimizeSizes } = c;
   const rows = [];
 
-  const crossLen = W - (optimizeSizes ? 2 : 0);
+  // Оптимизация размеров (по умолчанию включена, галочка «Не оптимизировать
+  // размеры» её выключает; как у I-3 и I-4): брусья крышки короче на 4 мм,
+  // расстояние от края крышки до их торцов - больше на 2 мм с каждой стороны.
+  const crossLen = W - (optimizeSizes ? 4 : 0);
   rows.push({ name: 'Внутренний поперечный брус', t: s.crossBeamT, w: s.crossBeamW, l: crossLen, qty: s.crossBeamCount, overrideKey: 't21' });
   let volume = vol(s.crossBeamT, s.crossBeamW, crossLen, s.crossBeamCount);
 
-  const longLen = L + s.stojkaT * 2 - (optimizeSizes ? 2 : 0);
+  const longLen = L + s.stojkaT * 2 - (optimizeSizes ? 4 : 0);
   rows.push({ name: 'Внутренний продольный брус', t: s.longBeamT, w: s.longBeamW, l: longLen, qty: s.longBeamCount, overrideKey: 'tLongbeam' });
   volume += vol(s.longBeamT, s.longBeamW, longLen, s.longBeamCount);
 
