@@ -107,7 +107,7 @@ function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKry
     {type:'double', x1:344, y1:500, x2:801, y2:355, lx:528, ly:334, text: valBeamGap+' мм'}
   ];
   // Расстояние от бокового края крышки до торца 1-го бруса (см. diagramKryshkaDefault).
-  if(beamSideGapMm > 0) records.push(...lidSideGapRecords([436, 711], [426, 733], [0.953, -0.302], 100, 54, 48, dimLabel(beamSideGapMm)+' мм'));
+  if(beamSideGapMm > 0) records.push(...lidSideGapRecords([436, 711], [447, 733], [0.953, -0.302], 100, 54, 48, dimLabel(beamSideGapMm)+' мм'));
 
   return renderDiagram(KRYSHKA_2BEAMS_IMG_B64, 'Крышка (2 поперечных бруса) - схема расположения деталей', 1157, 839, records, null, photoStrokeScale(1157));
 }
