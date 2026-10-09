@@ -871,8 +871,8 @@
      крупные кнопки «По ГОСТ» / «Оптимальный» под заголовком, у каждой - статус
      версии (бывшие плашки карточек). Кнопки - ссылки на страницы версий
      (common-version-switch.js запоминает выбор). */
-  .version-switch{display:inline-flex;flex-wrap:wrap;max-width:100%;margin:0 0 22px;padding:4px;gap:4px;border:1px solid var(--border-input);border-radius:12px;background:var(--panel);}
-  .version-opt{display:inline-flex;align-items:center;gap:10px;padding:9px 18px;border-radius:9px;text-decoration:none;color:var(--ink-soft);font-size:16px;font-weight:600;white-space:nowrap;transition:background-color .15s ease,color .15s ease;}
+  .version-switch{display:flex;flex-wrap:wrap;margin:0 0 22px;padding:4px;gap:4px;border:1px solid var(--border-input);border-radius:12px;background:var(--panel);}
+  .version-opt{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:9px 18px;border-radius:9px;text-decoration:none;color:var(--ink-soft);font-size:16px;font-weight:600;white-space:nowrap;transition:background-color .15s ease,color .15s ease;}
   .version-opt:hover{background:var(--accent-wash);color:var(--ink);}
   .version-opt.active{background:var(--accent);color:#fff;cursor:default;}
   /* статус версии - контурная плашка цвета статуса (на выбранной коричневой
