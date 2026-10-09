@@ -84,5 +84,6 @@ function errorFieldsFor(text){
   return [];
 }
 
+document.getElementById('boxView').src = BOX_G2991_II1_IMG;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
 initDensitySettings(WOOD_DENSITY_STORAGE_KEY);

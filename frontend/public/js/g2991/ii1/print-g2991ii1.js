@@ -1,6 +1,6 @@
 // ГОСТ 2991-85, тип II-1: содержимое печатной страницы и PDF (вызывается из
-// printBox/downloadPdf в common-print.js). Как у ГОСТ 10198-91 (III-1), но
-// без общего вида ящика: сверху - груз и итог.
+// printBox/downloadPdf в common-print.js). Как у ГОСТ 10198-91 (II-1): сверху
+// общий вид ящика, рядом груз и итог.
 
 const PDF_FILE_NAME = 'gost-2991-85-raschet.pdf';
 
@@ -74,22 +74,26 @@ function buildPrintHtml(){
     <h1>ГОСТ 2991-85 · тип II-1${boxNameHtml()}</h1>
     <div class="print-subtitle">Ящик дощатый неразборный плотный, торцовые стенки на двух планках</div>
 
-    <div class="print-summary-col">
-      <div class="print-summary-block">
-        <h2>Груз</h2>
-        <table class="print-plain-table">
-          <tr><td class="k">Размеры, мм</td><td>${L} × ${W} × ${H}</td></tr>
-          <tr><td class="k">Масса, кг</td><td>${M}</td></tr>
-        </table>
-      </div>
-      <div class="print-summary-block">
-        <h2>Итог</h2>
-        <table class="print-plain-table">
-          <tr><td class="k">Наружные, мм</td><td>${outDimsText.replace(/\s*мм$/, '')}</td></tr>
-          <tr><td class="k">Пиломатериал</td><td>${volumeText}</td></tr>
-          <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
-          <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
-        </table>
+    <div class="part-title">Общий вид ящика</div>
+    <div class="spec-row-diagram">
+      <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_G2991_II1_IMG}" alt=""></div></div>
+      <div class="print-summary-col">
+        <div class="print-summary-block">
+          <h2>Груз</h2>
+          <table class="print-plain-table">
+            <tr><td class="k">Размеры, мм</td><td>${L} × ${W} × ${H}</td></tr>
+            <tr><td class="k">Масса, кг</td><td>${M}</td></tr>
+          </table>
+        </div>
+        <div class="print-summary-block">
+          <h2>Итог</h2>
+          <table class="print-plain-table">
+            <tr><td class="k">Наружные, мм</td><td>${outDimsText.replace(/\s*мм$/, '')}</td></tr>
+            <tr><td class="k">Пиломатериал</td><td>${volumeText}</td></tr>
+            <tr><td class="k">Масса ящика</td><td>${massText}</td></tr>
+            <tr><td class="k">Норма времени</td><td>${timeText}</td></tr>
+          </table>
+        </div>
       </div>
     </div>
 
