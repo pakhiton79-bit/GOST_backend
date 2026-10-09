@@ -282,7 +282,7 @@ npm start
 
 ### `POST /api/iii1/calculate`
 
-Тело - как у II-1 (кроме `fineThickness`) плюс `"bulkCargo"` (насыпной или
+Тело - как у II-1 (кроме `fineThickness`), включая `"bulkCargo"` (насыпной или
 незакреплённый груз: обшивка 19 мм вместо 16) и `"addRaskosina"` (раскосины и
 при высоте до 600 мм). В ответе дополнительно `bolts`: строки болтов
 `{ name, d, qty }`.

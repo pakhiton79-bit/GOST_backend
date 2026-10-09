@@ -97,8 +97,8 @@ function computeGost10198II1(input) {
   if (MASS < 200) {
     warnings.push(`Масса груза ${MASS} кг менее 200 кг - вне области распространения ГОСТ 10198-91 в целом (200–20000 кг). Расчёт продолжен, но результат нужно перепроверить.`);
   }
-  // Толщина досок обшивки (щиты и крышка) - черновая таблица по массе.
-  const skin = { value: ov('skinValue', round(skinThickness(MASS)), 'Толщина обшивки (доска крышки)') };
+  // Толщина досок обшивки (щиты и крышка) - п.1.6.13: 16 мм, насыпной груз - 19 мм.
+  const skin = { value: ov('skinValue', round(skinThickness(input.bulkCargo)), 'Толщина обшивки (доска крышки)') };
   const c = { ...input, availableThicknesses, skinT: skin.value, ov, round, warnings };
 
   // --- 2. Согласование размеров ---

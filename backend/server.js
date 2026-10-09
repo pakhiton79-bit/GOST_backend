@@ -266,6 +266,7 @@ app.post('/api/ii1/calculate', (req, res) => {
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
+    bulkCargo: !!b.bulkCargo,
     optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,
@@ -299,6 +300,7 @@ app.post('/api/ii2/calculate', (req, res) => {
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
+    bulkCargo: !!b.bulkCargo,
     optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,
