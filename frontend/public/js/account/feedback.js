@@ -12,7 +12,7 @@ const FB_ICONS = {
 };
 const FB_GOSTS = {
   'ГОСТ 10198-91': ['I-1', 'I-2', 'I-3', 'I-4', 'II-1', 'II-1 (оптимальный)', 'II-2', 'III-1', 'III-1 (оптимальный)'],
-  'ГОСТ 2991-85': ['I'],
+  'ГОСТ 2991-85': ['I', 'II-1'],
 };
 const FB_NO_GOST = 'Не относится к ГОСТ / не знаю';
 const FB_NO_TYPE = 'Не относится к типу ящика';
@@ -23,7 +23,7 @@ const FB_PAGES = {
   'iii1-opt.html': 'III-1 (оптимальный)',
 };
 // Страницы ГОСТ 2991-85 (тип по умолчанию).
-const FB_PAGES_2991 = { 'g2991-i.html': 'I' };
+const FB_PAGES_2991 = { 'g2991-i.html': 'I', 'g2991-ii1.html': 'II-1' };
 function fbPage(){ return location.pathname.replace(/^\//, '') || 'index.html'; }
 function fbDefaults(){
   const page = fbPage();

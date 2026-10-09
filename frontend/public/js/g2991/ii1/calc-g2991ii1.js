@@ -1,5 +1,5 @@
-// ГОСТ 2991-85, тип I: сбор входных данных, запрос расчёта на сервер
-// (POST /api/g2991i/calculate) и вывод результата. Кнопка «Рассчитать»
+// ГОСТ 2991-85, тип II-1: сбор входных данных, запрос расчёта на сервер
+// (POST /api/g2991ii1/calculate) и вывод результата. Кнопка «Рассчитать»
 // вызывает общую обёртку calculate() из common-calc-state.js, та -
 // calculateNow().
 
@@ -11,8 +11,18 @@ function buildCalcInput(){
     W: parseFloat(document.getElementById('W').value),
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
+    species: (document.querySelector('input[name="species"]:checked') || {}).value || 'conifer',
+    concentrated: document.getElementById('concentrated').checked,
+    packet: document.getElementById('packet').checked,
+    roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
+    verticalEnd: document.getElementById('verticalEnd').checked,
     noLid: document.getElementById('noLid').checked,
     availableThicknesses: thicknessPicker.get(),
+    availableWidths: widthPicker.get(),
+    mainWidth: siteMainWidth2991(),
+    tableEdits: readTableEdits(),
+    ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
+    woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
   };
 }
 
@@ -30,7 +40,7 @@ async function calculateNow(){
 
   let calc;
   try{
-    const resp = await fetch('/api/g2991i/calculate', {
+    const resp = await fetch('/api/g2991ii1/calculate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -46,13 +56,24 @@ async function calculateNow(){
     return;
   }
 
-  renderThicknessTable(calc);
+  renderSummary(calc);
+  renderBoardTables(calc);
   renderWarnings(calc.warnings);
 
   document.getElementById('results').style.display = 'block';
   setCalcStatus('check');
   showQuotaHint(calc.quota); // осталось мало расчётов - подсказка, common-account.js
 }
+
+// Правка ячейки таблицы не пересчитывает сразу: ячейка помечается
+// исправленной, расчёт - устаревшим; учтётся по «Рассчитать».
+document.getElementById('boardTables').addEventListener('input', e=>{
+  if(e.target.classList.contains('editable-cell')){
+    markCellEdited(e.target);
+    updateResetButton();
+    invalidateCalc();
+  }
+});
 
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
 // красной рамкой (highlightErrorFields в common-calc-state.js).
@@ -62,3 +83,6 @@ function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   return [];
 }
+
+initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);

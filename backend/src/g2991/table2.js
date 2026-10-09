@@ -78,11 +78,16 @@ const G2991_THICKNESSES = [9, 13, 16, 19, 22, 25];
 
 // Толщина по таблице 2 (п. 1.10): масса, длина и расчётный размер - по
 // ближайшему большему табличному значению; размер больше 800 - последняя
-// графа. maxMass - предел массы для типа (масса больше - по его строке).
+// графа. maxMass - предел массы для типа (масса больше - по его строке или
+// ближайшей большей, если предела нет среди строк).
 // Длина больше последней строки этой массы (у 25 и 35 кг нет «св. 1200») -
 // по последней строке (по указанию пользователя - «по строке 1200»).
 function table2Thickness(mass, length, size, maxMass) {
-  const masses = [...new Set(T2_ROWS.map(r => r[0]))].filter(m => !maxMass || m <= maxMass);
+  // Строки по массе - до предела типа включительно; предела нет среди строк
+  // (II-1 - 110 кг) - до ближайшей большей строки (п. 1.10: 110 -> 125).
+  const allMasses = [...new Set(T2_ROWS.map(r => r[0]))];
+  const cap = maxMass ? (allMasses.find(m => m >= maxMass) || allMasses[allMasses.length - 1]) : Infinity;
+  const masses = allMasses.filter(m => m <= cap);
   const m = masses.find(v => mass <= v) || masses[masses.length - 1];
   const rows = T2_ROWS.filter(r => r[0] === m);
   const row = rows.find(r => length <= r[1]) || rows[rows.length - 1];
@@ -97,4 +102,77 @@ function g2991RoundUp(value) {
   return G2991_THICKNESSES.find(t => t >= value) || G2991_THICKNESSES[G2991_THICKNESSES.length - 1];
 }
 
-if (typeof module !== 'undefined') module.exports = { T2_SIZES, T2_ROWS, G2991_THICKNESSES, G2991_THICKNESS_OPTIONS, table2Thickness, g2991RoundUp };
+// Ширины пиломатериала «в наличии» для ГОСТ 2991-85 (по указанию
+// пользователя): от минимальной ширины досок по ГОСТ (40 мм, таблица 4) до
+// 150 мм (максимальной в ГОСТ нет), каждые 5 мм.
+const G2991_WIDTH_OPTIONS = Array.from({ length: (150 - 40) / 5 + 1 }, (_, i) => 40 + i * 5);
+const G2991_MAIN_WIDTH_DEFAULT = 100; // основная ширина доски (меняется в общих настройках)
+
+// Сдвиг толщины на n градаций ряда 9/13/16/19/22/25 (в пределах ряда).
+function g2991Grade(t, n) {
+  let i = G2991_THICKNESSES.indexOf(t);
+  if (i < 0) i = G2991_THICKNESSES.findIndex(v => v >= t);
+  if (i < 0) i = G2991_THICKNESSES.length - 1;
+  return G2991_THICKNESSES[Math.max(0, Math.min(G2991_THICKNESSES.length - 1, i + n))];
+}
+// Поправки толщины досок по таблице 2 (п. 1.9, 1.12, 1.13): species -
+// 'birch' (береза, -1 градация) или 'softDeciduous' (мягкие лиственные,
+// +1), иначе хвойные и твёрдые лиственные - без поправки; concentrated -
+// сосредоточенная нагрузка или плотность от 3 кг/дм3 (+1); packet -
+// пакетные и контейнерные перевозки (-1 при толщине от 13 мм).
+function g2991Corrected(t, opts) {
+  const o = opts || {};
+  if (o.species === 'birch') t = g2991Grade(t, -1);
+  else if (o.species === 'softDeciduous') t = g2991Grade(t, 1);
+  if (o.concentrated) t = g2991Grade(t, 1);
+  if (o.packet && t >= 13) t = g2991Grade(t, -1);
+  return t;
+}
+// Таблица 3: доски торцовых стенок и планки (толщина × ширина) по толщине
+// досок боковых стенок, дна и крышки (наибольшей из них, п. 1.16).
+function g2991Table3(t) {
+  if (t <= 16) return { torec: 16, plankT: 16, plankW: 40 };
+  if (t <= 19) return { torec: 19, plankT: 19, plankW: 50 };
+  if (t <= 22) return { torec: 22, plankT: 22, plankW: 60 };
+  return { torec: 25, plankT: 25, plankW: 60 };
+}
+// Таблица 4: минимальная ширина досок по массе груза, мм.
+function g2991MinBoardWidth(mass) {
+  if (mass <= 25) return 40;
+  if (mass <= 55) return 50;
+  return 60;
+}
+// Ширина вверх до ближайшей «в наличии» (ничего не выбрано или больше
+// максимальной - как есть).
+function g2991RoundWidth(w, widths) {
+  if (!widths || !widths.length) return w;
+  const a = widths.find(v => v >= w);
+  return a === undefined ? w : a;
+}
+// Раскладка досок щита (как в ГОСТ 10198-91, fillBoards): основная ширина -
+// mainW; с округлением (по умолчанию) все доски основной ширины (лишнее у
+// последней доски подрежут на месте); без округления - остаток одной
+// доборной доской, а если она уже минимума таблицы 4 (minW) - остаток с
+// одной основной делится на 2 доски. Доборные - вверх до ширины «в наличии».
+function g2991FillBoards(space, mainW, roundWidths, minW, widths) {
+  space = Math.round(space);
+  if (roundWidths) return { mainQty: Math.ceil(space / mainW - 1e-9), extra: [], warn: false };
+  let mainQty = Math.floor(space / mainW + 1e-9);
+  const rem = space - mainQty * mainW;
+  let extra = [], warn = false;
+  if (rem > 0) {
+    if (rem >= minW || mainQty === 0) {
+      extra = [{ width: rem, qty: 1 }];
+      warn = rem < minW;
+    } else {
+      mainQty--;
+      const total = rem + mainW, w1 = Math.ceil(total / 2), w2 = total - w1;
+      extra = w1 === w2 ? [{ width: w1, qty: 2 }] : [{ width: w2, qty: 1 }, { width: w1, qty: 1 }];
+      warn = w2 < minW;
+    }
+  }
+  extra = extra.map(e => ({ width: g2991RoundWidth(e.width, widths), qty: e.qty }));
+  return { mainQty, extra, warn };
+}
+
+if (typeof module !== 'undefined') module.exports = { T2_SIZES, T2_ROWS, G2991_THICKNESSES, G2991_THICKNESS_OPTIONS, G2991_WIDTH_OPTIONS, G2991_MAIN_WIDTH_DEFAULT, table2Thickness, g2991RoundUp, g2991Grade, g2991Corrected, g2991Table3, g2991MinBoardWidth, g2991RoundWidth, g2991FillBoards };

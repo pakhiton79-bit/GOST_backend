@@ -16,7 +16,8 @@ const { computeGost10198II1N } = require('./src/ii1n/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { computeGost2991I } = require('./src/g2991/i/compute');
-const { G2991_THICKNESS_OPTIONS } = require('./src/g2991/table2');
+const { computeGost2991II1 } = require('./src/g2991/ii1/compute');
+const { G2991_THICKNESS_OPTIONS, G2991_WIDTH_OPTIONS } = require('./src/g2991/table2');
 const { router: authRoutes } = require('./src/auth/routes');
 const adminRoutes = require('./src/auth/admin');
 const standardsRoutes = require('./src/auth/standards');
@@ -177,6 +178,30 @@ app.post('/api/g2991i/calculate', (req, res) => {
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
   };
   res.json(computeGost2991I(input));
+});
+
+// ГОСТ 2991-85, тип II-1. Правки таблицы деталей - как у ГОСТ 10198-91
+// (ширины и всё остальное, по указанию пользователя).
+const G2991_II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 };
+app.post('/api/g2991ii1/calculate', (req, res) => {
+  const b = req.body || {};
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    species: typeof b.species === 'string' ? b.species : 'conifer',
+    packet: !!b.packet,
+    concentrated: !!b.concentrated,
+    noLid: !!b.noLid,
+    verticalEnd: !!b.verticalEnd,
+    roundBoardWidths: !!b.roundBoardWidths,
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
+    availableWidths: sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS),
+    mainWidth: toNum(b.mainWidth),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+  };
+  res.json(withTableEdits(computeGost2991II1(input), b.tableEdits, G2991_II1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
 // Тип I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapMax).

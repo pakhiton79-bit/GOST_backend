@@ -3,11 +3,13 @@
 // (по указанию пользователя): слева разделы, справа их настройки. Разделы:
 // «Оформление» - тема: как в системе / светлая / тёмная (по умолчанию - как
 // в системе), переключатель - три значка с плавно перемещающимся ползунком
-// (по образцу пользователя); «Толщины в наличии» - общие для всех типов
-// ящиков (siteAvailableThicknesses; толщины, выбранные внутри типа, - в
-// приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
-// «Сброс настроек» - отдельным разделом, сброс всех сохранённых настроек
-// сайта (resetAllSiteSettings). Справа - только
+// (по образцу пользователя); разделы по ГОСТам (по указанию пользователя):
+// «ГОСТ 10198-91» - толщины в наличии, «ГОСТ 2991-85» - толщины, ширины в
+// наличии и основная ширина доски; общие для всех типов своего ГОСТа
+// (siteAvailableThicknesses / siteAvailableWidths; выбранные внутри типа -
+// в приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
+// «Сброс настроек» - отдельным разделом: сброс толщин и ширин и сброс всех
+// сохранённых настроек сайта (resetAllSiteSettings). Справа - только
 // выбранный слева раздел. Новые настройки - разделами в
 // SITE_SETTINGS_SECTIONS.
 // Настройки - одним объектом в localStorage, общие для всех страниц сайта.
@@ -25,6 +27,19 @@ const SITE_STORAGE_PREFIX = SITE_SETTINGS_STORAGE_KEY.replace(/site-settings$/, 
 // Общие толщины «в наличии» - тот же ряд, что у типов (AVAILABLE_THICKNESS_OPTIONS
 // в js/<тип>/options.js).
 const SITE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
+// ГОСТ 2991-85: толщины - каждый 1 мм от 9 до 25 мм плюс толщины выше;
+// ширины - от 40 до 150 мм через 5 мм; основная ширина доски - 100 мм по
+// умолчанию (G2991_* в js/g2991/... и backend/src/g2991/table2.js).
+const SITE_G2991_THICKNESS_OPTIONS = [...new Set([...Array.from({ length: 17 }, (_, i) => 9 + i), ...SITE_THICKNESS_OPTIONS])].sort((a, b) => a - b);
+const SITE_G2991_WIDTH_OPTIONS = Array.from({ length: 23 }, (_, i) => 40 + i * 5);
+const SITE_G2991_MAIN_WIDTH_DEFAULT = 100;
+// Списки «в наличии» по ГОСТам: ключ в общих настройках и варианты.
+// Ключ ГОСТ 10198-91 - прежний (availableThickness), сохранённый выбор не теряется.
+const SITE_STOCK_LISTS = {
+  thickness: { key: 'availableThickness', options: SITE_THICKNESS_OPTIONS },
+  thickness2991: { key: 'availableThickness2991', options: SITE_G2991_THICKNESS_OPTIONS },
+  width2991: { key: 'availableWidth2991', options: SITE_G2991_WIDTH_OPTIONS },
+};
 
 // Значки - SVG (а не символы: те на части систем рисуются эмодзи или тофу).
 const siteIcon = body => `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
@@ -84,26 +99,46 @@ function siteThemeSwitchHtml(){
   return `<div class="theme-switch" role="radiogroup" aria-label="Тема оформления" style="--i:${idx}"><span class="theme-switch-thumb" aria-hidden="true"></span>${opts}</div>`;
 }
 
-// Общие толщины «в наличии» (по возрастанию; пусто - строго по ГОСТ).
-function siteAvailableThicknesses(){
-  const a = loadSiteSettings().availableThickness;
-  return Array.isArray(a) ? a.filter(v => SITE_THICKNESS_OPTIONS.includes(v)).sort((x, y) => x - y) : [];
+// Общие толщины и ширины «в наличии» (по возрастанию; пусто - строго по
+// ГОСТ). list - ключ SITE_STOCK_LISTS.
+function siteStockList(list){
+  const d = SITE_STOCK_LISTS[list];
+  const a = loadSiteSettings()[d.key];
+  return Array.isArray(a) ? a.filter(v => d.options.includes(v)).sort((x, y) => x - y) : [];
 }
-// Сохранить общие толщины и сообщить странице типа (она обновит свои, если
-// берёт общие).
-function saveSiteThicknesses(arr){
-  saveSiteSetting('availableThickness', arr);
-  window.dispatchEvent(new Event('site-thickness-change'));
+// Толщины своего ГОСТа: gost '2991' - ГОСТ 2991-85, иначе ГОСТ 10198-91.
+function siteAvailableThicknesses(gost){
+  return siteStockList(gost === '2991' ? 'thickness2991' : 'thickness');
 }
-function siteThicknessHtml(){
-  const sel = siteAvailableThicknesses();
-  const boxes = SITE_THICKNESS_OPTIONS.map(t =>
+function siteAvailableWidths(){ return siteStockList('width2991'); }
+// Основная ширина доски ГОСТ 2991-85.
+function siteMainWidth2991(){
+  const w = loadSiteSettings().mainWidth2991;
+  return SITE_G2991_WIDTH_OPTIONS.includes(w) ? w : SITE_G2991_MAIN_WIDTH_DEFAULT;
+}
+// Сохранить общий список и сообщить странице типа (она обновит свои, если
+// берёт общие): событие site-thickness-change (detail.list - какой список).
+function saveSiteStockList(list, arr){
+  saveSiteSetting(SITE_STOCK_LISTS[list].key, arr);
+  window.dispatchEvent(new CustomEvent('site-thickness-change', { detail: { list } }));
+}
+function saveSiteThicknesses(arr){ saveSiteStockList('thickness', arr); }
+function siteStockListHtml(list){
+  const d = SITE_STOCK_LISTS[list], sel = siteStockList(list);
+  const boxes = d.options.map(t =>
     `<label><input type="checkbox" value="${t}"${sel.includes(t) ? ' checked' : ''}> ${t} мм</label>`).join('');
   return `<div class="thickness-dropdown-actions">
-      <button type="button" class="btn-secondary" data-site-thickness-all="1">Выбрать все</button>
-      <button type="button" class="btn-secondary" data-site-thickness-all="0">Снять все</button>
+      <button type="button" class="btn-secondary" data-site-list-all="1" data-site-list="${list}">Выбрать все</button>
+      <button type="button" class="btn-secondary" data-site-list-all="0" data-site-list="${list}">Снять все</button>
     </div>
-    <div class="thickness-checkbox-list" id="siteThicknessList">${boxes}</div>`;
+    <div class="thickness-checkbox-list" data-site-list-box="${list}">${boxes}</div>`;
+}
+function siteThicknessHtml(){ return siteStockListHtml('thickness'); }
+// Основная ширина доски ГОСТ 2991-85 - один вариант из списка ширин.
+function siteMainWidthHtml(){
+  const cur = siteMainWidth2991();
+  return `<div class="thickness-checkbox-list" id="siteMainWidth2991">${SITE_G2991_WIDTH_OPTIONS.map(w =>
+    `<label><input type="radio" name="siteMainWidth2991" value="${w}"${w === cur ? ' checked' : ''}> ${w} мм</label>`).join('')}</div>`;
 }
 
 // Сброс всех толщин (по указанию пользователя): после подтверждения
@@ -111,13 +146,13 @@ function siteThicknessHtml(){
 // <префикс><тип>-available-thickness), страница перезагружается - везде
 // расчёт строго по ГОСТ, пока толщины не выберут заново.
 function resetAllThicknesses(){
-  if(!window.confirm('Сбросить все толщины? Общие толщины и толщины, выбранные внутри типов ящиков, будут сняты - везде расчёт строго по ГОСТ, пока не выберете толщины заново.')) return;
-  saveSiteSetting('availableThickness', []);
+  if(!window.confirm('Сбросить все толщины и ширины? Общие и выбранные внутри типов ящиков толщины и ширины в наличии будут сняты - везде расчёт строго по ГОСТ, пока не выберете их заново.')) return;
+  Object.values(SITE_STOCK_LISTS).forEach(d => saveSiteSetting(d.key, []));
   try{
     const keys = [];
     for(let i = 0; i < localStorage.length; i++){
       const k = localStorage.key(i);
-      if(k && k.indexOf(SITE_STORAGE_PREFIX) === 0 && /-available-thickness$/.test(k)) keys.push(k);
+      if(k && /-available-(thickness|width)$/.test(k)) keys.push(k);
     }
     keys.forEach(k => localStorage.removeItem(k));
   }catch(e){}
@@ -133,7 +168,7 @@ function resetAllSiteSettings(){
     const keys = [];
     for(let i = 0; i < localStorage.length; i++){
       const k = localStorage.key(i);
-      if(k && k.indexOf(SITE_STORAGE_PREFIX) === 0) keys.push(k);
+      if(k && (k.indexOf(SITE_STORAGE_PREFIX) === 0 || k.indexOf(SITE_STORAGE_PREFIX.replace('10198', '2991')) === 0)) keys.push(k);
     }
     keys.forEach(k => localStorage.removeItem(k));
   }catch(e){}
@@ -151,23 +186,42 @@ const SITE_SETTINGS_SECTIONS = [
     }],
   },
   {
-    id: 'thickness', title: 'Толщины в наличии',
+    id: 'gost10198', title: 'ГОСТ 10198-91',
     rows: () => [{
-      title: 'Общие толщины в наличии',
-      hint: 'По умолчанию берутся во всех типах ящиков. Толщины, выбранные внутри типа, - в приоритете. Ничего не выбрано - расчёт строго по ГОСТ.',
-      control: siteThicknessHtml,
+      title: 'Толщины в наличии',
+      hint: 'По умолчанию берутся во всех типах ящиков ГОСТ 10198-91. Толщины, выбранные внутри типа, - в приоритете. Ничего не выбрано - расчёт строго по ГОСТ.',
+      control: () => siteStockListHtml('thickness'),
+      wide: true,
+    }],
+  },
+  {
+    id: 'gost2991', title: 'ГОСТ 2991-85',
+    rows: () => [{
+      title: 'Толщины в наличии',
+      hint: 'Для всех типов ящиков ГОСТ 2991-85: каждый 1 мм от 9 до 25 мм и толщины выше. Выбранные внутри типа - в приоритете. Ничего не выбрано - строго по ГОСТ.',
+      control: () => siteStockListHtml('thickness2991'),
       wide: true,
     }, {
-      title: 'Сбросить все толщины',
-      hint: 'Снимаются и общие толщины, и толщины, выбранные внутри типов ящиков, - везде расчёт строго по ГОСТ, пока не выберете толщины заново.',
-      control: () => '<button type="button" class="btn-secondary" id="siteThicknessReset">Сбросить</button>',
+      title: 'Ширины в наличии',
+      hint: 'Доборные доски и планки - вверх до ближайшей ширины в наличии. Ничего не выбрано - ширины как получились по расчёту.',
+      control: () => siteStockListHtml('width2991'),
+      wide: true,
+    }, {
+      title: 'Основная ширина доски',
+      hint: 'Ширина основных досок щитов, дна и крышки (по умолчанию 100 мм); остаток закрывают доборные доски.',
+      control: siteMainWidthHtml,
+      wide: true,
     }],
   },
   {
     id: 'reset', title: 'Сброс настроек',
     rows: () => [{
+      title: 'Сбросить все толщины и ширины',
+      hint: 'Снимаются общие и выбранные внутри типов ящиков толщины и ширины в наличии (все ГОСТы) - везде расчёт строго по ГОСТ, пока не выберете их заново.',
+      control: () => '<button type="button" class="btn-secondary" id="siteThicknessReset">Сбросить</button>',
+    }, {
       title: 'Сбросить все настройки',
-      hint: 'Толщины в наличии, галочки и поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема - на всех страницах сайта вернутся к значениям по умолчанию.',
+      hint: 'Толщины и ширины в наличии, галочки и поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема - на всех страницах сайта вернутся к значениям по умолчанию.',
       control: () => '<button type="button" class="btn-secondary" id="siteSettingsReset">Сбросить</button>',
     }],
   },
@@ -270,17 +324,24 @@ function initSiteSettings(){
     if(opt) selectTheme(opt);
     if(e.target.closest('#siteSettingsReset')) resetAllSiteSettings();
     if(e.target.closest('#siteThicknessReset')) resetAllThicknesses();
-    const all = e.target.closest('[data-site-thickness-all]');
+    const all = e.target.closest('[data-site-list-all]');
     if(all){
-      const on = all.dataset.siteThicknessAll === '1';
-      content.querySelectorAll('#siteThicknessList input').forEach(i => { i.checked = on; });
-      saveSiteThicknesses(on ? SITE_THICKNESS_OPTIONS.slice() : []);
+      const on = all.dataset.siteListAll === '1', list = all.dataset.siteList;
+      content.querySelectorAll(`[data-site-list-box="${list}"] input`).forEach(i => { i.checked = on; });
+      saveSiteStockList(list, on ? SITE_STOCK_LISTS[list].options.slice() : []);
     }
   });
-  // Галочки общих толщин - сохраняются сразу.
+  // Галочки общих толщин и ширин и основная ширина - сохраняются сразу.
   content.addEventListener('change', e => {
-    if(!e.target.closest('#siteThicknessList')) return;
-    saveSiteThicknesses(Array.from(content.querySelectorAll('#siteThicknessList input:checked')).map(i => parseInt(i.value, 10)));
+    const box = e.target.closest('[data-site-list-box]');
+    if(box){
+      saveSiteStockList(box.dataset.siteListBox, Array.from(box.querySelectorAll('input:checked')).map(i => parseInt(i.value, 10)));
+      return;
+    }
+    if(e.target.name === 'siteMainWidth2991'){
+      saveSiteSetting('mainWidth2991', parseInt(e.target.value, 10));
+      window.dispatchEvent(new CustomEvent('site-thickness-change', { detail: { list: 'mainWidth2991' } }));
+    }
   });
   // Стрелки - по вариантам, как у обычной группы переключателей.
   content.addEventListener('keydown', e => {
