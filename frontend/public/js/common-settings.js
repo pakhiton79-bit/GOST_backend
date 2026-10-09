@@ -3,9 +3,9 @@
 // (по указанию пользователя): слева разделы, справа их настройки. Разделы:
 // «Оформление» - тема: как в системе / светлая / тёмная (по умолчанию - как
 // в системе), переключатель - три значка с плавно перемещающимся ползунком
-// (по образцу пользователя); разделы по ГОСТам (по указанию пользователя):
-// «ГОСТ 10198-91» - толщины в наличии, «ГОСТ 2991-85» - толщины, ширины в
-// наличии и основная ширина доски; общие для всех типов своего ГОСТа
+// (по образцу пользователя); «Пиломатериал в наличии» - подзаголовками по
+// ГОСТам (по указанию пользователя): ГОСТ 10198-91 - толщины, ГОСТ 2991-85 -
+// толщины, ширины и основная ширина доски; общие для всех типов своего ГОСТа
 // (siteAvailableThicknesses / siteAvailableWidths; выбранные внутри типа -
 // в приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
 // «Сброс настроек» - отдельным разделом: сброс толщин и ширин и сброс всех
@@ -186,17 +186,14 @@ const SITE_SETTINGS_SECTIONS = [
     }],
   },
   {
-    id: 'gost10198', title: 'ГОСТ 10198-91',
-    rows: () => [{
+    // Оба ГОСТа - в одном разделе (по указанию пользователя), подзаголовками.
+    id: 'stock', title: 'Пиломатериал в наличии',
+    rows: () => [{ group: 'ГОСТ 10198-91' }, {
       title: 'Толщины в наличии',
       hint: 'По умолчанию берутся во всех типах ящиков ГОСТ 10198-91. Толщины, выбранные внутри типа, - в приоритете. Ничего не выбрано - расчёт строго по ГОСТ.',
       control: () => siteStockListHtml('thickness'),
       wide: true,
-    }],
-  },
-  {
-    id: 'gost2991', title: 'ГОСТ 2991-85',
-    rows: () => [{
+    }, { group: 'ГОСТ 2991-85' }, {
       title: 'Толщины в наличии',
       hint: 'Для всех типов ящиков ГОСТ 2991-85: каждый 1 мм от 9 до 25 мм и толщины выше. Выбранные внутри типа - в приоритете. Ничего не выбрано - строго по ГОСТ.',
       control: () => siteStockListHtml('thickness2991'),
@@ -232,7 +229,7 @@ function siteSettingsContentHtml(){
     `<a class="site-settings-nav-item${i === 0 ? ' active' : ''}" href="#site-settings-${s.id}" data-section="${s.id}">${s.title}</a>`).join('');
   const sections = SITE_SETTINGS_SECTIONS.map((s, i) => `<section class="site-settings-section${i === 0 ? ' active' : ''}" id="site-settings-${s.id}">
       <h3>${s.title}</h3>
-      ${s.rows().map(r => `<div class="site-settings-row${r.wide ? ' site-settings-row-wide' : ''}">
+      ${s.rows().map(r => r.group ? `<div class="site-settings-group">${r.group}</div>` : `<div class="site-settings-row${r.wide ? ' site-settings-row-wide' : ''}">
         <div class="site-settings-row-text"><div class="site-settings-row-title">${r.title}</div><div class="site-settings-row-hint">${r.hint}</div></div>
         <div class="site-settings-row-control">${r.control()}</div>
       </div>`).join('')}

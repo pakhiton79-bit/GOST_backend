@@ -255,6 +255,9 @@
     border-bottom:1px solid var(--rule);
   }
   .site-settings-row-title{font-size:16px;font-weight:500;color:var(--ink);}
+  /* подзаголовок ГОСТа внутри раздела настроек («Пиломатериал в наличии») */
+  .site-settings-group{margin:22px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--border-input);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);}
+  .site-settings-section h3 + .site-settings-group{margin-top:4px;}
   .site-settings-row-hint{margin-top:4px;font-size:13px;font-weight:400;line-height:1.45;color:var(--ink-soft);}
   .site-settings-row-control{flex:0 0 auto;}
   /* Строка с крупным элементом (список общих толщин) - элемент под текстом,
