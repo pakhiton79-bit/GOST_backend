@@ -1,11 +1,12 @@
 // ГОСТ 2991-85, тип II-1: чертежи узлов - плоские схемы (SVG, как щиты
 // III-1): узел - белый прямоугольник без досок (по указанию пользователя),
-// планки торца - белые поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
+// планки торца - светло-серые поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
 // (у дна и крышки - ширина), у торца ещё расстояние между планками.
 // Размеры - из расчёта (calc.drawing).
 const G2991_PANEL_IW = 2222;                       // ширина картинки
 const G2991_PANEL_MIN_RATIO = 0.3, G2991_PANEL_MAX_RATIO = 1.2; // пределы высоты кадра, доли ширины
 const G2991_PANEL_WIDTH = 260, G2991_PANEL_LABEL_SCALE = 0.8;
+const G2991_PLANK_FILL = '#d9d9d9'; // планки торца - светло-серые (по указанию пользователя)
 
 // lenMm × heightMm - габариты узла; boards - 'edges' (только 2 доски у
 // верхнего и нижнего края - «Без крышки»), иначе - сплошной щит; planks - 'v' (2 планки у
@@ -29,8 +30,8 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
   // Планки - по краям, вдвое шире обычной детали на экране (по указанию
   // пользователя: были тонковаты), но не больше 1/5 щита.
   const pw = Math.min(2 * drawnMemberWidth(ks), (planks === 'v' ? IW : IH) / 5);
-  if(planks === 'v') shapes += rect(0, 0, pw, IH, '#fff') + rect(IW - pw, 0, IW, IH, '#fff');
-  if(planks === 'h') shapes += rect(0, 0, IW, pw, '#fff') + rect(0, IH - pw, IW, IH, '#fff');
+  if(planks === 'v') shapes += rect(0, 0, pw, IH, G2991_PLANK_FILL) + rect(IW - pw, 0, IW, IH, G2991_PLANK_FILL);
+  if(planks === 'h') shapes += rect(0, 0, IW, pw, G2991_PLANK_FILL) + rect(0, IH - pw, IW, IH, G2991_PLANK_FILL);
   const outline = boards === 'edges'
     ? `<rect x="${f(stroke/2)}" y="${f(stroke/2)}" width="${f(IW-stroke)}" height="${f(IH-stroke)}" fill="none" stroke="#000" stroke-width="${f(stroke)}" stroke-dasharray="${f(6*ks)} ${f(4*ks)}"/>`
     : `<rect x="${f(stroke/2)}" y="${f(stroke/2)}" width="${f(IW-stroke)}" height="${f(IH-stroke)}" fill="none" stroke="#000" stroke-width="${f(stroke)}"/>`;

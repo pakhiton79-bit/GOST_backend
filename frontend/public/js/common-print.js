@@ -362,7 +362,8 @@ function downloadPdf(){
     // качестве. При 0.92 файл на порядок легче, а текст/линии остаются
     // чёткими для печатной документации такого рода.
     doc.addImage(canvas.toDataURL('image/jpeg', 0.92), 'JPEG', m, m, w, h);
-    doc.save('gost-10198-91-raschet.pdf');
+    // Имя файла - своё у ГОСТа страницы (PDF_FILE_NAME в print-*.js), иначе ГОСТ 10198-91.
+    doc.save(typeof PDF_FILE_NAME === 'string' ? PDF_FILE_NAME : 'gost-10198-91-raschet.pdf');
   }).catch(() => {
     refuseAction('Не удалось создать PDF-файл. Попробуйте ещё раз или воспользуйтесь кнопкой «Печать» (в диалоге печати можно сохранить как PDF).');
   }).finally(() => { endPrintJob('pdf', prev); });
