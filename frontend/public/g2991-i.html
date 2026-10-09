@@ -13,6 +13,7 @@
 <script src="/js/common-settings.js"></script>
 <script src="/js/common-account.js"></script>
 
+
 <style media="print">
   @page{ size:A4 portrait; margin:8mm; }
   body > *:not(#printArea){ display:none !important; }
@@ -60,62 +61,139 @@
   </div>
 
   <div class="card" id="thicknessCard"></div>
+  <div class="card" id="widthCard"></div>
 
   <div class="card">
     <h2>Дополнительные опции</h2>
     <div class="fastening-option-list">
+      <div class="option-group-title">Доски</div>
+      <label>
+        <input type="checkbox" id="noRoundBoardWidths">
+        <span>Не округлять ширину досок<span class="option-hint">Остаток закрывают доборные доски (не уже минимума таблицы 4). Без галочки все доски основной ширины (100 мм, меняется в общих настройках): лишнее у последней доски подрежут на месте</span></span>
+      </label>
+      <div class="option-group-title">Конструкция</div>
       <label>
         <input type="checkbox" id="noLid">
-        <span>Без крышки<span class="option-hint">Вместо крышки 2 доски толщиной как у дна и шириной 40-60 мм у верхних кромок стенок (п. 1.2)</span></span>
+        <span>Без крышки<span class="option-hint">Вместо крышки 2 доски толщиной как у дна и шириной 50 мм (п. 1.2)</span></span>
       </label>
     </div>
   </div>
 
   <div class="card action-card">
     <button id="calcBtn" onclick="calculate()">Рассчитать</button>
+    <button type="button" class="btn-secondary reset-btn" id="resetEditsBtn" onclick="resetTableEdits()" hidden>Сбросить до стандартных значений</button>
     <span class="calc-status">
       <span class="calc-loading" id="calcLoading"><span class="spinner" aria-hidden="true"></span>Идёт расчёт…</span>
+      <span class="calc-loading" id="calcPrinting"><span class="spinner" aria-hidden="true"></span>Подготовка к печати…</span>
+      <span class="calc-loading" id="calcPdf"><span class="spinner" aria-hidden="true"></span>Создание PDF-файла…</span>
       <span class="calc-check" id="calcCheck"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><polyline points="3.5 8.5 6.5 11.5 12.5 4.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Расчёт выполнен</span>
       <span class="calc-outdated" id="calcOutdated"><span class="mark"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="8" y1="4" x2="8" y2="8.7" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="8" cy="11.3" r="1.1" fill="#fff"/></svg></span>Нажмите «Рассчитать»</span>
       <span class="calc-error" id="calcError"><span class="mark mark-error"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>Расчёт не проведён</span>
+    </span>
+    <span class="print-actions">
+      <button class="print-btn btn-secondary" onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5V2.5h7v3"/><rect x="3" y="5.5" width="10" height="5" rx="0.8"/><path d="M4.5 9.5v4h7v-4"/><line x1="6" y1="11.5" x2="10" y2="11.5"/></svg>Печать</button>
+      <button class="print-btn btn-secondary" onclick="downloadPdf()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v6.5"/><path d="M5 6.5 8 9.5 11 6.5"/><path d="M3.5 12.5h9"/></svg>Скачать PDF</button>
     </span>
     <div class="error" id="err"></div>
   </div>
 
   <div id="results">
-    <div class="note note-danger" id="notReadyNote"><b>Тип I ещё не готов.</b> Пока рассчитываются только толщины досок по таблице 2 ГОСТ 2991-85. Детали, расход пиломатериала, масса ящика и норма времени появятся позже.</div>
+    <div class="note note-danger" id="notReadyNote"><b>Тип I ещё не готов.</b> Результат нельзя использовать в производстве.</div>
     <div class="note" id="warningsTop" style="margin-bottom:16px;"></div>
 
     <div class="card">
       <h2>Итог</h2>
-      <div class="summary summary-4">
-        <div>
-          <div class="label">Внутренние размеры</div>
-          <div class="value" id="outInner">- <span>мм</span></div>
-        </div>
-        <div>
-          <div class="label">Масса груза</div>
-          <div class="value" id="outCargoMass">- <span>кг</span></div>
+      <div class="summary-row">
+        <img class="box-view" id="boxView" alt="Общий вид ящика">
+        <div class="summary summary-4">
+          <div>
+            <div class="label">Наружные размеры</div>
+            <div class="value" id="outDims">- <span>мм</span></div>
+          </div>
+          <div>
+            <div class="label">Расход пило&shy;материала</div>
+            <div class="value" id="outVolume">- <span>м³</span></div>
+          </div>
+          <div class="time-tile">
+            <div class="label">Масса ящика</div>
+            <button type="button" class="time-settings-btn" id="densitySettingsBtn" onclick="onDensitySettingsOpen()" aria-label="Настройки плотности древесины" title="Плотность древесины">⚙</button>
+            <div class="value" id="outMass">- <span>кг</span></div>
+          </div>
+          <div class="time-tile">
+            <div class="label">Норма времени</div>
+            <button type="button" class="time-settings-btn" id="timeSettingsBtn" onclick="onTimeSettingsOpen()" aria-label="Настройки нормы времени" title="Настройки нормы времени">⚙</button>
+            <div class="value" id="outTime">- <span>ч</span></div>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>Толщины досок</h2>
-      <div id="thicknessTable"></div>
+      <h2>Спецификация досок</h2>
+      <div id="boardTables"></div>
+    </div>
+
+    <div class="card">
+      <h2>Комментарий</h2>
+      <textarea id="userComment" class="comment-field" placeholder="Заметки по расчёту, пожелания заказчика, особенности партии и т.п. - попадут и в печатную версию."></textarea>
     </div>
 
     <div class="disclaimer" style="margin-top:20px;">Калькулятор может ошибаться. Проверяйте результаты перед использованием в производстве.</div>
+  </div>
+
+  <div class="modal-overlay" id="densitySettingsOverlay" onclick="onDensitySettingsOverlayClick(event)" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close" onclick="onDensitySettingsClose()" aria-label="Закрыть">✕</button>
+      <h3>Настройки массы ящика</h3>
+      <div class="modal-field">
+        <label id="woodDensityLabel" for="woodDensityInput">Плотность древесины, кг/м³</label>
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="woodDensitySlider" aria-labelledby="woodDensityLabel"></div>
+          <input type="number" id="woodDensityInput" step="10" min="1" oninput="onWoodDensityInputChange()">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="timeSettingsOverlay" onclick="onTimeSettingsOverlayClick(event)" hidden>
+    <div class="modal-box">
+      <button type="button" class="modal-close" onclick="onTimeSettingsClose()" aria-label="Закрыть">✕</button>
+      <h3>Настройки нормы времени</h3>
+      <div class="modal-field">
+        <label id="baseProductivityLabel" for="baseProductivityInput">Базовая производительность, м³/ч</label>
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="baseProductivitySlider" aria-labelledby="baseProductivityLabel"></div>
+          <input type="number" id="baseProductivityInput" step="0.01" min="0.01" oninput="onBaseProductivityInputChange()">
+        </div>
+      </div>
+      <div class="modal-field">
+        <label id="timeCoeffLabel" for="timeCoeffInput">Коэффициент времени</label>
+        <div class="modal-slider-row">
+          <div class="jump-slider" id="timeCoeffSlider" aria-labelledby="timeCoeffLabel"></div>
+          <input type="number" id="timeCoeffInput" step="0.01" min="0.01" oninput="onTimeCoeffInputChange()">
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="tooNarrow">Экран слишком узкий для отображения калькулятора.<br>Разверните окно или используйте устройство с более широким экраном.</div>
 
+<div id="printArea"><div id="printScale"></div></div>
+
+<script src="/js/vendor/html2canvas.min.js"></script>
+<script src="/js/vendor/jspdf.umd.min.js"></script>
 <script src="/js/common-calc-state.js"></script>
 <script src="/js/common-table-edits.js"></script>
+<script src="/js/common-timesettings.js"></script>
+<script src="/js/common-diagrams.js"></script>
+<script src="/js/common-diagram-fit.js"></script>
+<script src="/js/g2991/ii1/diagrams/panels.js"></script>
+<script src="/js/g2991/i/diagrams.js"></script>
 <script src="/js/g2991/stock.js"></script>
 <script src="/js/g2991/i/options.js"></script>
 <script src="/js/g2991/i/render-g2991i.js"></script>
+<script src="/js/common-print.js"></script>
+<script src="/js/g2991/i/print-g2991i.js"></script>
 <script src="/js/g2991/i/calc-g2991i.js"></script>
 </body>
 </html>

@@ -169,15 +169,23 @@ app.post('/api/i3/calculate', (req, res) => {
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
-// ГОСТ 2991-85, тип I (заготовка: пока только толщины досок по таблице 2).
+// ГОСТ 2991-85, тип I. Правки таблицы деталей - как у II-1.
+const G2991_I_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 };
 app.post('/api/g2991i/calculate', (req, res) => {
   const b = req.body || {};
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     noLid: !!b.noLid,
+    roundBoardWidths: !!b.roundBoardWidths,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
+    availableWidths: sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS),
+    mainWidth: toNum(b.mainWidth),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
   };
-  res.json(computeGost2991I(input));
+  res.json(withTableEdits(computeGost2991I(input), b.tableEdits, G2991_I_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 
 // ГОСТ 2991-85, тип II-1. Правки таблицы деталей - как у ГОСТ 10198-91

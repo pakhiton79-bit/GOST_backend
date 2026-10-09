@@ -11,8 +11,14 @@ function buildCalcInput(){
     W: parseFloat(document.getElementById('W').value),
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
+    roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
     noLid: document.getElementById('noLid').checked,
     availableThicknesses: thicknessPicker.get(),
+    availableWidths: widthPicker.get(),
+    mainWidth: siteMainWidth2991(),
+    tableEdits: readTableEdits(),
+    ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
+    woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
   };
 }
 
@@ -46,13 +52,24 @@ async function calculateNow(){
     return;
   }
 
-  renderThicknessTable(calc);
+  renderSummary(calc);
+  renderBoardTables(calc);
   renderWarnings(calc.warnings);
 
   document.getElementById('results').style.display = 'block';
   setCalcStatus('check');
   showQuotaHint(calc.quota); // осталось мало расчётов - подсказка, common-account.js
 }
+
+// Правка ячейки таблицы не пересчитывает сразу: ячейка помечается
+// исправленной, расчёт - устаревшим; учтётся по «Рассчитать».
+document.getElementById('boardTables').addEventListener('input', e=>{
+  if(e.target.classList.contains('editable-cell')){
+    markCellEdited(e.target);
+    updateResetButton();
+    invalidateCalc();
+  }
+});
 
 // Поля, из-за которых расчёт заблокирован (по тексту ошибки), - подсвечиваются
 // красной рамкой (highlightErrorFields в common-calc-state.js).
@@ -62,3 +79,7 @@ function errorFieldsFor(text){
   if(/Заполните все поля/.test(text)) return ['L','W','H','M'].filter(id => !(parseFloat(document.getElementById(id).value) > 0));
   return [];
 }
+
+document.getElementById('boxView').src = BOX_G2991_I_IMG;
+initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
