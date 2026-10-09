@@ -26,8 +26,9 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
     const bw = drawnMemberWidth(ks);
     shapes += rect(0, 0, IW, bw, '#fff') + rect(0, IH - bw, IW, IH, '#fff');
   }
-  // Планки - шириной детали на экране, по краям.
-  const pw = drawnMemberWidth(ks);
+  // Планки - по краям, вдвое шире обычной детали на экране (по указанию
+  // пользователя: были тонковаты), но не больше 1/5 щита.
+  const pw = Math.min(2 * drawnMemberWidth(ks), (planks === 'v' ? IW : IH) / 5);
   if(planks === 'v') shapes += rect(0, 0, pw, IH, '#fff') + rect(IW - pw, 0, IW, IH, '#fff');
   if(planks === 'h') shapes += rect(0, 0, IW, pw, '#fff') + rect(0, IH - pw, IW, IH, '#fff');
   const outline = boards === 'edges'
