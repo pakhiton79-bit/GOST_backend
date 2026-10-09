@@ -263,13 +263,9 @@ app.post('/api/ii1/calculate', (req, res) => {
   if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
     return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
   }
-  if (b.lidLayout !== 'longitudinal' && b.lidLayout !== 'transverse') {
-    return res.status(400).json({ error: 'lidLayout должен быть "longitudinal" или "transverse".' });
-  }
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
-    lidLayout: b.lidLayout,
     optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,
@@ -300,13 +296,9 @@ app.post('/api/ii2/calculate', (req, res) => {
   if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
     return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
   }
-  if (b.lidLayout !== 'longitudinal' && b.lidLayout !== 'transverse') {
-    return res.status(400).json({ error: 'lidLayout должен быть "longitudinal" или "transverse".' });
-  }
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     fasteningType: b.fasteningType,
-    lidLayout: b.lidLayout,
     optimizeSizes: !!b.optimizeSizes,
     removeFloorBoards: !!b.removeFloorBoards,
     removeSkidBoards: !!b.removeSkidBoards,

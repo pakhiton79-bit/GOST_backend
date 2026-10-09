@@ -83,17 +83,14 @@ function stabilizeSizes(c) {
     stojkaT = ov('tStojka', round(stj.t), 'Толщина стойки');
     stojkaExceeded = stj.exceeded;
 
-    // Продольные брусья крышки - только при поперечном расположении досок.
-    if (c.lidLayout === 'transverse') {
-      longBeamCount = minCountBySpan(W, 100, LONG_BEAM_MAX_AXIS);
-      const longBeamAxis = clearGapBySpan(W, 100, longBeamCount) + 100; // ось-в-ось
-      const crossBeamAxis = (L + CROSS_BEAM_W) / (crossBeamCount + 1);
-      const lb = longBeamSection(crossBeamAxis, c.roundBoardWidths, longBeamAxis);
-      longBeamT = ov('tLongbeam', round(lb.t), 'Толщина продольного бруса крышки');
-      longBeamW = lb.w; longBeamExceeded = lb.exceeded;
-    } else {
-      longBeamT = 0; longBeamW = 100; longBeamCount = 0;
-    }
+    // Продольные брусья крышки (доски крышки - всегда поперёк ящика, по
+    // указанию пользователя продольное расположение убрано).
+    longBeamCount = minCountBySpan(W, 100, LONG_BEAM_MAX_AXIS);
+    const longBeamAxis = clearGapBySpan(W, 100, longBeamCount) + 100; // ось-в-ось
+    const crossBeamAxis = (L + CROSS_BEAM_W) / (crossBeamCount + 1);
+    const lb = longBeamSection(crossBeamAxis, c.roundBoardWidths, longBeamAxis);
+    longBeamT = ov('tLongbeam', round(lb.t), 'Толщина продольного бруса крышки');
+    longBeamW = lb.w; longBeamExceeded = lb.exceeded;
   }
 
   return {

@@ -16,7 +16,7 @@ const FINE_THICKNESS_FIELDS = [
   { key: 'frame',     label: 'Каркас (стойки и раскосины)' },
   { key: 'skin',      label: 'Доски обшивки' },
   { key: 'crossBeam', label: 'Поперечные брусья крышки' },
-  { key: 'longBeam',  label: 'Продольные брусья крышки', hint: 'при досках крышки поперёк ящика' },
+  { key: 'longBeam',  label: 'Продольные брусья крышки' },
 ];
 const FINE_THICKNESS_STORAGE_KEY = OPTIONS_STORAGE_PREFIX + 'fineThickness';
 

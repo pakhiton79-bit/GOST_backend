@@ -80,7 +80,7 @@ function makeThicknessOverrides(manualOverrides, fine) {
 
 // input: { L, W, H, MASS, fasteningType ('skid' | 'floor_boards'),
 //   solidRigidBase, removeFloorBoards, removeSkidBoards, forkliftLoading,
-//   roundBoardWidths, lidLayout ('longitudinal' | 'transverse'), optimizeSizes,
+//   roundBoardWidths, optimizeSizes,
 //   xRaskosina, addRaskosina (раскосины и при высоте до 600 мм), torecPostCount, bokPostCount (число стоек вручную; нет - штатно),
 //   lidCrossBeamCount (число поперечных брусьев крышки вручную; нет - штатно),
 //   boardGapMax (наибольший промежуток между досками обшивки, мм), fineThickness ({ frame, skid, sub, skin, floor, endBeam,
@@ -248,7 +248,7 @@ function computeGost10198II2(input) {
     warnings, dno: dno.rows, kryshka: kryshka.rows, endPanel: endPanel.rows, bokovoy: bokovoy.rows,
     outerL: s.len, outerW: s.outerW, outerH: s.outerH, totalVolume, normaVremeni, crateMass, woodDensity: woodRho,
     // Параметры чертежей.
-    k9Base: s.len, W, L, H, t_stojka: s.stojkaT, skin, t21: s.crossBeamT, t_longbeam: s.longBeamT, lidLayout: input.lidLayout,
+    k9Base: s.len, W, L, H, t_stojka: s.stojkaT, skin, t21: s.crossBeamT, t_longbeam: s.longBeamT,
     torecFrame, bokFrame, panelHeightFull,
     crossBeamCount: s.crossBeamCount, longbeamCount: s.longBeamCount,
     // Отступ от стенки до крайнего поперечного бруса и расстояние между

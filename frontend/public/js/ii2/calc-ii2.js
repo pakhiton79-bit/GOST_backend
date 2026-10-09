@@ -33,7 +33,6 @@ function buildCalcInput(){
     removeSkidBoards: document.getElementById('removeSkidBoards').checked,
     forkliftLoading: document.getElementById('forkliftLoading').checked,
     roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
-    lidLayout: document.querySelector('input[name="lidLayout"]:checked').value,
     optimizeSizes: document.getElementById('optimizeSizes').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
     addRaskosina: document.getElementById('addRaskosina').checked,
@@ -96,9 +95,6 @@ async function calculateNow(){
 ['solidRigidBase','noRoundBoardWidths','removeFloorBoards','optimizeSizes','addRaskosina'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', invalidateCalc);
-});
-document.querySelectorAll('input[name="lidLayout"]').forEach(el=>{
-  el.addEventListener('change', invalidateCalc);
 });
 
 // Правка ячейки таблицы не пересчитывает сразу: ячейка помечается

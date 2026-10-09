@@ -180,22 +180,7 @@ function persistCheckbox(id){
     try{ localStorage.setItem(key, el.checked ? '1' : '0'); }catch(e){}
   });
 }
-function persistRadioGroup(name){
-  const els = Array.from(document.querySelectorAll(`input[name="${name}"]`));
-  if(els.length === 0) return;
-  const key = OPTIONS_STORAGE_PREFIX + name;
-  try{
-    const saved = localStorage.getItem(key);
-    if(saved !== null && els.some(el=>el.value===saved)){
-      els.forEach(el=>{ el.checked = (el.value === saved); });
-    }
-  }catch(e){}
-  els.forEach(el=>el.addEventListener('change', ()=>{
-    if(el.checked){ try{ localStorage.setItem(key, el.value); }catch(e){} }
-  }));
-}
 ['removeFloorBoards','removeSkidBoards','forkliftLoading','solidRigidBase','noRoundBoardWidths','optimizeSizes','addRaskosina','xRaskosina','addParchment'].forEach(persistCheckbox);
 // «Убрать доски дна» скрыта при креплении к доскам дна - сохранённая
 // галочка не должна действовать незаметно.
 if(fasteningType !== 'skid') document.getElementById('removeFloorBoards').checked = false;
-persistRadioGroup('lidLayout');
