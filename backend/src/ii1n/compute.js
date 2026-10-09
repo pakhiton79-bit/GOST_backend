@@ -252,7 +252,7 @@ function computeGost10198II1N(input) {
     // поперечных - стойка + обшивка бока, за концы продольных - обшивка
     // торца; при «Оптимизировать размеры» - на 2 мм больше (по указанию
     // пользователя).
-    lidOverhangCross: s.stojkaT + skin.value + (input.optimizeSizes ? 2 : 0),
+    lidOverhangCross: skin.value + (input.optimizeSizes ? 2 : 0), // брус - до наружных граней стоек бока
     lidOverhangLong: skin.value + (input.optimizeSizes ? 2 : 0),
     xRaskosina: !!input.xRaskosina,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
