@@ -24,15 +24,16 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
   const ks = diagramScreenScale(IW, IH), stroke = 1.2 * ks;
   const rect = (x1, y1, x2, y2, fill) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"${fill ? ` fill="${fill}"` : ''}/>`;
   let shapes = '';
-  // Доски не прорисовываются (по указанию пользователя) - щит белым
-  // прямоугольником; «Без крышки» - только 2 доски у краёв.
-  if(boards === 'edges'){
-    const bw = drawnMemberWidth(ks);
-    shapes += rect(0, 0, IW, bw, '#fff') + rect(0, IH - bw, IW, IH, '#fff');
-  }
   // Планки - по краям, вдвое шире обычной детали на экране (по указанию
   // пользователя: были тонковаты), но не больше 1/5 щита.
   const pw = Math.min(2 * drawnMemberWidth(ks), (planks === 'v' ? IW : IH) / 5);
+  // Доски не прорисовываются (по указанию пользователя) - щит белым
+  // прямоугольником; «Без крышки» - только 2 доски у краёв, шириной и цветом
+  // как планки торца (по указанию пользователя).
+  if(boards === 'edges'){
+    const bw = Math.min(2 * drawnMemberWidth(ks), IH / 5);
+    shapes += rect(0, 0, IW, bw, G2991_PLANK_FILL) + rect(0, IH - bw, IW, IH, G2991_PLANK_FILL);
+  }
   if(planks === 'v') shapes += rect(0, 0, pw, IH, G2991_PLANK_FILL) + rect(IW - pw, 0, IW, IH, G2991_PLANK_FILL);
   if(planks === 'h') shapes += rect(0, 0, IW, pw, G2991_PLANK_FILL) + rect(0, IH - pw, IW, IH, G2991_PLANK_FILL);
   const outline = boards === 'edges'
