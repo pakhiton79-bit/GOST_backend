@@ -100,6 +100,9 @@ function computeGost2991II1(input) {
     thickness: { bok: bokT, dno: dnoT, kryshka: lidT, torec: torecT, plank: plankT },
     gost: { bok: bok.thickness, dno: dno.thickness, bokCorrected: bokG, dnoCorrected: dnoG },
     dno: dnoRows, kryshka: lidRows, torec: torecRows, bokovoy: bokRows,
+    // Размеры для чертежей: дно и крышка - длина × ширина, щиты - длина ×
+    // высота; планки торца - ширина и расстояние между ними.
+    drawing: { dnoL: dnoLen, dnoW: W + bokT * 2, bokL: bokLen, torecW: W, H, plankW, plankGap: (verticalEnd ? H : W) - plankW * 2 },
     outerL, outerW, outerH,
     totalVolume, woodDensity,
     crateMass: totalVolume * woodDensity,

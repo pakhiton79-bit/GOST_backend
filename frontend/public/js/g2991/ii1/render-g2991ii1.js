@@ -1,5 +1,6 @@
 // ГОСТ 2991-85, тип II-1: вывод результата - плитки «Итог», спецификация
-// (таблица по каждому узлу, все ячейки правятся - как в ГОСТ 10198-91) и
+// (чертёж и таблица по каждому узлу, все ячейки правятся - как в ГОСТ
+// 10198-91) и
 // предупреждения. calc - ответ расчёта.
 
 function renderSummary(calc){
@@ -30,17 +31,24 @@ function renderPartTable(rows, sectionKey){
   html += `</tbody></table></div>`;
   return html;
 }
-function renderPartBlock(title, tableHtml){
-  return `<div class="part-title">${title}</div><div class="spec-row-table">${tableHtml}</div>`;
+// Узел: заголовок, чертёж слева (diagrams/panels.js), таблица справа.
+function renderPartBlock(title, diagramHtml, tableHtml){
+  return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram"><div class="diagram-slot">${diagramHtml}</div>${tableHtml}</div>`;
 }
 
 function renderBoardTables(calc){
+  const dg = diagramsG2991II1(calc);
   let html = '';
-  html += renderPartBlock('Дно', renderPartTable(calc.dno, 'dno'));
-  html += renderPartBlock(calc.noLid ? 'Вместо крышки' : 'Крышка', renderPartTable(calc.kryshka, 'kryshka'));
-  html += renderPartBlock('Щит торцевой (2 шт.)', renderPartTable(calc.torec, 'torec'));
-  html += renderPartBlock('Щит боковой (2 шт.)', renderPartTable(calc.bokovoy, 'bokovoy'));
-  document.getElementById('boardTables').innerHTML = html;
+  html += renderPartBlock('Дно', dg.dno, renderPartTable(calc.dno, 'dno'));
+  html += renderPartBlock(calc.noLid ? 'Вместо крышки' : 'Крышка', dg.kryshka, renderPartTable(calc.kryshka, 'kryshka'));
+  html += renderPartBlock('Щит торцевой (2 шт.)', dg.torec, renderPartTable(calc.torec, 'torec'));
+  html += renderPartBlock('Щит боковой (2 шт.)', dg.bokovoy, renderPartTable(calc.bokovoy, 'bokovoy'));
+  const boardTablesEl = document.getElementById('boardTables');
+  boardTablesEl.innerHTML = html;
+  // Место под вылет подписей чертежей - когда картинки загрузятся.
+  const boardImages = Array.from(boardTablesEl.querySelectorAll('img'));
+  Promise.all(boardImages.map(img => img.decode ? img.decode().catch(()=>{}) : Promise.resolve()))
+    .then(()=> fitDiagramsOnScreen(boardTablesEl));
 }
 
 function renderWarnings(warnings){
