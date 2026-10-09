@@ -34,7 +34,8 @@ function buildBokovoy(c, s, frame, rask) {
   // Опорная планка - несёт поперечные брусья крышки: толщина - доска
   // обшивки, ширина - ширина стойки минус толщина поперечного бруса (вниз до
   // целого, в пределах 50-75 мм), длина - как у горизонтального бруса.
-  const opora = { t: skinT, w: Math.min(75, Math.max(50, Math.floor(STOJKA_W - s.crossBeamT))), l: horiz.l, qty: 2 };
+  // Опорная планка - 1 шт. на щит (по указанию пользователя; было 2).
+  const opora = { t: skinT, w: Math.min(75, Math.max(50, Math.floor(STOJKA_W - s.crossBeamT))), l: horiz.l, qty: 1 };
 
   const boardLen = 100 * 2 + frame.len + s.longBeamT;
   const fb = sideBoards(c, s, L + s.stojkaT * 2);
