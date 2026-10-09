@@ -874,9 +874,9 @@
   .version-switch{display:inline-flex;flex-wrap:wrap;max-width:100%;margin:0 0 22px;padding:4px;gap:4px;border:1px solid var(--border-input);border-radius:12px;background:var(--panel);}
   .version-opt{display:inline-flex;align-items:center;gap:10px;padding:9px 18px;border-radius:9px;text-decoration:none;color:var(--ink-soft);font-size:16px;font-weight:600;white-space:nowrap;transition:background-color .15s ease,color .15s ease;}
   .version-opt:hover{background:var(--accent-wash);color:var(--ink);}
-  .version-opt.active{background:var(--ink);color:var(--panel);cursor:default;}
-  /* статус версии - контурная плашка цвета статуса (на выбранной - на светлом
-     фоне, чтобы не спорить с тёмной кнопкой) */
+  .version-opt.active{background:var(--accent);color:#fff;cursor:default;}
+  /* статус версии - контурная плашка цвета статуса (на выбранной коричневой
+     кнопке - на светлом фоне, статус коричневым не заливается) */
   .version-badge{display:inline-block;padding:1px 9px;border:1px solid var(--warn);border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;color:var(--warn);background:transparent;}
   .version-badge-danger{border-color:var(--error);color:var(--error);}
   .version-opt.active .version-badge{background:var(--panel);}
