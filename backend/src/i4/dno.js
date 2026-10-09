@@ -70,7 +70,9 @@ function buildDno(c) {
   // погрузчиком - не тоньше 50 мм и не короче 300 мм. Невозможная длина
   // (≤ 0 или < 300 при погрузчике) - в таблице ⚠ вместо длины.
   const t10Raw = c.forkliftLoading ? Math.max(subfloorThicknessRaw(MASS), 50) : subfloorThicknessRaw(MASS);
-  const sub = { t: ov('t10Value', round(t10Raw), 'Толщина подполозной доски'), w: Math.min(skid.w, 150), l: skidLen - 400, qty: skid.count };
+  // Ширина подполозной доски - всегда как у полоза (по указанию
+  // пользователя; раньше - не больше 150 мм).
+  const sub = { t: ov('t10Value', round(t10Raw), 'Толщина подполозной доски'), w: skid.w, l: skidLen - 400, qty: skid.count };
   if (sub.l < 300) {
     warnings.push(`Длина подполозной доски ${Math.round(sub.l)} мм менее 300 мм.`);
   }
