@@ -65,6 +65,14 @@ const T2_ROWS = [
   [500, 800,  [22, 22, 22, 22, 22, 22, 19, 19, 19]],
   [500, INF,  [22, 22, 22, 22, 22, 22, 22, 22, 19]],
 ];
+// Толщины «в наличии» для ГОСТ 2991-85 (по указанию пользователя, только
+// для этого ГОСТа): каждый 1 мм от минимальной до максимальной толщины его
+// таблиц (9-25 мм: таблицы 2 и 3) плюс все толщины сайта (16-250 мм).
+const G2991_THICKNESS_OPTIONS = [...new Set([
+  ...Array.from({ length: 25 - 9 + 1 }, (_, i) => 9 + i),
+  16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250,
+])].sort((a, b) => a - b);
+
 // Ряд толщин досок ГОСТ 2991-85 (градации), мм.
 const G2991_THICKNESSES = [9, 13, 16, 19, 22, 25];
 
@@ -89,4 +97,4 @@ function g2991RoundUp(value) {
   return G2991_THICKNESSES.find(t => t >= value) || G2991_THICKNESSES[G2991_THICKNESSES.length - 1];
 }
 
-if (typeof module !== 'undefined') module.exports = { T2_SIZES, T2_ROWS, G2991_THICKNESSES, table2Thickness, g2991RoundUp };
+if (typeof module !== 'undefined') module.exports = { T2_SIZES, T2_ROWS, G2991_THICKNESSES, G2991_THICKNESS_OPTIONS, table2Thickness, g2991RoundUp };

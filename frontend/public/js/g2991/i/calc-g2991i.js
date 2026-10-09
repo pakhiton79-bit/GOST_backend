@@ -12,6 +12,7 @@ function buildCalcInput(){
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
     noLid: document.getElementById('noLid').checked,
+    availableThicknesses,
   };
 }
 

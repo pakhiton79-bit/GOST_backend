@@ -16,6 +16,7 @@ const { computeGost10198II1N } = require('./src/ii1n/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { computeGost2991I } = require('./src/g2991/i/compute');
+const { G2991_THICKNESS_OPTIONS } = require('./src/g2991/table2');
 const { router: authRoutes } = require('./src/auth/routes');
 const adminRoutes = require('./src/auth/admin');
 const standardsRoutes = require('./src/auth/standards');
@@ -173,6 +174,7 @@ app.post('/api/g2991i/calculate', (req, res) => {
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
     noLid: !!b.noLid,
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
   };
   res.json(computeGost2991I(input));
 });
