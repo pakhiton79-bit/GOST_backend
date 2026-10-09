@@ -26,7 +26,7 @@ function buildCalcInput(){
     W: parseFloat(document.getElementById('W').value),
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
-    optimizeSizes: document.getElementById('optimizeSizes').checked,
+    optimizeSizes: !document.getElementById('noOptimizeSizes').checked, // по умолчанию размеры оптимизируются
     removeFloorBoards: document.getElementById('removeFloorBoards').checked, // при креплении к доскам дна всегда снята
     removeSkidBoards: document.getElementById('removeSkidBoards').checked,
     roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
@@ -92,7 +92,7 @@ async function calculateNow(){
 ['L','W','H','M'].forEach(id=>{
   document.getElementById(id).addEventListener('input', invalidateCalc);
 });
-['optimizeSizes','solidRigidBase','noRoundBoardWidths','removeFloorBoards'].forEach(id=>{
+['noOptimizeSizes','solidRigidBase','noRoundBoardWidths','removeFloorBoards'].forEach(id=>{
   const el = document.getElementById(id);
   if(el) el.addEventListener('change', invalidateCalc);
 });

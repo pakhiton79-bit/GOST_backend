@@ -70,7 +70,13 @@ function buildKryshka(c, len, outerW) {
     warnings.push('Масса или ширина ящика вне Табл. 14 - брус крышки принят по крайнему значению.');
   }
   const beamT = ov('t21Value', round(crossBeam.value), 'Толщина внутреннего поперечного бруса крышки');
+  // Оптимизация размеров (по умолчанию включена, галочка «Не оптимизировать
+  // размеры» её выключает): брус короче на 4 мм, и только расстояние от
+  // бокового края крышки до торца бруса больше на 2 мм с каждой стороны.
   const beamLen = W - (c.optimizeSizes ? 4 : 0);
+  // Расстояние от бокового края крышки (ширина крышки - W + 2 толщины стенки,
+  // как у досок крышки) до торца поперечного бруса - для чертежа.
+  const beamSideGap = (W + wall * 2 - beamLen) / 2;
   const beams = beamLayout(len, wall + wall, c.beamGapValue, c.beamCountValue);
   if (beams.error) return { error: beams.error };
   rows.push({ name: 'Внутренний поперечный брус', t: beamT, w: BEAM_W, l: beamLen, qty: beams.count, overrideKey: 't21Value' });
@@ -78,7 +84,7 @@ function buildKryshka(c, len, outerW) {
   const volume = vol(wall, PLANK_W, width, planks.count) + vol(wall, 100, len, fb.mainQty) + vol(beamT, BEAM_W, beamLen, beams.count)
     + fb.extra.reduce((s, e) => s + vol(wall, e.width, len, e.qty), 0);
 
-  return { rows, volume, planks, standardPlanks: standard, beams, beamW: BEAM_W };
+  return { rows, volume, planks, standardPlanks: standard, beams, beamW: BEAM_W, beamSideGap };
 }
 
 module.exports = { buildKryshka };

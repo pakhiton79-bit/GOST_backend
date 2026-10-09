@@ -13,7 +13,26 @@
 // I-4: boardGap - промежуток обшивки ({ qty, gap, share }) или null - доски
 // вплотную: доски крышки идут вдоль длины, на чертеже - полосы по числу
 // досок (см. boards.js), сквозь промежутки видны пояса-планки снизу.
-function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm, boardGap){
+// Расстояние от бокового края крышки до торца поперечного бруса (по указанию
+// пользователя). Размер маленький - стрелки снаружи: Bp - угол торца бруса на
+// крышке, E - точка бокового края крышки напротив него; выносные линии - вдоль
+// ext на extLen, между ними - размер со стрелками снаружи (arrow), подпись -
+// за стрелкой у бруса (labelOff).
+function lidSideGapRecords(Bp, E, ext, extLen, arrow, labelOff, text){
+  const a = [E[0] + ext[0]*extLen, E[1] + ext[1]*extLen], b = [Bp[0] + ext[0]*extLen, Bp[1] + ext[1]*extLen];
+  const over = arrow*0.4;
+  const len = Math.hypot(b[0]-a[0], b[1]-a[1]) || 1, ux = (b[0]-a[0])/len, uy = (b[1]-a[1])/len;
+  return [
+    {type:'line', x1:E[0], y1:E[1], x2:a[0] + ext[0]*over, y2:a[1] + ext[1]*over},
+    {type:'line', x1:Bp[0], y1:Bp[1], x2:b[0] + ext[0]*over, y2:b[1] + ext[1]*over},
+    {type:'line', x1:a[0], y1:a[1], x2:b[0], y2:b[1]},
+    {type:'single', x1:a[0] - ux*arrow, y1:a[1] - uy*arrow, x2:a[0], y2:a[1]},
+    {type:'single', x1:b[0] + ux*arrow, y1:b[1] + uy*arrow, x2:b[0], y2:b[1]},
+    {type:'label', lx:b[0] + ux*(arrow + labelOff), ly:b[1] + uy*(arrow + labelOff), text},
+  ];
+}
+
+function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshkaMm, crossBeamQty, crossBeamWidthMm, plankCount, plankGapMm, plankEdgeGapVal, beamEdgeMm, beamGapMm, boardGap, beamSideGapMm){
   const lidLen = lengthMm + t30*2 + t32*2, lidW = widthMm + t41*2;
   const P = Math.max(1, Math.round(plankCount)), B = Math.max(0, Math.round(crossBeamQty));
   const eu = [0.9507, -0.3101], ev = [-0.4406, -0.8977];
@@ -215,6 +234,12 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
     const ea = P2(0, 0.5*Wv), eb = P2(bu0, 0.5*Wv);
     const edgeText = dimLabel(beamEdgeMm)+' мм';
     dimFit(ea, eb, edgeText, 'a', nleft, null, true);
+    // Расстояние от бокового (переднего) края крышки до торца первого бруса -
+    // у его правого переднего угла, выносные линии - вправо по крышке.
+    if(beamSideGapMm > 0){
+      const ur = bu0 + bw, room = (B > 1 ? beamU(1) : Lu) - ur;
+      records.push(...lidSideGapRecords(P2(ur, vB), P2(ur, 0), eu, Math.max(0.45*room, 20*pxU), 14*pxU, 16*pxU, dimLabel(beamSideGapMm)+' мм'));
+    }
     if(B > 1){
       const gi = Math.floor((B-1)/2), ua = beamU(gi) + bw, ub = beamU(gi+1);
       const [ga, gb] = beamDim(ua, ub, P2(ua, vB), P2(ub, vB), rowNear);
@@ -264,5 +289,5 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
 // Чертёж крышки для результата расчёта. I-4: всегда генерируемый - на фото
 // I-3 обшивка сплошная.
 function diagramKryshkaFor(calc){
-  return diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap, calc.boardGaps.kryshka);
+  return diagramKryshkaGen(calc.W, calc.L, calc.t30, calc.t32, calc.t41, calc.t40, calc.edgeDistKryshka, calc.l21, calc.w21, calc.l19, calc.bokSectionW, calc.plankGap, calc.beamEdgeDist, calc.beamGap, calc.boardGaps.kryshka, calc.beamSideGap);
 }
