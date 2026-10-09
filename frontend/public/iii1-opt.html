@@ -33,9 +33,13 @@
     <a href="index.html">Главная</a>
   </div>
   <header class="title-row">
-    <h1>ГОСТ 10198-91 тип III-1 (оптимальный)</h1>
+    <h1>ГОСТ 10198-91 тип III-1</h1>
     <input type="text" id="boxName" class="box-name-input" maxlength="100" placeholder="Номер или название ящика" aria-label="Номер или название ящика">
   </header>
+  <nav class="version-switch" id="versionSwitch" data-key="gost10198-iii1-version" aria-label="Версия расчёта">
+    <a class="version-opt" data-version="gost" href="iii1.html"><span>По ГОСТ</span><span class="version-badge">Неточность в самом ГОСТ</span></a>
+    <a class="version-opt" data-version="opt" href="iii1-opt.html"><span>Оптимальный</span><span class="version-badge">Оптимальная конструкция</span></a>
+  </nav>
 
   <div class="card">
     <h2>Внутренние размеры груза, мм</h2>
@@ -305,6 +309,7 @@
 <script src="/js/common-diagram-fit.js"></script>
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
+<script src="/js/common-version-switch.js"></script>
 <script>window.III1_OPTIMIZED = true; // оптимальный конструктивный вариант (js/iii1/options.js)</script>
 <script src="/js/iii1/options.js"></script>
 <script src="/js/iii1/manual-counts.js"></script>

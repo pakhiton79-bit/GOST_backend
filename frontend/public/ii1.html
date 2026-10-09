@@ -36,6 +36,10 @@
     <h1>ГОСТ 10198-91 тип II-1</h1>
     <input type="text" id="boxName" class="box-name-input" maxlength="100" placeholder="Номер или название ящика" aria-label="Номер или название ящика">
   </header>
+  <nav class="version-switch" id="versionSwitch" data-key="gost10198-ii1-version" aria-label="Версия расчёта">
+    <a class="version-opt" data-version="gost" href="ii1.html"><span>По ГОСТ</span><span class="version-badge">Требуется проверка</span></a>
+    <a class="version-opt" data-version="opt" href="ii1n.html"><span>Оптимальный</span><span class="version-badge version-badge-danger">Не готово</span></a>
+  </nav>
 
   <div class="card">
     <h2>Внутренние размеры груза, мм</h2>
@@ -305,6 +309,7 @@
 <script src="/js/common-diagram-fit.js"></script>
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
+<script src="/js/common-version-switch.js"></script>
 <script src="/js/ii1/options.js"></script>
 <script src="/js/ii1/manual-counts.js"></script>
 <script src="/js/ii1/fine-thickness.js"></script>

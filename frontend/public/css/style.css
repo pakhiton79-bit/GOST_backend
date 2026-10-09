@@ -867,6 +867,19 @@
   header.title-row h1{margin:0;}
   /* до правого края - как карточки ниже (по указанию пользователя, для
      единообразия; раньше было не шире 360px) */
+  /* Переключатель версий типа (II-1, III-1; по указанию пользователя): две
+     крупные кнопки «По ГОСТ» / «Оптимальный» под заголовком, у каждой - статус
+     версии (бывшие плашки карточек). Кнопки - ссылки на страницы версий
+     (common-version-switch.js запоминает выбор). */
+  .version-switch{display:flex;gap:0;margin:0 0 22px;border:1px solid var(--border-input);border-radius:12px;overflow:hidden;background:var(--panel);}
+  .version-opt{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 12px;text-decoration:none;color:var(--ink-soft);font-size:17px;font-weight:600;text-align:center;transition:background-color .15s ease,color .15s ease;}
+  .version-opt + .version-opt{border-left:1px solid var(--border-input);}
+  .version-opt:hover{background:var(--accent-wash);color:var(--ink);}
+  .version-opt.active{background:var(--accent);color:#fff;cursor:default;}
+  .version-badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;line-height:1.4;color:#fff;background:var(--warn);}
+  .version-badge-danger{background:var(--error);}
+  .version-opt.active .version-badge{box-shadow:0 0 0 1px rgba(255,255,255,.7);}
+  @media print{.version-switch{display:none !important;}}
   .box-name-input{
     flex:1 1 260px;
     height:40px;

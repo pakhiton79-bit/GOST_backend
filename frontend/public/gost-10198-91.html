@@ -123,16 +123,8 @@ const TYPES = [
   },
   {
     name: 'Тип II-1',
-    file: 'ii1.html',
-    image: '/images/box_ii1.png',
-    badge: 'Требуется проверка'
-  },
-  {
-    name: 'Тип II-1 (новая версия)',
-    file: 'ii1n.html',
-    image: '/images/box_ii1.png',
-    badge: 'Не готово',
-    badgeDanger: true
+    versions: { key: 'gost10198-ii1-version', gost: 'ii1.html', opt: 'ii1n.html' },
+    image: '/images/box_ii1.png'
   },
   {
     name: 'Тип II-2',
@@ -142,22 +134,20 @@ const TYPES = [
   },
   {
     name: 'Тип III-1',
-    file: 'iii1.html',
-    image: '/images/box_iii1.png',
-    badge: 'Неточность в самом ГОСТ'
-  },
-  {
-    name: 'Тип III-1 (оптимальный)',
-    file: 'iii1-opt.html',
-    image: '/images/box_iii1.png',
-    badge: 'Оптимальная конструкция'
+    versions: { key: 'gost10198-iii1-version', gost: 'iii1.html', opt: 'iii1-opt.html' },
+    image: '/images/box_iii1.png'
   }
 ];
 
 (function(){
   const root = document.getElementById('types');
   let html = '';
+  // У типа с двумя версиями (versions: по ГОСТ / оптимальная, переключатель
+  // на странице расчёта) карточка ведёт на последнюю выбранную, по
+  // умолчанию - на оптимальную (по указанию пользователя).
+  const versionFile = v => { let saved = null; try{ saved = localStorage.getItem(v.key); }catch(e){} return saved === 'gost' ? v.gost : v.opt; };
   TYPES.forEach(t => {
+    if(t.versions) t.file = versionFile(t.versions);
     const badgeClass = 'type-badge' + (t.badgeDanger ? ' type-badge-danger' : t.badgeOk ? ' type-badge-ok' : '');
     const badge = t.badge ? `<span class="${badgeClass}">${t.badge}</span>` : '';
     html += `<a class="type-card" href="${t.file}">

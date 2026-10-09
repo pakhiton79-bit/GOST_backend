@@ -11,7 +11,7 @@ const FB_ICONS = {
   help: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.3M12 16.5v.01"/></svg>',
 };
 const FB_GOSTS = {
-  'ГОСТ 10198-91': ['I-1', 'I-2', 'I-3', 'I-4', 'II-1', 'II-1 (новая версия)', 'II-2', 'III-1', 'III-1 (оптимальный)'],
+  'ГОСТ 10198-91': ['I-1', 'I-2', 'I-3', 'I-4', 'II-1', 'II-1 (оптимальный)', 'II-2', 'III-1', 'III-1 (оптимальный)'],
   'ГОСТ 2991-85': ['I'],
 };
 const FB_NO_GOST = 'Не относится к ГОСТ / не знаю';
@@ -19,7 +19,7 @@ const FB_NO_TYPE = 'Не относится к типу ящика';
 // Страница - ГОСТ и тип по умолчанию.
 const FB_PAGES = {
   'i1.html': 'I-1', 'i2.html': 'I-2', 'i3-skid.html': 'I-3', 'i4.html': 'I-4',
-  'ii1.html': 'II-1', 'ii1n.html': 'II-1 (новая версия)', 'ii2.html': 'II-2', 'iii1.html': 'III-1',
+  'ii1.html': 'II-1', 'ii1n.html': 'II-1 (оптимальный)', 'ii2.html': 'II-2', 'iii1.html': 'III-1',
   'iii1-opt.html': 'III-1 (оптимальный)',
 };
 // Страницы ГОСТ 2991-85 (тип по умолчанию).

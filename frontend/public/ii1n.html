@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Расчёт ящика - ГОСТ 10198-91 тип II-1 (новая версия) - Тара+</title>
+<title>Расчёт ящика - ГОСТ 10198-91 тип II-1 (оптимальный) - Тара+</title>
 <link rel="icon" type="image/png" href="/images/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,9 +33,13 @@
     <a href="index.html">Главная</a>
   </div>
   <header class="title-row">
-    <h1>ГОСТ 10198-91 тип II-1 (новая версия)</h1>
+    <h1>ГОСТ 10198-91 тип II-1</h1>
     <input type="text" id="boxName" class="box-name-input" maxlength="100" placeholder="Номер или название ящика" aria-label="Номер или название ящика">
   </header>
+  <nav class="version-switch" id="versionSwitch" data-key="gost10198-ii1-version" aria-label="Версия расчёта">
+    <a class="version-opt" data-version="gost" href="ii1.html"><span>По ГОСТ</span><span class="version-badge">Требуется проверка</span></a>
+    <a class="version-opt" data-version="opt" href="ii1n.html"><span>Оптимальный</span><span class="version-badge version-badge-danger">Не готово</span></a>
+  </nav>
 
   <div class="card">
     <h2>Внутренние размеры груза, мм</h2>
@@ -211,7 +215,7 @@
   </div>
 
   <div id="results">
-    <div class="note note-danger" id="notReadyNote"><b>Тип II-1 (новая версия) ещё не готов.</b> Это рабочая копия II-1 для доработок - результат нельзя использовать в производстве.</div>
+    <div class="note note-danger" id="notReadyNote"><b>Оптимальный вариант II-1 ещё не готов.</b> Это рабочая копия II-1 для доработок - результат нельзя использовать в производстве.</div>
     <div class="note" id="warningsTop" style="margin-bottom:16px;"></div>
 
     <div class="card">
@@ -306,6 +310,7 @@
 <script src="/js/common-diagram-fit.js"></script>
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
+<script src="/js/common-version-switch.js"></script>
 <script src="/js/ii1n/options.js"></script>
 <script src="/js/ii1n/manual-counts.js"></script>
 <script src="/js/ii1n/fine-thickness.js"></script>
