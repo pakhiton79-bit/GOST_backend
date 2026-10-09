@@ -11,9 +11,8 @@
 // с остальными входными данными, и итоговое normaVremeni приходит уже
 // оттуда (calc.normaVremeni). Изменение настроек в шестерёнке только
 // сохраняет их и помечает расчёт как устаревший - см. applySettings ниже.
-const TIME_SETTINGS_PRODUCTIVITY_STEPS = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09];
-const TIME_SETTINGS_COEFF_STEPS = [0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0];
-const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.0 };
+// Остановки ползунков, значения по умолчанию и сам ползунок (createJumpSlider) -
+// в common-settings.js: они же нужны окну «Настройки» на всех страницах.
 
 function loadTimeSettings(storageKey){
   try{
@@ -23,124 +22,40 @@ function loadTimeSettings(storageKey){
       const bp = Number(parsed.baseProductivity);
       const tc = Number(parsed.timeCoeff);
       return {
-        baseProductivity: bp > 0 ? bp : TIME_SETTINGS_DEFAULTS.baseProductivity,
-        timeCoeff: tc > 0 ? tc : TIME_SETTINGS_DEFAULTS.timeCoeff,
+        baseProductivity: bp > 0 ? bp : siteCalcParam('baseProductivity'),
+        timeCoeff: tc > 0 ? tc : siteCalcParam('timeCoeff'),
       };
     }
   }catch(e){}
-  return Object.assign({}, TIME_SETTINGS_DEFAULTS);
+  return siteTimeSettings(); // внутри типа не меняли - общие «Настройки»
 }
 
 function saveTimeSettings(storageKey, settings){
   try{ localStorage.setItem(storageKey, JSON.stringify(settings)); }catch(e){}
 }
 
-function timeSettingsNearestStepIndex(steps, value){
-  let bestIdx = 0, bestDiff = Infinity;
-  steps.forEach((v, i)=>{
-    const diff = Math.abs(v - value);
-    if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
-  });
-  return bestIdx;
+// Подпись в окне шестерёнки: значения свои у типа или из общих «Настроек».
+function calcSourceNote(overlay, storageKey){
+  const box = overlay.querySelector('.modal-box');
+  let note = box.querySelector('.modal-note');
+  if(!note){
+    note = document.createElement('p');
+    note.className = 'modal-note';
+    box.appendChild(note);
+  }
+  let own = false;
+  try{ own = localStorage.getItem(storageKey) !== null; }catch(e){}
+  note.textContent = own
+    ? 'Свои значения этого типа ящика. Общие - в «Настройках».'
+    : 'Сейчас - из общих «Настроек». Изменённые здесь будут только для этого типа ящика.';
 }
-
-// Дискретный "прыгающий" ползунок по фиксированным остановкам (steps) -
-// нативный <input type=range> не подошёл для двух требований пользователя
-// сразу: (1) плавная анимация перемещения между остановками - позиция
-// нативного бегунка не анимируется через CSS transition; (2) круглые
-// отметки остановок на треке - нативный datalist умеет только тонкие
-// штрихи, без контроля формы/цвета. Поэтому - свой минимальный виджет:
-// трек с закрашенной частью (fill) до текущей остановки, круглые метки
-// (по одной на каждый элемент steps, равномерно по индексу, не по
-// величине - остановки коэффициента распределены неровно: 0.5..3.0) и
-// бегунок (div), перетаскиваемый через Pointer Events. И перетаскивание,
-// и клавиатура (стрелки/Home/End), и клик по треку - двигают ровно на
-// одну остановку за раз (никогда не между ними), а left/width анимируются
-// через CSS transition (см. style.css) - "прыжками, но плавно" по
-// формулировке пользователя.
-// Больше стольких шагов - метки не рисуются (на узком экране сливаются в
-// сплошную рябь): ползунок выглядит сплошным, но по-прежнему ходит по шагам.
-const JUMP_SLIDER_MAX_MARKS = 25;
-
-function createJumpSlider(container, steps, onChange){
-  container.classList.add('jump-slider');
-  container.classList.toggle('jump-slider-dense', steps.length > JUMP_SLIDER_MAX_MARKS);
-  container.setAttribute('role', 'slider');
-  if(!container.hasAttribute('tabindex')) container.setAttribute('tabindex', '0');
-  container.setAttribute('aria-valuemin', steps[0]);
-  container.setAttribute('aria-valuemax', steps[steps.length - 1]);
-
-  const n = steps.length;
-  container.innerHTML = `
-    <div class="jump-slider-track">
-      <div class="jump-slider-fill"></div>
-      ${steps.map(()=>'<span class="jump-slider-mark"></span>').join('')}
-      <div class="jump-slider-thumb"></div>
-    </div>
-  `;
-  const track = container.querySelector('.jump-slider-track');
-  const fill = container.querySelector('.jump-slider-fill');
-  const marks = Array.from(container.querySelectorAll('.jump-slider-mark'));
-  const thumb = container.querySelector('.jump-slider-thumb');
-
-  // Позиция каждой метки по индексу (равномерно) - не меняется после
-  // создания, поэтому выставляется один раз здесь, а не в render().
-  marks.forEach((m, i)=>{ m.style.left = (i / (n - 1) * 100) + '%'; });
-
-  let index = 0;
-
-  function render(){
-    const pct = (index / (n - 1)) * 100;
-    thumb.style.left = pct + '%';
-    fill.style.width = pct + '%';
-    marks.forEach((m, i)=>{ m.classList.toggle('passed', i <= index); });
-    container.setAttribute('aria-valuenow', steps[index]);
-  }
-
-  function setIndex(newIndex, fire){
-    newIndex = Math.max(0, Math.min(n - 1, newIndex));
-    if(newIndex === index){ return; }
-    index = newIndex;
-    render();
-    if(fire) onChange(steps[index]);
-  }
-
-  function indexFromClientX(clientX){
-    const rect = track.getBoundingClientRect();
-    const fraction = rect.width ? (clientX - rect.left) / rect.width : 0;
-    return Math.round(Math.max(0, Math.min(1, fraction)) * (n - 1));
-  }
-
-  container.addEventListener('pointerdown', e=>{
-    container.setPointerCapture(e.pointerId);
-    container.focus();
-    setIndex(indexFromClientX(e.clientX), true);
-    function onMove(ev){ setIndex(indexFromClientX(ev.clientX), true); }
-    function onUp(){
-      container.removeEventListener('pointermove', onMove);
-      container.removeEventListener('pointerup', onUp);
-      container.removeEventListener('pointercancel', onUp);
-    }
-    container.addEventListener('pointermove', onMove);
-    container.addEventListener('pointerup', onUp);
-    container.addEventListener('pointercancel', onUp);
+// Общие значения поменяли в «Настройках» - тип, который берёт их, пересчитывается.
+function onSiteCalcParamsChange(storageKey){
+  window.addEventListener('site-calc-settings-change', ()=>{
+    let own = false;
+    try{ own = localStorage.getItem(storageKey) !== null; }catch(e){}
+    if(!own && typeof invalidateCalc === 'function') invalidateCalc();
   });
-
-  container.addEventListener('keydown', e=>{
-    if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){ setIndex(index + 1, true); e.preventDefault(); }
-    else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ setIndex(index - 1, true); e.preventDefault(); }
-    else if(e.key === 'Home'){ setIndex(0, true); e.preventDefault(); }
-    else if(e.key === 'End'){ setIndex(n - 1, true); e.preventDefault(); }
-  });
-
-  render();
-
-  return {
-    setValue(v){
-      index = timeSettingsNearestStepIndex(steps, v);
-      render();
-    },
-  };
 }
 
 function initTimeSettings(storageKey){
@@ -158,6 +73,7 @@ function initTimeSettings(storageKey){
   // (подсказка «Нажмите «Рассчитать»», см. invalidateCalc()).
   function applySettings(next){
     saveTimeSettings(storageKey, next);
+    calcSourceNote(overlay, storageKey);
     if(typeof invalidateCalc === 'function') invalidateCalc();
   }
 
@@ -180,8 +96,10 @@ function initTimeSettings(storageKey){
 
   window.onTimeSettingsOpen = function(){
     syncFieldsFromSettings();
+    calcSourceNote(overlay, storageKey);
     overlay.hidden = false;
   };
+  onSiteCalcParamsChange(storageKey);
   window.onTimeSettingsClose = function(){
     overlay.hidden = true;
   };
@@ -210,16 +128,15 @@ function initTimeSettings(storageKey){
 // (от лёгкой сухой хвои ~450 до тяжёлых лиственных пород/сырой древесины
 // ~850-900), любое другое значение - в поле ручного ввода. Хранится в
 // localStorage отдельно для каждого типа ящика (ключ передаётся в
-// initDensitySettings()), применяется только по «Рассчитать».
-const WOOD_DENSITY_STEPS = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900];
-const WOOD_DENSITY_DEFAULT = 700;
+// initDensitySettings()), применяется только по «Рассчитать». Пока внутри
+// типа не меняли - общая плотность из окна «Настройки» (siteWoodDensity).
 
 function loadWoodDensity(storageKey){
   try{
     const v = Number(localStorage.getItem(storageKey));
     if(v > 0) return v;
   }catch(e){}
-  return WOOD_DENSITY_DEFAULT;
+  return siteWoodDensity(); // внутри типа не меняли - общие «Настройки»
 }
 
 function initDensitySettings(storageKey){
@@ -230,6 +147,7 @@ function initDensitySettings(storageKey){
 
   function apply(v){
     try{ localStorage.setItem(storageKey, String(v)); }catch(e){}
+    calcSourceNote(overlay, storageKey);
     if(typeof invalidateCalc === 'function') invalidateCalc();
   }
   const slider = createJumpSlider(sliderEl, WOOD_DENSITY_STEPS, v=>{ input.value = v; apply(v); });
@@ -238,8 +156,10 @@ function initDensitySettings(storageKey){
     const v = loadWoodDensity(storageKey);
     slider.setValue(v);
     input.value = v;
+    calcSourceNote(overlay, storageKey);
     overlay.hidden = false;
   };
+  onSiteCalcParamsChange(storageKey);
   window.onDensitySettingsClose = function(){ overlay.hidden = true; };
   window.onDensitySettingsOverlayClick = function(event){
     if(event.target === overlay) overlay.hidden = true;

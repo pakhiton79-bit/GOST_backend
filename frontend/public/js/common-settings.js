@@ -8,6 +8,10 @@
 // толщины, ширины и основная ширина доски; общие для всех типов своего ГОСТа
 // (siteAvailableThicknesses / siteAvailableWidths; выбранные внутри типа -
 // в приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
+// «Норма времени и масса» - производительность, коэффициент времени и
+// плотность древесины, общие для всех типов всех ГОСТов (по указанию
+// пользователя; изменённые шестерёнкой внутри типа - в приоритете);
+// разделы - плитками, как карточки внутри типа;
 // «Сброс настроек» - отдельным разделом: сброс толщин и ширин и сброс всех
 // сохранённых настроек сайта (resetAllSiteSettings). Справа - только
 // выбранный слева раздел. Новые настройки - разделами в
@@ -39,6 +43,22 @@ const SITE_STOCK_LISTS = {
   thickness: { key: 'availableThickness', options: SITE_THICKNESS_OPTIONS },
   thickness2991: { key: 'availableThickness2991', options: SITE_G2991_THICKNESS_OPTIONS },
   width2991: { key: 'availableWidth2991', options: SITE_G2991_WIDTH_OPTIONS },
+};
+
+// Норма времени и плотность древесины - общие для всех типов ящиков (ключи в
+// общих настройках); внутри типа шестерёнкой можно задать свои - они в
+// приоритете (loadTimeSettings / loadWoodDensity в common-timesettings.js).
+// Остановки ползунков и значения по умолчанию - здесь: окно «Настройки» есть
+// на всех страницах, common-timesettings.js - только на страницах типов.
+const TIME_SETTINGS_PRODUCTIVITY_STEPS = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09];
+const TIME_SETTINGS_COEFF_STEPS = [0.5, 0.7, 1.0, 1.2, 1.5, 2.0, 3.0];
+const TIME_SETTINGS_DEFAULTS = { baseProductivity: 0.06, timeCoeff: 1.0 };
+const WOOD_DENSITY_STEPS = [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900];
+const WOOD_DENSITY_DEFAULT = 700;
+const SITE_CALC_PARAMS = {
+  baseProductivity: { steps: TIME_SETTINGS_PRODUCTIVITY_STEPS, def: TIME_SETTINGS_DEFAULTS.baseProductivity, step: 0.01 },
+  timeCoeff: { steps: TIME_SETTINGS_COEFF_STEPS, def: TIME_SETTINGS_DEFAULTS.timeCoeff, step: 0.01 },
+  woodDensity: { steps: WOOD_DENSITY_STEPS, def: WOOD_DENSITY_DEFAULT, step: 10 },
 };
 
 // Значки - SVG (а не символы: те на части систем рисуются эмодзи или тофу).
@@ -141,6 +161,137 @@ function siteMainWidthHtml(){
     `<label><input type="radio" name="siteMainWidth2991" value="${w}"${w === cur ? ' checked' : ''}> ${w} мм</label>`).join('')}</div>`;
 }
 
+// Общие норма времени и плотность (ключи настроек - имена в SITE_CALC_PARAMS).
+function siteCalcParam(name){
+  const v = Number(loadSiteSettings()[name]);
+  return v > 0 ? v : SITE_CALC_PARAMS[name].def;
+}
+function siteTimeSettings(){
+  return { baseProductivity: siteCalcParam('baseProductivity'), timeCoeff: siteCalcParam('timeCoeff') };
+}
+function siteWoodDensity(){ return siteCalcParam('woodDensity'); }
+// Сохранить и сообщить странице типа (событие site-calc-settings-change).
+function saveSiteCalcParam(name, v){
+  saveSiteSetting(name, v);
+  window.dispatchEvent(new CustomEvent('site-calc-settings-change', { detail: { param: name } }));
+}
+// Ползунок и поле ввода - как в шестерёнках у плиток «Итога».
+function siteCalcParamHtml(name){
+  const d = SITE_CALC_PARAMS[name];
+  return `<div class="modal-slider-row site-calc-param">
+      <div class="jump-slider" data-site-calc-slider="${name}"></div>
+      <input type="number" data-site-calc-input="${name}" step="${d.step}" min="${d.step}" value="${siteCalcParam(name)}" aria-label="Значение">
+    </div>`;
+}
+
+function timeSettingsNearestStepIndex(steps, value){
+  let bestIdx = 0, bestDiff = Infinity;
+  steps.forEach((v, i)=>{
+    const diff = Math.abs(v - value);
+    if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
+  });
+  return bestIdx;
+}
+
+// Дискретный "прыгающий" ползунок по фиксированным остановкам (steps) -
+// нативный <input type=range> не подошёл для двух требований пользователя
+// сразу: (1) плавная анимация перемещения между остановками - позиция
+// нативного бегунка не анимируется через CSS transition; (2) круглые
+// отметки остановок на треке - нативный datalist умеет только тонкие
+// штрихи, без контроля формы/цвета. Поэтому - свой минимальный виджет:
+// трек с закрашенной частью (fill) до текущей остановки, круглые метки
+// (по одной на каждый элемент steps, равномерно по индексу, не по
+// величине - остановки коэффициента распределены неровно: 0.5..3.0) и
+// бегунок (div), перетаскиваемый через Pointer Events. И перетаскивание,
+// и клавиатура (стрелки/Home/End), и клик по треку - двигают ровно на
+// одну остановку за раз (никогда не между ними), а left/width анимируются
+// через CSS transition (см. style.css) - "прыжками, но плавно" по
+// формулировке пользователя.
+// Больше стольких шагов - метки не рисуются (на узком экране сливаются в
+// сплошную рябь): ползунок выглядит сплошным, но по-прежнему ходит по шагам.
+const JUMP_SLIDER_MAX_MARKS = 25;
+
+function createJumpSlider(container, steps, onChange){
+  container.classList.add('jump-slider');
+  container.classList.toggle('jump-slider-dense', steps.length > JUMP_SLIDER_MAX_MARKS);
+  container.setAttribute('role', 'slider');
+  if(!container.hasAttribute('tabindex')) container.setAttribute('tabindex', '0');
+  container.setAttribute('aria-valuemin', steps[0]);
+  container.setAttribute('aria-valuemax', steps[steps.length - 1]);
+
+  const n = steps.length;
+  container.innerHTML = `
+    <div class="jump-slider-track">
+      <div class="jump-slider-fill"></div>
+      ${steps.map(()=>'<span class="jump-slider-mark"></span>').join('')}
+      <div class="jump-slider-thumb"></div>
+    </div>
+  `;
+  const track = container.querySelector('.jump-slider-track');
+  const fill = container.querySelector('.jump-slider-fill');
+  const marks = Array.from(container.querySelectorAll('.jump-slider-mark'));
+  const thumb = container.querySelector('.jump-slider-thumb');
+
+  // Позиция каждой метки по индексу (равномерно) - не меняется после
+  // создания, поэтому выставляется один раз здесь, а не в render().
+  marks.forEach((m, i)=>{ m.style.left = (i / (n - 1) * 100) + '%'; });
+
+  let index = 0;
+
+  function render(){
+    const pct = (index / (n - 1)) * 100;
+    thumb.style.left = pct + '%';
+    fill.style.width = pct + '%';
+    marks.forEach((m, i)=>{ m.classList.toggle('passed', i <= index); });
+    container.setAttribute('aria-valuenow', steps[index]);
+  }
+
+  function setIndex(newIndex, fire){
+    newIndex = Math.max(0, Math.min(n - 1, newIndex));
+    if(newIndex === index){ return; }
+    index = newIndex;
+    render();
+    if(fire) onChange(steps[index]);
+  }
+
+  function indexFromClientX(clientX){
+    const rect = track.getBoundingClientRect();
+    const fraction = rect.width ? (clientX - rect.left) / rect.width : 0;
+    return Math.round(Math.max(0, Math.min(1, fraction)) * (n - 1));
+  }
+
+  container.addEventListener('pointerdown', e=>{
+    container.setPointerCapture(e.pointerId);
+    container.focus();
+    setIndex(indexFromClientX(e.clientX), true);
+    function onMove(ev){ setIndex(indexFromClientX(ev.clientX), true); }
+    function onUp(){
+      container.removeEventListener('pointermove', onMove);
+      container.removeEventListener('pointerup', onUp);
+      container.removeEventListener('pointercancel', onUp);
+    }
+    container.addEventListener('pointermove', onMove);
+    container.addEventListener('pointerup', onUp);
+    container.addEventListener('pointercancel', onUp);
+  });
+
+  container.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){ setIndex(index + 1, true); e.preventDefault(); }
+    else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ setIndex(index - 1, true); e.preventDefault(); }
+    else if(e.key === 'Home'){ setIndex(0, true); e.preventDefault(); }
+    else if(e.key === 'End'){ setIndex(n - 1, true); e.preventDefault(); }
+  });
+
+  render();
+
+  return {
+    setValue(v){
+      index = timeSettingsNearestStepIndex(steps, v);
+      render();
+    },
+  };
+}
+
 // Сброс всех толщин (по указанию пользователя): после подтверждения
 // очищаются общие толщины и толщины, выбранные внутри каждого типа (ключи
 // <префикс><тип>-available-thickness), страница перезагружается - везде
@@ -211,6 +362,26 @@ const SITE_SETTINGS_SECTIONS = [
     }],
   },
   {
+    // Общие для всех типов всех ГОСТов (по указанию пользователя).
+    id: 'calc', title: 'Норма времени и масса',
+    rows: () => [{ group: 'Норма времени' }, {
+      title: 'Базовая производительность, м³/ч',
+      hint: 'Норма времени = объём пиломатериала / производительность × коэффициент. По умолчанию 0.06 м³/ч. Для всех типов ящиков; заданное шестерёнкой внутри типа - в приоритете.',
+      control: () => siteCalcParamHtml('baseProductivity'),
+      wide: true,
+    }, {
+      title: 'Коэффициент времени',
+      hint: 'По умолчанию 1.0.',
+      control: () => siteCalcParamHtml('timeCoeff'),
+      wide: true,
+    }, { group: 'Масса ящика' }, {
+      title: 'Плотность древесины, кг/м³',
+      hint: 'Масса ящика = объём пиломатериала × плотность. По умолчанию 700 кг/м³. Для всех типов ящиков; заданное шестерёнкой внутри типа - в приоритете.',
+      control: () => siteCalcParamHtml('woodDensity'),
+      wide: true,
+    }],
+  },
+  {
     id: 'reset', title: 'Сброс настроек',
     rows: () => [{
       title: 'Сбросить все толщины и ширины',
@@ -224,15 +395,32 @@ const SITE_SETTINGS_SECTIONS = [
   },
 ];
 
+// Строки раздела; { group } начинает плитку (по указанию пользователя - как
+// карточки внутри типа): заголовок и её строки в рамке.
+function siteSettingsRowsHtml(rows){
+  let html = '', open = false;
+  rows.forEach(r => {
+    if(r.group){
+      if(open) html += '</div>';
+      html += `<div class="site-settings-tile"><div class="site-settings-tile-title">${r.group}</div>`;
+      open = true;
+      return;
+    }
+    html += `<div class="site-settings-row${r.wide ? ' site-settings-row-wide' : ''}">
+        <div class="site-settings-row-text"><div class="site-settings-row-title">${r.title}</div><div class="site-settings-row-hint">${r.hint}</div></div>
+        <div class="site-settings-row-control">${r.control()}</div>
+      </div>`;
+  });
+  if(open) html += '</div>';
+  return html;
+}
+
 function siteSettingsContentHtml(){
   const nav = SITE_SETTINGS_SECTIONS.map((s, i) =>
     `<a class="site-settings-nav-item${i === 0 ? ' active' : ''}" href="#site-settings-${s.id}" data-section="${s.id}">${s.title}</a>`).join('');
   const sections = SITE_SETTINGS_SECTIONS.map((s, i) => `<section class="site-settings-section${i === 0 ? ' active' : ''}" id="site-settings-${s.id}">
       <h3>${s.title}</h3>
-      ${s.rows().map(r => r.group ? `<div class="site-settings-group">${r.group}</div>` : `<div class="site-settings-row${r.wide ? ' site-settings-row-wide' : ''}">
-        <div class="site-settings-row-text"><div class="site-settings-row-title">${r.title}</div><div class="site-settings-row-hint">${r.hint}</div></div>
-        <div class="site-settings-row-control">${r.control()}</div>
-      </div>`).join('')}
+      ${siteSettingsRowsHtml(s.rows())}
     </section>`).join('');
   return `<nav class="site-settings-nav">${nav}</nav><div class="site-settings-sections">${sections}</div>`;
 }
@@ -292,6 +480,7 @@ function initSiteSettings(){
   const close = () => { overlay.hidden = true; btn.focus(); };
   btn.addEventListener('click', () => {
     content.innerHTML = siteSettingsContentHtml();
+    initSiteCalcParams();
     overlay.hidden = false;
     const cur = content.querySelector('.theme-switch-option[aria-checked="true"]');
     if(cur) cur.focus();
@@ -300,6 +489,21 @@ function initSiteSettings(){
   overlay.querySelector('.site-settings-close').addEventListener('click', close);
   document.addEventListener('keydown', e => { if(e.key === 'Escape' && !overlay.hidden) close(); });
 
+  // Норма времени и плотность: ползунок и поле, сохраняются сразу.
+  function initSiteCalcParams(){
+    content.querySelectorAll('[data-site-calc-slider]').forEach(el => {
+      const name = el.dataset.siteCalcSlider;
+      const input = content.querySelector(`[data-site-calc-input="${name}"]`);
+      const slider = createJumpSlider(el, SITE_CALC_PARAMS[name].steps, v => { input.value = v; saveSiteCalcParam(name, v); });
+      slider.setValue(siteCalcParam(name));
+      input.addEventListener('input', () => {
+        const v = parseFloat(String(input.value).replace(',', '.'));
+        if(!(v > 0)) return;
+        slider.setValue(v);
+        saveSiteCalcParam(name, v);
+      });
+    });
+  }
   // Выбор темы: ползунок переезжает (меняется --i), тема применяется сразу.
   function selectTheme(opt){
     const sw = opt.closest('.theme-switch');

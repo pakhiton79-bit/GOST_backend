@@ -255,9 +255,14 @@
     border-bottom:1px solid var(--rule);
   }
   .site-settings-row-title{font-size:16px;font-weight:500;color:var(--ink);}
-  /* подзаголовок ГОСТа внутри раздела настроек («Пиломатериал в наличии») */
-  .site-settings-group{margin:22px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--border-input);font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);}
-  .site-settings-section h3 + .site-settings-group{margin-top:4px;}
+  /* плитка внутри раздела настроек (ГОСТ в «Пиломатериале в наличии» и т.п.) -
+     как карточка внутри типа */
+  .site-settings-tile{margin-top:16px;padding:18px 22px 4px;background:var(--panel);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow-sm);}
+  .site-settings-tile-title{padding-bottom:10px;border-bottom:1px solid var(--rule);font-size:14px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);}
+  .site-settings-tile .site-settings-row:last-child{border-bottom:none;}
+  .site-calc-param .jump-slider{flex:1;}
+  /* подпись в окне шестерёнки: значения свои у типа или общие */
+  .modal-note{margin:4px 0 0;font-size:12px;line-height:1.45;color:var(--ink-soft);}
   .site-settings-row-hint{margin-top:4px;font-size:13px;font-weight:400;line-height:1.45;color:var(--ink-soft);}
   .site-settings-row-control{flex:0 0 auto;}
   /* Строка с крупным элементом (список общих толщин) - элемент под текстом,
