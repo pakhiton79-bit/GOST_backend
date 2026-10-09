@@ -1,17 +1,14 @@
 // ГОСТ 2991-85, тип II-1: чертежи узлов - плоские схемы (SVG, как щиты
-// III-1): доски светло-серые полосами (одной ширины на экране, число - сколько
-// поместится, drawnBoardStrips в common-diagrams.js), планки торца - белые
-// поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
+// III-1): узел - белый прямоугольник без досок (по указанию пользователя),
+// планки торца - белые поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
 // (у дна и крышки - ширина), у торца ещё расстояние между планками.
 // Размеры - из расчёта (calc.drawing).
 const G2991_PANEL_IW = 2222;                       // ширина картинки
 const G2991_PANEL_MIN_RATIO = 0.3, G2991_PANEL_MAX_RATIO = 1.2; // пределы высоты кадра, доли ширины
 const G2991_PANEL_WIDTH = 260, G2991_PANEL_LABEL_SCALE = 0.8;
-const G2991_BOARD_FILL = '#d9d9d9';
 
-// lenMm × heightMm - габариты узла; boards - 'h' (доски вдоль длины, полосы
-// друг над другом), 'v' (доски поперёк, полосы рядом), 'edges' (только 2
-// доски у верхнего и нижнего края - «Без крышки»); planks - 'v' (2 планки у
+// lenMm × heightMm - габариты узла; boards - 'edges' (только 2 доски у
+// верхнего и нижнего края - «Без крышки»), иначе - сплошной щит; planks - 'v' (2 планки у
 // левого и правого края), 'h' (у верхнего и нижнего) или null; plankMm -
 // ширина планки, plankGapMm - расстояние между планками (подпись).
 function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, plankGapMm){
@@ -23,11 +20,11 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
   const ks = diagramScreenScale(IW, IH), stroke = 1.2 * ks;
   const rect = (x1, y1, x2, y2, fill) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"${fill ? ` fill="${fill}"` : ''}/>`;
   let shapes = '';
-  if(boards === 'h') drawnBoardStrips(0, IH, ks, null).forEach(([a, b]) => { shapes += rect(0, a, IW, b, G2991_BOARD_FILL); });
-  else if(boards === 'v') drawnBoardStrips(0, IW, ks, null).forEach(([a, b]) => { shapes += rect(a, 0, b, IH, G2991_BOARD_FILL); });
-  else if(boards === 'edges'){
+  // Доски не прорисовываются (по указанию пользователя) - щит белым
+  // прямоугольником; «Без крышки» - только 2 доски у краёв.
+  if(boards === 'edges'){
     const bw = drawnMemberWidth(ks);
-    shapes += rect(0, 0, IW, bw, G2991_BOARD_FILL) + rect(0, IH - bw, IW, IH, G2991_BOARD_FILL);
+    shapes += rect(0, 0, IW, bw, '#fff') + rect(0, IH - bw, IW, IH, '#fff');
   }
   // Планки - шириной детали на экране, по краям.
   const pw = drawnMemberWidth(ks);
