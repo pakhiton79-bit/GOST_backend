@@ -12,6 +12,7 @@ const { computeGost10198I1 } = require('./src/i1/compute');
 const { computeGost10198I2 } = require('./src/i2/compute');
 const { computeGost10198I4 } = require('./src/i4/compute');
 const { computeGost10198II1 } = require('./src/ii1/compute');
+const { computeGost10198II1N } = require('./src/ii1n/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
 const { computeGost2991I } = require('./src/g2991/i/compute');
@@ -287,6 +288,39 @@ app.post('/api/ii1/calculate', (req, res) => {
     timeCoeff: toNum(b.timeCoeff),
   };
   res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input,
+    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+});
+
+// Тип II-1 (новая версия) - независимая копия II-1 для доработок (src/ii1n).
+app.post('/api/ii1n/calculate', (req, res) => {
+  const b = req.body || {};
+  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
+    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
+  }
+  const input = {
+    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    fasteningType: b.fasteningType,
+    bulkCargo: !!b.bulkCargo,
+    optimizeSizes: !!b.optimizeSizes,
+    removeFloorBoards: !!b.removeFloorBoards,
+    removeSkidBoards: !!b.removeSkidBoards,
+    roundBoardWidths: !!b.roundBoardWidths,
+    solidRigidBase: !!b.solidRigidBase,
+    forkliftLoading: !!b.forkliftLoading,
+    xRaskosina: !!b.xRaskosina,
+    addRaskosina: !!b.addRaskosina,
+    addParchment: !!b.addParchment,
+    torecPostCount: toNum(b.torecPostCount),
+    bokPostCount: toNum(b.bokPostCount),
+    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
+    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
+    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
+    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
+    baseProductivity: toNum(b.baseProductivity),
+    woodDensity: toNum(b.woodDensity),
+    timeCoeff: toNum(b.timeCoeff),
+  };
+  res.json(withTableEdits(computeGost10198II1N(input), b.tableEdits, II1_TABLE_SECTIONS, input,
     r => { r.crateMass = r.totalVolume * r.woodDensity; }));
 });
 

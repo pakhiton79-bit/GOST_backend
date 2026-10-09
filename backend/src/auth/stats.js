@@ -6,7 +6,7 @@ const store = require('./store');
 
 const DAY_MS = 24 * 3600 * 1000;
 const MSK_MS = 3 * 3600 * 1000;
-const TYPE_NAMES = { i1: 'I-1', i2: 'I-2', i3: 'I-3', i4: 'I-4', ii1: 'II-1', ii2: 'II-2', iii1: 'III-1', g2991i: 'ГОСТ 2991-85 I' };
+const TYPE_NAMES = { i1: 'I-1', i2: 'I-2', i3: 'I-3', i4: 'I-4', ii1: 'II-1', ii1n: 'II-1 (новая версия)', ii2: 'II-2', iii1: 'III-1', g2991i: 'ГОСТ 2991-85 I' };
 
 function dayKey(ts) {
   return new Date(ts + MSK_MS).toISOString().slice(0, 10);

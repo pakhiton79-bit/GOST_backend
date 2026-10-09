@@ -1,0 +1,308 @@
+// ГОСТ 10198-91, тип II-1: чертёж «Щит торцевой». Перенесено из
+// src/ii1/diagrams.js исходного репозитория pakhiton79-bit/GOST_10198-91.
+// Геометрия - НЕ единая формула на все схемы, а собственная разметка
+// КАЖДОЙ схемы, присланная пользователем отдельно для каждого фото (тот же
+// принцип, что и у KRYSHKA_VARIANTS - независимые записи per-схема, в
+// натуральных пикселях именно этого фото). Схемы сгруппированы по этажности
+// (TOREC_VARIANTS[floors][count]) - геометрия/пропорции у 1-этажных и
+// 2-этажных щитов принципиально разные (два яруса раскосин). Фото - на 2-4
+// стойки; на 5 и более чертёж генерируется по геометрии фото на 4 стойки
+// того же числа этажей (см. panelScheme ниже и panel-generated.js).
+// В 1-этажных схемах структура из 4 групп подписей:
+// - A (только если longbeamVal>0 - режим "поперечное" расположение досок
+//   крышки; при "продольном" бруса нет, группа не рисуется): толщина
+//   внутреннего продольного бруса крышки (сидит НАД щитом).
+// - B: ширина щита (наружный край левой стойки до наружного края правой) =
+//   W + толщина стойки*2 (k31 - длина "Горизонтального бруса" в таблице).
+// - C: толщина досок обшивки бока (skin.value) - отступ слева от щита.
+// - D: высота щита БЕЗ бруса крышки (ширина стойки*2 + длина стойки) =
+//   100*2 + torecFrame.len = panelHeightFull при floors=1 (см. heightVal).
+// В 2-этажных схемах группа D показывает ПОЛНУЮ высоту щита (ширина
+// стойки*3 + длина стойки*2 = panelHeightFull при floors=2), плюс
+// добавляется своя группа E (floorHeightVal = ширина стойки + длина
+// стойки, высота ОДНОГО этажа) - на 1-этажных схемах группы E нет.
+// xRaskosinaVal - X-образные раскосины (фото imgX); hasRaskosinaVal = false -
+// щит без раскосин (внутренняя высота до 600 мм, п.1.7.7).
+// gapVal - расстояние между кромками соседних стоек (frame.sectionW, ширина
+// стоек учтена), см. postGapRecords.
+// На 5 и более стоек фото нет - чертёж генерируется (см. panelScheme).
+function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
+  const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
+  if(!v) return diagramTooDense();
+  const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
+    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
+}
+
+// Схема щита на count стоек и floors (1 или 2) этажей: фото из
+// TOREC_VARIANTS (2-4 стойки с раскосинами) или сгенерированный чертёж (5 и
+// более стоек или щит без раскосин, см. panel-generated.js) - с подписями
+// фото на 4 стойки: у него те же размеры картинки и наружные кромки щита.
+// { img, IW, IH, records, gap }; null - слишком много стоек (вместо чертежа
+// заглушка).
+function panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal){
+  if(count <= 4 && hasRaskosinaVal){
+    const v = TOREC_VARIANTS[floors][count];
+    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap };
+  }
+  const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal, hasRaskosinaVal);
+  if(!g) return null;
+  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap };
+}
+
+// Размер «расстояние между стойками» в первой секции схемы v: стрелка чуть
+// ниже верхнего бруса, подпись - по её центру. Если подпись не помещается
+// между наконечниками (накрыла бы стрелку), весь размер выносится над
+// чертежом (по указанию пользователя, как зазор между планками у I-1):
+// выносные линии от кромок стоек вверх, стрелка над фото, подпись над ней.
+// widthPx/labelScale - ширина чертежа на экране и масштаб подписей (как в
+// renderDiagram): по ним оценивается ширина подписи в пикселях фото.
+function postGapRecords(v, gapVal, widthPx, labelScale){
+  const g = v.gap, text = dimLabel(gapVal)+' мм';
+  const px = v.IW / widthPx;                                        // пикселей фото на 1px экрана
+  const labelW = (text.length * 8.2 + 16) * (labelScale || 1) * px; // шрифт 13px bold + поля
+  const headLen = 9 * photoStrokeScale(v.IW);                       // наконечник (см. headTriangle)
+  const mid = (g.x1 + g.x2) / 2;
+  if(g.x2 - g.x1 >= labelW + 2*headLen + 6*px){
+    const y = g.secTop + v.IW * 0.06;
+    return [{type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:mid, ly:y, text}];
+  }
+  const y = -12*px;
+  return [
+    {type:'line', x1:g.x1, y1:g.secTop, x2:g.x1, y2:y - 6*px},
+    {type:'line', x1:g.x2, y1:g.secTop, x2:g.x2, y2:y - 6*px},
+    {type:'double', x1:g.x1, y1:y, x2:g.x2, y2:y, lx:mid, ly:y - 16*px, text}
+  ];
+}
+
+const TOREC_IMG_2POSTS_B64 = "/images/torec_ii1_1floor_2posts.jpg"; // 1 раскосина
+const TOREC_IMG_3POSTS_B64 = "/images/torec_ii1_1floor_3posts.jpg"; // 2 раскосины
+const TOREC_IMG_4POSTS_B64 = "/images/torec_ii1_1floor_4posts.jpg"; // 3 раскосины
+const TOREC_IMG_2FLOOR_2POSTS_B64 = "/images/torec_ii1_2floor_2posts.jpg"; // 2 этажа, 2 раскосины
+const TOREC_IMG_2FLOOR_3POSTS_B64 = "/images/torec_ii1_2floor_3posts.jpg"; // 2 этажа, 4 раскосины
+const TOREC_IMG_2FLOOR_4POSTS_B64 = "/images/torec_ii1_2floor_4posts.jpg"; // 2 этажа, 6 раскосин
+// X-образные раскосины: те же фото со встречной раскосиной под исходной в
+// каждой секции (сгенерированы из исходных), калибровка та же.
+const TOREC_IMG_2POSTS_X_B64 = "/images/torec_ii1_1floor_2posts_x.jpg";
+const TOREC_IMG_3POSTS_X_B64 = "/images/torec_ii1_1floor_3posts_x.jpg";
+const TOREC_IMG_4POSTS_X_B64 = "/images/torec_ii1_1floor_4posts_x.jpg";
+const TOREC_IMG_2FLOOR_2POSTS_X_B64 = "/images/torec_ii1_2floor_2posts_x.jpg";
+const TOREC_IMG_2FLOOR_3POSTS_X_B64 = "/images/torec_ii1_2floor_3posts_x.jpg";
+const TOREC_IMG_2FLOOR_4POSTS_X_B64 = "/images/torec_ii1_2floor_4posts_x.jpg";
+
+const TOREC_VARIANTS = {
+  1: {
+    // «2 стойки» (1 раскосина) - по исходной разметке пользователя.
+    2: { img: TOREC_IMG_2POSTS_B64, imgX: TOREC_IMG_2POSTS_X_B64, IW: 1116, IH: 796,
+      gap: { x1: 196.5, x2: 920.5, secTop: 167.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal) {
+        const records = [];
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:877, y1:12, x2:1193, y2:12},
+            {type:'line', x1:1153, y1:12, x2:1153, y2:80},
+            {type:'single', x1:1008, y1:-124, x2:1153, y2:44, lx:973, ly:-145, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:109, y1:698, x2:108, y2:920},
+          {type:'line', x1:1011, y1:697, x2:1011, y2:932},
+          {type:'double', x1:1011, y1:886, x2:107, y2:886, lx:562, ly:906, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:12, y1:700, x2:11, y2:863},
+          {type:'line', x1:12, y1:824, x2:109, y2:824},
+          {type:'single', x1:-90, y1:924, x2:62, y2:824, lx:-93, ly:945, text:skinVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:879, y1:80, x2:1285, y2:80},
+          {type:'line', x1:915, y1:785, x2:1298, y2:786},
+          {type:'double', x1:1198, y1:79, x2:1202, y2:782, lx:1200, ly:431, text:heightVal+' мм', vertical:true}
+        );
+        return records;
+      }
+    },
+    // «3 стойки» (2 раскосины) - по разметке пользователя.
+    // Левый конец стрелки widthVal и низ ближней (x=82) вертикальной линии
+    // группы skinVal - подправлены по аналогии с исправлением у «4 стойки»
+    // ниже (тот же тип ошибки: стрелка ширины начиналась у дальней линии
+    // x=10, а должна - у ближней x=82, вплотную к видимому краю стойки на
+    // фото; ближняя линия соответственно удлинена, чтобы визуально доходить
+    // до стрелки) - у «2 стойки» выше этой ошибки не было изначально (там
+    // своя отдельная линия-вынос для ширины, не переиспользует линию группы
+    // skinVal).
+    3: { img: TOREC_IMG_3POSTS_B64, imgX: TOREC_IMG_3POSTS_X_B64, IW: 1460, IH: 605,
+      gap: { x1: 148.5, x2: 696.5, secTop: 130.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal) {
+        const records = [];
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:1313, y1:13, x2:1603, y2:11},
+            {type:'line', x1:1530, y1:12, x2:1530, y2:62},
+            {type:'single', x1:1211, y1:-120, x2:1531, y2:40, lx:1182, ly:-136, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:1379, y1:734, x2:1377, y2:530},
+          {type:'double', x1:82, y1:712, x2:1377, y2:712, lx:694, ly:735, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:82, y1:528, x2:82, y2:737},
+          {type:'line', x1:10, y1:530, x2:10, y2:731},
+          {type:'line', x1:10, y1:620, x2:82, y2:619},
+          {type:'single', x1:-77, y1:716, x2:46, y2:620, lx:-83, ly:744, text:skinVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:1311, y1:598, x2:1603, y2:596},
+          {type:'line', x1:1603, y1:62, x2:1312, y2:64},
+          {type:'double', x1:1561, y1:64, x2:1562, y2:597, lx:1572, ly:331, text:heightVal+' мм', vertical:true}
+        );
+        return records;
+      }
+    },
+    // «4 стойки» (3 раскосины) - по разметке пользователя.
+    4: { img: TOREC_IMG_4POSTS_B64, imgX: TOREC_IMG_4POSTS_X_B64, IW: 2222, IH: 644,
+      gap: { x1: 157.5, x2: 743.5, secTop: 134.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal) {
+        const records = [];
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:2062, y1:10, x2:2364, y2:6},
+            {type:'line', x1:2275, y1:7, x2:2277, y2:65},
+            {type:'single', x1:2022, y1:-120, x2:2278, y2:36, lx:2008, ly:-132, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:2135, y1:567, x2:2138, y2:802},
+          {type:'double', x1:78, y1:744, x2:2135, y2:743, lx:1112, ly:801, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:78, y1:565, x2:76, y2:769},
+          {type:'line', x1:8, y1:564, x2:8, y2:788},
+          {type:'line', x1:9, y1:679, x2:78, y2:678},
+          {type:'single', x1:-108, y1:532, x2:44, y2:679, lx:-109, ly:499, text:skinVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:2069, y1:636, x2:2369, y2:635},
+          {type:'line', x1:2063, y1:66, x2:2365, y2:64},
+          {type:'double', x1:2316, y1:64, x2:2317, y2:636, lx:2324, ly:346, text:heightVal+' мм', vertical:true}
+        );
+        return records;
+      }
+    },
+  },
+  2: {
+    // «2 стойки, 2 этажа» (2 раскосины, по 1 на этаж) - по разметке
+    // пользователя. heightVal - полная высота щита (ширина стойки*3 +
+    // длина стойки*2 = panelHeightFull), floorHeightVal - высота ОДНОГО
+    // этажа (ширина стойки + длина стойки) - своя, отдельная от 1-этажных
+    // схем группа E.
+    2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, imgX: TOREC_IMG_2FLOOR_2POSTS_X_B64, IW: 833, IH: 1041,
+      gap: { x1: 161.5, x2: 681.5, secTop: 140.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
+        const records = [];
+        records.push({type:'line', x1:680, y1:78, x2:989, y2:78});
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:679, y1:28, x2:984, y2:30},
+            {type:'line', x1:934, y1:79, x2:934, y2:30},
+            {type:'single', x1:715, y1:-127, x2:934, y2:56, lx:642, ly:-136, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:682, y1:1026, x2:1002, y2:1024},
+          {type:'double', x1:909, y1:82, x2:910, y2:1024, lx:955, ly:552, text:heightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:163, y1:584, x2:-107, y2:585},
+          {type:'line', x1:163, y1:1026, x2:-115, y2:1028},
+          {type:'double', x1:-61, y1:586, x2:-61, y2:1027, lx:-148, ly:805, text:floorHeightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:100, y1:966, x2:99, y2:1130},
+          {type:'line', x1:745, y1:963, x2:746, y2:1130},
+          {type:'double', x1:100, y1:1096, x2:746, y2:1095, lx:424, ly:1116, text:widthVal+' мм'}
+        );
+        return records;
+      }
+    },
+    // «3 стойки, 2 этажа» (4 раскосины, по 2 на этаж) - по разметке
+    // пользователя. В отличие от схемы «2 стойки» выше, здесь есть своя
+    // группа skinVal (толщина досок обшивки бока) - на схеме «2 стойки» её
+    // не было вовсе.
+    3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, imgX: TOREC_IMG_2FLOOR_3POSTS_X_B64, IW: 1473, IH: 1088,
+      gap: { x1: 152.5, x2: 700.5, secTop: 138.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
+        const records = [];
+        records.push({type:'line', x1:1317, y1:73, x2:1654, y2:73});
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:1317, y1:20, x2:1653, y2:20},
+            {type:'line', x1:1593, y1:20, x2:1593, y2:72},
+            {type:'single', x1:1369, y1:-114, x2:1593, y2:47, lx:1317, ly:-119, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:1316, y1:1072, x2:1667, y2:1071},
+          {type:'double', x1:1570, y1:73, x2:1570, y2:1070, lx:1597, ly:582, text:heightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:152, y1:606, x2:-75, y2:605},
+          {type:'line', x1:151, y1:1072, x2:-91, y2:1072},
+          {type:'double', x1:-57, y1:607, x2:-56, y2:1073, lx:-170, ly:844, text:floorHeightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:1382, y1:1005, x2:1382, y2:1180},
+          {type:'line', x1:86, y1:1005, x2:85, y2:1167},
+          {type:'double', x1:1382, y1:1148, x2:86, y2:1149, lx:735, ly:1164, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:14, y1:1009, x2:14, y2:1167},
+          {type:'line', x1:14, y1:1107, x2:86, y2:1106},
+          {type:'single', x1:-97, y1:1222, x2:52, y2:1106, lx:-102, ly:1335, text:skinVal+' мм'}
+        );
+        return records;
+      }
+    },
+    // «4 стойки, 2 этажа» (6 раскосин, по 3 на этаж) - по разметке
+    // пользователя. Здесь, в отличие от «2/3 стойки» выше, стрелка widthVal
+    // уже сразу присланной с обеими своими выносными линиями (без
+    // переиспользования линии группы skinVal) - как у «2 стойки», без
+    // ошибки, что была у «3 стойки»/1-этажной «4 стойки» (см. комментарии
+    // там).
+    4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, imgX: TOREC_IMG_2FLOOR_4POSTS_X_B64, IW: 2223, IH: 1160,
+      gap: { x1: 157.5, x2: 743.5, secTop: 149.5 },
+      records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
+        const records = [];
+        records.push({type:'line', x1:2065, y1:78, x2:2390, y2:76});
+        if(longbeamVal > 0){
+          records.push(
+            {type:'line', x1:2062, y1:9, x2:2389, y2:9},
+            {type:'line', x1:2317, y1:10, x2:2318, y2:77},
+            {type:'single', x1:2037, y1:-141, x2:2317, y2:44, lx:2027, ly:-144, text:longbeamVal+' мм'}
+          );
+        }
+        records.push(
+          {type:'line', x1:2063, y1:1152, x2:2381, y2:1152},
+          {type:'double', x1:2298, y1:77, x2:2299, y2:1152, lx:2319, ly:622, text:heightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:158, y1:652, x2:-104, y2:648},
+          {type:'line', x1:157, y1:1152, x2:-127, y2:1152},
+          {type:'double', x1:-68, y1:651, x2:-70, y2:1152, lx:-239, ly:902, text:floorHeightVal+' мм', vertical:true}
+        );
+        records.push(
+          {type:'line', x1:2135, y1:1080, x2:2136, y2:1264},
+          {type:'line', x1:77, y1:1084, x2:77, y2:1252},
+          {type:'double', x1:2136, y1:1224, x2:77, y2:1222, lx:1107, ly:1242, text:widthVal+' мм'}
+        );
+        records.push(
+          {type:'line', x1:8, y1:1084, x2:7, y2:1254},
+          {type:'line', x1:8, y1:1189, x2:77, y2:1189},
+          {type:'single', x1:-97, y1:1296, x2:44, y2:1189, lx:-100, ly:1467, text:skinVal+' мм'}
+        );
+        return records;
+      }
+    },
+  },
+};
