@@ -38,6 +38,9 @@ function imapConfig() {
     secure: port === 993,
   };
 }
+// Пароль по сети - только в шифрованном соединении: порт 993 (TLS) или
+// STARTTLS; без шифрования - только для проверки на своём компьютере.
+const isLocalHost = h => ['127.0.0.1', 'localhost', '::1'].includes(h);
 const configured = cfg => Boolean(cfg.user && cfg.pass);
 
 // Понятный текст ошибки подключения.
@@ -56,6 +59,7 @@ async function withImap(fn) {
   const cfg = imapConfig();
   const client = new ImapFlow({
     host: cfg.host, port: cfg.port, secure: cfg.secure,
+    doSTARTTLS: cfg.secure ? undefined : (isLocalHost(cfg.host) ? undefined : true),
     auth: { user: cfg.user, pass: cfg.pass },
     logger: false, connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 60000,
   });
@@ -205,12 +209,16 @@ router.post('/reply', handle(async (req, res) => {
     const { mail } = await loadMessage(client, 'inbox', uid, true);
     const to = listAddr(mail.replyTo)[0] || listAddr(mail.from)[0];
     if (!to) throw Object.assign(new Error('В письме нет адреса отправителя - ответить нельзя.'), { userText: true, status: 400 });
-    const subject = /^\s*re:/i.test(mail.subject || '') ? mail.subject : `Re: ${mail.subject || ''}`.trim();
+    const subj = String(mail.subject || '').replace(/[\r\n]+/g, ' ');
+    const subject = /^\s*re:/i.test(subj) ? subj : `Re: ${subj}`.trim();
     const when = mail.date ? mail.date.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' }) : '';
     const quote = (mail.text || '').trim().slice(0, 20000).split('\n').map(l => '> ' + l).join('\n');
     const author = listAddr(mail.from)[0] || to;
     const text = `${body}\n\n${when}, ${author.name || author.address} пишет:\n${quote}`;
     const sent = await sendSupportReply({ to: to.address, subject, text, replyTo: support });
+    // Тестовый режим (почта сайта не настроена) - письмо не ушло: ни копии,
+    // ни отметки «отвечено».
+    if (sent.test) return { to: to.address, test: true, copied: false };
     // Копия в «Отправленные» и отметка «отвечено» - если не вышло, ответ всё равно ушёл.
     let copied = true;
     try {
@@ -228,6 +236,12 @@ router.post('/reply', handle(async (req, res) => {
 
 // Письмо в формате RFC 5322 для копии в «Отправленные».
 function rawMessage({ from, to, subject, text, inReplyTo, references }) {
+  // Значения заголовков - из чужого письма: без переводов строк (иначе можно
+  // подставить свои заголовки).
+  const one = v => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ');
+  [subject, to, inReplyTo] = [subject, to, inReplyTo].map(one);
+  references = [].concat(references || []).map(one);
+  from = { name: one(from.name), address: one(from.address) };
   const b64 = s => Buffer.from(s, 'utf8').toString('base64');
   const enc = s => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`);
   const refs = [].concat(references || []).concat(inReplyTo || []).filter(Boolean).join(' ');

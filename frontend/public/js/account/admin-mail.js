@@ -86,6 +86,9 @@ function renderMailView(){
   const m = mailOpen;
   const row = (label, value) => value ? `<div>${label}: <b>${esc(value)}</b></div>` : '';
   const replyTo = m.replyTo || m.from;
+  // «Ответить на» в письме не совпадает с отправителем - так иногда делают
+  // мошенники (ответ уйдёт на чужой адрес): предупреждение у кнопки.
+  const otherReply = !!(m.replyTo && m.from && m.replyTo.address !== m.from.address);
   const files = m.attachments.map(a => `<a href="/api/admin/mail/attachment?folder=${m.folder}&uid=${m.uid}&i=${a.i}" download="${esc(a.filename)}">${esc(a.filename)}</a> <span class="admin-sub">${fmtSize(a.size)}</span>`);
   $('mailView').innerHTML = `<button type="button" class="btn-secondary admin-mail-back">← К списку</button>
     <h3>${esc(m.subject || '(без темы)')}</h3>
@@ -103,7 +106,7 @@ function renderMailView(){
     ${m.folder === 'inbox' && replyTo ? `<div class="std-field admin-mail-reply">
       <label for="mailReplyText">Ответ</label>
       <textarea id="mailReplyText" maxlength="20000" placeholder="Текст ответа. Исходное письмо добавится ниже цитатой."></textarea>
-      <div class="admin-mail-reply-bar"><button type="button" class="btn-secondary admin-mail-send">Отправить</button><span class="admin-mail-reply-to">Получатель: ${esc(replyTo.address)}</span></div>
+      <div class="admin-mail-reply-bar"><button type="button" class="btn-secondary admin-mail-send">Отправить</button><span class="admin-mail-reply-to">Получатель: ${esc(replyTo.address)}${otherReply ? ' <span class="admin-tag admin-tag-blocked">не адрес отправителя - проверьте</span>' : ''}</span></div>
     </div>` : ''}`;
   $('mailView').querySelector('.admin-mail-text').textContent = (m.text || '(письмо без текста)') + (m.cut ? '\n\n… (письмо обрезано - полностью в Яндекс Почте)' : '');
 }
@@ -116,8 +119,9 @@ async function sendReply(btn){
   btn.disabled = true; ta.disabled = true;
   try{
     const d = await api('mail/reply', { uid: mailOpen.uid, text });
-    const notes = [d.test ? 'тестовый режим: письмо не отправлено, текст - в журнале сервера' : '', d.copied ? '' : 'копия в «Отправленные» не сохранилась'].filter(Boolean);
-    mailMsg(`Ответ отправлен на ${d.to}.${notes.length ? ' (' + notes.join('; ') + ')' : ''}`, !d.test);
+    const notes = [d.test ? 'тестовый режим: письмо не отправлено - почта сайта (Unisender) не настроена' : '', d.copied || d.test ? '' : 'копия в «Отправленные» не сохранилась'].filter(Boolean);
+    mailMsg(`${d.test ? 'Ответ не отправлен' : 'Ответ отправлен на ' + d.to}.${notes.length ? ' (' + notes.join('; ') + ')' : ''}`, !d.test);
+    if(d.test){ btn.disabled = false; ta.disabled = false; return; }
     const item = mailItems.find(x => x.uid === mailOpen.uid);
     if(item) item.answered = true;
     mailOpen.answered = true;

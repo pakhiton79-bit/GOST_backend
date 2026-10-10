@@ -84,7 +84,8 @@ router.post('/plan', (req, res) => {
   res.json({ ok: true, quota: quotaInfo(user, now) });
 });
 
-const MAX_GRANT = 100000;
+const MAX_GRANT = 100000;   // за один раз
+const MAX_EXTRA = 1000000;  // всего у аккаунта
 router.post('/calcs', (req, res) => {
   const email = String(req.body.email || '').trim().toLowerCase();
   const user = store.findUserByEmail(email);
@@ -101,6 +102,7 @@ router.post('/calcs', (req, res) => {
     return res.json({ ok: true, taken, quota: quotaInfo(user, now) });
   }
   const left = user.extraLeft + count;
+  if (left > MAX_EXTRA) return res.status(400).json({ error: `Выданных расчётов у аккаунта может быть не больше ${MAX_EXTRA.toLocaleString('ru-RU')}.` });
   store.updateUser(user, { extraLeft: left, extraTotal: left });
   res.json({ ok: true, quota: quotaInfo(user, now) });
 });

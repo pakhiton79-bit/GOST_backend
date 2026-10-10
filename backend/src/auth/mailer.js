@@ -164,7 +164,8 @@ async function sendAutoRenewNotice(email, { planName, date, amount }) {
 async function sendSupportReply({ to, subject, text, replyTo }) {
   const cfg = mailConfig();
   if (!mailEnabled(cfg)) {
-    console.log(`[почта, тестовый режим] ответ поддержки ${to}: ${subject}\n${text}`);
+    // Текст ответа в журнал не пишется (персональные данные) - только кому и тема.
+    console.log(`[почта, тестовый режим] ответ поддержки ${to}: ${subject} (не отправлен)`);
     return { from: { name: cfg.fromName, address: replyTo || 'test@localhost' }, test: true };
   }
   const html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;white-space:pre-wrap">'
