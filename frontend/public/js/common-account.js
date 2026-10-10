@@ -157,7 +157,7 @@ function autoRenewHtml(user){
   const q = user.quota, sum = ar.amount.toLocaleString('ru-RU') + ' ₽';
   const until = q.planUntil ? new Date(q.planUntil).toLocaleDateString('ru-RU') : '';
   const body = ar.on
-    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}. За ${ar.noticeDays} дня до списания придёт письмо.</p>
+    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}.</p>
        <div class="site-acc-actions"><button type="button" class="btn-secondary site-sub-btn" data-ar="off">Отключить автопродление</button></div>`
     : `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную».</p>
        <label class="site-ar-consent"><input type="checkbox" id="siteArConsent"> <span>Согласен(на) на автоматическое продление подписки ${escHtml(q.planName)} на тот же срок со списанием ${sum} (по действующей цене) тем же способом оплаты - на условиях <a href="terms.html#terms-autorenew" target="_blank">Пользовательского соглашения</a>. Отключить можно в любой момент.</span></label>
