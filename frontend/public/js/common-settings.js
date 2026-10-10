@@ -289,8 +289,8 @@ function createJumpSlider(container, steps, onChange){
 // очищаются общие толщины и толщины, выбранные внутри каждого типа (ключи
 // <префикс><тип>-available-thickness), страница перезагружается - везде
 // расчёт строго по ГОСТ, пока толщины не выберут заново.
-function resetAllThicknesses(){
-  if(!window.confirm('Сбросить все толщины и ширины? Общие и выбранные внутри типов ящиков толщины и ширины в наличии будут сняты - везде расчёт строго по ГОСТ, пока не выберете их заново.')) return;
+async function resetAllThicknesses(){
+  if(!await siteConfirm({ title: 'Сбросить все толщины и ширины?', text: 'Общие и выбранные внутри типов ящиков толщины и ширины в наличии будут сняты - везде расчёт строго по ГОСТ, пока не выберете их заново.', ok: 'Сбросить', danger: true })) return;
   Object.values(SITE_STOCK_LISTS).forEach(d => saveSiteSetting(d.key, []));
   try{
     const keys = [];
@@ -306,8 +306,8 @@ function resetAllThicknesses(){
 // Сброс всех настроек сайта (по указанию пользователя): после подтверждения
 // удаляются все ключи сайта в localStorage, страница перезагружается -
 // всё возвращается к значениям по умолчанию.
-function resetAllSiteSettings(){
-  if(!window.confirm('Сбросить все настройки сайта? Толщины в наличии, галочки, поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема на всех страницах вернутся к значениям по умолчанию.')) return;
+async function resetAllSiteSettings(){
+  if(!await siteConfirm({ title: 'Сбросить все настройки сайта?', text: 'Толщины в наличии, галочки, поля опций, «Тонкая настройка», нормы времени, плотность древесины и тема на всех страницах вернутся к значениям по умолчанию.', ok: 'Сбросить', danger: true })) return;
   try{
     const keys = [];
     for(let i = 0; i < localStorage.length; i++){
@@ -543,3 +543,59 @@ function initSiteSettings(){
 
 if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSiteSettings);
 else initSiteSettings();
+
+// Окно подтверждения в стиле сайта (по указанию пользователя: вместо окон
+// браузера confirm/prompt). siteConfirm({ title, text, ok, danger, input })
+// - Promise: отмена - null, «ОК» - true, с полем input ({ label,
+// placeholder }) - введённый текст. Enter - «ОК», Esc и клик мимо - отмена.
+function siteConfirm(opts){
+  return new Promise(resolve => {
+    const o = opts || {};
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay site-confirm';
+    overlay.innerHTML = `<div class="modal-box site-confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="siteConfirmTitle">
+        <h3 id="siteConfirmTitle"></h3>
+        <p class="site-confirm-text"></p>
+        ${o.input ? '<div class="site-confirm-field"><label for="siteConfirmInput"></label><input type="text" id="siteConfirmInput" maxlength="300" autocomplete="off"></div>' : ''}
+        <div class="site-confirm-actions">
+          <button type="button" class="btn-secondary site-confirm-cancel">${o.cancel || 'Отмена'}</button>
+          <button type="button" class="site-confirm-ok${o.danger ? ' site-confirm-danger' : ''}"></button>
+        </div>
+      </div>`;
+    overlay.querySelector('h3').textContent = o.title || 'Подтвердите действие';
+    const text = overlay.querySelector('.site-confirm-text');
+    if(o.text) text.textContent = o.text; else text.remove();
+    overlay.querySelector('.site-confirm-ok').textContent = o.ok || 'ОК';
+    const input = overlay.querySelector('#siteConfirmInput');
+    if(input){
+      overlay.querySelector('label').textContent = o.input.label || '';
+      input.placeholder = o.input.placeholder || '';
+    }
+    const before = document.activeElement;
+    const done = value => {
+      document.removeEventListener('keydown', onKey, true);
+      overlay.remove();
+      if(before && before.focus) before.focus({ preventScroll: true });
+      resolve(value);
+    };
+    const ok = () => done(input ? input.value.trim() : true);
+    const onKey = e => {
+      if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); done(null); }
+      else if(e.key === 'Enter' && !e.target.closest('.site-confirm-cancel')){ e.preventDefault(); ok(); }
+      else if(e.key === 'Tab'){
+        // Фокус не уходит из окна.
+        const f = [...overlay.querySelectorAll('input, button')];
+        const i = f.indexOf(document.activeElement);
+        e.preventDefault();
+        f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+      }
+    };
+    overlay.addEventListener('click', e => {
+      if(e.target === overlay || e.target.closest('.site-confirm-cancel')) done(null);
+      else if(e.target.closest('.site-confirm-ok')) ok();
+    });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(overlay);
+    (input || overlay.querySelector('.site-confirm-ok')).focus();
+  });
+}

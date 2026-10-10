@@ -332,7 +332,7 @@ document.addEventListener('click', async e => {
     const msg = document.getElementById('siteAccDelMsg'), pw = document.getElementById('siteAccDelPw').value;
     const fail = t => { msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = t; };
     if(!pw) return fail('Введите пароль, чтобы подтвердить удаление.');
-    if(!window.confirm('Удалить аккаунт без возможности восстановления?')) return;
+    if(!await siteConfirm({ title: 'Удалить аккаунт?', text: 'Аккаунт, подписка и расчёты будут удалены без возможности восстановления.', ok: 'Удалить', danger: true })) return;
     el.disabled = true;
     try{
       const r = await post('delete', { password: pw });

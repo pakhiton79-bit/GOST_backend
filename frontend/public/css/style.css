@@ -673,6 +673,21 @@
      .modal-close, поэтому он перебивал transparent на hover. Явный hover
      здесь нужен не для эффекта, а чтобы погасить чужой. */
   .modal-close:hover{background:transparent;}
+
+  /* Окно подтверждения в стиле сайта (siteConfirm, common-settings.js) -
+     вместо окон браузера confirm/prompt; поверх окна настроек. */
+  .site-confirm{z-index:200;}
+  .site-confirm-box{max-width:440px;}
+  .site-confirm-box h3{margin-bottom:10px;padding-right:0;}
+  .site-confirm-text{margin:0 0 20px;font-size:14px;line-height:1.5;color:var(--ink-soft);overflow-wrap:anywhere;}
+  .site-confirm-field{margin-bottom:20px;}
+  .site-confirm-field label{display:block;text-transform:none;letter-spacing:normal;font-size:13px;font-weight:600;color:var(--ink-soft);margin-bottom:8px;}
+  .site-confirm-field input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border-input);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:14px;}
+  .site-confirm-field input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash);}
+  .site-confirm-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;}
+  .site-confirm-actions button{margin:0;}
+  .site-confirm-danger{background:var(--error);}
+  .site-confirm-danger:hover{background:var(--error);filter:brightness(.9);}
   .modal-field{margin-bottom:20px;}
   .modal-field:last-child{margin-bottom:0;}
   .modal-field label{

@@ -224,21 +224,23 @@ $('adminRows').addEventListener('click', async e => {
   const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock, .admin-grant-btn, .admin-take-btn');
   if(!btn || btn.disabled) return;
   const tr = btn.closest('tr'), email = tr.dataset.email;
-  if(btn.classList.contains('admin-delete') && !window.confirm(`Удалить аккаунт ${email}? Его подписка, счётчики и входы будут удалены без возможности восстановления.`)) return;
+  if(btn.classList.contains('admin-delete') && !await siteConfirm({ title: `Удалить аккаунт ${email}?`, text: 'Его подписка, счётчики и входы будут удалены без возможности восстановления.', ok: 'Удалить', danger: true })) return;
   // Блокировка: причина (можно пустую) - её увидит пользователь при попытке войти.
   let reason = '';
   if(btn.classList.contains('admin-block')){
-    reason = window.prompt(`Заблокировать ${email}? Вход и расчёты будут запрещены, входы на всех устройствах завершатся.\n\nПричина (её увидит пользователь при входе, можно оставить пустой):`, '');
+    reason = await siteConfirm({ title: `Заблокировать ${email}?`, text: 'Вход и расчёты будут запрещены, входы на всех устройствах завершатся.', ok: 'Заблокировать', danger: true,
+      input: { label: 'Причина (её увидит пользователь при входе, можно оставить пустой)' } });
     if(reason === null) return;
   }
-  if(btn.classList.contains('admin-unblock') && !window.confirm(`Разблокировать ${email}?`)) return;
+  if(btn.classList.contains('admin-unblock') && !await siteConfirm({ title: `Разблокировать ${email}?`, ok: 'Разблокировать' })) return;
   let count = 0;
   const take = btn.classList.contains('admin-take-btn');
   if(take || btn.classList.contains('admin-grant-btn')){
     count = Number(tr.querySelector('.admin-grant-count').value);
     if(!Number.isInteger(count) || count < 1) return showMsg(`Укажите, сколько расчётов ${take ? 'забрать' : 'выдать'} (целое число от 1).`);
-    if(take ? !window.confirm(`Забрать у ${email} ${fmtNum(count)} расч. из выданных? Бонус за регистрацию и месячные расчёты не меняются.`)
-      : !window.confirm(`Выдать ${email} ${fmtNum(count)} расч. сверх подписки? Они не сгорают.`)) return;
+    if(!await siteConfirm(take
+      ? { title: `Забрать у ${email} ${fmtNum(count)} расч.?`, text: 'Забираются только выданные расчёты. Бонус за регистрацию и месячные расчёты не меняются.', ok: 'Забрать' }
+      : { title: `Выдать ${email} ${fmtNum(count)} расч.?`, text: 'Сверх подписки, не сгорают.', ok: 'Выдать' })) return;
   }
   btn.disabled = true;
   try{

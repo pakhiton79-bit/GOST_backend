@@ -115,7 +115,7 @@ async function sendReply(btn){
   const ta = $('mailReplyText'), text = ta.value.trim();
   if(!text) return mailMsg('Напишите текст ответа.', false);
   const to = (mailOpen.replyTo || mailOpen.from).address;
-  if(!window.confirm(`Отправить ответ на ${to}?`)) return;
+  if(!await siteConfirm({ title: 'Отправить ответ?', text: `Получатель: ${to}`, ok: 'Отправить' })) return;
   btn.disabled = true; ta.disabled = true;
   try{
     const d = await api('mail/reply', { uid: mailOpen.uid, text });
