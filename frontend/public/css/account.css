@@ -434,10 +434,13 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-block .auth-devices{margin-top:10px;}
 .site-acc-block .auth-device button{margin:0;padding:7px 12px;font-size:13px;}
 .site-acc-danger .site-usage-title{color:var(--error);}
-/* автопродление (раздел «Подписка»): галочка согласия - не отмечена заранее */
+/* автопродление (раздел «Аккаунт»): галочка согласия - не отмечена заранее */
 .site-ar-consent{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink);line-height:1.45;cursor:pointer;}
 .site-ar-consent input{margin-top:3px;flex:0 0 auto;}
 #siteAutoRenew .site-sub-btn:disabled{opacity:.45;cursor:default;}
+/* сообщение об автопродлении вверху страницы (за 3 дня до продления) */
+.site-autorenew-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+.site-autorenew-close{flex:0 0 auto;border:none;background:none;color:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0 4px;}
 .site-acc-del-btn{color:var(--error);margin-top:10px;}
 .site-acc-del-btn:hover{border-color:var(--error);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}

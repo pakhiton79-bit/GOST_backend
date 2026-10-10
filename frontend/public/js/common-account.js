@@ -42,6 +42,42 @@ function noteAccountUser(user){
   accountUserCache = user;
   applyPlanClass(user);
   renderAccountButton(user);
+  renderAutoRenewNotice(user);
+}
+// Сообщение об автопродлении (по указанию пользователя - вместе с письмом):
+// за 3 дня до продления (autoRenew.noticeDue с сервера) - полоса вверху
+// страницы со ссылкой на «Аккаунт», где его можно отключить. Закрытое
+// сообщение больше не показывается до следующего продления (ключ - дата
+// окончания подписки).
+function renderAutoRenewNotice(user){
+  const old = document.getElementById('siteAutoRenewNotice');
+  const ar = user && user.autoRenew, until = user && user.quota && user.quota.planUntil;
+  const key = 'gost10198-autorenew-notice-' + until;
+  let closed = false;
+  try{ closed = localStorage.getItem(key) === '1'; }catch(e){}
+  if(!ar || !ar.noticeDue || !until || closed){ if(old) old.remove(); return; }
+  if(old) return;
+  const wrap = document.querySelector('.wrap');
+  if(!wrap) return;
+  const el = document.createElement('div');
+  el.id = 'siteAutoRenewNotice';
+  el.className = 'note site-autorenew-notice';
+  el.innerHTML = `<span>Подписка ${escHtml(user.quota.planName)} будет автоматически продлена ${new Date(until).toLocaleDateString('ru-RU')}, сумма ${ar.amount.toLocaleString('ru-RU')} ₽. `
+    + `<a href="#account" data-ar-open>Отключить автопродление</a></span>`
+    + '<button type="button" class="site-autorenew-close" aria-label="Закрыть">×</button>';
+  el.querySelector('[data-ar-open]').addEventListener('click', e => {
+    e.preventDefault();
+    openSettingsSection('account');
+    // блок автопродления появляется, когда придут данные аккаунта
+    let tries = 0;
+    const scroll = () => { const b = document.getElementById('siteAutoRenew'); if(b) b.scrollIntoView({ block: 'center' }); else if(++tries < 20) setTimeout(scroll, 100); };
+    scroll();
+  });
+  el.querySelector('.site-autorenew-close').addEventListener('click', () => {
+    try{ localStorage.setItem(key, '1'); }catch(e){}
+    el.remove();
+  });
+  wrap.insertBefore(el, wrap.firstChild);
 }
 // Ссылка на вход / регистрацию с возвратом на эту страницу.
 function authHref(mode){
@@ -157,7 +193,7 @@ function autoRenewHtml(user){
   const q = user.quota, sum = ar.amount.toLocaleString('ru-RU') + ' ₽';
   const until = q.planUntil ? new Date(q.planUntil).toLocaleDateString('ru-RU') : '';
   const body = ar.on
-    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}.</p>
+    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}. За ${ar.noticeDays} дня до списания придёт письмо.</p>
        <div class="site-acc-actions"><button type="button" class="btn-secondary site-sub-btn" data-ar="off">Отключить автопродление</button></div>`
     : `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную».</p>
        <label class="site-ar-consent"><input type="checkbox" id="siteArConsent"> <span>Согласен(на) на автоматическое продление подписки ${escHtml(q.planName)} на тот же срок со списанием ${sum} (по действующей цене) тем же способом оплаты - на условиях <a href="terms.html#terms-autorenew" target="_blank">Пользовательского соглашения</a>. Отключить можно в любой момент.</span></label>
@@ -306,17 +342,16 @@ document.addEventListener('click', async e => {
 });
 
 if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
+  // «Аккаунт» и «Подписка» - один раздел (по указанию пользователя):
+  // подписка, лимиты и автопродление, затем данные аккаунта.
   SITE_SETTINGS_SECTIONS.splice(1, 0, {
     id: 'account', title: 'Аккаунт',
-    rows: () => [{ title: 'Данные аккаунта', hint: '', control: () => '<div class="site-acc" id="siteAccountBox"></div>', wide: true }],
-  }, {
-    id: 'subscription', title: 'Подписка',
     rows: () => [{
       title: 'Подписка и лимиты',
       hint: 'Расчёт - одно нажатие «Рассчитать». Сначала тратятся расчёты месяца, потом бонус за регистрацию.',
       control: () => '<div class="site-sub" id="siteSubBox"></div>',
       wide: true,
-    }],
+    }, { title: 'Данные аккаунта', hint: '', control: () => '<div class="site-acc" id="siteAccountBox"></div>', wide: true }],
   });
   // «Помощь» (по указанию пользователя) - последним разделом, на всех
   // страницах: почта поддержки (после проверки «Я не робот», см.
@@ -388,7 +423,7 @@ document.addEventListener('click', e => {
   if(e.target.closest('.site-settings-nav-item[data-section="help"]')) renderSiteHelp();
 });
 // Окно открыли - сразу последние известные данные, затем свежие с сервера.
-// Адрес с #account или #subscription (например, со старой страницы
+// Адрес с #account или #subscription (раздел «Аккаунт») (например, со старой страницы
 // account.html) - окно открывается сразу на этом разделе.
 function initSettingsAccount(){
   const btn = document.getElementById('siteSettingsBtn');
@@ -398,8 +433,9 @@ function initSettingsAccount(){
     if(accountUserCache !== undefined) render(accountUserCache);
     fetchAccountUser().then(render);
   });
-  const section = location.hash.replace('#', '');
-  if(section === 'account' || section === 'subscription' || section === 'help'){
+  // #subscription - прежний раздел «Подписка», теперь часть «Аккаунта».
+  const section = location.hash.replace('#', '').replace(/^subscription$/, 'account');
+  if(section === 'account' || section === 'help'){
     openSettingsSection(section);
     history.replaceState(null, '', location.pathname + location.search);
   }
