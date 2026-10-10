@@ -84,6 +84,7 @@
 .auth-msg-error{color:var(--error);background:color-mix(in srgb, var(--error) 10%, transparent);}
 .auth-msg-ok{color:var(--ink);background:var(--accent-wash);}
 .auth-msg[hidden]{display:none;}
+.auth-msg a[href^="mailto:"]{color:var(--accent);} /* почта в сообщении (о блокировке) - коричневая, как ссылки сайта */
 
 /* Страница аккаунта: строки «название - значение». */
 .account-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--rule);font-size:15px;}
