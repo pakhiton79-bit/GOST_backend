@@ -440,7 +440,8 @@ body.auth-page{margin:0;background:var(--bg);}
 #siteAutoRenew .site-sub-btn:disabled{opacity:.45;cursor:default;}
 /* сообщение об автопродлении вверху страницы (за 3 дня до продления) */
 .site-autorenew-notice{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
-.site-autorenew-close{flex:0 0 auto;border:none;background:none;color:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0 4px;}
+.site-autorenew-notice a, .site-ar-consent a{color:var(--accent);} /* ссылки - коричневые, как на сайте */
+.site-autorenew-close{flex:0 0 auto;margin:0;border:none;background:none;color:inherit;font-size:20px;line-height:1;cursor:pointer;padding:0 4px;}
 .site-acc-del-btn{color:var(--error);margin-top:10px;}
 .site-acc-del-btn:hover{border-color:var(--error);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}

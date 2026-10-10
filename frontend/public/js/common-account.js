@@ -343,8 +343,9 @@ document.addEventListener('click', async e => {
 
 if(typeof SITE_SETTINGS_SECTIONS !== 'undefined'){
   // «Аккаунт» и «Подписка» - один раздел (по указанию пользователя):
-  // подписка, лимиты и автопродление, затем данные аккаунта.
-  SITE_SETTINGS_SECTIONS.splice(1, 0, {
+  // подписка, лимиты и автопродление, затем данные аккаунта. Первым в окне,
+  // выше «Оформления» (по указанию пользователя).
+  SITE_SETTINGS_SECTIONS.splice(0, 0, {
     id: 'account', title: 'Аккаунт',
     rows: () => [{
       title: 'Подписка и лимиты',
