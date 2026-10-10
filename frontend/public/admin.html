@@ -47,6 +47,21 @@
       <summary>Таблица по дням</summary>
       <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>День</th><th>Расчёты</th><th>Регистрации</th></tr></thead><tbody id="dailyRows"></tbody></table></div>
     </details>
+    <div class="card" id="mailCard">
+      <h2>Почта поддержки <span class="admin-count" id="mailCount"></span></h2>
+      <p class="admin-chart-note">Ящик поддержки на Яндексе. Ответ уходит отправителю письма, копия - в «Отправленные» ящика.</p>
+      <div class="admin-mail-bar" id="mailBar">
+        <div class="admin-mail-tabs" role="tablist" aria-label="Папка">
+          <button type="button" role="tab" class="admin-mail-tab" data-folder="inbox" aria-selected="true">Входящие</button>
+          <button type="button" role="tab" class="admin-mail-tab" data-folder="sent" aria-selected="false">Отправленные</button>
+        </div>
+        <button type="button" class="btn-secondary" id="mailRefresh">Обновить</button>
+      </div>
+      <div class="auth-msg" id="mailMsg" hidden></div>
+      <div class="admin-mail-list" id="mailList"></div>
+      <button type="button" class="btn-secondary admin-mail-more" id="mailMore" hidden>Показать ещё</button>
+      <div class="admin-mail-view" id="mailView" hidden></div>
+    </div>
     <div class="card">
       <h2>Сообщения об ошибках <span class="admin-count" id="repCount"></span></h2>
       <p class="admin-chart-note">Из кнопки «Сообщить об ошибке» в верхней панели. Сначала Pro и Team (приоритетное обслуживание), дальше новые сверху.</p>
@@ -83,5 +98,6 @@
 </div>
 <script src="/js/account/ui-select.js"></script>
 <script src="/js/account/admin.js"></script>
+<script src="/js/account/admin-mail.js"></script>
 </body>
 </html>

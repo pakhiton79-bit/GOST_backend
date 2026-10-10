@@ -14,6 +14,7 @@
 //   POST /api/admin/unblock { email }     - разблокировать
 //   GET  /api/admin/stats                 - статистика (stats.js)
 //   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js)
+//   /api/admin/mail/...                   - почта поддержки (support-mail.js)
 //   GET  /api/admin/reports               - сообщения об ошибках (feedback.js)
 //                                           (Pro и Team - первыми с пометкой priority, дальше новые сверху)
 const express = require('express');
@@ -134,6 +135,8 @@ router.post('/unblock', (req, res) => {
   store.updateUser(user, { blocked: null });
   res.json({ ok: true });
 });
+
+router.use('/mail', require('./support-mail').router);
 
 router.get('/requests', (req, res) => {
   res.json({ requests: withPriority(store.listRequests()) });

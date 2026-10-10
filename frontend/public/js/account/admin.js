@@ -191,7 +191,7 @@ function renderReports(){
 async function api(path, body){
   const r = await fetch('/api/admin/' + path, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' });
   const d = await r.json();
-  if(!r.ok){ const e = new Error(d.error || 'Ошибка сервера.'); e.status = r.status; throw e; }
+  if(!r.ok){ const e = new Error(d.error || 'Ошибка сервера.'); e.status = r.status; e.notConfigured = !!d.notConfigured; throw e; }
   return d;
 }
 

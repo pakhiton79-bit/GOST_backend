@@ -12,6 +12,7 @@
 //   MAIL_FROM_NAME        - имя отправителя (по умолчанию «Тара+»);
 //   SUPPORT_EMAIL         - куда приходят заявки на стандарты и сообщения об
 //                           ошибках (ответ на письмо уходит пользователю);
+//   (ответы из админки - «Почта поддержки», support-mail.js);
 //   MAIL_SKIP_UNSUBSCRIBE - 1, если поддержка сервиса разрешила письма без
 //                           ссылки «отписаться» (для кодов это уместно).
 // Пока ключ или отправитель не заданы - тестовый режим: письма не
@@ -156,4 +157,20 @@ async function sendAutoRenewNotice(email, { planName, date, amount }) {
   await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
 }
 
-module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice };
+// Ответ из раздела «Почта поддержки» админки (support-mail.js): обычный
+// текст, ответ пользователя придёт на replyTo (ящик поддержки). Возвращает
+// { from, test } - отправителя (для копии в «Отправленные») и тестовый ли
+// режим; ошибка сервиса - исключение.
+async function sendSupportReply({ to, subject, text, replyTo }) {
+  const cfg = mailConfig();
+  if (!mailEnabled(cfg)) {
+    console.log(`[почта, тестовый режим] ответ поддержки ${to}: ${subject}\n${text}`);
+    return { from: { name: cfg.fromName, address: replyTo || 'test@localhost' }, test: true };
+  }
+  const html = '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;white-space:pre-wrap">'
+    + escapeHtml(text) + '</div>';
+  await sendMail(cfg, { to, subject, text, html, replyTo });
+  return { from: { name: cfg.fromName, address: cfg.from }, test: false };
+}
+
+module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice, sendSupportReply };
