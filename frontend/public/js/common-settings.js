@@ -248,7 +248,11 @@ function createJumpSlider(container, steps, onChange){
     return Math.round(Math.max(0, Math.min(1, fraction)) * (n - 1));
   }
 
+  // Рамка фокуса вокруг бегунка - только при управлении с клавиатуры: при
+  // перетаскивании мышью/пальцем её не видно (по замечанию пользователя -
+  // «коричневый круг» вокруг ползунка), см. .jump-slider-pointer в style.css.
   container.addEventListener('pointerdown', e=>{
+    container.classList.add('jump-slider-pointer');
     container.setPointerCapture(e.pointerId);
     container.focus();
     setIndex(indexFromClientX(e.clientX), true);
@@ -264,6 +268,7 @@ function createJumpSlider(container, steps, onChange){
   });
 
   container.addEventListener('keydown', e=>{
+    container.classList.remove('jump-slider-pointer');
     if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){ setIndex(index + 1, true); e.preventDefault(); }
     else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){ setIndex(index - 1, true); e.preventDefault(); }
     else if(e.key === 'Home'){ setIndex(0, true); e.preventDefault(); }
