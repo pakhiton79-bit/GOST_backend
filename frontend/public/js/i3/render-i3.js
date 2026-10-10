@@ -7,6 +7,7 @@
 const BOX_IMG_B64 = "/images/box.png";
 
 function renderSummary(calc){
+  rememberLiveCalc(calc); // основа итогов при правках без пересчёта (common-table-edits.js)
   document.getElementById('outDims').innerHTML = `${calc.outerL} × ${calc.outerW} × ${calc.outerH} <span>мм</span>`;
   document.getElementById('outVolume').innerHTML = `${calc.totalVolume.toFixed(3)} <span>м³</span>`;
   document.getElementById('outMass').innerHTML = `${calc.crateMass.toFixed(1)} <span>кг</span>`;

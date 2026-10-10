@@ -889,6 +889,11 @@
   .version-badge{display:inline-block;padding:1px 9px;border:1px solid var(--warn);border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;color:var(--warn);background:transparent;}
   .version-badge-danger{border-color:var(--error);color:var(--error);}
   .version-opt.active .version-badge{background:#fff;}
+  /* «?» у оптимальной версии - пояснение (по наведению, фокусу, на телефоне -
+     по нажатию: common-version-switch.js, класс .open) */
+  .version-info{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:18px;height:18px;border:1.5px solid currentColor;border-radius:50%;font-size:12px;font-weight:700;line-height:1;cursor:help;outline:none;}
+  .version-info::after{content:attr(data-tip);position:absolute;top:calc(100% + 10px);left:50%;transform:translateX(-50%);width:max-content;max-width:280px;padding:8px 12px;border-radius:8px;background:var(--ink);color:var(--panel);font-size:13px;font-weight:500;line-height:1.4;white-space:normal;text-align:left;box-shadow:var(--shadow-sm);opacity:0;visibility:hidden;transition:opacity .15s ease;pointer-events:none;z-index:20;}
+  .version-info:hover::after,.version-info:focus-visible::after,.version-info.open::after{opacity:1;visibility:visible;}
   @media (max-width:560px){.version-switch{display:flex;}.version-opt{flex:1 1 100%;justify-content:space-between;white-space:normal;}}
   @media print{.version-switch{display:none !important;}}
   .box-name-input{

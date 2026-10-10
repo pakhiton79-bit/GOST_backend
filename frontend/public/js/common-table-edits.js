@@ -94,3 +94,83 @@ function readTableEdits(){
   });
   return edits;
 }
+
+// ============ Правки без пересчёта ============
+// По указанию пользователя: правка ширины, длины и количества (в ГОСТ
+// 2991-85 - длины и количества) на другие детали не влияет, поэтому
+// «Нажмите «Рассчитать»» не появляется, а объём, масса ящика и норма времени
+// обновляются сразу - так же, как их пересчитал бы расчёт (applyTableEdits:
+// к объёму последнего расчёта прибавляется разница объёмов изменённых строк
+// с множителем раздела). Правка толщины (в ГОСТ 2991-85 - и ширины) меняет
+// другие детали - после неё нужен пересчёт. Роли, требующие пересчёта, тип
+// может задать константой TABLE_RECALC_ROLES (ГОСТ 2991-85 - js/g2991/options.js).
+// Множители объёма разделов (как на сервере): щиты торцевой и боковой - по
+// 2 шт.; лента, пергамин и болты в объём не входят.
+const TABLE_VOLUME_MULT = { dno: 1, kryshka: 1, torec: 2, endPanel: 2, bokovoy: 2 };
+function tableRecalcRoles(){
+  return typeof TABLE_RECALC_ROLES !== 'undefined' ? TABLE_RECALC_ROLES : ['t'];
+}
+// Правки только тех ролей, после которых нужен пересчёт: по ним
+// common-calc-state.js решает, устарел ли расчёт.
+function readRecalcTableEdits(){
+  const roles = tableRecalcRoles(), out = {};
+  const all = readTableEdits();
+  Object.keys(all).forEach(sec => Object.keys(all[sec]).forEach(key => {
+    roles.forEach(role => {
+      if(!(role in all[sec][key])) return;
+      out[sec] = out[sec] || {};
+      out[sec][key] = out[sec][key] || {};
+      out[sec][key][role] = all[sec][key][role];
+    });
+  }));
+  return out;
+}
+// Последний результат расчёта - основа для итогов при правках без пересчёта
+// (запоминает renderSummary каждого типа; повторный вывод итогов отсюда же
+// основу не меняет).
+let liveCalcBase = null, liveRendering = false;
+function rememberLiveCalc(calc){
+  if(!liveRendering) liveCalcBase = calc;
+}
+function updateLiveTotals(){
+  if(!liveCalcBase || typeof renderSummary !== 'function') return;
+  const num = s => { const x = parseFloat(String(s).replace(',', '.')); return Number.isFinite(x) ? x : 0; };
+  const recalc = tableRecalcRoles();
+  let delta = 0;
+  document.querySelectorAll('#boardTables table[data-section] tr[data-row-key]').forEach(tr => {
+    const mult = TABLE_VOLUME_MULT[tr.closest('table').dataset.section] || 0;
+    if(!mult) return;
+    // Объём строки по ячейкам: текущие значения или значения последнего
+    // расчёта; роли, требующие пересчёта, - всегда по последнему расчёту.
+    const vol = current => TABLE_EDIT_ROLES.reduce((p, role) => {
+      const c = tr.querySelector(`td[data-role="${role}"]`);
+      if(!c) return 0;
+      const orig = 'origText' in c.dataset ? c.dataset.origText : c.textContent;
+      return p * num(current && !recalc.includes(role) ? c.textContent : orig);
+    }, 1) / 1e9;
+    delta += (vol(true) - vol(false)) * mult;
+  });
+  const base = liveCalcBase, totalVolume = base.totalVolume + delta;
+  const ts = loadTimeSettings(TIME_SETTINGS_STORAGE_KEY);
+  const live = Object.assign({}, base, {
+    totalVolume,
+    crateMass: base.totalVolume > 0 ? base.crateMass * totalVolume / base.totalVolume : base.crateMass,
+    normaVremeni: Math.ceil(totalVolume / ts.baseProductivity * ts.timeCoeff * 10 - 1e-9) / 10, // как computeNormaVremeni
+  });
+  liveRendering = true;
+  try{ renderSummary(live); }finally{ liveRendering = false; }
+  if(typeof showManualEditsWarning === 'function') showManualEditsWarning();
+}
+// Правка ячейки таблицы деталей (общий обработчик всех типов): ячейка
+// помечается исправленной; толщина (и ширина в ГОСТ 2991-85) - расчёт
+// устарел, остальное - итоги сразу, без «Нажмите «Рассчитать»».
+function onTableCellInput(cell){
+  markCellEdited(cell);
+  syncOverrideCells(cell);
+  updateResetButton();
+  if(tableRecalcRoles().includes(cell.dataset.role)) invalidateCalc();
+  else{
+    updateLiveTotals();
+    invalidateCalc(); // статус - по правкам, требующим пересчёта (calcStateSignature)
+  }
+}

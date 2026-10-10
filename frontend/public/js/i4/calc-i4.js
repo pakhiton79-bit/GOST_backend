@@ -97,13 +97,11 @@ async function calculateNow(){
   if(el) el.addEventListener('change', invalidateCalc);
 });
 
-// Правка ячейки таблицы не пересчитывает сразу: ячейка помечается
-// исправленной, расчёт - устаревшим; учтётся по «Рассчитать».
+// Правка ячейки таблицы: толщина - расчёт устарел (учтётся по «Рассчитать»),
+// остальное - итоги сразу (onTableCellInput в common-table-edits.js).
 document.getElementById('boardTables').addEventListener('input', e=>{
   if(e.target.classList.contains('editable-cell')){
-    markCellEdited(e.target); syncOverrideCells(e.target);
-    updateResetButton();
-    invalidateCalc();
+    onTableCellInput(e.target);
   }
 });
 

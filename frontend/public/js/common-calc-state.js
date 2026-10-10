@@ -96,9 +96,13 @@ function calcStateSignature(){
     // I-1: без галочек «Настроить число поясов / расстояние» значение
     // ползунка в расчёт не идёт - не сравниваем его.
     if(input && !input.plankLayoutMode && 'plankLayoutValue' in input) input.plankLayoutValue = null;
+    // Правки таблицы в теле запроса - тоже только требующие пересчёта
+    // (длина, количество и т.п. итоги меняют сразу - common-table-edits.js).
+    if(input && input.tableEdits) input.tableEdits = readRecalcTableEdits();
     return JSON.stringify({
       input,
-      tableEdits: readTableEdits(),
+      // только правки, требующие пересчёта (common-table-edits.js)
+      tableEdits: readRecalcTableEdits(),
       thicknesses: typeof availableThicknesses !== 'undefined' ? availableThicknesses : null,
       time: typeof TIME_SETTINGS_STORAGE_KEY !== 'undefined' ? loadTimeSettings(TIME_SETTINGS_STORAGE_KEY) : null,
     });

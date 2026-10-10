@@ -5,6 +5,9 @@ const G2991_STORAGE_KEY = 'gost2991-' + G2991_TYPE.key + '-';
 const OPTIONS_STORAGE_PREFIX = G2991_STORAGE_KEY + 'opt-';
 const TIME_SETTINGS_STORAGE_KEY = G2991_STORAGE_KEY + 'time-settings'; // шестерёнка «Нормы времени»
 const WOOD_DENSITY_STORAGE_KEY = G2991_STORAGE_KEY + 'wood-density';   // шестерёнка «Массы ящика»
+// Правка толщины и ширины в таблице деталей меняет раскладку досок - нужен
+// пересчёт; длина и количество - итоги сразу (common-table-edits.js).
+const TABLE_RECALC_ROLES = ['t', 'w'];
 
 // Любое изменение параметров: после первого расчёта показывается «Нажмите
 // «Рассчитать»» (см. markCalcChanged в common-calc-state.js).
