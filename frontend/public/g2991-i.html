@@ -66,6 +66,19 @@
   <div class="card">
     <h2>Дополнительные опции</h2>
     <div class="fastening-option-list">
+      <div class="option-group-title">Порода древесины</div>
+      <label><input type="radio" name="species" value="conifer" checked><span>Хвойные и твёрдые лиственные<span class="option-hint">Толщины - по таблице 2</span></span></label>
+      <label><input type="radio" name="species" value="birch"><span>Берёза<span class="option-hint">Толщина досок на одну градацию меньше (п. 1.9)</span></span></label>
+      <label><input type="radio" name="species" value="softDeciduous"><span>Мягкие лиственные<span class="option-hint">Толщина досок на одну градацию больше (п. 1.9)</span></span></label>
+      <div class="option-group-title">Условия</div>
+      <label>
+        <input type="checkbox" id="concentrated">
+        <span>Сосредоточенная нагрузка<span class="option-hint">Или упаковочная плотность груза от 3 кг/дм³: толщина досок на одну градацию больше (п. 1.12)</span></span>
+      </label>
+      <label>
+        <input type="checkbox" id="packet">
+        <span>Пакетные или контейнерные перевозки<span class="option-hint">Толщина досок от 13 мм - на одну градацию меньше (п. 1.13)</span></span>
+      </label>
       <div class="option-group-title">Доски</div>
       <label>
         <input type="checkbox" id="noRoundBoardWidths">

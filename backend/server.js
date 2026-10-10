@@ -175,6 +175,9 @@ app.post('/api/g2991i/calculate', (req, res) => {
   const b = req.body || {};
   const input = {
     L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
+    species: typeof b.species === 'string' ? b.species : 'conifer',
+    packet: !!b.packet,
+    concentrated: !!b.concentrated,
     noLid: !!b.noLid,
     roundBoardWidths: !!b.roundBoardWidths,
     availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),

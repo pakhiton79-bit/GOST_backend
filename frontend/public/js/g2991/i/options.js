@@ -1,5 +1,5 @@
 // ГОСТ 2991-85, тип I: опции формы - толщины и ширины «в наличии»
-// (js/g2991/stock.js), галочки. Всё запоминается в localStorage
+// (js/g2991/stock.js), порода, галочки. Всё запоминается в localStorage
 // (ключи - свои для типа).
 const OPTIONS_STORAGE_PREFIX = 'gost2991-i-opt-';
 const TIME_SETTINGS_STORAGE_KEY = 'gost2991-i-time-settings'; // шестерёнка «Нормы времени»
@@ -23,7 +23,19 @@ function persistCheckbox(id){
     try{ localStorage.setItem(key, el.checked ? '1' : '0'); }catch(e){}
   });
 }
-['noRoundBoardWidths', 'noLid'].forEach(id => persistCheckbox(id));
+function persistRadioGroup(name){
+  const els = Array.from(document.querySelectorAll(`input[name="${name}"]`));
+  const key = OPTIONS_STORAGE_PREFIX + name;
+  try{
+    const saved = localStorage.getItem(key);
+    if(saved !== null && els.some(el => el.value === saved)) els.forEach(el => { el.checked = el.value === saved; });
+  }catch(e){}
+  els.forEach(el => el.addEventListener('change', () => {
+    if(el.checked){ try{ localStorage.setItem(key, el.value); }catch(e){} }
+  }));
+}
+['concentrated', 'packet', 'noRoundBoardWidths', 'noLid'].forEach(id => persistCheckbox(id));
+persistRadioGroup('species');
 
 // Толщины и ширины «в наличии»; общие - из раздела «ГОСТ 2991-85» окна
 // «Настройки».

@@ -1,5 +1,6 @@
 // ГОСТ 2991-85, тип II-1: чертежи узлов - плоские схемы (SVG, как щиты
-// III-1): узел - белый прямоугольник без досок (по указанию пользователя),
+// III-1): узел - белый прямоугольник, доски - тонкими линиями стыков (по
+// указанию пользователя: видно, в какую сторону идут доски, без перегрузки),
 // планки торца - светло-серые поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
 // (у дна и крышки - ширина), у торца ещё расстояние между планками.
 // Размеры - из расчёта (calc.drawing).
@@ -10,12 +11,28 @@ const G2991_PANEL_IW = 2222;                       // ширина картин�
 const G2991_PANEL_MIN_RATIO = 0.3, G2991_PANEL_MAX_RATIO = 1.2; // пределы высоты кадра, доли ширины
 const G2991_PANEL_WIDTH = 260, G2991_PANEL_LABEL_SCALE = 0.8;
 const G2991_PLANK_FILL = '#d9d9d9'; // планки торца - светло-серые (по указанию пользователя)
+const G2991_JOINT_STROKE = '#777';  // линии стыков досок - тонкие серые
+const G2991_JOINT_MIN_PX = 3;       // доски уже стольких px на экране - стыки не рисуются (сливаются)
+
+// Ширины досок узла по порядку строк таблицы (кроме планок): снизу вверх для
+// щитов и дна/крышки, слева направо для вертикальных досок торца.
+function g2991RowsLayout(rows){
+  const res = [];
+  rows.forEach(r => {
+    if(/^Планка/.test(r.name)) return;
+    const qty = Math.min(200, Math.max(0, Math.round(r.qty) || 0));
+    for(let i = 0; i < qty; i++) res.push(r.w);
+  });
+  return res;
+}
 
 // lenMm × heightMm - габариты узла; boards - 'edges' (только 2 доски у
 // верхнего и нижнего края - «Без крышки»), иначе - сплошной щит; planks - 'v' (2 планки у
 // левого и правого края), 'h' (у верхнего и нижнего) или null; plankMm -
-// ширина планки, plankGapMm - расстояние между планками (подпись).
-function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, plankGapMm){
+// ширина планки, plankGapMm - расстояние между планками (подпись); layout -
+// ширины досок по порядку (g2991RowsLayout): стыки - линиями, для 'h' -
+// горизонтальными снизу вверх, для 'v' - вертикальными слева направо.
+function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, plankGapMm, layout){
   const IW = G2991_PANEL_IW;
   const IH = IW * Math.min(G2991_PANEL_MAX_RATIO, Math.max(G2991_PANEL_MIN_RATIO, heightMm / lenMm));
   const f = v => v.toFixed(1);
@@ -27,8 +44,26 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
   // Планки - по краям, вдвое шире обычной детали на экране (по указанию
   // пользователя: были тонковаты), но не больше 1/5 щита.
   const pw = Math.min(2 * drawnMemberWidth(ks), (planks === 'v' ? IW : IH) / 5);
-  // Доски не прорисовываются (по указанию пользователя) - щит белым
-  // прямоугольником; «Без крышки» - только 2 доски у краёв, шириной и цветом
+  // Стыки досок - тонкие линии поверх белого щита (лишнее у последней доски
+  // за краем щита не рисуется); слишком узкие доски - без линий.
+  let joints = '';
+  if(layout && layout.length > 1 && (boards === 'h' || boards === 'v')){
+    const span = boards === 'h' ? heightMm : lenMm, size = boards === 'h' ? IH : IW;
+    const px = size / span;
+    if(Math.min(...layout) * px / k >= G2991_JOINT_MIN_PX){
+      let pos = 0;
+      layout.slice(0, -1).forEach(w => {
+        pos += w;
+        if(pos >= span) return;
+        const c = pos * px;
+        joints += boards === 'h'
+          ? `<line x1="0" y1="${f(IH - c)}" x2="${f(IW)}" y2="${f(IH - c)}"/>`
+          : `<line x1="${f(c)}" y1="0" x2="${f(c)}" y2="${f(IH)}"/>`;
+      });
+    }
+  }
+  if(joints) shapes += `<g stroke="${G2991_JOINT_STROKE}" stroke-width="${f(0.6 * ks)}">${joints}</g>`;
+  // «Без крышки» - только 2 доски у краёв, шириной и цветом
   // как планки торца (по указанию пользователя).
   if(boards === 'edges'){
     const bw = Math.min(2 * drawnMemberWidth(ks), IH / 5);
@@ -79,13 +114,13 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
 function diagramsG2991II1(calc){
   const d = calc.drawing;
   return {
-    dno: diagramG2991Panel('Дно - схема', d.dnoL, d.dnoW, 'h', null),
+    dno: diagramG2991Panel('Дно - схема', d.dnoL, d.dnoW, 'h', null, 0, 0, g2991RowsLayout(calc.dno)),
     kryshka: calc.noLid
       ? diagramG2991Panel('Вместо крышки - схема', d.dnoL, d.dnoW, 'edges', null)
-      : diagramG2991Panel('Крышка - схема', d.dnoL, d.dnoW, 'h', null),
+      : diagramG2991Panel('Крышка - схема', d.dnoL, d.dnoW, 'h', null, 0, 0, g2991RowsLayout(calc.kryshka)),
     torec: calc.verticalEnd
-      ? diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'v', 'h', d.plankW, d.plankGap)
-      : diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'h', 'v', d.plankW, d.plankGap),
-    bokovoy: diagramG2991Panel('Щит боковой - схема', d.bokL, d.H, 'h', null),
+      ? diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'v', 'h', d.plankW, d.plankGap, g2991RowsLayout(calc.torec))
+      : diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'h', 'v', d.plankW, d.plankGap, g2991RowsLayout(calc.torec)),
+    bokovoy: diagramG2991Panel('Щит боковой - схема', d.bokL, d.H, 'h', null, 0, 0, g2991RowsLayout(calc.bokovoy)),
   };
 }

@@ -11,6 +11,9 @@ function buildCalcInput(){
     W: parseFloat(document.getElementById('W').value),
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
+    species: (document.querySelector('input[name="species"]:checked') || {}).value || 'conifer',
+    concentrated: document.getElementById('concentrated').checked,
+    packet: document.getElementById('packet').checked,
     roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
     noLid: document.getElementById('noLid').checked,
     availableThicknesses: thicknessPicker.get(),
