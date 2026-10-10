@@ -151,7 +151,7 @@ function renderUsers(){
     return `<tr data-email="${esc(u.email)}">
       <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}${u.autoRenew ? ' <span class="admin-tag admin-tag-ok">автопродление</span>' : ''}${u.blocked ? ' <span class="admin-tag admin-tag-blocked">заблокирован</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div>${u.blocked ? `<div class="admin-sub">заблокирован ${fmtDate(u.blocked.at)}${u.blocked.reason ? ': ' + esc(u.blocked.reason) : ''}</div>` : ''}</td>
       <td><div class="admin-plan-pick">${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}<span class="admin-term"${u.quota.plan === 'free' ? ' hidden' : ''}>${uiSelect(termOptions(), String(u.planMonths || (adminData.terms || [1])[0]), 'Срок подписки ' + u.email)}</span><span class="admin-term-none"${u.quota.plan === 'free' ? '' : ' hidden'}>бессрочно</span></div><div class="admin-sub">с ${fmtDate(u.planSince)}${u.quota.planUntil ? ' до ' + fmtDate(u.quota.planUntil) : ''}</div></td>
-      <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'нет'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}${u.quota.extraLeft > 0 ? `<div class="admin-sub">выдано, осталось ${fmtNum(u.quota.extraLeft)}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div><div class="admin-grant"><input type="number" class="admin-grant-count" min="1" max="100000" step="1" placeholder="0" aria-label="Сколько расчётов выдать ${esc(u.email)}"><button type="button" class="btn-secondary admin-grant-btn">Выдать</button></div></td>
+      <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'нет'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}${u.quota.extraLeft > 0 ? `<div class="admin-sub">выдано, осталось ${fmtNum(u.quota.extraLeft)}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div><div class="admin-grant"><input type="number" class="admin-grant-count" min="1" max="100000" step="1" placeholder="0" aria-label="Сколько расчётов выдать или забрать ${esc(u.email)}"><button type="button" class="btn-secondary admin-grant-btn">Выдать</button><button type="button" class="btn-secondary admin-take-btn"${u.quota.extraLeft > 0 ? '' : ' disabled title="Выданных расчётов нет"'}>Забрать</button></div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
       <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button>${u.blocked ? '<button type="button" class="btn-secondary admin-unblock">Разблокировать</button>' : `<button type="button" class="btn-secondary admin-block"${u.self ? ' disabled title="Свой аккаунт заблокировать нельзя"' : ''}>Заблокировать</button>`}<button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
@@ -221,7 +221,7 @@ $('adminRows').addEventListener('keydown', e => {
   if(e.key === 'Enter' && e.target.classList.contains('admin-grant-count')) e.target.closest('tr').querySelector('.admin-grant-btn').click();
 });
 $('adminRows').addEventListener('click', async e => {
-  const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock, .admin-grant-btn');
+  const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock, .admin-grant-btn, .admin-take-btn');
   if(!btn || btn.disabled) return;
   const tr = btn.closest('tr'), email = tr.dataset.email;
   if(btn.classList.contains('admin-delete') && !window.confirm(`Удалить аккаунт ${email}? Его подписка, счётчики и входы будут удалены без возможности восстановления.`)) return;
@@ -233,14 +233,19 @@ $('adminRows').addEventListener('click', async e => {
   }
   if(btn.classList.contains('admin-unblock') && !window.confirm(`Разблокировать ${email}?`)) return;
   let count = 0;
-  if(btn.classList.contains('admin-grant-btn')){
+  const take = btn.classList.contains('admin-take-btn');
+  if(take || btn.classList.contains('admin-grant-btn')){
     count = Number(tr.querySelector('.admin-grant-count').value);
-    if(!Number.isInteger(count) || count < 1) return showMsg('Укажите, сколько расчётов выдать (целое число от 1).');
-    if(!window.confirm(`Выдать ${email} ${fmtNum(count)} расч. сверх подписки? Они не сгорают.`)) return;
+    if(!Number.isInteger(count) || count < 1) return showMsg(`Укажите, сколько расчётов ${take ? 'забрать' : 'выдать'} (целое число от 1).`);
+    if(take ? !window.confirm(`Забрать у ${email} ${fmtNum(count)} расч. из выданных? Бонус за регистрацию и месячные расчёты не меняются.`)
+      : !window.confirm(`Выдать ${email} ${fmtNum(count)} расч. сверх подписки? Они не сгорают.`)) return;
   }
   btn.disabled = true;
   try{
-    if(btn.classList.contains('admin-grant-btn')){
+    if(take){
+      const d = await api('calcs', { email, count, take: true });
+      showMsg(`${email}: забрано ${fmtNum(d.taken)}, выданных расчётов осталось ${fmtNum(d.quota.extraLeft)}.`, true);
+    } else if(btn.classList.contains('admin-grant-btn')){
       const d = await api('calcs', { email, count });
       showMsg(`${email}: выдано ${fmtNum(count)}, дополнительных расчётов теперь ${fmtNum(d.quota.extraLeft)}.`, true);
     } else if(btn.classList.contains('admin-block')){

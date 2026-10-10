@@ -5,8 +5,9 @@
 //   GET  /api/admin/users                 - аккаунты, подписки, счётчики
 //   POST /api/admin/plan { email, plan, months } - сменить подписку с этого
 //                                           момента; платная - на months (1 или 3) месяцев по 30 дней
-//   POST /api/admin/calcs { email, count } - выдать расчёты сверх подписки
-//                                           (не сгорают, plans.js)
+//   POST /api/admin/calcs { email, count, take } - выдать расчёты сверх подписки
+//                                           (не сгорают, plans.js); take - забрать
+//                                           из выданных (бонус и месячные не трогаются)
 //   POST /api/admin/delete { email }      - удалить аккаунт (себя - нельзя)
 //   POST /api/admin/block { email, reason } - заблокировать (себя - нельзя): вход и
 //                                           расчёты запрещены, входы на всех устройствах завершаются
@@ -91,6 +92,13 @@ router.post('/calcs', (req, res) => {
   if (!Number.isInteger(count) || count < 1 || count > MAX_GRANT) return res.status(400).json({ error: `Укажите число расчётов от 1 до ${MAX_GRANT.toLocaleString('ru-RU')}.` });
   const now = Date.now();
   if (syncUser(user, now)) store.updateUser(user);
+  if (req.body.take === true) {
+    // Забрать - не больше, чем осталось выданных; «выдано» уменьшается на столько же.
+    if (user.extraLeft <= 0) return res.status(400).json({ error: 'Выданных расчётов у аккаунта нет.' });
+    const taken = Math.min(count, user.extraLeft);
+    store.updateUser(user, { extraLeft: user.extraLeft - taken, extraTotal: Math.max(user.extraLeft - taken, (user.extraTotal || 0) - taken) });
+    return res.json({ ok: true, taken, quota: quotaInfo(user, now) });
+  }
   const left = user.extraLeft + count;
   store.updateUser(user, { extraLeft: left, extraTotal: left });
   res.json({ ok: true, quota: quotaInfo(user, now) });
