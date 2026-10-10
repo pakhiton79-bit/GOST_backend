@@ -81,6 +81,7 @@ app.use(express.json());
 app.use('/api', (req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 // Аккаунты: кто вошёл (req.user) и /api/auth/* (см. src/auth/routes.js).
 app.use(attachUser);
+app.use('/api/auth/auto-renew', require('./src/auth/auto-renew').router);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', makeThrottle(), adminRoutes);
 app.use('/api/standards', standardsRoutes);
@@ -475,6 +476,17 @@ function runCleanup() {
 }
 runCleanup();
 setInterval(runCleanup, 24 * 3600 * 1000).unref();
+
+// Письма-напоминания об автопродлении (за 3 дня до окончания подписки) -
+// раз в час; пока автопродление выключено (AUTO_RENEW_ENABLED), ничего не
+// делает (src/auth/auto-renew.js).
+const { sendDueNotices } = require('./src/auth/auto-renew');
+function runAutoRenewNotices() {
+  sendDueNotices(Date.now()).then(n => { if (n) console.log(`[автопродление] напоминаний отправлено: ${n}`); })
+    .catch(e => console.error('[автопродление] ошибка:', e));
+}
+setTimeout(runAutoRenewNotices, 60 * 1000).unref();
+setInterval(runAutoRenewNotices, 3600 * 1000).unref();
 
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
 app.use(express.static(FRONTEND_DIR));

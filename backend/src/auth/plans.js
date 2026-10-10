@@ -60,6 +60,11 @@ function syncUser(user, now) {
     Object.assign(user, { plan: 'free', planSince: now, planUntil: null, planExpiredAt: now, used: 0 });
     changed = true;
   }
+  // Пробная - автопродления нет (auto-renew.js).
+  if (user.plan === 'free' && user.autoRenew && user.autoRenew.on) {
+    user.autoRenew = { ...user.autoRenew, on: false, offAt: now, offReason: 'подписка закончилась' };
+    changed = true;
+  }
   const { start } = periodBounds(user.planSince, now);
   if (user.periodStart !== start) { user.periodStart = start; user.used = 0; changed = true; }
   return changed;

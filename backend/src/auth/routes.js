@@ -33,6 +33,7 @@ const { startSession, endSession } = require('./session');
 const { planOf, quotaInfo, syncUser } = require('./plans');
 const stats = require('./stats');
 const { consentsFromRequest } = require('./legal');
+const { publicAutoRenew } = require('./auto-renew');
 const antibot = require('./antibot');
 const mailLimits = require('./mail-limits');
 const { supportEmail } = require('./support-email');
@@ -163,7 +164,7 @@ function checkCode(email, purpose, code) {
 function publicUser(u) {
   const now = Date.now();
   if (syncUser(u, now)) store.updateUser(u);
-  return { email: u.email, createdAt: u.createdAt, quota: quotaInfo(u, now), isAdmin: isAdmin(u) };
+  return { email: u.email, createdAt: u.createdAt, quota: quotaInfo(u, now), isAdmin: isAdmin(u), autoRenew: publicAutoRenew(u) };
 }
 
 function publicDevices(user, currentId) {

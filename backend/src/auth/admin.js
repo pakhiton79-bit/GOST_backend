@@ -40,6 +40,7 @@ router.get('/users', (req, res) => {
       quota: quotaInfo(u, now), devices: sessions.length,
       totalCalcs: u.totalCalcs || 0,
       marketing: !!(u.consents && u.consents.marketing),
+      autoRenew: !!(u.autoRenew && u.autoRenew.on),
       lastCalcAt: u.lastCalcAt ? new Date(u.lastCalcAt).toISOString() : null,
       lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
       self: u.id === req.user.id,
@@ -62,7 +63,9 @@ router.post('/plan', (req, res) => {
   // давних.
   const now = Date.now();
   const planUntil = plan === 'free' ? null : now + months * PERIOD_MS;
-  store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0 });
+  // planMonths - срок подключения (сумма автопродления, auto-renew.js).
+  store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0, planMonths: plan === 'free' ? null : months });
+  if (syncUser(user, now)) store.updateUser(user); // пробная - автопродление выключается
   store.listUserSessions(user.id).slice(planOf(user).devices).forEach(s => store.deleteSessionById(user.id, s.id));
   res.json({ ok: true, quota: quotaInfo(user, now) });
 });

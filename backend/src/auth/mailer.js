@@ -134,4 +134,25 @@ async function sendErrorReport(rec) {
   ]);
 }
 
-module.exports = { sendCode, sendStandardRequest, sendErrorReport };
+// Напоминание об автопродлении подписки (auto-renew.js): за несколько дней до
+// окончания - дата, сумма и как отключить. Ошибка отправки - исключение
+// (напоминание повторится через час).
+async function sendAutoRenewNotice(email, { planName, date, amount }) {
+  const cfg = mailConfig();
+  const day = date.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
+  const sum = amount.toLocaleString('ru-RU') + ' ₽';
+  const lines = [
+    `Подписка ${planName} будет автоматически продлена ${day}.`,
+    `Сумма списания: ${sum}.`,
+    'Отключить автопродление можно в любой момент: окно «Настройки» на сайте, раздел «Подписка».',
+  ];
+  if (!mailEnabled(cfg)) {
+    console.log(`[почта, тестовый режим] ${email}: ${lines.join(' ')}`);
+    return;
+  }
+  const subject = `${SITE_NAME}: подписка ${planName} продлится ${day}`;
+  const html = layout('Автопродление подписки', lines.map(l => `<p>${escapeHtml(l)}</p>`));
+  await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
+}
+
+module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice };

@@ -434,6 +434,10 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-block .auth-devices{margin-top:10px;}
 .site-acc-block .auth-device button{margin:0;padding:7px 12px;font-size:13px;}
 .site-acc-danger .site-usage-title{color:var(--error);}
+/* автопродление (раздел «Подписка»): галочка согласия - не отмечена заранее */
+.site-ar-consent{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink);line-height:1.45;cursor:pointer;}
+.site-ar-consent input{margin-top:3px;flex:0 0 auto;}
+#siteAutoRenew .site-sub-btn:disabled{opacity:.45;cursor:default;}
 .site-acc-del-btn{color:var(--error);margin-top:10px;}
 .site-acc-del-btn:hover{border-color:var(--error);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}

@@ -143,8 +143,50 @@ function renderSiteSub(user){
     const used = q.welcomeTotal - q.welcomeLeft;
     html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
   }
+  html += autoRenewHtml(user);
   box.innerHTML = html;
 }
+// Автопродление платной подписки (по указанию пользователя; сервер -
+// src/auth/auto-renew.js). user.autoRenew - null, пока функция выключена на
+// сервере (до подключения онлайн-оплаты) - тогда блока нет. Включить - только
+// с отдельным согласием (галочка не отмечена заранее), отключить - одной
+// кнопкой в любой момент.
+function autoRenewHtml(user){
+  const ar = user.autoRenew;
+  if(!ar || !ar.paid) return '';
+  const q = user.quota, sum = ar.amount.toLocaleString('ru-RU') + ' ₽';
+  const until = q.planUntil ? new Date(q.planUntil).toLocaleDateString('ru-RU') : '';
+  const body = ar.on
+    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}. За ${ar.noticeDays} дня до списания придёт письмо.</p>
+       <div class="site-acc-actions"><button type="button" class="btn-secondary site-sub-btn" data-ar="off">Отключить автопродление</button></div>`
+    : `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную».</p>
+       <label class="site-ar-consent"><input type="checkbox" id="siteArConsent"> <span>Согласен(на) на автоматическое продление подписки ${escHtml(q.planName)} на тот же срок со списанием ${sum} (по действующей цене) тем же способом оплаты - на условиях <a href="terms.html#terms-autorenew" target="_blank">Пользовательского соглашения</a>. Отключить можно в любой момент.</span></label>
+       <div class="site-acc-actions"><button type="button" class="site-sub-btn site-sub-btn-main" data-ar="on" disabled>Включить автопродление</button></div>`;
+  return `<div class="site-acc-block" id="siteAutoRenew"><div class="site-usage-title">Автопродление</div>${body}<div class="auth-msg" id="siteArMsg" hidden></div></div>`;
+}
+document.addEventListener('change', e => {
+  if(e.target.id !== 'siteArConsent') return;
+  const btn = document.querySelector('#siteAutoRenew [data-ar="on"]');
+  if(btn) btn.disabled = !e.target.checked;
+});
+document.addEventListener('click', async e => {
+  const el = e.target.closest('#siteAutoRenew [data-ar]');
+  if(!el) return;
+  const on = el.dataset.ar === 'on', msg = document.getElementById('siteArMsg');
+  const consent = document.getElementById('siteArConsent');
+  if(on && !(consent && consent.checked)) return;
+  el.disabled = true;
+  try{
+    const r = await fetch('/api/auth/auto-renew', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(on ? { on: true, consent: true } : { on: false }) });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
+    if(accountUserCache){ accountUserCache.autoRenew = d.autoRenew; renderSiteSub(accountUserCache); }
+  }catch(err){
+    msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = err.message;
+    el.disabled = false;
+  }
+});
 // Пояснение, если вход завершился, пока страница была открыта.
 function sessionEndedText(){
   return accountSessionEnded ? 'Вход завершён: сервер обновлялся или в аккаунт вошли на другом устройстве. ' : '';
