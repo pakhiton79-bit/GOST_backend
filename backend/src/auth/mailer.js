@@ -20,6 +20,7 @@ const SITE_NAME = 'Тара+';
 const PURPOSE_TEXT = {
   register: 'подтверждение почты',
   reset: 'восстановление пароля',
+  login: 'вход в аккаунт',
 };
 
 function mailConfig() {

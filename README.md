@@ -78,7 +78,7 @@ backend/            Express-сервер: расчётный API + раздач�
       boards.js        доски с промежутками (fillGapBoards) вместо сплошной обшивки
       dno.js, kryshka.js, end-panel.js, bokovoy.js, plank-layout.js   узлы ящика (как у I-3)
   auth/            аккаунты, подписки и всё, что вокруг них (раздел «Аккаунты» ниже):
-    routes.js        вход, регистрация, коды, устройства, удаление (/api/auth/*)
+    routes.js        вход (пароль, затем код из письма: /login -> /login-verify), регистрация, коды, устройства, удаление (/api/auth/*)
     session.js       cookie входа sid, кто вошёл (req.user)
     store.js         хранилище - JSON-файл (аккаунты, входы, коды, заявки, сообщения, статистика)
     crypto.js        хэши паролей, кодов и токенов

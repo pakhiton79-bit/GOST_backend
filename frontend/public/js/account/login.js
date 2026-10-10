@@ -1,4 +1,5 @@
-// Страница входа (login.html): вход, регистрация, подтверждение почты кодом,
+// Страница входа (login.html): вход (пароль, затем код из письма - по
+// указанию пользователя), регистрация, подтверждение почты кодом,
 // восстановление пароля - одна форма, поля и надписи меняются по режиму.
 // После входа - переход на ?next= (только страницы этого же сайта) или на
 // главную.
@@ -12,6 +13,12 @@ const AUTH_MODES = {
     title: 'Создайте аккаунт', sub: '', submit: 'Создать аккаунт',
     fields: ['email', 'password', 'password2', 'consents', 'captcha'], pwLabel: 'Пароль (не короче 8 символов)', pwAuto: 'new-password',
     switchHtml: 'Уже есть аккаунт? <a data-mode="login">Войти</a>',
+  },
+  // Код из письма после верного пароля (вход завершает /login-verify).
+  loginCode: {
+    title: 'Код для входа', sub: '', submit: 'Войти', fields: ['code'],
+    linksHtml: '<a data-resend="login">Отправить код ещё раз</a>',
+    switchHtml: '<a data-mode="login">Назад ко входу</a>',
   },
   verify: {
     title: 'Подтвердите почту', sub: '', submit: 'Подтвердить', fields: ['code'],
@@ -43,6 +50,7 @@ const $ = id => document.getElementById(id);
 let authMode = 'login';
 let authEmail = '';
 let deviceTicket = '';
+let loginTicket = ''; // пропуск после верного пароля (для кода входа)
 
 // Капча «Я не робот» на регистрации и восстановлении пароля (js/account/pow.js):
 // задача решается сразу, как только форма показана; ответ одноразовый -
@@ -109,8 +117,9 @@ function setMode(mode, msg, ok){
   ['consentTerms', 'consentPd', 'consentMarketing'].forEach(id => { $(id).checked = false; });
   document.querySelectorAll('.auth-eye').forEach(b => setEye(b, false));
   const text = $('authText');
-  text.hidden = !(mode === 'verify' || mode === 'reset');
+  text.hidden = !(mode === 'verify' || mode === 'reset' || mode === 'loginCode');
   if(mode === 'verify') text.innerHTML = 'Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут.';
+  if(mode === 'loginCode') text.innerHTML = 'Мы отправили 6-значный код для входа на <b></b>. Код действует 15 минут.';
   if(mode === 'reset') text.innerHTML = 'Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль.';
   if(!text.hidden) text.querySelector('b').textContent = authEmail;
   $('authSubmit').hidden = !m.submit;
@@ -207,6 +216,7 @@ async function onSubmit(e){
       const d = await api('login', { email, password: pw });
       authEmail = email;
       if(d.needVerify) return setMode('verify', d.notice || 'Почта ещё не подтверждена: мы отправили код.', !d.notice);
+      if(d.needLoginCode){ loginTicket = d.ticket; return setMode('loginCode', d.notice, false); }
       afterLogin(d);
     } else if(authMode === 'register'){
       const d = await api('register', { email, password: pw, ...bot, consents: {
@@ -214,6 +224,8 @@ async function onSubmit(e){
       } });
       authEmail = email;
       setMode('verify', d.notice, false);
+    } else if(authMode === 'loginCode'){
+      afterLogin(await api('login-verify', { ticket: loginTicket, code }));
     } else if(authMode === 'verify'){
       afterLogin(await api('verify', { email: authEmail, code }));
     } else if(authMode === 'forgot'){
@@ -247,7 +259,7 @@ document.querySelector('.auth-box').addEventListener('click', async e => {
   if(!a) return;
   if(a.dataset.mode) return setMode(a.dataset.mode);
   try{
-    await api('resend', { email: authEmail, purpose: a.dataset.resend });
+    await api('resend', { email: authEmail, purpose: a.dataset.resend, ticket: loginTicket });
     showMsg('Новый код отправлен.', true);
   }catch(err){ showMsg(err.message); }
 });

@@ -189,7 +189,7 @@ function finishLogin(req, res, user) {
   const limit = planOf(user).devices;
   if (store.listUserSessions(user.id).length >= limit) {
     const ticket = newToken();
-    store.setTicket(sha256(ticket), { userId: user.id, expires: Date.now() + TICKET_TTL_MS });
+    store.setTicket(sha256(ticket), { userId: user.id, kind: 'device', expires: Date.now() + TICKET_TTL_MS });
     return res.json({ ok: true, needDevice: true, ticket, limit, planName: planOf(user).name, devices: publicDevices(user, null) });
   }
   startSession(req, res, user.id);
@@ -245,6 +245,14 @@ router.post('/verify', rateLimit, (req, res) => {
 
 router.post('/resend', rateLimit, async (req, res, next) => {
   try {
+    // Код для входа - повторно только с пропуском после пароля.
+    if (req.body.purpose === 'login') {
+      const u = loginTicketUser(req.body.ticket);
+      if (!u) return res.status(400).json({ error: 'Время на ввод кода вышло. Войдите ещё раз.' });
+      const e = await issueCode(u.email, 'login', req.ip);
+      if (e) return res.status(429).json({ error: e });
+      return res.json({ ok: true });
+    }
     const email = normEmail(req.body.email);
     const purpose = req.body.purpose === 'reset' ? 'reset' : 'register';
     const user = email && store.findUserByEmail(email);
@@ -283,14 +291,36 @@ router.post('/login', rateLimit, async (req, res, next) => {
       const err = await issueCode(email, 'register', req.ip);
       return res.json({ ok: true, needVerify: true, notice: err || undefined });
     }
-    finishLogin(req, res, user);
+    if (user.blocked) return res.status(403).json(blockedError(user));
+    // Код при входе (по указанию пользователя): пароль верный - на почту код,
+    // клиенту - пропуск «пароль проверен» (вид 'login', живёт как код); вход
+    // завершает /login-verify с пропуском и кодом.
+    const ticket = newToken();
+    store.setTicket(sha256(ticket), { userId: user.id, kind: 'login', expires: Date.now() + CODE_TTL_MS });
+    const err = await issueCode(email, 'login', req.ip);
+    res.json({ ok: true, needLoginCode: true, ticket, notice: err || undefined });
   } catch (e) { next(e); }
+});
+
+// Пропуск после верного пароля (вид 'login') - пользователь или null.
+function loginTicketUser(ticket) {
+  const t = store.getTicket(sha256(String(ticket || '')));
+  return t && t.kind === 'login' ? store.findUserById(t.userId) : null;
+}
+router.post('/login-verify', rateLimit, (req, res) => {
+  const user = loginTicketUser(req.body.ticket);
+  if (!user) return res.status(400).json({ error: 'Время на ввод кода вышло. Войдите ещё раз.' });
+  const err = checkCode(user.email, 'login', req.body.code);
+  if (err) return res.status(400).json({ error: err });
+  store.deleteTicket(sha256(String(req.body.ticket)));
+  finishLogin(req, res, user);
 });
 
 router.post('/device-replace', rateLimit, (req, res) => {
   const ticketHash = sha256(String(req.body.ticket || ''));
   const t = store.getTicket(ticketHash);
-  const user = t && store.findUserById(t.userId);
+  // Только пропуск выбора устройства (пропуск после пароля без кода - нет).
+  const user = t && t.kind !== 'login' && store.findUserById(t.userId);
   if (!user) return res.status(400).json({ error: 'Время на выбор устройства вышло. Войдите ещё раз.' });
   if (!store.deleteSessionById(user.id, String(req.body.id || ''))) {
     return res.status(400).json({ error: 'Это устройство уже не в аккаунте. Обновите список.', devices: publicDevices(user, null) });
