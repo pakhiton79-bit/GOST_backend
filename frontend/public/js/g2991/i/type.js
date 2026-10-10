@@ -26,7 +26,7 @@ const G2991_TYPE = {
   key: 'i',
   title: 'тип I',
   subtitle: 'Ящик дощатый неразборный плотный, торцовые стенки без планок',
-  checkboxes: ['concentrated', 'packet', 'noRoundBoardWidths', 'noLid'],
+  checkboxes: ['concentrated', 'packet', 'noLid'],
   boxImg: BOX_G2991_I_IMG,
   diagrams: diagramsG2991I,
   api: '/api/g2991i/calculate',

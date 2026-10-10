@@ -58,21 +58,20 @@ function torecLayout(H, torecW, bokJoints, minW, widths) {
   return { clash: true };
 }
 
-// Строки торца по раскладке torecLayout (снизу вверх). С округлением ширин
-// верхняя доска - шириной средних (лишнее подрежут на месте), без - по
-// остатку (вверх до ширины «в наличии»).
+// Строки торца по раскладке torecLayout (снизу вверх). Верхняя доска - по
+// остатку (вверх до ширины «в наличии»), сумма ширин равна высоте груза.
 function torecRows(layout, ctx) {
-  const { t, W, H, torecW, roundWidths, minW, widths, warnings } = ctx;
+  const { t, W, H, torecW, minW, widths, warnings } = ctx;
   const row = (name, w, qty) => ({ name, t, w, l: W, qty });
-  if (layout.single) return [row('Доска торца', roundWidths ? torecW : T.g2991RoundWidth(H, widths), 1)];
+  if (layout.single) return [row('Доска торца', T.g2991RoundWidth(H, widths), 1)];
   if (layout.clash) {
     warnings.push('Торец: не удалось развести стыки досок торца и бока - часть стыков торца совпадает со стыками бока (п. 1.2).');
-    const fb = T.g2991FillBoards(H, torecW, roundWidths, minW, widths);
+    const fb = T.g2991FillBoards(H, torecW, minW, widths);
     if (fb.warn) warnings.push(`Торец: доборная доска уже ${minW} мм (минимум по таблице 4 ГОСТ 2991-85).`);
     return B.g2991BoardRows('Доска торца', t, W, fb, torecW);
   }
   const { w0, m, k, top } = layout;
-  const topW = roundWidths ? m : T.g2991RoundWidth(top, widths);
+  const topW = T.g2991RoundWidth(top, widths);
   const middle = k + (w0 === m ? 1 : 0) + (topW === m ? 1 : 0);
   return [
     ...(w0 !== m ? [row('Доска торца (нижняя)', w0, 1)] : []),
@@ -90,7 +89,6 @@ function computeGost2991I(input) {
   const warnings = [];
   const opts = { species: SPECIES.includes(input.species) ? input.species : 'conifer', concentrated: !!input.concentrated, packet: !!input.packet };
   const noLid = !!input.noLid;
-  const roundWidths = input.roundBoardWidths !== false;
   const widths = input.availableWidths || [];
   const bw = B.g2991BoardWidths(input.mainWidth, widths);
   const minW = T.g2991MinBoardWidth(MASS);
@@ -112,7 +110,7 @@ function computeGost2991I(input) {
 
   // Детали.
   const fill = (space, label) => {
-    const fb = T.g2991FillBoards(space, bw.main, roundWidths, minW, widths);
+    const fb = T.g2991FillBoards(space, bw.main, minW, widths);
     if (fb.warn) warnings.push(`${label}: доборная доска уже ${minW} мм (минимум по таблице 4 ГОСТ 2991-85).`);
     return fb;
   };
@@ -125,7 +123,7 @@ function computeGost2991I(input) {
   const bokRows = B.g2991BoardRows('Доска бока', bokT, len, bokFill, bw.main);
   const bokJoints = B.g2991Joints(B.g2991LayoutWidths(bokFill, bw.main), H);
   const torec = torecRows(torecLayout(H, bw.torec, bokJoints, minW, widths),
-    { t: torecT, W, H, torecW: bw.torec, roundWidths, minW, widths, warnings });
+    { t: torecT, W, H, torecW: bw.torec, minW, widths, warnings });
 
   const totalVolume = B.g2991RowsVolume(dnoRows) + B.g2991RowsVolume(lidRows) + B.g2991RowsVolume(torec) * 2 + B.g2991RowsVolume(bokRows) * 2;
   const woodDensity = Number.isFinite(input.woodDensity) && input.woodDensity > 0 ? input.woodDensity : WOOD_DENSITY_KG_M3;

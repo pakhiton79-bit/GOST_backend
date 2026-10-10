@@ -20,7 +20,6 @@ function buildCalcInput(){
     species: (document.querySelector('input[name="species"]:checked') || {}).value || 'conifer',
     concentrated: checked('concentrated'),
     packet: checked('packet'),
-    roundBoardWidths: !checked('noRoundBoardWidths'), // по умолчанию ширины округляются
     verticalEnd: checked('verticalEnd'),               // только у II-1
     noLid: checked('noLid'),
     availableThicknesses: thicknessPicker.get(),

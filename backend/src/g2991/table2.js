@@ -149,14 +149,13 @@ function g2991RoundWidth(w, widths) {
   const a = widths.find(v => v >= w);
   return a === undefined ? w : a;
 }
-// Раскладка досок щита (как в ГОСТ 10198-91, fillBoards): основная ширина -
-// mainW; с округлением (по умолчанию) все доски основной ширины (лишнее у
-// последней доски подрежут на месте); без округления - остаток одной
-// доборной доской, а если она уже минимума таблицы 4 (minW) - остаток с
-// одной основной делится на 2 доски. Доборные - вверх до ширины «в наличии».
-function g2991FillBoards(space, mainW, roundWidths, minW, widths) {
+// Раскладка досок щита: основная ширина - mainW; остаток - одной доборной
+// доской, а если она уже минимума таблицы 4 (minW) - остаток с одной
+// основной доской делится на две доборные. Ширины не округляются (по
+// указанию пользователя): сумма ширин равна размеру щита; доборные - вверх
+// до ширины «в наличии» (widths), если она выбрана.
+function g2991FillBoards(space, mainW, minW, widths) {
   space = Math.round(space);
-  if (roundWidths) return { mainQty: Math.ceil(space / mainW - 1e-9), extra: [], warn: false };
   let mainQty = Math.floor(space / mainW + 1e-9);
   const rem = space - mainQty * mainW;
   let extra = [], warn = false;

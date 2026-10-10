@@ -69,7 +69,7 @@ function computeGost2991II1(input) {
 
   // Детали.
   const fill = (space, label) => {
-    const fb = T.g2991FillBoards(space, mainW, input.roundBoardWidths !== false, minW, widths);
+    const fb = T.g2991FillBoards(space, mainW, minW, widths);
     if (fb.warn) warnings.push(`${label}: доборная доска уже ${minW} мм (минимум по таблице 4 ГОСТ 2991-85).`);
     return fb;
   };
