@@ -275,10 +275,11 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-tooltip[hidden]{display:none;}
 
 /* Расчёты по типам: горизонтальные полосы, значение - у конца. */
-.admin-hbars{display:flex;flex-direction:column;gap:10px;}
-.admin-hbar{display:grid;grid-template-columns:170px 1fr 48px;align-items:center;gap:10px;font-size:14px;}
-@media (max-width:560px){.admin-hbar{grid-template-columns:110px 1fr 40px;}}
-.admin-hbar-name{color:var(--ink);font-weight:500;line-height:1.3;} /* длинные названия (ГОСТ 2991-85, оптимальные) - в своей колонке */
+.admin-hbars{display:grid;grid-template-columns:max-content 1fr auto;column-gap:10px;row-gap:10px;align-items:center;font-size:14px;}
+/* строки - ячейки общей сетки: колонка названий - по самому длинному, названия
+   прижаты к полосам - промежуток до полосы у всех строк одинаковый */
+.admin-hbar{display:contents;}
+.admin-hbar-name{color:var(--ink);font-weight:500;line-height:1.3;text-align:right;}
 .admin-hbar-track{height:14px;}
 .admin-hbar-fill{height:100%;min-width:0;background:var(--accent);border-radius:0 4px 4px 0;}
 .admin-hbar-val{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums;}
