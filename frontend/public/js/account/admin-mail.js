@@ -119,9 +119,7 @@ async function sendReply(btn){
   btn.disabled = true; ta.disabled = true;
   try{
     const d = await api('mail/reply', { uid: mailOpen.uid, text });
-    const notes = [d.test ? 'тестовый режим: письмо не отправлено - почта сайта (Unisender) не настроена' : '', d.copied || d.test ? '' : 'копия в «Отправленные» не сохранилась'].filter(Boolean);
-    mailMsg(`${d.test ? 'Ответ не отправлен' : 'Ответ отправлен на ' + d.to}.${notes.length ? ' (' + notes.join('; ') + ')' : ''}`, !d.test);
-    if(d.test){ btn.disabled = false; ta.disabled = false; return; }
+    mailMsg(`Ответ отправлен на ${d.to}.${d.copied ? '' : ' (копия в «Отправленные» не сохранилась)'}`, true);
     const item = mailItems.find(x => x.uid === mailOpen.uid);
     if(item) item.answered = true;
     mailOpen.answered = true;

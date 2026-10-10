@@ -1,11 +1,13 @@
 // Почта поддержки в админке (по указанию пользователя): ящик поддержки на
-// Яндексе читается по IMAP, ответы уходят через почтовый сервис сайта
-// (mailer.js), копия ответа кладётся в «Отправленные» ящика.
+// Яндексе читается по IMAP, ответы уходят с этого же ящика через SMTP
+// Яндекса (не через Unisender - он только для кодов и писем сайта), копия
+// ответа - в «Отправленные».
 //
 // Настройки - переменные окружения (вписывает владелец сайта):
 //   SUPPORT_IMAP_USER     - адрес ящика поддержки целиком;
 //   SUPPORT_IMAP_PASSWORD - пароль приложения Яндекса (не основной пароль);
-//   SUPPORT_IMAP_HOST, SUPPORT_IMAP_PORT - по умолчанию imap.yandex.ru:993
+//   SUPPORT_IMAP_HOST, SUPPORT_IMAP_PORT - по умолчанию imap.yandex.ru:993,
+//   SUPPORT_SMTP_HOST, SUPPORT_SMTP_PORT - по умолчанию smtp.yandex.ru:465
 //                           (менять не нужно; для проверки на своём сервере).
 // Пока не заданы - раздел в админке показывает, что почта не подключена.
 //
@@ -20,7 +22,6 @@ const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
 const store = require('./store');
 const { PLANS } = require('./plans');
-const { sendSupportReply } = require('./mailer');
 
 const PAGE = 30;
 const MAX_SOURCE = 20 * 1024 * 1024;  // письма больше - без разбора (память сервера)
@@ -195,10 +196,54 @@ router.get('/attachment', handle(async (req, res) => {
   res.send(a.content);
 }));
 
-// Ответ: письмо отправителю (или на его Reply-To), «Re: тема», ниже -
-// цитата исходного письма; ответы пользователя придут обратно в ящик
-// поддержки (Reply-To). Копия - в «Отправленные», исходное письмо
-// помечается отвеченным.
+// Ответ (по указанию пользователя - с ящика поддержки на Яндексе, не через
+// Unisender): письмо отправителю (или на его Reply-To), «Re: тема», ниже -
+// цитата исходного письма. Отправка - через SMTP Яндекса тем же паролем
+// приложения; копия - в «Отправленные» (если Яндекс не положил её сам),
+// исходное письмо помечается отвеченным. Не ушло (на бесплатном Render
+// почтовые порты могут быть закрыты - заработает на своём сервере, или
+// Яндекс не принял письмо) - ошибка с причиной.
+function smtpConfig() {
+  const env = process.env, imap = imapConfig();
+  const port = Number(env.SUPPORT_SMTP_PORT) || 465;
+  const host = env.SUPPORT_SMTP_HOST || 'smtp.yandex.ru';
+  return {
+    host, port, secure: port === 465,
+    // Без шифрования пароль не отправляется (кроме проверки на своём компьютере).
+    requireTLS: port !== 465 && !isLocalHost(host),
+    auth: { user: imap.user, pass: imap.pass },
+    connectionTimeout: 15000, greetingTimeout: 15000, socketTimeout: 30000,
+  };
+}
+function smtpError(e) {
+  if (e.code === 'EAUTH') return 'Яндекс не принял логин или пароль для отправки (SMTP).';
+  if (['ECONNECTION', 'ETIMEDOUT', 'ESOCKET', 'EDNS', 'ECONNREFUSED', 'ECONNRESET'].includes(e.code) || /timeout|ECONNREFUSED/i.test(e.message || '')) {
+    return 'Нет соединения с сервером отправки Яндекса (smtp.yandex.ru:465): возможно, хостинг закрывает почтовые порты (так бывает на бесплатном Render).';
+  }
+  return 'Яндекс не принял письмо: ' + (e.response || e.message || 'неизвестная ошибка');
+}
+
+// Письмо целиком (RFC 5322) - nodemailer кодирует заголовки сам (переводы
+// строк из чужой темы не превращаются в новые заголовки).
+function buildReply({ from, to, subject, text, inReplyTo, references }) {
+  const MailComposer = require('nodemailer/lib/mail-composer');
+  const domain = String(from.address).split('@')[1] || 'localhost';
+  const messageId = `<${Date.now().toString(36)}.${require('crypto').randomBytes(8).toString('hex')}@${domain}>`;
+  const one = v => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ');
+  const refs = [].concat(references || []).concat(inReplyTo || []).map(one).filter(Boolean);
+  const mail = new MailComposer({
+    from, to, subject: one(subject), text, messageId, date: new Date(),
+    inReplyTo: inReplyTo ? one(inReplyTo) : undefined, references: refs.length ? refs : undefined,
+  });
+  return new Promise((resolve, reject) => mail.compile().build((err, raw) => (err ? reject(err) : resolve({ raw, messageId }))));
+}
+
+async function specialFolder(client, use, names) {
+  const list = await client.list();
+  const f = list.find(m => m.specialUse === use) || list.find(m => names.test(m.name));
+  return f ? f.path : null;
+}
+
 router.post('/reply', handle(async (req, res) => {
   const uid = uidOf(req);
   const body = String(req.body.text || '').replace(/\r\n/g, '\n').trim();
@@ -215,52 +260,42 @@ router.post('/reply', handle(async (req, res) => {
     const quote = (mail.text || '').trim().slice(0, 20000).split('\n').map(l => '> ' + l).join('\n');
     const author = listAddr(mail.from)[0] || to;
     const text = `${body}\n\n${when}, ${author.name || author.address} пишет:\n${quote}`;
-    const sent = await sendSupportReply({ to: to.address, subject, text, replyTo: support });
-    // Тестовый режим (почта сайта не настроена) - письмо не ушло: ни копии,
-    // ни отметки «отвечено».
-    if (sent.test) return { to: to.address, test: true, copied: false };
-    // Копия в «Отправленные» и отметка «отвечено» - если не вышло, ответ всё равно ушёл.
-    let copied = true;
+    const from = { name: process.env.MAIL_FROM_NAME || 'Тара+', address: support };
+    const { raw, messageId } = await buildReply({ from, to: to.address, subject, text, inReplyTo: mail.messageId, references: mail.references });
+
+    let sendErr = null;
     try {
-      const sentPath = await folderPath(client, 'sent');
-      await client.append(sentPath, rawMessage({ from: sent.from, to: to.address, subject, text, inReplyTo: mail.messageId, references: mail.references }), ['\\Seen']);
-    } catch (e) { copied = false; console.error(`[почта поддержки] копия ответа не сохранена: ${e.message}`); }
+      const transport = require('nodemailer').createTransport(smtpConfig());
+      try { await transport.sendMail({ envelope: { from: support, to: [to.address] }, raw }); } finally { transport.close(); }
+    } catch (e) {
+      sendErr = e;
+      console.error(`[почта поддержки] ответ не отправлен (${e.code || ''}): ${e.message}`);
+    }
+
+    // Не ушло - ошибка (текст ответа остаётся в поле на странице).
+    if (sendErr) throw Object.assign(new Error(`Ответ не отправлен. ${smtpError(sendErr)}`), { userText: true });
+
+    // Ушло. Копия в «Отправленные» - если Яндекс не положил её сам (ищем по
+    // Message-ID); отметка «отвечено». Ошибки здесь не страшны - ответ ушёл.
+    let copied = false;
+    try {
+      const sentPath = await specialFolder(client, '\\Sent', /^(sent|отправленные)$/i);
+      if (sentPath) {
+        await new Promise(r => setTimeout(r, 1500));
+        const lock = await client.getMailboxLock(sentPath);
+        let found = [];
+        try { found = (await client.search({ header: { 'message-id': messageId } }, { uid: true })) || []; } finally { lock.release(); }
+        if (!found.length) await client.append(sentPath, raw, ['\\Seen']);
+        copied = true;
+      }
+    } catch (e) { console.error(`[почта поддержки] копия ответа не сохранена: ${e.message}`); }
     try {
       const lock = await client.getMailboxLock('INBOX');
       try { await client.messageFlagsAdd(String(uid), ['\\Answered'], { uid: true }); } finally { lock.release(); }
     } catch (e) { /* не страшно */ }
-    return { to: to.address, test: sent.test, copied };
+    return { to: to.address, sent: true, copied };
   });
   res.json({ ok: true, ...result });
 }));
-
-// Письмо в формате RFC 5322 для копии в «Отправленные».
-function rawMessage({ from, to, subject, text, inReplyTo, references }) {
-  // Значения заголовков - из чужого письма: без переводов строк (иначе можно
-  // подставить свои заголовки).
-  const one = v => String(v == null ? '' : v).replace(/[\r\n]+/g, ' ');
-  [subject, to, inReplyTo] = [subject, to, inReplyTo].map(one);
-  references = [].concat(references || []).map(one);
-  from = { name: one(from.name), address: one(from.address) };
-  const b64 = s => Buffer.from(s, 'utf8').toString('base64');
-  const enc = s => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`);
-  const refs = [].concat(references || []).concat(inReplyTo || []).filter(Boolean).join(' ');
-  const domain = (String(from.address).split('@')[1] || 'localhost');
-  const lines = [
-    `From: ${from.name ? enc(from.name) + ' ' : ''}<${from.address}>`,
-    `To: <${to}>`,
-    `Subject: ${enc(subject)}`,
-    `Date: ${new Date().toUTCString().replace('GMT', '+0000')}`,
-    `Message-ID: <${Date.now().toString(36)}.${Math.random().toString(36).slice(2)}@${domain}>`,
-    ...(inReplyTo ? [`In-Reply-To: ${inReplyTo}`] : []),
-    ...(refs ? [`References: ${refs}`] : []),
-    'MIME-Version: 1.0',
-    'Content-Type: text/plain; charset=utf-8',
-    'Content-Transfer-Encoding: base64',
-    '',
-    b64(text).replace(/.{76}/g, '$&\r\n'),
-  ];
-  return Buffer.from(lines.join('\r\n'), 'utf8');
-}
 
 module.exports = { router, imapConfig };
