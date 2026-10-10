@@ -300,7 +300,11 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-table td{padding:12px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink);font-variant-numeric:tabular-nums;}
 .admin-actions{display:flex;flex-direction:column;gap:6px;align-items:stretch;min-width:136px;}
 /* Подписка и её срок (1 или 3 месяца) - рядом. */
-.admin-plan-pick{display:flex;gap:6px;flex-wrap:wrap;}
+.admin-plan-pick{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.admin-term[hidden],.admin-term-none[hidden]{display:none;}
+.admin-term-none{font-size:13px;color:var(--ink-soft);padding:0 4px;}
+.admin-grant{display:flex;gap:6px;margin-top:6px;}
+.admin-grant-count{width:72px;padding:6px 8px;font-size:13px;}
 .admin-table button{margin:0;padding:7px 12px;font-size:13px;}
 .admin-delete{color:var(--error);}
 .admin-delete:hover{border-color:var(--error);}

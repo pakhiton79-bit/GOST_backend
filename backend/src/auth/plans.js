@@ -6,6 +6,9 @@
 //   Base - 25 расчётов в месяц, 1 устройство, 5 000 ₽ в месяц;
 //   Pro  - 150 расчётов в месяц, 1 устройство, 10 000 ₽ в месяц;
 //   Team - 2500 расчётов в месяц на аккаунт, 4 устройства, 30 000 ₽ в месяц.
+// Расчёты, выданные администратором (по указанию пользователя; extraLeft из
+// extraTotal выданных последний раз вместе с остатком), - сверх подписки, не
+// сгорают и не пропадают при смене подписки; тратятся последними.
 // Расчёт - каждое успешное нажатие «Рассчитать». Месяц - 30 дней (по
 // указанию пользователя, после аудита) от даты подключения подписки (у
 // пробной - от регистрации); неиспользованные расчёты месяца не переносятся.
@@ -52,6 +55,7 @@ function syncUser(user, now) {
   if (!Number.isFinite(user.planSince)) { user.planSince = Date.parse(user.createdAt) || now; changed = true; }
   if (!Number.isInteger(user.welcomeLeft)) { user.welcomeLeft = WELCOME_CALCS; changed = true; }
   if (!Number.isInteger(user.used)) { user.used = 0; changed = true; }
+  if (!Number.isInteger(user.extraLeft)) { user.extraLeft = 0; user.extraTotal = 0; changed = true; }
   // Платная подписка без срока (выдана до появления сроков) - на 1 месяц от
   // подключения.
   if (user.plan !== 'free' && !Number.isFinite(user.planUntil)) { user.planUntil = user.planSince + PERIOD_MS; changed = true; }
@@ -78,16 +82,20 @@ function quotaInfo(user, now) {
     plan: user.plan, planName: p.name, devices: p.devices,
     planUntil: Number.isFinite(user.planUntil) ? new Date(user.planUntil).toISOString() : null,
     monthly: p.monthly, used: user.used, monthlyLeft,
-    welcomeLeft: user.welcomeLeft, welcomeTotal: WELCOME_CALCS, left: monthlyLeft + user.welcomeLeft,
+    welcomeLeft: user.welcomeLeft, welcomeTotal: WELCOME_CALCS,
+    extraLeft: user.extraLeft, extraTotal: user.extraTotal || user.extraLeft,
+    left: monthlyLeft + user.welcomeLeft + user.extraLeft,
     periodStart: new Date(start).toISOString(), periodEnd: new Date(end).toISOString(),
   };
 }
 
-// Списать один расчёт: сначала месячные, потом бонус за регистрацию.
+// Списать один расчёт: сначала месячные, потом бонус за регистрацию, потом
+// выданные администратором.
 // false - расчётов не осталось.
 function consume(user) {
   if (user.used < planOf(user).monthly) { user.used += 1; return true; }
   if (user.welcomeLeft > 0) { user.welcomeLeft -= 1; return true; }
+  if (user.extraLeft > 0) { user.extraLeft -= 1; return true; }
   return false;
 }
 

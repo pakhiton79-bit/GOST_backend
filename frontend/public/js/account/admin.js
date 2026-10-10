@@ -136,7 +136,8 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': 
 
 // Выпадающий список в стиле сайта - uiSelect (js/account/ui-select.js).
 
-// Срок платной подписки (1 или 3 месяца по 30 дней) - для пробной не учитывается.
+// Срок платной подписки (1 или 3 месяца по 30 дней). Пробная - бессрочная:
+// вместо списка срока - «бессрочно» (переключается при выборе подписки).
 // В строке выбран срок текущей подписки (planMonths с сервера).
 function termOptions(){
   return (adminData.terms || [1, 3]).map(m => ({ id: String(m), name: m + ' мес.' }));
@@ -149,8 +150,8 @@ function renderUsers(){
     const seen = u.lastSeen ? 'вход ' + fmtDate(u.lastSeen) : 'входов нет';
     return `<tr data-email="${esc(u.email)}">
       <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}${u.autoRenew ? ' <span class="admin-tag admin-tag-ok">автопродление</span>' : ''}${u.blocked ? ' <span class="admin-tag admin-tag-blocked">заблокирован</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div>${u.blocked ? `<div class="admin-sub">заблокирован ${fmtDate(u.blocked.at)}${u.blocked.reason ? ': ' + esc(u.blocked.reason) : ''}</div>` : ''}</td>
-      <td><div class="admin-plan-pick">${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}${uiSelect(termOptions(), String(u.planMonths || (adminData.terms || [1])[0]), 'Срок подписки ' + u.email)}</div><div class="admin-sub">с ${fmtDate(u.planSince)}${u.quota.planUntil ? ' до ' + fmtDate(u.quota.planUntil) : ''}</div></td>
-      <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'без месячных'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div></td>
+      <td><div class="admin-plan-pick">${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}<span class="admin-term"${u.quota.plan === 'free' ? ' hidden' : ''}>${uiSelect(termOptions(), String(u.planMonths || (adminData.terms || [1])[0]), 'Срок подписки ' + u.email)}</span><span class="admin-term-none"${u.quota.plan === 'free' ? '' : ' hidden'}>бессрочно</span></div><div class="admin-sub">с ${fmtDate(u.planSince)}${u.quota.planUntil ? ' до ' + fmtDate(u.quota.planUntil) : ''}</div></td>
+      <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'без месячных'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}${u.quota.extraLeft > 0 ? `<div class="admin-sub">выдано, осталось ${fmtNum(u.quota.extraLeft)}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div><div class="admin-grant"><input type="number" class="admin-grant-count" min="1" max="100000" step="1" placeholder="0" aria-label="Сколько расчётов выдать ${esc(u.email)}"><button type="button" class="btn-secondary admin-grant-btn">Выдать</button></div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
       <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button>${u.blocked ? '<button type="button" class="btn-secondary admin-unblock">Разблокировать</button>' : `<button type="button" class="btn-secondary admin-block"${u.self ? ' disabled title="Свой аккаунт заблокировать нельзя"' : ''}>Заблокировать</button>`}<button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
@@ -209,8 +210,18 @@ async function load(){
 }
 
 $('adminSearch').addEventListener('input', renderUsers);
+$('adminRows').addEventListener('ui-select-change', e => {
+  const pick = e.target.closest('.admin-plan-pick');
+  if(!pick || e.target !== pick.querySelector('.ui-select')) return;
+  const free = e.target.dataset.value === 'free';
+  pick.querySelector('.admin-term').hidden = free;
+  pick.querySelector('.admin-term-none').hidden = !free;
+});
+$('adminRows').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.target.classList.contains('admin-grant-count')) e.target.closest('tr').querySelector('.admin-grant-btn').click();
+});
 $('adminRows').addEventListener('click', async e => {
-  const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock');
+  const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock, .admin-grant-btn');
   if(!btn || btn.disabled) return;
   const tr = btn.closest('tr'), email = tr.dataset.email;
   if(btn.classList.contains('admin-delete') && !window.confirm(`Удалить аккаунт ${email}? Его подписка, счётчики и входы будут удалены без возможности восстановления.`)) return;
@@ -221,9 +232,18 @@ $('adminRows').addEventListener('click', async e => {
     if(reason === null) return;
   }
   if(btn.classList.contains('admin-unblock') && !window.confirm(`Разблокировать ${email}?`)) return;
+  let count = 0;
+  if(btn.classList.contains('admin-grant-btn')){
+    count = Number(tr.querySelector('.admin-grant-count').value);
+    if(!Number.isInteger(count) || count < 1) return showMsg('Укажите, сколько расчётов выдать (целое число от 1).');
+    if(!window.confirm(`Выдать ${email} ${fmtNum(count)} расч. сверх подписки? Они не сгорают.`)) return;
+  }
   btn.disabled = true;
   try{
-    if(btn.classList.contains('admin-block')){
+    if(btn.classList.contains('admin-grant-btn')){
+      const d = await api('calcs', { email, count });
+      showMsg(`${email}: выдано ${fmtNum(count)}, дополнительных расчётов теперь ${fmtNum(d.quota.extraLeft)}.`, true);
+    } else if(btn.classList.contains('admin-block')){
       await api('block', { email, reason });
       showMsg(`Аккаунт ${email} заблокирован.`, true);
     } else if(btn.classList.contains('admin-unblock')){
@@ -231,7 +251,8 @@ $('adminRows').addEventListener('click', async e => {
       showMsg(`Аккаунт ${email} разблокирован.`, true);
     } else if(btn.classList.contains('admin-save')){
       const [planSel, termSel] = tr.querySelectorAll('.ui-select');
-      const d = await api('plan', { email, plan: planSel.dataset.value, months: Number(termSel.dataset.value) });
+      const plan = planSel.dataset.value;
+      const d = await api('plan', plan === 'free' ? { email, plan } : { email, plan, months: Number(termSel.dataset.value) });
       showMsg(`${email}: подписка ${d.quota.planName} с этого момента${d.quota.planUntil ? ' до ' + fmtDate(d.quota.planUntil) : ''}.`, true);
     } else {
       await api('delete', { email });

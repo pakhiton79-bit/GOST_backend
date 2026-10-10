@@ -179,6 +179,8 @@ function renderSiteSub(user){
     const used = q.welcomeTotal - q.welcomeLeft;
     html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
   }
+  // Расчёты, выданные администратором (сверх подписки).
+  if(q.extraLeft > 0) html += usageBlock('Дополнительные расчёты', q.extraTotal - q.extraLeft, q.extraTotal, 'Не сгорают', `Осталось ${q.extraLeft.toLocaleString('ru-RU')} из ${q.extraTotal.toLocaleString('ru-RU')}`);
   html += autoRenewHtml(user);
   box.innerHTML = html;
 }

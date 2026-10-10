@@ -5,6 +5,8 @@
 //   GET  /api/admin/users                 - аккаунты, подписки, счётчики
 //   POST /api/admin/plan { email, plan, months } - сменить подписку с этого
 //                                           момента; платная - на months (1 или 3) месяцев по 30 дней
+//   POST /api/admin/calcs { email, count } - выдать расчёты сверх подписки
+//                                           (не сгорают, plans.js)
 //   POST /api/admin/delete { email }      - удалить аккаунт (себя - нельзя)
 //   POST /api/admin/block { email, reason } - заблокировать (себя - нельзя): вход и
 //                                           расчёты запрещены, входы на всех устройствах завершаются
@@ -77,6 +79,20 @@ router.post('/plan', (req, res) => {
   store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0, planMonths: plan === 'free' ? null : months });
   if (syncUser(user, now)) store.updateUser(user); // пробная - автопродление выключается
   store.listUserSessions(user.id).slice(planOf(user).devices).forEach(s => store.deleteSessionById(user.id, s.id));
+  res.json({ ok: true, quota: quotaInfo(user, now) });
+});
+
+const MAX_GRANT = 100000;
+router.post('/calcs', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  const count = Number(req.body.count);
+  if (!Number.isInteger(count) || count < 1 || count > MAX_GRANT) return res.status(400).json({ error: `Укажите число расчётов от 1 до ${MAX_GRANT.toLocaleString('ru-RU')}.` });
+  const now = Date.now();
+  if (syncUser(user, now)) store.updateUser(user);
+  const left = user.extraLeft + count;
+  store.updateUser(user, { extraLeft: left, extraTotal: left });
   res.json({ ok: true, quota: quotaInfo(user, now) });
 });
 
