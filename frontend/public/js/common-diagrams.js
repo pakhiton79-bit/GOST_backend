@@ -81,6 +81,10 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, l
         const h = r.w/2;
         shapes += `<rect x="${r.x1+h}" y="${r.y1+h}" width="${r.x2-r.x1-2*h}" height="${r.y2-r.y1+r.w+1}" fill="#fff"/>`;
         shapes += `<path d="M${r.x1},${r.y2+h} V${r.y1} H${r.x2} V${r.y2+h}" fill="none" stroke="#000" stroke-width="${r.w}" stroke-linejoin="miter"/>`;
+      } else if(r.type==='part'){
+        // Деталь поверх фото (опорная планка бока II-1/II-2): прямоугольник
+        // x1..x2 × y1..y2 с заливкой и контуром толщиной r.w (как линии фото).
+        shapes += `<rect x="${r.x1}" y="${r.y1}" width="${(r.x2-r.x1).toFixed(1)}" height="${(r.y2-r.y1).toFixed(1)}" fill="${r.fill || '#fff'}" stroke="#000" stroke-width="${r.w}"/>`;
       } else if(r.type==='single'){
         const head = headTriangle(r.x1,r.y1,r.x2,r.y2,scale);
         shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${head.bx.toFixed(1)}" y2="${head.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;

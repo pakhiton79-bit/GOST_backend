@@ -55,7 +55,7 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap, over
   return {
     img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
     gap: { x1: px(0) + postW, x2: px(1), secTop: bars[0][1] },
-    strips, skinTop: sy1,
+    strips, skinTop: sy1, topBar: bars[0],
   };
 }
 
@@ -71,7 +71,7 @@ function ii2PanelOverhang(calc, isBok){
 // каркаса (у бока - длина груза), overhangMm - выступ обшивки за каркас с
 // каждой стороны (ii2PanelOverhang), boardGap - промежутки ({ qty, gap,
 // share } или null - сплошь).
-function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
+function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt, oporaW){
   const floors = frame.floors, v4 = TOREC_VARIANTS[floors][4], G = PANEL_GEN_II1[floors];
   const overhang = overhangMm > 0.5;
   const g = ii2PanelImage(frame.count, floors, calc.xRaskosina, frame.hasRaskosina, boardGap, overhang);
@@ -100,6 +100,10 @@ function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
     );
   }
   records.push(...postGapRecords(v, frame.sectionW, II2_PANEL_WIDTH, II2_PANEL_LABEL_SCALE));
+  // Опорная планка (только бок, oporaW - её ширина, мм; oporaRecords -
+  // js/ii1/diagrams/torec.js): подпись правее середины - у 40% ширины над
+  // щитом размер промежутка между досками.
+  if(oporaW > 0) records.unshift(...oporaRecords(v.IW, G.frameL, G.frameR, g.topBar[0], g.topBar[1], oporaW, 0.68));
   // Промежуток между досками - над щитом, у 40% ширины (левее - размер
   // между стойками, правее - толщина продольного бруса).
   const pick = boardGap && ii2PickGap(g.strips, v.IW * 0.4);
@@ -114,5 +118,6 @@ function diagramTorecII2(calc){
   return ii2PanelDiagram(calc, calc.torecFrame, calc.W + calc.t_stojka*2, ii2PanelOverhang(calc, false), calc.boardGaps.torec, 'Щит торцевой - схема расположения деталей');
 }
 function diagramBokII2(calc){
-  return ii2PanelDiagram(calc, calc.bokFrame, calc.L, ii2PanelOverhang(calc, true), calc.boardGaps.bokovoy, 'Щит боковой - схема расположения деталей');
+  const opora = (calc.bokovoy || []).find(r => r.name === 'Опорная планка');
+  return ii2PanelDiagram(calc, calc.bokFrame, calc.L, ii2PanelOverhang(calc, true), calc.boardGaps.bokovoy, 'Щит боковой - схема расположения деталей', opora ? opora.w : 0);
 }

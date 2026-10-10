@@ -43,11 +43,32 @@ function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, 
 function panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal){
   if(count <= 4 && hasRaskosinaVal){
     const v = TOREC_VARIANTS[floors][count];
-    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap };
+    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap, topBar: v.topBar };
   }
   const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!g) return null;
-  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap };
+  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap, topBar: v.topBar };
+}
+
+// Опорная планка бока (ГОСТ 10198-91, II-1 и II-2 по ГОСТ; по указанию
+// пользователя - на чертеже): на верхнем горизонтальном брусе по всей его
+// длине (x1..x2 - наружные кромки каркаса), у нижней кромки бруса
+// (поперечные брусья крышки лежат на ней), высотой по ширине планки
+// (oporaW, мм) из 100 мм бруса; стрелка с подписью - над чертежом (pos -
+// место подписи по длине, доля; по умолчанию середина). top, bot - верхняя и нижняя кромки бруса на картинке.
+function oporaRecords(IW, x1, x2, top, bot, oporaW, pos){
+  const p = pos || 0.5;                                    // подпись - на этой доле длины
+  const sw = 6 * IW / 2222;                                // толщина линий, как у фото
+  const y1 = bot - (bot - top) * oporaW / 100;
+  // Над чертежом бывают вынесены размер между стойками (слева), промежуток
+  // между досками (II-2, у середины) и толщина продольного бруса крышки
+  // (справа): подпись - выше их всех, у середины, стрелка - вправо вниз.
+  const ax = x1 + (x2 - x1) * (p + 0.1), ay = (y1 + bot) / 2; // острие стрелки - на планке
+  const sx = x1 + (x2 - x1) * p, sy = -IW * 0.16;            // начало - над чертежом
+  return [
+    {type:'part', x1, y1, x2, y2:bot, w:sw},
+    {type:'single', x1:sx, y1:sy, x2:ax, y2:ay, lx:sx, ly:sy - IW * 0.03, text:'Опорная планка'},
+  ];
 }
 
 // Размер «расстояние между стойками» в первой секции схемы v: стрелка чуть
@@ -94,6 +115,7 @@ const TOREC_VARIANTS = {
   1: {
     // «2 стойки» (1 раскосина) - по исходной разметке пользователя.
     2: { img: TOREC_IMG_2POSTS_B64, imgX: TOREC_IMG_2POSTS_X_B64, IW: 1116, IH: 796,
+      topBar: [80, 108, 1011],
       gap: { x1: 196.5, x2: 920.5, secTop: 167.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
@@ -132,6 +154,7 @@ const TOREC_VARIANTS = {
     // своя отдельная линия-вынос для ширины, не переиспользует линию группы
     // skinVal).
     3: { img: TOREC_IMG_3POSTS_B64, imgX: TOREC_IMG_3POSTS_X_B64, IW: 1460, IH: 605,
+      topBar: [63, 82, 1377],
       gap: { x1: 148.5, x2: 696.5, secTop: 130.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
@@ -162,6 +185,7 @@ const TOREC_VARIANTS = {
     },
     // «4 стойки» (3 раскосины) - по разметке пользователя.
     4: { img: TOREC_IMG_4POSTS_B64, imgX: TOREC_IMG_4POSTS_X_B64, IW: 2222, IH: 644,
+      topBar: [63.5, 77.5, 2135.5],
       gap: { x1: 157.5, x2: 743.5, secTop: 134.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal) {
         const records = [];
@@ -198,6 +222,7 @@ const TOREC_VARIANTS = {
     // этажа (ширина стойки + длина стойки) - своя, отдельная от 1-этажных
     // схем группа E.
     2: { img: TOREC_IMG_2FLOOR_2POSTS_B64, imgX: TOREC_IMG_2FLOOR_2POSTS_X_B64, IW: 833, IH: 1041,
+      topBar: [78, 100, 746],
       gap: { x1: 161.5, x2: 681.5, secTop: 140.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
@@ -231,6 +256,7 @@ const TOREC_VARIANTS = {
     // группа skinVal (толщина досок обшивки бока) - на схеме «2 стойки» её
     // не было вовсе.
     3: { img: TOREC_IMG_2FLOOR_3POSTS_B64, imgX: TOREC_IMG_2FLOOR_3POSTS_X_B64, IW: 1473, IH: 1088,
+      topBar: [73, 86, 1382],
       gap: { x1: 152.5, x2: 700.5, secTop: 138.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];
@@ -271,6 +297,7 @@ const TOREC_VARIANTS = {
     // ошибки, что была у «3 стойки»/1-этажной «4 стойки» (см. комментарии
     // там).
     4: { img: TOREC_IMG_2FLOOR_4POSTS_B64, imgX: TOREC_IMG_2FLOOR_4POSTS_X_B64, IW: 2223, IH: 1160,
+      topBar: [77.5, 77.5, 2135.5],
       gap: { x1: 157.5, x2: 743.5, secTop: 149.5 },
       records: function(longbeamVal, widthVal, skinVal, heightVal, floorHeightVal) {
         const records = [];

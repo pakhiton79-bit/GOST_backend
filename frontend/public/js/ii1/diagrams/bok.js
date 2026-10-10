@@ -13,10 +13,14 @@
 // что у торца (panelScheme в torec.js: фото на 2-4 стойки, на 5 и более -
 // сгенерированный чертёж). gapVal - расстояние между стойками бока
 // (bokFrame.sectionW), см. postGapRecords в torec.js.
-function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
+// oporaW - ширина опорной планки, мм (из таблицы бока; 0 - не рисуется).
+function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal, oporaW){
   const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!v) return diagramTooDense();
   const records = v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
     .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  // Узкое фото (2 стойки) - подпись левее, иначе наезжает на подпись
+  // толщины продольного бруса справа.
+  if(oporaW > 0) records.unshift(...oporaRecords(v.IW, v.topBar[1], v.topBar[2], v.topBar[0], v.gap.secTop, oporaW, v.IW < 1200 ? 0.3 : 0.5));
   return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }

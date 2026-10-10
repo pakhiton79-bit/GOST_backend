@@ -53,6 +53,8 @@ function renderTextRow(sectionKey, rows, defaultText){
 // множитель подписей 0.8 (см. renderDiagram в common-diagrams.js): у этих
 // чертежей подписи почти не вылетают за рамку, и автосжатие их не уменьшает.
 const II1_PANEL_WIDTH = 260, II1_PANEL_LABEL_SCALE = 0.8;
+// Ширина опорной планки, мм - из строки таблицы бока (0 - строки нет).
+const oporaWidth = rows => ((rows || []).find(r => r.name === 'Опорная планка') || {}).w || 0;
 
 function renderBoardTables(calc, manualOverrides){
   const torecW = calc.W + calc.t_stojka*2;
@@ -67,7 +69,7 @@ function renderBoardTables(calc, manualOverrides){
     diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),
     renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
-    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina),
+    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina, oporaWidth(calc.bokovoy)),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Пергамин - под всеми узлами, попадает и в печать.
   if(calc.parchment && calc.parchment.length){
