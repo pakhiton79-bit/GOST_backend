@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Расчёт ящика - ГОСТ 10198-91 тип II-2 - Тара+</title>
+<title>Расчёт ящика - ГОСТ 10198-91 тип II-2 (оптимальный) - Тара+</title>
 <link rel="icon" type="image/png" href="/images/favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -223,6 +223,7 @@
   </div>
 
   <div id="results">
+    <div class="note note-danger" id="notReadyNote"><b>Оптимальный вариант II-2 ещё не готов.</b> Это рабочая копия II-2 для доработок - результат нельзя использовать в производстве.</div>
     <div class="note" id="warningsTop" style="margin-bottom:16px;"></div>
 
     <div class="card">
@@ -308,10 +309,10 @@
 <script src="/js/ii1/diagrams/kryshka.js"></script>
 <script src="/js/ii1/diagrams/panel-generated.js"></script>
 <script src="/js/ii1/diagrams/torec.js"></script>
-<script src="/js/ii2/diagrams/boards.js"></script>
-<script src="/js/ii2/diagrams/dno.js"></script>
-<script src="/js/ii2/diagrams/kryshka.js"></script>
-<script src="/js/ii2/diagrams/panel.js"></script>
+<script src="/js/ii2n/diagrams/boards.js"></script>
+<script src="/js/ii2n/diagrams/dno.js"></script>
+<script src="/js/ii2n/diagrams/kryshka.js"></script>
+<script src="/js/ii2n/diagrams/panel.js"></script>
 <script src="/js/vendor/html2canvas.min.js"></script>
 <script src="/js/vendor/jspdf.umd.min.js"></script>
 <script src="/js/common-calc-state.js"></script>
@@ -320,12 +321,12 @@
 <script src="/js/common-print.js"></script>
 <script src="/js/common-timesettings.js"></script>
 <script src="/js/common-version-switch.js"></script>
-<script src="/js/ii2/options.js"></script>
-<script src="/js/ii2/board-gaps.js"></script>
-<script src="/js/ii2/manual-counts.js"></script>
-<script src="/js/ii2/fine-thickness.js"></script>
-<script src="/js/ii2/render-ii2.js"></script>
-<script src="/js/ii2/print-ii2.js"></script>
-<script src="/js/ii2/calc-ii2.js"></script>
+<script src="/js/ii2n/options.js"></script>
+<script src="/js/ii2n/board-gaps.js"></script>
+<script src="/js/ii2n/manual-counts.js"></script>
+<script src="/js/ii2n/fine-thickness.js"></script>
+<script src="/js/ii2n/render-ii2n.js"></script>
+<script src="/js/ii2n/print-ii2n.js"></script>
+<script src="/js/ii2n/calc-ii2n.js"></script>
 </body>
 </html>

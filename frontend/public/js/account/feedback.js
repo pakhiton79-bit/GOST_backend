@@ -19,7 +19,7 @@ const FB_NO_TYPE = 'Не относится к типу ящика';
 // Страница - ГОСТ и тип по умолчанию.
 const FB_PAGES = {
   'i1.html': 'I-1', 'i2.html': 'I-2', 'i3-skid.html': 'I-3', 'i4.html': 'I-4',
-  'ii1.html': 'II-1', 'ii1n.html': 'II-1 (оптимальный)', 'ii2.html': 'II-2', 'iii1.html': 'III-1',
+  'ii1.html': 'II-1', 'ii1n.html': 'II-1 (оптимальный)', 'ii2.html': 'II-2', 'ii2n.html': 'II-2 (оптимальный)', 'iii1.html': 'III-1',
   'iii1-opt.html': 'III-1 (оптимальный)',
 };
 // Страницы ГОСТ 2991-85 (тип по умолчанию).
