@@ -1,4 +1,4 @@
-// ГОСТ 2991-85, тип II-1: содержимое печатной страницы и PDF (вызывается из
+// ГОСТ 2991-85: содержимое печатной страницы и PDF типа (вызывается из
 // printBox/downloadPdf в common-print.js). Как у ГОСТ 10198-91 (II-1): сверху
 // общий вид ящика, рядом груз и итог.
 
@@ -71,12 +71,12 @@ function buildPrintHtml(){
   return `
     <img class="print-watermark" src="${LOGO_B64}" alt="">
 
-    <h1>ГОСТ 2991-85 · тип II-1${boxNameHtml()}</h1>
-    <div class="print-subtitle">Ящик дощатый неразборный плотный, торцовые стенки на двух планках</div>
+    <h1>ГОСТ 2991-85 · ${G2991_TYPE.title}${boxNameHtml()}</h1>
+    <div class="print-subtitle">${G2991_TYPE.subtitle}</div>
 
     <div class="part-title">Общий вид ящика</div>
     <div class="spec-row-diagram">
-      <div class="diagram-slot"><div class="diagram-wrap"><img src="${BOX_G2991_II1_IMG}" alt=""></div></div>
+      <div class="diagram-slot"><div class="diagram-wrap"><img src="${G2991_TYPE.boxImg}" alt=""></div></div>
       <div class="print-summary-col">
         <div class="print-summary-block">
           <h2>Груз</h2>

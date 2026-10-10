@@ -25,24 +25,17 @@
 //     бок = длина груза + 2 доски торца (дно и крышка - как обычно);
 //   - «Без крышки» (п. 1.2): вместо крышки 2 доски толщиной как у дна,
 //     шириной 50 мм, длиной как у крышки.
-// Ширина досок: основная - 100 мм (меняется в общих настройках), доборные -
-// как в ГОСТ 10198-91 (g2991FillBoards), не уже минимума таблицы 4.
-const { vol, findNegativeField, inputLimitsError, makeRoundUpToAvailable, thicknessPartWarnings, computeNormaVremeni } = require('../../helpers');
+// Ширина досок: основная - выбор внутри типа (по умолчанию 100 мм), вверх до
+// ширины «в наличии» (g2991BoardWidths, boards.js); доборные - как в ГОСТ
+// 10198-91 (g2991FillBoards), не уже минимума таблицы 4.
+const { findNegativeField, inputLimitsError, makeRoundUpToAvailable, thicknessPartWarnings, computeNormaVremeni } = require('../../helpers');
 const T = require('../table2');
+const B = require('../boards');
 
 const TYPE_II1_MAX_MASS = 110; // таблица 1
 const NO_LID_BOARD_W = 50;     // доски вместо крышки (п. 1.2: 40-60 мм; по указанию пользователя - 50)
 const WOOD_DENSITY_KG_M3 = 700; // плотность по умолчанию (как у ГОСТ 10198-91)
 const SPECIES = ['conifer', 'birch', 'softDeciduous'];
-
-// Строки деталей: основные доски и доборные (как в ГОСТ 10198-91).
-function boardRows(name, t, l, fb, mainW) {
-  const rows = [];
-  if (fb.mainQty > 0) rows.push({ name, t, w: mainW, l, qty: fb.mainQty });
-  fb.extra.forEach((e, i) => rows.push({ name: `${name} (дополнительная)${fb.extra.length > 1 ? ' ' + (i + 1) : ''}`, t, w: e.width, l, qty: e.qty }));
-  return rows;
-}
-const rowsVolume = rows => rows.reduce((s, r) => s + vol(r.t, r.w, r.l, r.qty), 0);
 
 function computeGost2991II1(input) {
   const { L, W, H, MASS } = input;
@@ -54,7 +47,7 @@ function computeGost2991II1(input) {
   const opts = { species: SPECIES.includes(input.species) ? input.species : 'conifer', concentrated: !!input.concentrated, packet: !!input.packet };
   const noLid = !!input.noLid, verticalEnd = !!input.verticalEnd;
   const widths = input.availableWidths || [];
-  const mainW = T.G2991_WIDTH_OPTIONS.includes(input.mainWidth) ? input.mainWidth : T.G2991_MAIN_WIDTH_DEFAULT;
+  const mainW = B.g2991BoardWidths(input.mainWidth, widths).main;
   const minW = T.g2991MinBoardWidth(MASS);
 
   // Толщины по ГОСТ (с поправками), затем - «в наличии».
@@ -81,17 +74,17 @@ function computeGost2991II1(input) {
     return fb;
   };
   const dnoLen = L + torecT * 2;
-  const dnoRows = boardRows('Доска дна', dnoT, dnoLen, fill(W + bokT * 2, 'Дно'), mainW);
+  const dnoRows = B.g2991BoardRows('Доска дна', dnoT, dnoLen, fill(W + bokT * 2, 'Дно'), mainW);
   const lidRows = noLid
     ? [{ name: 'Доска вместо крышки', t: lidT, w: NO_LID_BOARD_W, l: dnoLen, qty: 2 }]
-    : boardRows('Доска крышки', lidT, dnoLen, fill(W + bokT * 2, 'Крышка'), mainW);
+    : B.g2991BoardRows('Доска крышки', lidT, dnoLen, fill(W + bokT * 2, 'Крышка'), mainW);
   const bokLen = verticalEnd ? L + torecT * 2 : L + (torecT + plankT) * 2;
-  const bokRows = boardRows('Доска бока', bokT, bokLen, fill(H, 'Бок'), mainW);
+  const bokRows = B.g2991BoardRows('Доска бока', bokT, bokLen, fill(H, 'Бок'), mainW);
   const torecRows = verticalEnd
-    ? [...boardRows('Доска торца', torecT, H, fill(W, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: W, qty: 2 }]
-    : [...boardRows('Доска торца', torecT, W, fill(H, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: H, qty: 2 }];
+    ? [...B.g2991BoardRows('Доска торца', torecT, H, fill(W, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: W, qty: 2 }]
+    : [...B.g2991BoardRows('Доска торца', torecT, W, fill(H, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: H, qty: 2 }];
 
-  const totalVolume = rowsVolume(dnoRows) + rowsVolume(lidRows) + rowsVolume(torecRows) * 2 + rowsVolume(bokRows) * 2;
+  const totalVolume = B.g2991RowsVolume(dnoRows) + B.g2991RowsVolume(lidRows) + B.g2991RowsVolume(torecRows) * 2 + B.g2991RowsVolume(bokRows) * 2;
   const woodDensity = Number.isFinite(input.woodDensity) && input.woodDensity > 0 ? input.woodDensity : WOOD_DENSITY_KG_M3;
   const outerL = L + (torecT + plankT) * 2, outerW = W + bokT * 2, outerH = H + dnoT + lidT;
 

@@ -84,3 +84,55 @@ function stockPickerCardHtml(id, title){
     </div>
     <div class="note" id="${id}Note" style="display:none;margin-top:14px;"></div>`;
 }
+
+// ============ Основная ширина доски ============
+// По указанию пользователя - внутри типа (раньше была в общих настройках):
+// выпадающий список с одним выбором (radio), под списком ширин «в наличии».
+// В расчёте ширина берётся вверх до ширины «в наличии» (одна ширина в наличии
+// - все доски по ней; g2991StockWidth в g2991/boards.js) - подпись кнопки
+// показывает, какая получится. Разметка - mainWidthPickerHtml(id).
+const G2991_UI_MAIN_WIDTH_DEFAULT = 100;
+// Как g2991StockWidth (g2991/boards.js): ближайшая «в наличии» не уже w, а если
+// все уже - самая широкая; ничего не выбрано - w.
+function stockWidthFor(w, widths){
+  if(!widths.length) return w;
+  const up = widths.find(v => v >= w);
+  return up === undefined ? widths[widths.length - 1] : up;
+}
+function mainWidthPickerHtml(id){
+  return `<div class="main-width-block">
+      <label for="${id}Btn">Основная ширина доски</label>
+      <div class="thickness-filter dropdown-wrap">
+        <button type="button" class="thickness-dropdown-btn" id="${id}Btn"><span id="${id}Label">-</span><span class="thickness-dropdown-arrow">▾</span></button>
+        <div class="thickness-dropdown-panel" id="${id}Panel"></div>
+      </div>
+    </div>`;
+}
+// makeMainWidthPicker({ id, storageKey, options, stock, onChange }) -> { get(),
+// refresh() }: get - выбранная ширина (уходит в расчёт), refresh - обновить
+// подпись после смены ширин «в наличии» (stock() - их список).
+function makeMainWidthPicker(cfg){
+  const $ = s => document.getElementById(cfg.id + s);
+  let value = G2991_UI_MAIN_WIDTH_DEFAULT;
+  try{
+    const saved = parseInt(localStorage.getItem(cfg.storageKey), 10);
+    if(cfg.options.includes(saved)) value = saved;
+  }catch(e){}
+  function updateLabel(){
+    const stock = cfg.stock(), eff = stockWidthFor(value, stock);
+    $('Label').textContent = stock.length === 1 ? `${eff} мм (единственная в наличии)`
+      : eff !== value ? `${value} мм → ${eff} мм (ближайшая в наличии)` : `${value} мм`;
+  }
+  $('Panel').innerHTML = `<div class="thickness-checkbox-list">${cfg.options.map(w =>
+    `<label><input type="radio" name="${cfg.id}" value="${w}"${w === value ? ' checked' : ''}> ${w} мм</label>`).join('')}</div>`;
+  $('Btn').addEventListener('click', () => $('Panel').classList.toggle('open'));
+  $('Panel').addEventListener('change', e => {
+    value = parseInt(e.target.value, 10);
+    try{ localStorage.setItem(cfg.storageKey, String(value)); }catch(e){}
+    $('Panel').classList.remove('open');
+    updateLabel();
+    if(cfg.onChange) cfg.onChange();
+  });
+  updateLabel();
+  return { get: () => value, refresh: updateLabel };
+}

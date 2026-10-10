@@ -5,7 +5,8 @@
 // в системе), переключатель - три значка с плавно перемещающимся ползунком
 // (по образцу пользователя); «Пиломатериал в наличии» - подзаголовками по
 // ГОСТам (по указанию пользователя): ГОСТ 10198-91 - толщины, ГОСТ 2991-85 -
-// толщины, ширины и основная ширина доски; общие для всех типов своего ГОСТа
+// толщины и ширины (основная ширина доски - внутри типа, js/g2991/stock.js);
+// общие для всех типов своего ГОСТа
 // (siteAvailableThicknesses / siteAvailableWidths; выбранные внутри типа -
 // в приоритете, см. loadAvailableThicknesses в js/<тип>/options.js);
 // «Норма времени» (производительность, коэффициент) и «Масса ящика»
@@ -32,11 +33,9 @@ const SITE_STORAGE_PREFIX = SITE_SETTINGS_STORAGE_KEY.replace(/site-settings$/, 
 // в js/<тип>/options.js).
 const SITE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 150, 175, 200, 225, 250];
 // ГОСТ 2991-85: толщины - каждый 1 мм от 9 до 25 мм плюс толщины выше;
-// ширины - от 40 до 150 мм через 5 мм; основная ширина доски - 100 мм по
-// умолчанию (G2991_* в js/g2991/... и backend/src/g2991/table2.js).
+// ширины - от 40 до 150 мм через 5 мм (G2991_* в backend/src/g2991/table2.js).
 const SITE_G2991_THICKNESS_OPTIONS = [...new Set([...Array.from({ length: 17 }, (_, i) => 9 + i), ...SITE_THICKNESS_OPTIONS])].sort((a, b) => a - b);
 const SITE_G2991_WIDTH_OPTIONS = Array.from({ length: 23 }, (_, i) => 40 + i * 5);
-const SITE_G2991_MAIN_WIDTH_DEFAULT = 100;
 // Списки «в наличии» по ГОСТам: ключ в общих настройках и варианты.
 // Ключ ГОСТ 10198-91 - прежний (availableThickness), сохранённый выбор не теряется.
 const SITE_STOCK_LISTS = {
@@ -131,11 +130,6 @@ function siteAvailableThicknesses(gost){
   return siteStockList(gost === '2991' ? 'thickness2991' : 'thickness');
 }
 function siteAvailableWidths(){ return siteStockList('width2991'); }
-// Основная ширина доски ГОСТ 2991-85.
-function siteMainWidth2991(){
-  const w = loadSiteSettings().mainWidth2991;
-  return SITE_G2991_WIDTH_OPTIONS.includes(w) ? w : SITE_G2991_MAIN_WIDTH_DEFAULT;
-}
 // Сохранить общий список и сообщить странице типа (она обновит свои, если
 // берёт общие): событие site-thickness-change (detail.list - какой список).
 function saveSiteStockList(list, arr){
@@ -154,12 +148,6 @@ function siteStockListHtml(list){
     <div class="thickness-checkbox-list" data-site-list-box="${list}">${boxes}</div>`;
 }
 function siteThicknessHtml(){ return siteStockListHtml('thickness'); }
-// Основная ширина доски ГОСТ 2991-85 - один вариант из списка ширин.
-function siteMainWidthHtml(){
-  const cur = siteMainWidth2991();
-  return `<div class="thickness-checkbox-list" id="siteMainWidth2991">${SITE_G2991_WIDTH_OPTIONS.map(w =>
-    `<label><input type="radio" name="siteMainWidth2991" value="${w}"${w === cur ? ' checked' : ''}> ${w} мм</label>`).join('')}</div>`;
-}
 
 // Общие норма времени и плотность (ключи настроек - имена в SITE_CALC_PARAMS).
 function siteCalcParam(name){
@@ -351,13 +339,8 @@ const SITE_SETTINGS_SECTIONS = [
       wide: true,
     }, {
       title: 'Ширины в наличии',
-      hint: 'Доборные доски и планки - вверх до ближайшей ширины в наличии. Ничего не выбрано - ширины как получились по расчёту.',
+      hint: 'Основные доски (основная ширина выбирается внутри типа) и доски торца - вверх до ближайшей ширины в наличии, одна ширина в наличии - все доски по ней; доборные доски и планки - тоже вверх до ближайшей. Ничего не выбрано - основная ширина как выбрана в типе (по умолчанию 100 мм), доски торца типа I - 150 мм.',
       control: () => siteStockListHtml('width2991'),
-      wide: true,
-    }, {
-      title: 'Основная ширина доски',
-      hint: 'Ширина основных досок щитов, дна и крышки (по умолчанию 100 мм); остаток закрывают доборные доски.',
-      control: siteMainWidthHtml,
       wide: true,
     }],
   },
@@ -537,17 +520,10 @@ function initSiteSettings(){
       saveSiteStockList(list, on ? SITE_STOCK_LISTS[list].options.slice() : []);
     }
   });
-  // Галочки общих толщин и ширин и основная ширина - сохраняются сразу.
+  // Галочки общих толщин и ширин - сохраняются сразу.
   content.addEventListener('change', e => {
     const box = e.target.closest('[data-site-list-box]');
-    if(box){
-      saveSiteStockList(box.dataset.siteListBox, Array.from(box.querySelectorAll('input:checked')).map(i => parseInt(i.value, 10)));
-      return;
-    }
-    if(e.target.name === 'siteMainWidth2991'){
-      saveSiteSetting('mainWidth2991', parseInt(e.target.value, 10));
-      window.dispatchEvent(new CustomEvent('site-thickness-change', { detail: { list: 'mainWidth2991' } }));
-    }
+    if(box) saveSiteStockList(box.dataset.siteListBox, Array.from(box.querySelectorAll('input:checked')).map(i => parseInt(i.value, 10)));
   });
   // Стрелки - по вариантам, как у обычной группы переключателей.
   content.addEventListener('keydown', e => {

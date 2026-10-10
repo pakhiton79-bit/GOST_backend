@@ -1154,6 +1154,8 @@
 
   /* ============ Фильтр толщин пиломатериала "в наличии" ============ */
   .thickness-filter{position:relative;}
+  /* основная ширина доски ГОСТ 2991-85 - под списком ширин «в наличии» */
+  .main-width-block{margin-top:20px;}
   .thickness-dropdown-btn{
     width:100%;
     display:flex;

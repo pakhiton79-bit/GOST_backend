@@ -1,12 +1,9 @@
-// ГОСТ 2991-85, тип II-1: чертежи узлов - плоские схемы (SVG, как щиты
-// III-1): узел - белый прямоугольник, доски - тонкими линиями стыков (по
+// ГОСТ 2991-85: чертежи узлов - плоские схемы (SVG, как щиты III-1 ГОСТ
+// 10198-91), общие для всех типов: узел - белый прямоугольник, доски - тонкими линиями стыков (по
 // указанию пользователя: видно, в какую сторону идут доски, без перегрузки),
 // планки торца - светло-серые поверх. Подписи (по указанию пользователя): у всех узлов длина и высота
 // (у дна и крышки - ширина), у торца ещё расстояние между планками.
-// Размеры - из расчёта (calc.drawing).
-// Общий вид ящика (плитка «Итог» и печать) - присланный рисунок, увеличенный в 3 раза.
-const BOX_G2991_II1_IMG = "/images/box_g2991_ii1.png";
-
+// Размеры - из расчёта (calc.drawing). Узлы своего типа - js/g2991/<тип>/diagrams.js.
 const G2991_PANEL_IW = 2222;                       // ширина картинки
 const G2991_PANEL_MIN_RATIO = 0.3, G2991_PANEL_MAX_RATIO = 1.2; // пределы высоты кадра, доли ширины
 const G2991_PANEL_WIDTH = 260, G2991_PANEL_LABEL_SCALE = 0.8;
@@ -108,19 +105,4 @@ function diagramG2991Panel(altText, lenMm, heightMm, boards, planks, plankMm, pl
     }
   }
   return renderDiagram(img, altText, IW, IH, records, widthPx, photoStrokeScale(IW), ls);
-}
-
-// Чертежи узлов II-1 по результату расчёта.
-function diagramsG2991II1(calc){
-  const d = calc.drawing;
-  return {
-    dno: diagramG2991Panel('Дно - схема', d.dnoL, d.dnoW, 'h', null, 0, 0, g2991RowsLayout(calc.dno)),
-    kryshka: calc.noLid
-      ? diagramG2991Panel('Вместо крышки - схема', d.dnoL, d.dnoW, 'edges', null)
-      : diagramG2991Panel('Крышка - схема', d.dnoL, d.dnoW, 'h', null, 0, 0, g2991RowsLayout(calc.kryshka)),
-    torec: calc.verticalEnd
-      ? diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'v', 'h', d.plankW, d.plankGap, g2991RowsLayout(calc.torec))
-      : diagramG2991Panel('Щит торцевой - схема', d.torecW, d.H, 'h', 'v', d.plankW, d.plankGap, g2991RowsLayout(calc.torec)),
-    bokovoy: diagramG2991Panel('Щит боковой - схема', d.bokL, d.H, 'h', null, 0, 0, g2991RowsLayout(calc.bokovoy)),
-  };
 }

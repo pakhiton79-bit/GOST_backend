@@ -1,7 +1,6 @@
-// ГОСТ 2991-85, тип I: вывод результата - плитки «Итог», спецификация
+// ГОСТ 2991-85: вывод результата страницы типа - плитки «Итог», спецификация
 // (чертёж и таблица по каждому узлу, все ячейки правятся - как в ГОСТ
-// 10198-91) и
-// предупреждения. calc - ответ расчёта.
+// 10198-91) и предупреждения. calc - ответ расчёта.
 
 function renderSummary(calc){
   document.getElementById('outDims').innerHTML = `${Math.round(calc.outerL)} × ${Math.round(calc.outerW)} × ${Math.round(calc.outerH)} <span>мм</span>`;
@@ -31,13 +30,13 @@ function renderPartTable(rows, sectionKey){
   html += `</tbody></table></div>`;
   return html;
 }
-// Узел: заголовок, чертёж слева (diagrams.js), таблица справа.
+// Узел: заголовок, чертёж слева (G2991_TYPE.diagrams), таблица справа.
 function renderPartBlock(title, diagramHtml, tableHtml){
   return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram"><div class="diagram-slot">${diagramHtml}</div>${tableHtml}</div>`;
 }
 
 function renderBoardTables(calc){
-  const dg = diagramsG2991I(calc);
+  const dg = G2991_TYPE.diagrams(calc);
   let html = '';
   html += renderPartBlock('Дно', dg.dno, renderPartTable(calc.dno, 'dno'));
   html += renderPartBlock(calc.noLid ? 'Вместо крышки' : 'Крышка', dg.kryshka, renderPartTable(calc.kryshka, 'kryshka'));

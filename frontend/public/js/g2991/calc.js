@@ -1,7 +1,13 @@
-// ГОСТ 2991-85, тип II-1: сбор входных данных, запрос расчёта на сервер
-// (POST /api/g2991ii1/calculate) и вывод результата. Кнопка «Рассчитать»
+// ГОСТ 2991-85: сбор входных данных страницы типа, запрос расчёта на сервер
+// (POST G2991_TYPE.api) и вывод результата. Кнопка «Рассчитать»
 // вызывает общую обёртку calculate() из common-calc-state.js, та -
 // calculateNow().
+
+// Галочка опций; нет такой у типа - false.
+function checked(id){
+  const el = document.getElementById(id);
+  return !!(el && el.checked);
+}
 
 // Тело запроса на расчёт. По нему же common-calc-state.js сравнивает текущую
 // форму с последним расчётом (calcStateSignature).
@@ -12,14 +18,14 @@ function buildCalcInput(){
     H: parseFloat(document.getElementById('H').value),
     MASS: parseFloat(document.getElementById('M').value),
     species: (document.querySelector('input[name="species"]:checked') || {}).value || 'conifer',
-    concentrated: document.getElementById('concentrated').checked,
-    packet: document.getElementById('packet').checked,
-    roundBoardWidths: !document.getElementById('noRoundBoardWidths').checked, // по умолчанию ширины округляются
-    verticalEnd: document.getElementById('verticalEnd').checked,
-    noLid: document.getElementById('noLid').checked,
+    concentrated: checked('concentrated'),
+    packet: checked('packet'),
+    roundBoardWidths: !checked('noRoundBoardWidths'), // по умолчанию ширины округляются
+    verticalEnd: checked('verticalEnd'),               // только у II-1
+    noLid: checked('noLid'),
     availableThicknesses: thicknessPicker.get(),
     availableWidths: widthPicker.get(),
-    mainWidth: siteMainWidth2991(),
+    mainWidth: mainWidthPicker.get(),
     tableEdits: readTableEdits(),
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
     woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
@@ -40,7 +46,7 @@ async function calculateNow(){
 
   let calc;
   try{
-    const resp = await fetch('/api/g2991ii1/calculate', {
+    const resp = await fetch(G2991_TYPE.api, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
@@ -84,6 +90,6 @@ function errorFieldsFor(text){
   return [];
 }
 
-document.getElementById('boxView').src = BOX_G2991_II1_IMG;
+document.getElementById('boxView').src = G2991_TYPE.boxImg;
 initTimeSettings(TIME_SETTINGS_STORAGE_KEY);
 initDensitySettings(WOOD_DENSITY_STORAGE_KEY);
