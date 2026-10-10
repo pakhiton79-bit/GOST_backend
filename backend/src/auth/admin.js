@@ -29,6 +29,15 @@ router.use((req, res, next) => {
   next();
 });
 
+// Срок текущей платной подписки, мес. (для списка срока в админке): записан
+// при выдаче (planMonths), у выданных раньше - по датам начала и окончания.
+function planMonthsOf(u) {
+  if (u.plan === 'free') return null;
+  if (PLAN_TERMS.includes(u.planMonths)) return u.planMonths;
+  const m = Math.round((u.planUntil - u.planSince) / PERIOD_MS);
+  return PLAN_TERMS.includes(m) ? m : PLAN_TERMS[0];
+}
+
 router.get('/users', (req, res) => {
   const now = Date.now();
   const users = store.listUsers().map(u => {
@@ -41,6 +50,7 @@ router.get('/users', (req, res) => {
       totalCalcs: u.totalCalcs || 0,
       marketing: !!(u.consents && u.consents.marketing),
       autoRenew: !!(u.autoRenew && u.autoRenew.on),
+      planMonths: planMonthsOf(u),
       lastCalcAt: u.lastCalcAt ? new Date(u.lastCalcAt).toISOString() : null,
       lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
       self: u.id === req.user.id,

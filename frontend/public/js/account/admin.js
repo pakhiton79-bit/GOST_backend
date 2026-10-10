@@ -137,6 +137,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': 
 // Выпадающий список в стиле сайта - uiSelect (js/account/ui-select.js).
 
 // Срок платной подписки (1 или 3 месяца по 30 дней) - для пробной не учитывается.
+// В строке выбран срок текущей подписки (planMonths с сервера).
 function termOptions(){
   return (adminData.terms || [1, 3]).map(m => ({ id: String(m), name: m + ' мес.' }));
 }
@@ -148,7 +149,7 @@ function renderUsers(){
     const seen = u.lastSeen ? 'вход ' + fmtDate(u.lastSeen) : 'входов нет';
     return `<tr data-email="${esc(u.email)}">
       <td>${esc(u.email)}${u.self ? ' <span class="admin-tag admin-tag-you">вы</span>' : ''}${u.verified ? '' : ' <span class="admin-tag">не подтверждена</span>'}${u.marketing ? ' <span class="admin-tag admin-tag-ok">рассылки</span>' : ''}${u.autoRenew ? ' <span class="admin-tag admin-tag-ok">автопродление</span>' : ''}${u.blocked ? ' <span class="admin-tag admin-tag-blocked">заблокирован</span>' : ''}<div class="admin-sub">с ${fmtDate(u.createdAt)}</div>${u.blocked ? `<div class="admin-sub">заблокирован ${fmtDate(u.blocked.at)}${u.blocked.reason ? ': ' + esc(u.blocked.reason) : ''}</div>` : ''}</td>
-      <td><div class="admin-plan-pick">${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}${uiSelect(termOptions(), '1', 'Срок подписки ' + u.email)}</div><div class="admin-sub">с ${fmtDate(u.planSince)}${u.quota.planUntil ? ' до ' + fmtDate(u.quota.planUntil) : ''}</div></td>
+      <td><div class="admin-plan-pick">${uiSelect(adminData.plans, u.quota.plan, 'Подписка ' + u.email)}${uiSelect(termOptions(), String(u.planMonths || (adminData.terms || [1])[0]), 'Срок подписки ' + u.email)}</div><div class="admin-sub">с ${fmtDate(u.planSince)}${u.quota.planUntil ? ' до ' + fmtDate(u.quota.planUntil) : ''}</div></td>
       <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'без месячных'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
