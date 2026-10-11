@@ -29,8 +29,8 @@
 function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
   const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!v) return diagramTooDense();
-  const records = v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
-    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  const records = raiseSkinRecords(v, v.records(dimLabel(longbeamVal), dimLabel(widthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
+    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale)));
   return renderDiagram(v.img, 'Щит торцевой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
 
@@ -43,11 +43,31 @@ function diagramTorec(count, floors, longbeamVal, widthVal, skinVal, heightVal, 
 function panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal){
   if(count <= 4 && hasRaskosinaVal){
     const v = TOREC_VARIANTS[floors][count];
-    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap };
+    return { img: xRaskosinaVal ? v.imgX : v.img, IW: v.IW, IH: v.IH, records: v.records, gap: v.gap, skin: II1N_SKIN[floors][count] };
   }
   const v = TOREC_VARIANTS[floors][4], g = panelGeneratedII1(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!g) return null;
-  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap };
+  return { img: g.img, IW: v.IW, IH: v.IH, records: v.records, gap: g.gap, skin: II1N_SKIN[floors][4] };
+}
+
+// Оптимальная версия (по указанию пользователя): каркас ниже на поперечный
+// брус крышки, поэтому выступ обшивки над верхним брусом каркаса на чертеже
+// - вдвое выше, чем на фото. Поверх фото - белый прямоугольник обшивки от
+// нового верха до верхнего бруса (закрывает прежний верх), размеры над
+// брусом растягиваются вдвое от бруса, подписи выше обшивки - сдвигаются
+// вверх на прибавку. Координаты фото (центры линий): [левый край обшивки,
+// правый край, верх обшивки, верх верхнего бруса]; сгенерированный чертёж -
+// в геометрии фото на 4 стойки (panel-generated.js).
+const II1N_SKIN = {
+  1: { 2: [10.5, 1106.5, 10.5, 80], 3: [9.5, 1449.5, 11.5, 63], 4: [7.5, 2211.5, 7.5, 63.5] },
+  2: { 2: [28.5, 814.5, 28.5, 78], 3: [13.5, 1453.5, 19.5, 73], 4: [7.5, 2212.5, 8.5, 77.5] },
+};
+function raiseSkinRecords(v, records){
+  const [L, R, top, bar] = v.skin, d = bar - top;
+  const sy = y => y >= bar - 4 ? y : (y >= top - 15 ? bar - (bar - y) * 2 : y - d);
+  records.forEach(r => ['y1', 'y2', 'ly'].forEach(k => { if(typeof r[k] === 'number') r[k] = sy(r[k]); }));
+  records.unshift({type:'part', x1:L, y1:top - d, x2:R, y2:bar, w:6 * v.IW / 2222, fill:'#fff'});
+  return records;
 }
 
 // Размер «расстояние между стойками» в первой секции схемы v: стрелка чуть

@@ -33,6 +33,10 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap, over
   const px = i => G.frameL + i*(postW + bay); // левая кромка i-й стойки (с 0)
   const rect = (x1, y1, x2, y2) => `<rect x="${f(x1)}" y="${f(y1)}" width="${f(x2-x1)}" height="${f(y2-y1)}"/>`;
   const [sk1, sy1, sk2, sy2] = G.skin;
+  // Оптимальная версия (по указанию пользователя): выступ обшивки над
+  // верхним брусом каркаса - вдвое выше, чем у II-1: каркас сдвинут вниз на
+  // этот выступ (lift), верх досок остаётся на месте, картинка выше на lift.
+  const lift = G.bars[0][0] - sy1;
   const sx1 = overhang ? sk1 : G.frameL, sx2 = overhang ? sk2 : G.frameR;
   const strips = ii2BoardStrips(sx1, sx2, boardGap, k);
   let frame = '';
@@ -48,14 +52,15 @@ function ii2PanelImage(n, floors, xRaskosinaVal, hasRaskosinaVal, boardGap, over
     for(let i=0; i<n; i++) frame += rect(px(i), top, px(i) + postW, bot);
   }
   bars.forEach(b=>{ frame += rect(G.frameL, b[0], G.frameR, b[1]); });
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${G.IH}" viewBox="0 0 ${G.IW} ${G.IH}">`
+  const IH = G.IH + lift;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${f(IH)}" viewBox="0 0 ${G.IW} ${f(IH)}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
-    + `<g stroke="#000" stroke-width="${PANEL_GEN_II1_STROKE}" stroke-linejoin="miter">${ii2BoardRects(strips, true, sy1, sy2)}`
-    + `<g fill="#fff">${frame}</g></g></svg>`;
+    + `<g stroke="#000" stroke-width="${PANEL_GEN_II1_STROKE}" stroke-linejoin="miter">${ii2BoardRects(strips, true, sy1, sy2 + lift)}`
+    + `<g fill="#fff" transform="translate(0,${f(lift)})">${frame}</g></g></svg>`;
   return {
     img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg),
-    gap: { x1: px(0) + postW, x2: px(1), secTop: bars[0][1] },
-    strips, skinTop: sy1,
+    gap: { x1: px(0) + postW, x2: px(1), secTop: bars[0][1] + lift },
+    strips, skinTop: sy1, lift, IH,
   };
 }
 
@@ -76,7 +81,7 @@ function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
   const overhang = overhangMm > 0.5;
   const g = ii2PanelImage(frame.count, floors, calc.xRaskosina, frame.hasRaskosina, boardGap, overhang);
   if(!g) return diagramTooDense();
-  const v = { IW: v4.IW, IH: v4.IH, gap: g.gap };
+  const v = { IW: v4.IW, IH: g.IH, gap: g.gap };
   const widthText = dimLabel(widthVal) + ' мм';
   // Подписи щита II-1 без группы «выступ обшивки слева» (выносные линии у
   // левого края x 0..80 и стрелка к ним); выносная линия длины каркаса слева -
@@ -101,6 +106,12 @@ function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
         : {type:'single', x1:-108, y1:yB - 212, x2:(x0 + xL) / 2, y2:yH, lx:-109, ly:yB - 245, text}
     );
   }
+  // Подписи выше - в координатах щита II-1: всё, что ниже верхнего бруса, -
+  // вниз на lift, размер выступа над брусом - растянут вдвое (верх обшивки
+  // на месте), подписи над обшивкой - на месте.
+  const top = G.skin[1], bar = G.bars[0][0];
+  const sy = y => y >= bar - 4 ? y + g.lift : (y >= top - 15 ? bar + g.lift - (bar - y) * 2 : y);
+  records.forEach(r => ['y1', 'y2', 'ly'].forEach(k => { if(typeof r[k] === 'number') r[k] = sy(r[k]); }));
   records.push(...postGapRecords(v, frame.sectionW, II2_PANEL_WIDTH, II2_PANEL_LABEL_SCALE));
   // Промежуток между досками - над щитом, у 40% ширины (левее - размер
   // между стойками, правее - толщина продольного бруса).

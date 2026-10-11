@@ -16,7 +16,7 @@
 function diagramBok(count, floors, longbeamVal, lengthVal, skinVal, heightVal, floorHeightVal, widthPxOverride, labelScale, xRaskosinaVal, gapVal, hasRaskosinaVal){
   const v = panelScheme(count, floors, xRaskosinaVal, hasRaskosinaVal);
   if(!v) return diagramTooDense();
-  const records = v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
-    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale));
+  const records = raiseSkinRecords(v, v.records(dimLabel(longbeamVal), dimLabel(lengthVal), dimLabel(skinVal), dimLabel(heightVal), dimLabel(floorHeightVal))
+    .concat(postGapRecords(v, gapVal, widthPxOverride, labelScale)));
   return renderDiagram(v.img, 'Щит боковой - схема расположения деталей', v.IW, v.IH, records, widthPxOverride, photoStrokeScale(v.IW), labelScale);
 }
