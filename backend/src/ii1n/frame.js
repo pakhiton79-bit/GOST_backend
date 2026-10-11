@@ -3,6 +3,7 @@
 const { minCountBySpan, clearGapBySpan } = require('./logic');
 
 const STOJKA_W = 100;   // ширина стойки
+const BAR_W = 100;      // ширина горизонтального бруса каркаса
 const MAX_AXIS = 800;   // шаг осей стоек
 const MIN_ANGLE = 20, MAX_ANGLE = 60; // допустимый угол раскосины, °
 const RASKOSINA_MIN_H = 600; // п.1.7.7: раскосины - при внутренней высоте ящика свыше 600 мм
@@ -21,11 +22,22 @@ const RASKOSINA_MIN_H = 600; // п.1.7.7: раскосины - при внутр
 // помещаются - sectionW ≤ 0 (проверяет compute.js).
 // Возвращает { count, floors, len (длина стойки), sectionW, hasRaskosina,
 // warn, tooNarrow }.
+// Каркас и его размеры для чертежей (по указанию пользователя - от самого
+// каркаса, а не заданными числами): height - высота каркаса (брусья по
+// BAR_W и стойки на все этажи), floorHeight - высота одного этажа (брус и
+// стойка).
 function buildFrame(fillspace, panelH, H, manualCount, forceRaskosina) {
+  const fr = buildFrameParts(fillspace, panelH, H, manualCount, forceRaskosina);
+  fr.height = fr.floors * fr.len + (fr.floors + 1) * BAR_W;
+  fr.floorHeight = BAR_W + fr.len;
+  return fr;
+}
+
+function buildFrameParts(fillspace, panelH, H, manualCount, forceRaskosina) {
   const spacingMinCount = minCountBySpan(fillspace, STOJKA_W, MAX_AXIS);
   const sectionW = n => clearGapBySpan(fillspace, STOJKA_W, n);
   const angleDeg = (n, h) => Math.atan2(h, sectionW(n)) * 180 / Math.PI;
-  const stojkaLen = fl => fl === 2 ? (panelH - 100 * 3) / 2 : panelH - 100 * 2;
+  const stojkaLen = fl => fl === 2 ? (panelH - BAR_W * 3) / 2 : panelH - BAR_W * 2;
   if (sectionW(2) <= 0) {
     return { count: 2, floors: 1, len: 0, sectionW: 0, hasRaskosina: false, warn: null, tooNarrow: true };
   }

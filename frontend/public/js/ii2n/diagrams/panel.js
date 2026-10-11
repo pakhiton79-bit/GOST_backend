@@ -88,7 +88,7 @@ function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt){
   // своя (у 1-этажного щита II-1 её роль играла линия той группы).
   // Выступ обшивки над каркасом - продольный + поперечный брус крышки
   // (оптимальный: опорных планок нет, каркас ниже на поперечный брус).
-  const records = v4.records(dimLabel(calc.t_longbeam + calc.t21), widthText.slice(0, -3), '', dimLabel(calc.panelHeightFull), dimLabel(100 + frame.len))
+  const records = v4.records(dimLabel(calc.t_longbeam + calc.t21), widthText.slice(0, -3), '', dimLabel(frame.height), dimLabel(frame.floorHeight))
     .filter(r => !(r.type === 'single' && r.x2 < 80) && !(r.type === 'line' && Math.min(r.x1, r.x2) >= 0 && Math.max(r.x1, r.x2) <= 80));
   const dimB = records.find(r => r.type === 'double' && r.text === widthText);
   const yB = dimB.y1, xL = G.frameL;

@@ -66,10 +66,10 @@ function renderBoardTables(calc, manualOverrides){
     diagramKryshka(calc.longbeamCount, calc.crossBeamCount, calc.lidOverhangLong, calc.lidOverhangCross, calc.outerW, calc.k9Base, undefined, calc.edgeDistCross, crossBeamWidth(calc.kryshka), calc.gapDistCross),
     renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
   html += renderPartBlock(`<div class="part-title">Щит торцевой (2 шт.)</div>`,
-    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam + calc.t21, torecW, calc.skin.value, calc.panelHeightFull, 100 + calc.torecFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),
+    diagramTorec(calc.torecFrame.count, calc.torecFrame.floors, calc.t_longbeam + calc.t21, torecW, calc.skin.value, calc.torecFrame.height, calc.torecFrame.floorHeight, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.torecFrame.sectionW, calc.torecFrame.hasRaskosina),
     renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlock(`<div class="part-title" style="margin-bottom:26px">Щит боковой (2 шт.)</div>`,
-    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam + calc.t21, calc.L, calc.t_stojka, calc.panelHeightFull, 100 + calc.bokFrame.len, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina),
+    diagramBok(calc.bokFrame.count, calc.bokFrame.floors, calc.t_longbeam + calc.t21, calc.L, calc.t_stojka, calc.bokFrame.height, calc.bokFrame.floorHeight, II1_PANEL_WIDTH, II1_PANEL_LABEL_SCALE, calc.xRaskosina, calc.bokFrame.sectionW, calc.bokFrame.hasRaskosina),
     renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Пергамин - под всеми узлами, попадает и в печать.
   if(calc.parchment && calc.parchment.length){
