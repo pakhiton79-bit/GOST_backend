@@ -50,12 +50,12 @@ function stabilizeSizes(c) {
     if (c.solidRigidBase) {
       const poloz = polozSection165(MASS);
       polozSimpleExceeded = poloz.exceeded;
-      const countDefault = (W > 1100) ? 3 : 2;
-      const minNeeded = minSkidsByWidth162(skidCalcWidth, poloz.w);
-      skid = { t: round(poloz.h, 'Полоз'), w: poloz.w, count: countDefault < minNeeded ? minNeeded : countDefault };
+      // Минимальное число полозьев с шагом осей не больше 1200 мм (п.1.6.2; по
+      // указанию пользователя, без правила «3 при ширине больше 1100»).
+      skid = { t: round(poloz.h, 'Полоз'), w: poloz.w, count: minSkidsByWidth162(skidCalcWidth, poloz.w) };
       skidTableInfo = null;
     } else {
-      const sel = selectSkid19(MASS, len, skidCalcWidth, c.availableThicknesses);
+      const sel = selectSkid19(MASS, len, skidCalcWidth, c.availableThicknesses, false); // минимум полозьев
       skid = { t: round(sel.h, 'Полоз'), w: sel.w, count: sel.count };
       skidTableInfo = sel;
     }

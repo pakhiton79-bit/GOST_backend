@@ -111,7 +111,10 @@ function minSkidsByWidth162(widthMm, skidW) {
 // среди равнозначных вариантов количества полозьев); передаётся явно
 // параметром (без обращения к какому-либо глобальному/модульному состоянию),
 // чтобы функция оставалась чистой и пригодной для использования в бэкенде.
-function selectSkid19(mass, workingLengthMm, widthMm, availableThicknesses) {
+// preferStock (по умолчанию да - III-1): среди подходящих вариантов сначала
+// тот, чья толщина есть «в наличии»; false (I-3, I-4, II-1, II-2 - по указанию
+// пользователя) - всегда вариант с минимальным числом полозьев.
+function selectSkid19(mass, workingLengthMm, widthMm, availableThicknesses, preferStock = true) {
   const massIdx = nearestIndexBy(TABLE19, r => r.mass, mass);
   const massRow = TABLE19[massIdx];
   const massSnapped = mass > TABLE19[TABLE19.length - 1].mass;
@@ -158,7 +161,7 @@ function selectSkid19(mass, workingLengthMm, widthMm, availableThicknesses) {
     valid = [{ count: finalCount, h: base.h, w: base.w, lengthUsed: base.lengthUsed, lengthSnapped: base.lengthSnapped }];
   }
 
-  let chosen = (availableThicknesses && availableThicknesses.length)
+  let chosen = (preferStock && availableThicknesses && availableThicknesses.length)
     ? valid.find(o => availableThicknesses.includes(o.h))
     : null;
   if (!chosen) {
