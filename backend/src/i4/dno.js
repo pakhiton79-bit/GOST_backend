@@ -96,7 +96,7 @@ function buildDno(c) {
 
   // Доски дна - между торцовыми брусьями, поперёк ящика.
   const floorGostT = floorBoardGostThickness(c, skid, skidCalcWidth);
-  const t12 = removeFloorBoards ? 0 : ov('t12Value', round(floorGostT), 'Толщина доски дна');
+  const t12 = removeFloorBoards ? 0 : ov('t12Value', round(floorGostT, 'Доска дна'), 'Толщина доски дна');
   const floorLen = W;
   // Доски дна - с промежутками (boards.js); убраны - без предупреждений.
   const fb = fillGapBoards(L - beam.w * 2, c.roundBoardWidths, c.boardGapMax, 'Дно', removeFloorBoards ? [] : warnings);

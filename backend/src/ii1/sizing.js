@@ -71,11 +71,13 @@ function stabilizeSizes(c) {
 
     // Доска дна: при креплении к доскам дна - Табл. 4, иначе - по массе.
     if (c.fasteningType === 'floor_boards') {
-      const distanceMm = skid.count > 1 ? skidCalcWidth / (skid.count - 1) : skidCalcWidth;
+      // Расстояние между осями полозьев - как у I-3/I-4 (по указанию
+      // пользователя): ширина за вычетом одного полоза на число промежутков.
+      const distanceMm = skid.count > 1 ? (skidCalcWidth - skid.w) / (skid.count - 1) : skidCalcWidth;
       const fb = floorBoardThickness(MASS, L, W, distanceMm);
-      floorBoardT = round(fb.value); floorBoardExceeded = fb.exceeded;
+      floorBoardT = round(fb.value, 'Доска дна'); floorBoardExceeded = fb.exceeded;
     } else {
-      floorBoardT = round(floorBoardThicknessNew(MASS));
+      floorBoardT = round(floorBoardThicknessNew(MASS), 'Доска дна');
     }
     floorBoardT = ov('floorBoardT', floorBoardT, 'Толщина доски дна');
 
