@@ -26,7 +26,7 @@ function boardRows(name, t, span, len, roundBoardWidths, overrideKey) {
 //   skidT            - толщина полоза (null - полоза нет);
 //   kLen             - длина досок дна, крышки и бокового щита;
 //   plankQty         - число поясов планок;
-//   horizPlankaLen   - длина горизонтальной планки торца;
+//   horizPlankaLen   - просвет между вертикальными планками торца (раскосина);
 //   roundBoardWidths - галочка «Округлить ширину досок».
 
 // Дно: полоз (или планка, если полоз не нужен) + доски дна.
@@ -75,10 +75,12 @@ function buildBokovoy(g) {
 
 // Торцевой щит: 2 вертикальные и 2 горизонтальные планки + доски.
 function buildTorec(g) {
-  const { W, H, T, horizPlankaLen, roundBoardWidths } = g;
+  const { W, H, T, roundBoardWidths } = g;
   return [
-    { name: 'Вертикальная планка', t: T.torPlanka, w: PLANK_W, l: H, qty: 2, overrideKey: 'tTorPlanka' },
-    { name: 'Горизонтальная планка', t: T.torPlanka, w: PLANK_W, l: horizPlankaLen, qty: 2, overrideKey: 'tTorPlanka' },
+    // По указанию пользователя: горизонтальные планки - на всю ширину груза,
+    // вертикальные - между ними (высота груза минус две горизонтальные планки).
+    { name: 'Вертикальная планка', t: T.torPlanka, w: PLANK_W, l: H - PLANK_W * 2, qty: 2, overrideKey: 'tTorPlanka' },
+    { name: 'Горизонтальная планка', t: T.torPlanka, w: PLANK_W, l: W, qty: 2, overrideKey: 'tTorPlanka' },
     ...boardRows('Доска торцевого щита', T.torBoard, H, W, roundBoardWidths, 'tTorBoard'),
   ];
 }

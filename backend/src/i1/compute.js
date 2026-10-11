@@ -123,6 +123,9 @@ function computeGost10198I1(input) {
   if (horizPlankaLen < 0) {
     return { error: `Ширина груза ${W} мм недостаточна для двух вертикальных планок торца (по 100мм) - расчёт не выполняется.` };
   }
+  if (H - 200 <= 0) {
+    return { error: `Высота груза ${H} мм недостаточна для двух горизонтальных планок торца (по 100мм) - расчёт не выполняется.` };
+  }
 
   // --- 2. Толщина по ГОСТ ---
   const plankOverride = (plankLayoutMode === 'count' || plankLayoutMode === 'gap')
