@@ -55,8 +55,6 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
     {type:'double', x1:1006, y1:-73, x2:1255, y2:-150, lx:1115, ly:-141, text: valEdgePlanka+' мм'},
     {type:'double', x1:299, y1:989, x2:441, y2:936},
     {type:'single', x1:194, y1:1236, x2:377, y2:959, lx:205, ly:1296, text: valEdgeBeam+' мм'},
-    {type:'line', x1:273, y1:422, x2:251, y2:378},
-    {type:'single', x1:-51, y1:266, x2:263, y2:400, lx:-85, ly:225, text: valPlankaThick+' мм'},
     {type:'line', x1:273, y1:263, x2:195, y2:124},
     {type:'line', x1:567, y1:178, x2:489, y2:39},
     {type:'double', x1:204, y1:141, x2:498, y2:56, lx:276, ly:-35, text: valPlankGap+' мм'}, // подпись - за стрелкой: стрелка короче подписи
@@ -67,6 +65,10 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
   // Расстояние от бокового края крышки до торца 1-го бруса - у его правого
   // переднего угла (угол бруса на крышке и край крышки - по фото).
   if(beamSideGapMm > 0) records.push(...lidSideGapRecords([649, 1075], [666, 1110], [0.954, -0.300], 150, 80, 70, dimLabel(beamSideGapMm)+' мм'));
+  // Выступ 1-й планки за задний край крышки (= толщина вертикальной планки
+  // бокового щита) - размером с выносными линиями влево (по указанию
+  // пользователя; раньше - сноска): угол конца планки и край крышки - по фото.
+  records.push(...lidSideGapRecords([144, 340], [176, 398], [-0.954, 0.300], 220, 80, 70, valPlankaThick+' мм'));
 
   return renderDiagram(KRYSHKA_IMG_B64, 'Крышка - схема расположения деталей', 1718, 1274, records, null, photoStrokeScale(1718));
 }
@@ -89,10 +91,6 @@ function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKry
     {type:'line', x1:244, y1:734, x2:353, y2:939},
     {type:'line', x1:320, y1:877, x2:420, y2:843},
     {type:'single', x1:81, y1:828, x2:372, y2:857, lx:53, ly:799, text: valEdgePlanka+' мм'},
-    {type:'line', x1:184, y1:175, x2:-107, y2:268},
-    {type:'line', x1:222, y1:236, x2:-82, y2:331},
-    {type:'line', x1:-76, y1:256, x2:-50, y2:320},
-    {type:'single', x1:250, y1:-31, x2:-63, y2:289, lx:301, ly:-65, text: valPlankaThick+' мм'},
     {type:'line', x1:1098, y1:453, x2:1199, y2:642},
     {type:'double', x1:347, y1:929, x2:1200, y2:641, lx:805, ly:779, text: valLen+' мм'},
     {type:'line', x1:764, y1:62, x2:995, y2:-13},
@@ -108,6 +106,8 @@ function diagramKryshka2Beams(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKry
   ];
   // Расстояние от бокового края крышки до торца 1-го бруса (см. diagramKryshkaDefault).
   if(beamSideGapMm > 0) records.push(...lidSideGapRecords([436, 711], [447, 733], [0.953, -0.302], 100, 54, 48, dimLabel(beamSideGapMm)+' мм'));
+  // Выступ 1-й планки за задний край крышки (см. diagramKryshkaDefault).
+  records.push(...lidSideGapRecords([101, 225], [124, 262], [-0.953, 0.302], 150, 54, 48, valPlankaThick+' мм'));
 
   return renderDiagram(KRYSHKA_2BEAMS_IMG_B64, 'Крышка (2 поперечных бруса) - схема расположения деталей', 1157, 839, records, null, photoStrokeScale(1157));
 }
@@ -289,9 +289,14 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
       records.push({type:'double', x1:ga[0], y1:ga[1], x2:gb[0], y2:gb[1], lx:gl[0], ly:gl[1], text: dimLabel(beamGapMm)+' мм'});
     }
   }
-  // толщина планки - сноска к дальнему левому углу конца первой планки
-  const tc = tip(plankU(0));
-  records.push({type:'single', x1:tc[0]-260, y1:tc[1]-120, x2:tc[0], y2:tc[1], lx:tc[0]-290, ly:tc[1]-160, text: valPlankaThick+' мм'});
+  // Выступ планки за край крышки (= толщина вертикальной планки бокового
+  // щита) - по указанию пользователя размером с выносными линиями, а не
+  // сноской: у первой планки за задней кромкой, выносные линии - влево от
+  // края крышки и от конца планки, подпись - за концом планки.
+  {
+    const u0 = plankU(0);
+    records.push(...lidSideGapRecords(P2(u0, 1.13*Wv, low), P2(u0, Wv), nleft, 40*pxU, 14*pxU, 16*pxU, valPlankaThick+' мм'));
+  }
 
   // Толщина линий (по указанию пользователя): как у остальных чертежей, пока
   // это выглядит нормально, и постепенно тоньше, когда крышка длинная и
