@@ -1540,3 +1540,80 @@
     .layout-v2 #boardTables .spec-table td:nth-child(4)::before{content:'Длина';}
     .layout-v2 #boardTables .spec-table td:nth-child(5)::before{content:'Кол-во';}
   }
+
+  /* ===== Микроанимации (по указанию пользователя; js/common-motion.js,
+     переключатель версий - js/common-version-switch.js). При «уменьшить
+     движение» в системе анимаций нет. ===== */
+  /* 1. Кнопка «Рассчитать»: надпись / точки / «Готово» - слои в одной ячейке
+     сетки (ширина кнопки не меняется). */
+  #calcBtn.motion-btn{display:inline-grid;transition:background-color .2s ease,transform .12s ease;}
+  #calcBtn.motion-btn:active{transform:scale(.97);}
+  .cb-face{grid-area:1/1;display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+  .cb-dots, .cb-done{visibility:hidden;}
+  #calcBtn.is-loading{opacity:1;}
+  #calcBtn.is-loading .cb-label, #calcBtn.is-done .cb-label{opacity:0;}
+  #calcBtn.is-loading .cb-dots{visibility:visible;}
+  #calcBtn.is-done{background:var(--ok);}
+  #calcBtn.is-done .cb-done{visibility:visible;}
+  .cb-dots i{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.4;}
+  /* 6. Галочки (все на сайте): свой квадрат вместо системного. */
+  input[type="checkbox"]{
+    -webkit-appearance:none;appearance:none;
+    width:16px;height:16px;flex:0 0 16px;box-sizing:border-box;padding:0;
+    vertical-align:-3px;cursor:pointer;
+    border:1.5px solid #9AA3B2;border-radius:4px;
+    background:var(--panel) no-repeat center;
+    transition:background-color .15s ease,border-color .15s ease;
+  }
+  input[type="checkbox"]:checked{
+    border-color:var(--accent);
+    background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 14'%3E%3Cpath d='M2.5 7.5l3 3 6-7' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center/12px 12px;
+  }
+  input[type="checkbox"]:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  input[type="checkbox"]:disabled{opacity:.5;cursor:default;}
+  /* 5. Переключатель версий: подложка переезжает к нажатой кнопке. */
+  .version-switch{position:relative;}
+  .version-pill{position:absolute;top:0;left:0;border-radius:9px;background:var(--accent);pointer-events:none;transition:transform .26s cubic-bezier(.2,.8,.2,1),width .26s cubic-bezier(.2,.8,.2,1),height .26s cubic-bezier(.2,.8,.2,1);}
+  .version-moving .version-opt{position:relative;}
+  .version-moving .version-opt.active{background:transparent;}
+  /* 12. Полоса подготовки листа под кнопками печати. */
+  .print-actions{position:relative;}
+  .print-progress{position:absolute;left:0;right:0;bottom:-8px;height:3px;border-radius:2px;background:var(--rule);overflow:hidden;opacity:0;pointer-events:none;transition:opacity .25s ease;}
+  .print-progress > span{display:block;height:100%;width:0;border-radius:2px;background:var(--accent);}
+  .print-progress.run{opacity:1;}
+  .print-progress.run > span{width:85%;transition:width 1.6s cubic-bezier(.2,.7,.2,1);}
+  .print-progress.done{opacity:0;transition:opacity .3s ease .35s;}
+  .print-progress.done > span{width:100%;transition:width .3s ease;}
+  @media print{.print-progress{display:none !important;}}
+  @media (prefers-reduced-motion:no-preference){
+    .cb-dots i{animation:motion-dot .9s ease-in-out infinite;}
+    .cb-dots i:nth-child(2){animation-delay:.15s;}
+    .cb-dots i:nth-child(3){animation-delay:.3s;}
+    #calcBtn.is-done .cb-done svg path{stroke-dasharray:24;animation:motion-tick .32s ease-out backwards;}
+    /* 2/3. Изменившиеся ячейки таблиц деталей. */
+    #boardTables td.motion-flash{animation:motion-flash .9s ease-out;}
+    /* 4. Размерные линии чертежей, затем стрелки и подписи. */
+    #boardTables .motion-draw .diagram-arrows line{animation:motion-draw .7s cubic-bezier(.4,0,.2,1) backwards;}
+    #boardTables .motion-draw .diagram-arrows polygon{animation:motion-fade .25s ease-out .45s backwards;}
+    #boardTables .motion-draw .diagram-label{animation:motion-fade .3s ease-out .55s backwards;}
+    /* 6. */
+    input[type="checkbox"].motion-chk{animation:motion-chk .26s cubic-bezier(.3,1.6,.5,1);}
+    /* 7. Предупреждения. */
+    #results #warningsTop.motion-warn{animation:motion-warn .36s cubic-bezier(.2,.8,.2,1);}
+    #warningsTop.motion-warn .motion-warn-ico{display:inline-block;animation:motion-nudge .5s ease-in-out .3s;}
+    /* 8. Окна (подтверждения, настройки): фон темнеет, окно вырастает. */
+    .modal-overlay{animation:motion-fade .2s ease-out;}
+    .modal-overlay .modal-box{animation:motion-dialog .22s cubic-bezier(.2,.8,.2,1);}
+  }
+  @keyframes motion-dot{0%,80%,100%{opacity:.4;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
+  @keyframes motion-tick{from{stroke-dashoffset:24;}to{stroke-dashoffset:0;}}
+  @keyframes motion-flash{from{background-color:var(--accent-wash);}}
+  @keyframes motion-draw{from{stroke-dasharray:1;stroke-dashoffset:1;}to{stroke-dasharray:1;stroke-dashoffset:0;}}
+  @keyframes motion-fade{from{opacity:0;}}
+  @keyframes motion-chk{
+    0%{transform:scale(.8);background-size:0 0;}
+    100%{transform:scale(1);background-size:12px 12px;}
+  }
+  @keyframes motion-warn{from{opacity:0;transform:translateY(-10px);}}
+  @keyframes motion-nudge{0%,100%{transform:rotate(0);}25%{transform:rotate(-14deg);}75%{transform:rotate(14deg);}}
+  @keyframes motion-dialog{from{opacity:0;transform:translateY(6px) scale(.96);}}

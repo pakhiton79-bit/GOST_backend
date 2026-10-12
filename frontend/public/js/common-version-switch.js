@@ -31,4 +31,32 @@
     }
     a.addEventListener('click', () => save(a.getAttribute('data-version')));
   });
+  // Подложка выбранной версии переезжает к нажатой кнопке, потом переход
+  // (микроанимация, стили - .version-pill в style.css).
+  el.addEventListener('click', e => {
+    const a = e.target.closest('a[data-version]');
+    const cur = el.querySelector('a.active');
+    if(!a || !cur || a === cur || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    e.preventDefault();
+    const box = el.getBoundingClientRect(), r0 = cur.getBoundingClientRect(), r1 = a.getBoundingClientRect();
+    const pill = document.createElement('span');
+    pill.className = 'version-pill';
+    const place = r => { pill.style.transform = `translate(${r.left - box.left - el.clientLeft}px,${r.top - box.top - el.clientTop}px)`; pill.style.width = r.width + 'px'; pill.style.height = r.height + 'px'; };
+    place(r0);
+    el.prepend(pill);
+    el.classList.add('version-moving');
+    cur.classList.remove('active');
+    void pill.offsetWidth;
+    a.classList.add('active');
+    place(r1);
+    setTimeout(() => { location.href = a.href; }, 260);
+  });
+  // Возврат кнопкой «Назад» (страница из кэша браузера) - подложку убрать.
+  window.addEventListener('pageshow', e => {
+    if(!e.persisted) return;
+    el.classList.remove('version-moving');
+    el.querySelectorAll('.version-pill').forEach(p => p.remove());
+    el.querySelectorAll('a[data-version]').forEach(x => x.classList.toggle('active', x.getAttribute('href') === page));
+  });
 })();

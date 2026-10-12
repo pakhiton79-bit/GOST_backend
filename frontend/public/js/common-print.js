@@ -82,6 +82,7 @@ function beginPrintJob(kind){
   const btn = document.getElementById('calcBtn');
   if(btn) btn.disabled = true;
   setCalcStatus(kind);
+  if(typeof motionPrintStart === 'function') motionPrintStart();
   // Кадр отрисовки - чтобы индикатор показался до тяжёлой сборки листа.
   return new Promise(r => requestAnimationFrame(() => setTimeout(() => r(prev), 0)));
 }
@@ -90,6 +91,7 @@ function endPrintJob(kind, prev){
   const btn = document.getElementById('calcBtn');
   if(btn) btn.disabled = calcInProgress;
   if(currentCalcStatus() === kind) setCalcStatus(prev);
+  if(typeof motionPrintEnd === 'function') motionPrintEnd();
 }
 // Номер/название ящика (поле #boxName справа от заголовка) - в печать/PDF
 // справа от заголовка; пустое - ничего не выводится.
