@@ -3,16 +3,16 @@
 // Лимиты и подписки - следующими этапами.
 //
 //   GET  /api/auth/challenge                           - задача капчи «Я не робот» (antibot.js)
-//   POST /api/auth/register { email, password, consents, website, captchaToken }
+//   POST /api/auth/register { email, password, consents, trap, captchaToken }
 //                                                      - аккаунт + код на почту
 //                                                        (consents: terms, pd - обязательно; marketing - legal.js;
-//                                                        website - поле-ловушка, captchaToken - ответ капчи)
+//                                                        trap - поле-ловушка, captchaToken - ответ капчи)
 //   POST /api/auth/verify   { email, code }            - подтверждение почты, вход
 //   POST /api/auth/resend   { email, purpose }         - код ещё раз
 //   POST /api/auth/login    { email, password }        - вход (почта не подтверждена - код)
 //   POST /api/auth/logout                              - выход
 //   GET  /api/auth/me                                  - кто вошёл
-//   POST /api/auth/forgot   { email, website, captchaToken } - код для нового пароля
+//   POST /api/auth/forgot   { email, trap, captchaToken } - код для нового пароля
 //   POST /api/auth/reset    { email, code, password }  - новый пароль, вход
 //   POST /api/auth/device-replace { ticket, id }       - вход сверх лимита устройств:
 //                                                        выйти на устройстве id и войти
@@ -88,6 +88,7 @@ function rateLimit(req, res, next) {
   const list = (hits.get(req.ip) || []).filter(t => now - t < RATE_WINDOW_MS);
   if (list.length >= RATE_MAX) {
     hits.set(req.ip, list);
+    console.log(`[вход] лимит запросов с IP ${req.ip}: ${req.path}`);
     return res.status(429).json({ error: 'Слишком много попыток. Подождите несколько минут и попробуйте снова.' });
   }
   list.push(now);
@@ -116,17 +117,26 @@ function codeLockText(rec, now) {
   if (w.dayFails < CODE_DAY_FAILS) return null;
   return `Слишком много неверных кодов. Попробуйте через ${Math.ceil((w.dayStart + CODE_DAY_MS - now) / 3600000)} ч.`;
 }
+// Код не выдан - строка в журнал с причиной (по указанию пользователя: журнал
+// не должен молчать, когда кода нет).
+function codeRefused(email, purpose, reason) {
+  console.log(`[почта] код не выдан (${email}, ${purpose}): ${reason}`);
+  return reason;
+}
 async function issueCode(email, purpose, ip) {
   const prev = store.getCode(email, purpose);
   const lock = codeLockText(prev, Date.now());
-  if (lock) return lock;
+  if (lock) return codeRefused(email, purpose, lock);
   if (prev && Date.now() - prev.sentAt < CODE_RESEND_MS) {
     const sec = Math.ceil((CODE_RESEND_MS - (Date.now() - prev.sentAt)) / 1000);
-    return `Новый код можно запросить через ${sec} с.`;
+    return codeRefused(email, purpose, `Новый код можно запросить через ${sec} с.`);
   }
   // Суточные лимиты писем (mail-limits.js): на почту, с IP и всего.
   const limitErr = mailLimits.takeCode(email, ip || '', Date.now());
-  if (limitErr) return limitErr;
+  if (limitErr) {
+    console.log(`[почта] код не выдан (${email}, ${purpose}): ${limitErr} (IP ${ip || '-'})`);
+    return limitErr;
+  }
   const code = newCode();
   const rec = { hash: hashCode(email, code), expires: Date.now() + CODE_TTL_MS, attempts: 0, sentAt: Date.now(), ...codeDayWindow(prev, Date.now()) };
   store.setCode(email, purpose, rec);
@@ -215,14 +225,20 @@ router.post('/register', rateLimit, async (req, res, next) => {
     const legal = consentsFromRequest(req);
     if (legal.error) return res.status(400).json({ error: legal.error });
     // Бот заполнил поле-ловушку - ответ как при успехе, но ничего не делаем.
-    if (antibot.honeypotFilled(req)) return res.json({ ok: true, needVerify: true });
+    if (antibot.honeypotFilled(req)) {
+      console.log(`[почта] код не выдан (${email}, register): заполнено поле-ловушка для ботов`);
+      return res.json({ ok: true, needVerify: true });
+    }
     if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     if (antibot.isDisposableEmail(email)) return res.status(400).json({ error: antibot.DISPOSABLE_ERROR });
     // Хеш - до обращения к хранилищу: дальше без await, чтобы два
     // одновременных запроса не создали два аккаунта с одной почтой.
     const passHash = await hashPassword(req.body.password);
     let user = store.findUserByEmail(email);
-    if (user && user.verified) return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
+    if (user && user.verified) {
+      console.log(`[почта] код не выдан (${email}, register): аккаунт уже есть и подтверждён`);
+      return res.status(409).json({ error: 'Аккаунт с этой почтой уже есть. Войдите с паролем или восстановите его на странице входа.', exists: true });
+    }
     // Почта ещё не подтверждена - регистрацию можно пройти заново.
     if (user) store.updateUser(user, { passHash });
     else user = store.createUser(email, passHash);
@@ -383,7 +399,10 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
   try {
     const email = normEmail(req.body.email);
     if (!email) return res.status(400).json({ error: 'Введите правильный адрес почты.' });
-    if (antibot.honeypotFilled(req)) return res.json({ ok: true });
+    if (antibot.honeypotFilled(req)) {
+      console.log(`[почта] код не выдан (${email}, reset): заполнено поле-ловушка для ботов`);
+      return res.json({ ok: true });
+    }
     if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     const user = store.findUserByEmail(email);
     // Ответ одинаковый, есть аккаунт или нет, - чтобы по нему нельзя было

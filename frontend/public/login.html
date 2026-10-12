@@ -88,7 +88,7 @@
         </div>
         <div class="auth-field auth-pow" data-field="captcha" id="authPow" data-state="work"><span class="auth-pow-icon" aria-hidden="true"></span><span id="authPowText" role="status">Проверяем, что вы не робот...</span></div>
         <!-- Поле-ловушка для ботов: человек его не видит и не заполняет (backend/src/auth/antibot.js). -->
-        <div class="auth-hp" aria-hidden="true"><label for="authWebsite">Сайт</label><input type="text" id="authWebsite" name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="auth-hp" aria-hidden="true"><label for="authTrap">Оставьте пустым</label><input type="text" id="authTrap" name="trap" tabindex="-1" autocomplete="off" data-lpignore="true" data-1p-ignore data-form-type="other"></div>
         <button type="submit" class="auth-submit" id="authSubmit">Войти</button>
       </form>
       <div class="auth-devices" id="authDevices" hidden></div>

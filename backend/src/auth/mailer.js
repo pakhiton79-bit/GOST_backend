@@ -90,6 +90,8 @@ async function sendCode(email, code, purpose) {
     `<p>${note}</p>`,
   ]);
   await sendMail(cfg, { to: email, subject, text, html });
+  // Сам код в журнал не пишется - только факт отправки.
+  console.log(`[почта] код отправлен письмом: ${email} (${what})`);
 }
 
 // Письмо в поддержку (заявка, сообщение об ошибке): ответ - на почту

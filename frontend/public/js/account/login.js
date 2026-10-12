@@ -210,7 +210,7 @@ async function onSubmit(e){
     try{ captchaToken = await powPromise; }
     catch(err){ showMsg(POW_TEXT.fail); btn.disabled = false; startPow(); return; } // новая задача - для следующей попытки
   }
-  const bot = { website: $('authWebsite').value, captchaToken };
+  const bot = { trap: $('authTrap').value, captchaToken };
   try{
     if(authMode === 'login'){
       const d = await api('login', { email, password: pw });
