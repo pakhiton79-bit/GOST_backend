@@ -395,12 +395,17 @@ const HELP_POW_TEXT = { work: 'Проверяем, что вы не робот..
 function renderSiteHelp(){
   const el = document.getElementById('siteHelpEmail');
   if(!el) return;
+  // Значок - как на странице входа: кольцо заполняется по ходу проверки.
   const showState = state => {
-    el.innerHTML = `<div class="auth-pow" data-state="${state}"><span class="auth-pow-icon" aria-hidden="true"></span><span role="status">${HELP_POW_TEXT[state]}</span></div>`;
+    el.innerHTML = `<div class="auth-pow" data-state="${state}"><svg class="auth-pow-icon" viewBox="0 0 22 22" aria-hidden="true"><circle class="auth-pow-bg" cx="11" cy="11" r="9"/><circle class="auth-pow-fg" cx="11" cy="11" r="9" transform="rotate(-90 11 11)"/><path class="auth-pow-tick" d="M7 11.4l2.8 2.7L15.2 8.3"/></svg><span role="status">${HELP_POW_TEXT[state]}</span></div>`;
+  };
+  const showProgress = p => {
+    const ring = el.querySelector('.auth-pow[data-state="work"] .auth-pow-fg');
+    if(ring) ring.style.strokeDashoffset = (56.55 * (1 - p)).toFixed(2);
   };
   if(!helpEmailPromise){
     helpEmailPromise = loadPow()
-      .then(() => powSolve(state => { if(document.getElementById('siteHelpEmail') === el) showState(state); }))
+      .then(() => powSolve(state => { if(document.getElementById('siteHelpEmail') === el) showState(state); }, showProgress))
       .then(captchaToken => fetch('/api/feedback/contact', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ captchaToken }) }))
       .then(r => r.ok ? r.json() : Promise.reject(new Error('contact ' + r.status)))
       .then(d => d.email || '');
@@ -424,6 +429,12 @@ document.addEventListener('click', e => {
   // Раздел «Помощь» открыли (кнопкой «Помощь» или слева в «Настройках») -
   // проверка «Я не робот» и адрес поддержки.
   if(e.target.closest('.site-settings-nav-item[data-section="help"]')) renderSiteHelp();
+  // На телефоне меню разделов нет - все разделы друг под другом, «Помощь»
+  // видна сразу: адрес поддержки загружается при открытии окна «Настройки».
+  if(e.target.closest('#siteSettingsBtn')) requestAnimationFrame(() => {
+    const help = document.getElementById('siteHelpEmail');
+    if(help && help.offsetParent && !help.innerHTML) renderSiteHelp();
+  });
 });
 // Окно открыли - сразу последние известные данные, затем свежие с сервера.
 // Адрес с #account или #subscription (раздел «Аккаунт») (например, со старой страницы
