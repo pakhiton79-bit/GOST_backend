@@ -50,12 +50,13 @@
 .auth-pow{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--panel);font-size:13px;color:var(--ink-soft);}
 .auth-pow[hidden]{display:none;}
 /* Значок проверки: кольцо заполняется по ходу перебора (pow.js), затем
-   зелёное с галочкой. */
+   коричневый круг с белой галочкой. */
 .auth-pow-icon{flex:0 0 22px;width:22px;height:22px;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
 .auth-pow-bg{stroke:var(--rule);}
 .auth-pow-fg{stroke:var(--accent);stroke-dasharray:56.55;stroke-dashoffset:56.55;transition:stroke-dashoffset .12s linear,stroke .2s ease;}
-.auth-pow-tick{stroke:var(--ok);stroke-width:2.2;stroke-dasharray:14;stroke-dashoffset:14;}
-.auth-pow[data-state="ok"] .auth-pow-fg{stroke:var(--ok);stroke-dashoffset:0;}
+.auth-pow-tick{stroke:#fff;stroke-width:2.2;stroke-dasharray:14;stroke-dashoffset:14;}
+/* Пройдена - как было: коричневый круг с белой галочкой. */
+.auth-pow[data-state="ok"] .auth-pow-fg{fill:var(--accent);stroke-dashoffset:0;}
 .auth-pow[data-state="ok"] .auth-pow-tick{stroke-dashoffset:0;transition:stroke-dashoffset .3s ease-out .1s;}
 .auth-pow[data-state="ok"]{color:var(--ink);}
 .auth-pow[data-state="fail"]{color:var(--error);}
