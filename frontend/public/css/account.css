@@ -195,7 +195,7 @@ body.auth-page{margin:0;background:var(--bg);}
   color:var(--ink-soft);
   display:flex;align-items:center;justify-content:center;
 }
-.auth-eye:hover{background:var(--secondary-hover);color:var(--ink);}
+.auth-eye:hover{background:transparent;color:var(--ink);}
 .auth-eye svg{width:20px;height:20px;}
 .auth-page .auth-submit{
   width:100%;
