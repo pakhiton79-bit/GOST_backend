@@ -37,9 +37,11 @@ function sha256hex(str){
 }
 
 // Решить задачу сервера. onState('work' | 'ok' | 'fail') - для надписи в
-// форме. Результат - токен (base64 от JSON) для поля captchaToken.
-async function powSolve(onState){
+// форме, onProgress(0..1) - доля перебранных чисел (кольцо у надписи).
+// Результат - токен (base64 от JSON) для поля captchaToken.
+async function powSolve(onState, onProgress){
   onState('work');
+  if(onProgress) onProgress(0);
   try{
     const r = await fetch('/api/auth/challenge', { credentials: 'same-origin', cache: 'no-store' });
     if(!r.ok) throw new Error('challenge ' + r.status);
@@ -49,7 +51,10 @@ async function powSolve(onState){
         onState('ok');
         return btoa(JSON.stringify({ salt: c.salt, number: n, challenge: c.challenge, signature: c.signature }));
       }
-      if(n % 3000 === 2999) await new Promise(res => setTimeout(res, 0));
+      if(n % 3000 === 2999){
+        if(onProgress) onProgress(n / c.maxnumber);
+        await new Promise(res => setTimeout(res, 0));
+      }
     }
     throw new Error('not solved');
   }catch(e){
