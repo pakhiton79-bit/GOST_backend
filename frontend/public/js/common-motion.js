@@ -5,14 +5,13 @@
 //  1. Кнопка «Рассчитать»: точки, пока идёт расчёт, затем зелёная «Готово».
 //  2. Числа блока «Итог» досчитываются от прежних значений к новым.
 //  3. Изменившиеся после пересчёта ячейки таблиц деталей коротко подсвечиваются.
-//  4. Размерные линии чертежей прорисовываются, когда чертёж виден на экране.
 //  7. Новое предупреждение выезжает сверху, значок ⚠ покачивается.
 // 12. Полоса под кнопками «Печать»/«Скачать PDF» - по этапам подготовки листа.
 // Галочки (6) и окна (8) - только CSS, переключатель версий (5) - в
 // common-version-switch.js. При «уменьшить движение» в системе ничего не
 // анимируется.
 const motionOn = () => !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
-let motionSnap = null, motionDotsTimer = null, motionDoneTimer = null, motionDrawObserver = null;
+let motionSnap = null, motionDotsTimer = null, motionDoneTimer = null;
 const motionCounters = new Map();
 
 // Кнопка «Рассчитать»: три слоя в одной ячейке сетки (ширина кнопки - по
@@ -69,7 +68,6 @@ function motionCalcEnd(ok){
       td.addEventListener('animationend', () => td.classList.remove('motion-flash'), { once: true });
     });
   }
-  motionWatchDiagrams();
   const warn = document.getElementById('warningsTop');
   if(warn && warn.style.display !== 'none' && warn.textContent.trim() && warn.textContent !== snap.warn) motionWarn(warn);
 }
@@ -107,26 +105,6 @@ function motionCount(el, oldText){
   requestAnimationFrame(step);
 }
 
-// Размерные линии: прорисовка запускается, когда чертёж появляется на экране.
-function motionWatchDiagrams(){
-  if(motionDrawObserver) motionDrawObserver.disconnect();
-  const wraps = document.querySelectorAll('#boardTables .diagram-wrap:not(.diagram-placeholder)');
-  if(!wraps.length || !window.IntersectionObserver) return;
-  motionDrawObserver = new IntersectionObserver(entries => entries.forEach(en => {
-    if(!en.isIntersecting) return;
-    motionDrawObserver.unobserve(en.target);
-    const wrap = en.target;
-    wrap.querySelectorAll('.diagram-arrows line').forEach(l => l.setAttribute('pathLength', '1'));
-    wrap.classList.add('motion-draw');
-    setTimeout(() => motionUndraw(wrap), 1300);
-  }));
-  wraps.forEach(w => motionDrawObserver.observe(w));
-}
-function motionUndraw(wrap){
-  wrap.classList.remove('motion-draw');
-  wrap.querySelectorAll('.diagram-arrows line[pathLength]').forEach(l => l.removeAttribute('pathLength'));
-}
-
 function motionWarn(warn){
   warn.querySelectorAll(':scope > div').forEach(d => {
     const t = d.firstChild;
@@ -148,8 +126,6 @@ function motionWarn(warn){
 function motionFinishAll(){
   motionCounters.forEach(job => { job.node.textContent = job.target; });
   motionCounters.clear();
-  if(motionDrawObserver) motionDrawObserver.disconnect();
-  document.querySelectorAll('#boardTables .motion-draw').forEach(motionUndraw);
 }
 window.addEventListener('beforeprint', motionFinishAll);
 

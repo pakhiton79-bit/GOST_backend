@@ -1591,10 +1591,6 @@
     #calcBtn.is-done .cb-done svg path{stroke-dasharray:24;animation:motion-tick .32s ease-out backwards;}
     /* 2/3. Изменившиеся ячейки таблиц деталей. */
     #boardTables td.motion-flash{animation:motion-flash .9s ease-out;}
-    /* 4. Размерные линии чертежей, затем стрелки и подписи. */
-    #boardTables .motion-draw .diagram-arrows line{animation:motion-draw .7s cubic-bezier(.4,0,.2,1) backwards;}
-    #boardTables .motion-draw .diagram-arrows polygon{animation:motion-fade .25s ease-out .45s backwards;}
-    #boardTables .motion-draw .diagram-label{animation:motion-fade .3s ease-out .55s backwards;}
     /* 6. */
     input[type="checkbox"].motion-chk{animation:motion-chk .26s cubic-bezier(.3,1.6,.5,1);}
     /* 7. Предупреждения. */
@@ -1607,7 +1603,6 @@
   @keyframes motion-dot{0%,80%,100%{opacity:.4;transform:translateY(0);}40%{opacity:1;transform:translateY(-3px);}}
   @keyframes motion-tick{from{stroke-dashoffset:24;}to{stroke-dashoffset:0;}}
   @keyframes motion-flash{from{background-color:var(--accent-wash);}}
-  @keyframes motion-draw{from{stroke-dasharray:1;stroke-dashoffset:1;}to{stroke-dasharray:1;stroke-dashoffset:0;}}
   @keyframes motion-fade{from{opacity:0;}}
   @keyframes motion-chk{
     0%{transform:scale(.8);background-size:0 0;}
