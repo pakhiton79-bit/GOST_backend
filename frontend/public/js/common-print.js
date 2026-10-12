@@ -86,6 +86,10 @@ function beginPrintJob(kind){
   // Кадр отрисовки - чтобы индикатор показался до тяжёлой сборки листа.
   return new Promise(r => requestAnimationFrame(() => setTimeout(() => r(prev), 0)));
 }
+// Этап подготовки листа пройден - полоса прогресса (common-motion.js) на долю p.
+function printStep(p, crawlMs){
+  return typeof motionPrintStep === 'function' ? motionPrintStep(p, crawlMs) : Promise.resolve();
+}
 function endPrintJob(kind, prev){
   printInProgress = false;
   const btn = document.getElementById('calcBtn');
@@ -150,9 +154,13 @@ function printBox(){
   beginPrintJob('printing').then(p=>{
     prev = p;
     buildAndSizePrintArea();
-    return waitImagesReady(document.getElementById('printScale'));
+    return printStep(.35);
+  }).then(()=>{
+    return waitImagesReady(document.getElementById('printScale')).then(()=>printStep(.7));
   }).then(()=>{
     fitPrintAreaToOnePage(document.getElementById('printArea'));
+    return printStep(1);
+  }).then(()=>{
     window.print();
   }).finally(()=>{ endPrintJob('printing', prev); });
 }
@@ -330,12 +338,19 @@ function downloadPdf(){
   beginPrintJob('pdf').then(p=>{
     prev = p;
     buildAndSizePrintArea();
-    return waitImagesReady(document.getElementById('printScale'));
+    return printStep(.1);
+  }).then(()=>{
+    return waitImagesReady(document.getElementById('printScale')).then(()=>printStep(.2));
   }).then(()=>{
     const printArea = document.getElementById('printArea');
     fitPrintAreaToOnePage(printArea);
     bakeDiagramArrowStrokeWidths(printArea);
-    return rasterizeDiagramArrows(printArea);
+    return printStep(.3);
+  }).then(()=>{
+    return rasterizeDiagramArrows(document.getElementById('printArea')).then(()=>printStep(.45));
+  }).then(()=>{
+    // Съёмка листа - самый долгий этап без своего прогресса: полоса ползёт.
+    return printStep(.9, 6000);
   }).then(()=>{
     const printArea = document.getElementById('printArea');
     // Масштаб 2x - иначе текст/тонкие линии чертежей на растровой картинке
@@ -352,7 +367,7 @@ function downloadPdf(){
         clonedEl.style.pointerEvents = 'auto';
       }
     });
-  }).then(canvas => {
+  }).then(canvas => printStep(.95).then(() => canvas)).then(canvas => {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
     const m = PRINT_PAGE.marginMM;

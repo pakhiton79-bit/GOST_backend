@@ -1579,11 +1579,10 @@
   /* 12. Полоса подготовки листа под кнопками печати. */
   .print-actions{position:relative;}
   .print-progress{position:absolute;left:0;right:0;bottom:-8px;height:3px;border-radius:2px;background:var(--rule);overflow:hidden;opacity:0;pointer-events:none;transition:opacity .25s ease;}
-  .print-progress > span{display:block;height:100%;width:0;border-radius:2px;background:var(--accent);}
+  /* transform, а не width - полоса движется, даже пока страница занята сборкой листа */
+  .print-progress > span{display:block;height:100%;border-radius:2px;background:var(--accent);transform:scaleX(0);transform-origin:0 50%;}
   .print-progress.run{opacity:1;}
-  .print-progress.run > span{width:85%;transition:width 1.6s cubic-bezier(.2,.7,.2,1);}
   .print-progress.done{opacity:0;transition:opacity .3s ease .35s;}
-  .print-progress.done > span{width:100%;transition:width .3s ease;}
   @media print{.print-progress{display:none !important;}}
   @media (prefers-reduced-motion:no-preference){
     .cb-dots i{animation:motion-dot .9s ease-in-out infinite;}

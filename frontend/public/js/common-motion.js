@@ -7,7 +7,7 @@
 //  3. Изменившиеся после пересчёта ячейки таблиц деталей коротко подсвечиваются.
 //  4. Размерные линии чертежей прорисовываются, когда чертёж виден на экране.
 //  7. Новое предупреждение выезжает сверху, значок ⚠ покачивается.
-// 12. Полоса под кнопками «Печать»/«Скачать PDF», пока готовится лист.
+// 12. Полоса под кнопками «Печать»/«Скачать PDF» - по этапам подготовки листа.
 // Галочки (6) и окна (8) - только CSS, переключатель версий (5) - в
 // common-version-switch.js. При «уменьшить движение» в системе ничего не
 // анимируется.
@@ -174,12 +174,29 @@ function motionPrintStart(){
   if(!bar) return;
   clearTimeout(motionPrintTimer);
   bar.className = 'print-progress';
+  const fill = bar.firstChild;
+  fill.style.transition = 'none';
+  fill.style.transform = 'scaleX(0)';
   void bar.offsetWidth;
   bar.classList.add('run');
+}
+// Этап подготовки пройден: полоса - на долю p (0..1) по факту. crawlMs - у
+// долгого этапа без своего прогресса (съёмка листа для PDF): полоса за это
+// время медленно ползёт к p, не доходя до следующей отметки раньше времени.
+// Промис - после отрисовки кадра, чтобы полоса успела сдвинуться до
+// следующего тяжёлого шага.
+function motionPrintStep(p, crawlMs){
+  const bar = document.querySelector('.print-actions .print-progress.run');
+  if(!bar) return Promise.resolve();
+  const fill = bar.firstChild;
+  fill.style.transition = crawlMs ? `transform ${crawlMs}ms cubic-bezier(.1,.6,.3,1)` : 'transform .25s ease';
+  fill.style.transform = `scaleX(${p})`;
+  return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 }
 function motionPrintEnd(){
   const bar = document.querySelector('.print-actions .print-progress.run');
   if(!bar) return;
+  motionPrintStep(1);
   bar.classList.add('done');
   motionPrintTimer = setTimeout(() => { bar.className = 'print-progress'; }, 700);
 }
