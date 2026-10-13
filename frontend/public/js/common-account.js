@@ -479,8 +479,15 @@ function loadPlans(){
 function nextPlanId(plan){ return { free: 'base', base: 'pro', pro: 'team' }[plan] || null; }
 function calcWord(n){ return plural(n, 'расчёт', 'расчёта', 'расчётов'); }
 
-// Под кнопкой «Рассчитать» после успешного расчёта: осталось 5 и меньше
-// (или 10% и меньше у платных) - сколько осталось и ссылка на подписку больше.
+// Расчёты закончились (по указанию пользователя: не красной ошибкой и без
+// счётчика). После последнего успешного расчёта - тёплая плашка под кнопками
+// «Рассчитать» (showQuotaHint); при нажатии без расчётов или без входа -
+// окно (showLimitDialog): дата новых расчётов и подписка больше.
+const LIMIT_ICONS = {
+  clock: '<svg viewBox="0 0 28 28" aria-hidden="true"><circle class="limit-draw" cx="14" cy="14" r="11" style="--len:70"/><path d="M14 8v6l4 2.5"/></svg>',
+  user: '<svg viewBox="0 0 28 28" aria-hidden="true"><circle class="limit-draw" cx="14" cy="10" r="5" style="--len:32"/><path class="limit-draw" d="M5 24c1.5-5 5-7 9-7s7.5 2 9 7" style="--len:30"/></svg>',
+};
+const fmtLimitDate = iso => new Date(iso).toLocaleDateString('ru-RU');
 function showQuotaHint(q){
   const err = document.getElementById('err');
   if(!err) return;
@@ -488,35 +495,102 @@ function showQuotaHint(q){
   if(!hint){
     hint = document.createElement('div');
     hint.id = 'quotaHint';
-    hint.className = 'quota-hint';
+    hint.className = 'quota-banner';
+    hint.setAttribute('role', 'status');
     err.insertAdjacentElement('afterend', hint);
   }
   hint.hidden = true;
-  if(!q) return;
-  const low = q.plan === 'free' ? q.left <= 5 : q.left <= Math.max(5, Math.round(q.monthly * 0.1));
-  if(!low) return;
-  const reset = new Date(q.periodEnd).toLocaleDateString('ru-RU');
+  if(!q || q.left > 0) return;
   const next = nextPlanId(q.plan);
   loadPlans().then(plans => {
     const np = next && plans[next];
-    hint.textContent = q.left === 0 ? (q.monthly ? `Расчёты закончились до ${reset}.` : 'Пробные расчёты закончились.') : `Осталось ${q.left} ${calcWord(q.left)}.`;
-    if(np){
-      const a = document.createElement('a');
-      a.href = 'plans.html';
-      a.textContent = `Больше в ${np.name}`;
-      hint.append(' ', a);
-    }
+    hint.innerHTML = `${LIMIT_ICONS.clock}<span>${q.monthly
+      ? `Вы использовали все расчёты этого месяца. Новые появятся ${fmtLimitDate(q.periodEnd)}.`
+      : 'Вы использовали все пробные расчёты.'}${np ? ` Больше расчётов - в <a href="plans.html">${escHtml(np.name)}</a>.` : ''}</span>`;
     hint.hidden = false;
   });
 }
 
-// Ошибка расчёта от сервера со ссылкой (не вошли - «Войти» с возвратом на
-// эту страницу, закончились расчёты - «Подписки»): ссылка после текста
-// ошибки (#err на страницах расчёта).
-function appendCalcErrorLink(link){
+// Окно: не вошли (kind 'guest'), закончились месячные ('month') или пробные
+// ('trial') - данные приходят с сервера (calc-quota.js, limit).
+function showLimitDialog(limit){
+  document.querySelectorAll('.limit-dialog').forEach(o => o.remove());
+  const page = encodeURIComponent(location.pathname.replace(/^\//, ''));
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay limit-dialog';
+  const btn = (cls, text, attrs) => `<${attrs ? 'a' : 'button type="button"'} class="${cls}"${attrs || ''}>${text}</${attrs ? 'a' : 'button'}>`;
+  let icon = LIMIT_ICONS.clock, title, text, extra = '', actions;
+  if(limit.kind === 'guest'){
+    icon = LIMIT_ICONS.user;
+    title = 'Войдите, чтобы посчитать';
+    text = `Расчёты доступны после входа. При регистрации - ${limit.welcome} ${calcWord(limit.welcome)} бесплатно.`;
+    actions = btn('btn-secondary', 'Войти', ` href="login.html?next=${page}"`) + btn('limit-main', 'Зарегистрироваться', ` href="login.html?mode=register&amp;next=${page}"`);
+  } else if(limit.kind === 'trial'){
+    title = 'Пробные расчёты закончились';
+    text = `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`;
+    extra = '<div class="limit-plans" id="limitPlans"></div>';
+    actions = btn('btn-secondary limit-close', 'Позже') + btn('limit-main', 'Выбрать подписку', ' href="plans.html"');
+  } else {
+    const days = Math.max(1, Math.ceil((new Date(limit.periodEnd) - Date.now()) / 86400000));
+    title = 'Расчёты на этот месяц закончились';
+    text = `Новые ${limit.monthly.toLocaleString('ru-RU')} ${calcWord(limit.monthly)} начислятся <b>${fmtLimitDate(limit.periodEnd)}</b>, через ${days} ${plural(days, 'день', 'дня', 'дней')}. Введённые размеры останутся на странице.`;
+    if(limit.next){
+      // Все подписки больше текущей (по указанию пользователя) - карточками.
+      extra = '<div class="limit-plans" id="limitPlans"></div>';
+      actions = btn('btn-secondary limit-close', 'Понятно') + btn('limit-main', 'Выбрать подписку', ' href="plans.html"');
+    } else {
+      text += ' Нужно больше уже сейчас - напишите нам, обсудим дополнительные расчёты.';
+      actions = btn('btn-secondary limit-close', 'Понятно') + btn('limit-main limit-support', 'Написать в поддержку');
+    }
+  }
+  overlay.innerHTML = `<div class="modal-box limit-box" role="dialog" aria-modal="true" aria-labelledby="limitTitle">
+      <div class="limit-icon">${icon}</div>
+      <h3 id="limitTitle">${title}</h3>
+      <p class="limit-text">${text}</p>
+      ${extra}
+      <div class="limit-actions">${actions}</div>
+    </div>`;
+  const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
+  const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); close(); } };
+  overlay.addEventListener('click', e => {
+    if(e.target === overlay || e.target.closest('.limit-close')) return close();
+    if(e.target.closest('.limit-support')){ close(); openSettingsSection('help'); }
+  });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(overlay);
+  overlay.querySelector('.limit-main').focus();
+  // Карточки подписок: у пробной - все платные (выделена Pro), у
+  // закончившейся платной - все подписки больше текущей (выделена следующая).
+  if(document.getElementById('limitPlans')) loadPlans().then(plans => {
+    const box = document.getElementById('limitPlans');
+    if(!box) return;
+    const ids = Object.keys(plans);
+    const from = limit.kind === 'trial' ? ids.indexOf('free') : ids.indexOf(limit.plan);
+    const higher = ids.slice(from + 1);
+    const hot = limit.kind === 'trial' ? 'pro' : higher[0];
+    box.style.setProperty('--n', higher.length);
+    box.innerHTML = higher.map(id => {
+      const p = plans[id];
+      return `<div class="limit-plan${id === hot ? ' limit-next' : ''}"><b>${escHtml(p.name)}</b>`
+        + `<span class="limit-price">${p.price ? p.price.toLocaleString('ru-RU') + ' ₽ в месяц' : ''}</span>`
+        + `<span>${p.monthly.toLocaleString('ru-RU')} ${calcWord(p.monthly)} в месяц</span>`
+        + `<span>${p.devices} ${plural(p.devices, 'устройство', 'устройства', 'устройств')}</span></div>`;
+    }).join('');
+  });
+}
+
+// Ошибка расчёта от сервера: не вошли или закончились расчёты (limit) -
+// окно вместо красной ошибки; иначе ссылка после текста ошибки (#err).
+function appendCalcErrorLink(link, limit){
   const hint = document.getElementById('quotaHint');
   if(hint) hint.hidden = true;
   const err = document.getElementById('err');
+  if(limit && limit.kind){
+    if(err) err.textContent = '';
+    if(typeof setCalcStatus === 'function') setCalcStatus(null);
+    showLimitDialog(limit);
+    return;
+  }
   if(!err || !link || !/^[a-z0-9-]+\.html$/.test(link.href)) return;
   const a = document.createElement('a');
   a.className = 'calc-error-link';

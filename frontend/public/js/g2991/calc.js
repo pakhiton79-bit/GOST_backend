@@ -57,7 +57,7 @@ async function calculateNow(){
   }
   if(calc.error){
     showCalcError(calc.error);
-    appendCalcErrorLink(calc.errorLink); // не вошли / закончились расчёты - common-account.js
+    appendCalcErrorLink(calc.errorLink, calc.limit); // не вошли / закончились расчёты - окно, common-account.js
     return;
   }
 
@@ -67,7 +67,7 @@ async function calculateNow(){
 
   document.getElementById('results').style.display = 'block';
   setCalcStatus('check');
-  showQuotaHint(calc.quota); // осталось мало расчётов - подсказка, common-account.js
+  showQuotaHint(calc.quota); // последний расчёт - плашка «Вы использовали все расчёты», common-account.js
 }
 
 // Правка ячейки таблицы: толщина - расчёт устарел (учтётся по «Рассчитать»),

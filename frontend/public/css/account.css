@@ -436,9 +436,41 @@ body.auth-page{margin:0;background:var(--bg);}
 
 /* Предложения подписки: под кнопкой «Рассчитать» (мало расчётов), на
    странице аккаунта, в настройках. Спокойные, без ярких плашек. */
-.quota-hint{margin-top:10px;font-size:13px;line-height:1.5;color:var(--ink-soft);}
-.quota-hint[hidden]{display:none;}
-.quota-hint a, .account-upsell a{color:var(--accent);font-weight:600;}
+/* Расчёты закончились (common-account.js): плашка после последнего расчёта
+   и окно при нажатии без расчётов / без входа - не красным (по указанию
+   пользователя). */
+.quota-banner{flex-basis:100%;display:flex;align-items:flex-start;gap:12px;margin-top:4px;padding:12px 14px;border-radius:12px;background:var(--warn-wash);border:1px solid color-mix(in srgb, var(--warn) 40%, transparent);font-size:14px;line-height:1.5;color:var(--ink);}
+.quota-banner[hidden]{display:none;}
+.quota-banner svg{flex:0 0 22px;width:22px;height:22px;fill:none;stroke:var(--warn);stroke-width:2.2;stroke-linecap:round;}
+.quota-banner a, .account-upsell a{color:var(--accent);font-weight:600;}
+.limit-box{max-width:460px;display:flex;flex-direction:column;gap:14px;}
+.limit-box h3{margin:0;padding:0;font-size:20px;font-weight:700;}
+.limit-icon{width:52px;height:52px;border-radius:14px;background:var(--accent-wash);display:flex;align-items:center;justify-content:center;}
+.limit-icon svg{width:28px;height:28px;fill:none;stroke:var(--accent);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+.limit-text{margin:0;font-size:15px;line-height:1.55;color:var(--ink-soft);}
+.limit-text b{color:var(--ink);}
+.limit-plan{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border:1px solid var(--rule);border-radius:12px;font-size:13px;color:var(--ink-soft);}
+.limit-plan b{font-size:16px;color:var(--ink);}
+.limit-plan.limit-next{border:1.5px solid var(--accent);}
+.limit-plans{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:10px;}
+.limit-plans:empty{display:none;}
+.limit-price{color:var(--accent);font-weight:700;}
+.limit-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-top:4px;}
+.limit-actions > *{margin:0;display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;box-sizing:border-box;}
+.limit-main{background:var(--accent);color:#fff;border:0;}
+.limit-main:hover{background:var(--accent-hover);color:#fff;}
+.limit-actions .btn-secondary{color:var(--ink);}
+.limit-box:has(.limit-plans){max-width:600px;}
+@media (max-width:560px){ .limit-plans{grid-template-columns:1fr;} }
+@media (prefers-reduced-motion:no-preference){
+  .quota-banner:not([hidden]){animation:limit-in .4s cubic-bezier(.2,.8,.2,1);}
+  .limit-icon .limit-draw{stroke-dasharray:var(--len);animation:limit-draw .9s cubic-bezier(.4,0,.2,1) .2s backwards;}
+  .limit-plan{animation:limit-in .4s cubic-bezier(.2,.8,.2,1) backwards;}
+  .limit-plan:nth-child(2){animation-delay:.08s;}
+  .limit-plan:nth-child(3){animation-delay:.16s;}
+}
+@keyframes limit-in{from{opacity:0;transform:translateY(-8px);}}
+@keyframes limit-draw{from{stroke-dashoffset:var(--len);}}
 .account-upsell{margin:14px 0 0;font-size:14px;color:var(--ink-soft);}
 .account-upsell[hidden]{display:none;}
 .site-sub-btn-main{background:var(--accent);color:#fff;border:1px solid var(--accent);}

@@ -4,7 +4,7 @@
 // заполнены поля и т.п.) не списывается. В ответ расчёта добавляется
 // quota - сколько осталось.
 const store = require('./store');
-const { PLANS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
+const { PLANS, WELCOME_CALCS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
 const stats = require('./stats');
 
 function fmtDate(iso) {
@@ -15,7 +15,9 @@ function fmtDate(iso) {
 function calcQuota(req, res, next) {
   const user = req.user;
   if (!user) {
-    return res.status(401).json({ error: 'Войдите в аккаунт, чтобы выполнить расчёт.', errorLink: { href: 'login.html', text: 'Войти' } });
+    // limit - для окна на странице (common-account.js, showLimitDialog).
+    return res.status(401).json({ error: 'Войдите в аккаунт, чтобы выполнить расчёт.', errorLink: { href: 'login.html', text: 'Войти' },
+      limit: { kind: 'guest', welcome: WELCOME_CALCS } });
   }
   const now = Date.now();
   if (syncUser(user, now)) store.updateUser(user);
@@ -26,6 +28,11 @@ function calcQuota(req, res, next) {
     return res.status(402).json({
       error: q.monthly ? `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.` : 'Пробные расчёты закончились.',
       errorLink: next ? { href: 'plans.html', text: `Больше в ${next.name}` } : undefined,
+      limit: {
+        kind: q.monthly ? 'month' : 'trial', plan: q.plan, planName: q.planName, monthly: q.monthly,
+        periodEnd: q.periodEnd, welcome: WELCOME_CALCS,
+        next: next ? { name: next.name, monthly: next.monthly, price: next.price } : null,
+      },
     });
   }
   const type = req.params.type; // у обработчика расчёта req.params уже свои
