@@ -143,7 +143,7 @@
 
 /* Сравнение. */
 .lp-compare-wrap{overflow-x:auto;border:1px solid var(--rule);border-radius:16px;background:var(--panel);}
-.lp-compare{width:100%;min-width:760px;border-collapse:collapse;font-size:14px;}
+.lp-compare{width:100%;min-width:620px;border-collapse:collapse;font-size:14px;}
 .lp-compare th, .lp-compare td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--rule);color:var(--ink-soft);vertical-align:middle;}
 .lp-compare tr:last-child td{border-bottom:none;}
 .lp-compare th{font-size:13px;font-weight:600;color:var(--ink);}
