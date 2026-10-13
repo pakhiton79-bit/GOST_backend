@@ -18,7 +18,7 @@
 //                                                        выйти на устройстве id и войти
 //   GET  /api/auth/devices                             - устройства, где выполнен вход
 //   POST /api/auth/devices/logout { id }               - выйти на устройстве
-//   POST /api/auth/delete   { password }               - удалить свой аккаунт
+//   POST /api/auth/delete   { password, checkOnly }    - удалить свой аккаунт (checkOnly - только проверить пароль)
 //   POST /api/auth/password { current, password }      - сменить пароль (входы на
 //                                                        других устройствах завершаются)
 //
@@ -366,6 +366,9 @@ router.post('/delete', rateLimit, async (req, res, next) => {
     if (!(await verifyPassword(String(req.body.password || ''), req.user.passHash))) {
       return res.status(401).json({ error: 'Неверный пароль.' });
     }
+    // Только проверка пароля - перед окном «Удалить аккаунт?» (по указанию
+    // пользователя: с неверным паролем окно не открывается).
+    if (req.body.checkOnly) return res.json({ ok: true });
     store.deleteUser(req.user);
     endSession(req, res);
     res.json({ ok: true });
