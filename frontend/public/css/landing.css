@@ -222,3 +222,14 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-cards-4, .lp-types{grid-template-columns:1fr;}
   .lp-btn{width:100%;}
 }
+
+/* Акцент на скорости и отсутствии ошибок (по указанию пользователя):
+   строка преимуществ под кнопками первого экрана и блок «Без человеческой
+   ошибки» (карточки) перед сравнением. */
+.lp-proof{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:10px 22px;font-size:14px;font-weight:600;color:var(--ink);}
+.lp-proof li{display:flex;align-items:center;gap:8px;}
+.lp-proof svg{flex:0 0 18px;width:18px;height:18px;padding:3px;box-sizing:border-box;border-radius:50%;background:var(--accent);fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
+.lp-sub{font-size:16px;line-height:1.6;color:var(--ink-soft);margin:-12px 0 24px;max-width:720px;}
+/* Блок «Без человеческой ошибки»: карточки, над заголовком - как бывает при
+   ручном расчёте. */
+.lp-nofail-was{font-size:13px;line-height:1.45;color:var(--ink-soft);margin:0 0 6px;}

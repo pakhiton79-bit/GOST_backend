@@ -25,11 +25,16 @@
     <div class="lp-hero-text">
       <div class="lp-eyebrow">Деревянная тара по ГОСТ</div>
       <h1 class="lp-title">Ящик по ГОСТ<br>за минуту</h1>
-      <p class="lp-lead">Введите размеры и массу груза. Тара+ подберёт сечения по таблицам ГОСТ, составит таблицу деталей, нарисует чертежи узлов и посчитает объём пиломатериала, массу ящика и нормы времени.</p>
+      <p class="lp-lead">Введите размеры и массу груза - остальное Тара+ посчитает сама, строго по таблицам ГОСТ: сечения, таблицу деталей, чертежи узлов, объём пиломатериала, массу ящика и нормы времени. Без ручных пересчётов и без ошибок по невнимательности.</p>
       <div class="lp-cta" id="lpHeroCta">
         <a class="lp-btn lp-btn-main" href="login.html?mode=register&next=gosts.html">Попробовать бесплатно</a>
         <a class="lp-btn lp-btn-ghost" href="login.html?next=gosts.html">Войти</a>
       </div>
+      <ul class="lp-proof">
+        <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>Около минуты на ящик</li>
+        <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>Один алгоритм по ГОСТ для каждого расчёта</li>
+        <li><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>Без ручных пересчётов</li>
+      </ul>
     </div>
     <div class="lp-hero-art lp-demo" id="lpDemo" aria-label="Как выглядит расчёт: ввод размеров, расчёт, печать">
       <div class="lpd-window">
@@ -83,16 +88,41 @@
   </section>
 
   <section class="lp-section">
+    <h2 class="lp-h2">Без человеческой ошибки</h2>
+    <p class="lp-sub">Ошибка в расчёте тары обычно выясняется уже в цеху. Вот где она появляется чаще всего - и как это закрыто в Тара+.</p>
+    <div class="lp-cards lp-cards-3 lp-nofail">
+      <div class="lp-card">
+        <div class="lp-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 4v16"/></svg></div>
+        <div class="lp-nofail-was">Вручную: взяли не ту строку таблицы ГОСТ</div>
+        <h3>Сечения - по таблицам сами</h3>
+        <p>Полозья, брусья и доски подбираются по таблицам стандарта по размерам и массе груза.</p>
+      </div>
+      <div class="lp-card">
+        <div class="lp-icon"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></div>
+        <div class="lp-nofail-was">Вручную: поменяли размер и забыли пересчитать часть деталей</div>
+        <h3>Пересчёт - весь ящик сразу</h3>
+        <p>После любого изменения сайт просит пересчитать и пересчитывает все детали и чертежи.</p>
+      </div>
+      <div class="lp-card">
+        <div class="lp-icon"><svg viewBox="0 0 24 24"><path d="M4 20 20 4M4 20h6M4 20v-6"/><rect x="12" y="12" width="8" height="8" rx="1"/></svg></div>
+        <div class="lp-nofail-was">Вручную: опечатка при переносе размеров на чертёж</div>
+        <h3>Чертежи - из того же расчёта</h3>
+        <p>Размеры на чертежах берутся из того же расчёта, что и таблица деталей, без переписывания.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="lp-section">
     <h2 class="lp-h2">Чем это лучше привычных способов</h2>
     <div class="lp-compare-wrap">
       <table class="lp-compare">
         <thead><tr><th></th><th class="lp-us">Тара+</th><th>Свои таблицы Excel</th><th>Чертёж в САПР</th><th>Вручную по ГОСТ</th></tr></thead>
         <tbody>
           <tr><td>Время на ящик</td><td class="lp-us"><i class="lp-yes"></i>около минуты</td><td>быстро, если файл готов</td><td>часы</td><td>около 30 минут</td></tr>
+          <tr><td>Риск ошибки</td><td class="lp-us"><i class="lp-yes"></i>единый алгоритм по ГОСТ</td><td>высокий</td><td>зависит от конструктора</td><td>высокий</td></tr>
           <tr><td>Результат</td><td class="lp-us"><i class="lp-yes"></i>детали, чертежи, объём, масса, нормы</td><td>что заложено в файл</td><td>только чертёж</td><td>всё по отдельности</td></tr>
           <tr><td>Настройки расчёта</td><td class="lp-us"><i class="lp-yes"></i>толщины в наличии, раскосины и др.</td><td>почти нет</td><td>вручную</td><td>вручную</td></tr>
           <tr><td>Сделать самим</td><td class="lp-us"><i class="lp-yes"></i>уже готово</td><td>сложно добиться точности</td><td>долго и дорого</td><td>-</td></tr>
-          <tr><td>Риск ошибки</td><td class="lp-us"><i class="lp-yes"></i>единый алгоритм по ГОСТ</td><td>высокий</td><td>зависит от конструктора</td><td>высокий</td></tr>
         </tbody>
       </table>
     </div>
