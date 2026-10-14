@@ -257,22 +257,24 @@ function renderSiteAccount(user){
     </div>
     <div class="site-acc-block">
       <div class="site-usage-title">Пароль</div>
-      <div class="site-acc-delete" id="siteAccPw" hidden>
+      <form class="site-acc-delete" id="siteAccPw" hidden novalidate>
+        <input type="email" autocomplete="username" value="${escHtml(user.email)}" hidden tabindex="-1" aria-hidden="true">
         <div class="auth-msg" id="siteAccPwMsg" hidden></div>
         <div class="auth-field"><input type="password" id="siteAccPwOld" placeholder="Текущий пароль" autocomplete="current-password" maxlength="200" aria-label="Текущий пароль"></div>
         <div class="auth-field"><input type="password" id="siteAccPwNew" placeholder="Новый пароль, не короче 8 символов" autocomplete="new-password" maxlength="200" aria-label="Новый пароль"></div>
         <button type="button" class="btn-secondary site-sub-btn" data-acc="password-save">Сохранить пароль</button>
-      </div>
+      </form>
       <button type="button" class="btn-secondary site-sub-btn site-acc-pw-btn" data-acc="password-open">Сменить пароль</button>
     </div>
     <div class="site-acc-block site-acc-danger">
       <div class="site-usage-title">Удаление аккаунта</div>
       <p class="site-sub-text">Аккаунт, подписка, счётчики и входы на всех устройствах удаляются без возможности восстановления.</p>
-      <div class="site-acc-delete" id="siteAccDelete" hidden>
+      <form class="site-acc-delete" id="siteAccDelete" hidden novalidate>
+        <input type="email" autocomplete="username" value="${escHtml(user.email)}" hidden tabindex="-1" aria-hidden="true">
         <div class="auth-msg" id="siteAccDelMsg" hidden></div>
         <div class="auth-field"><input type="password" id="siteAccDelPw" placeholder="Пароль для подтверждения" autocomplete="current-password" maxlength="200" aria-label="Пароль для подтверждения"></div>
         <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-confirm">Удалить навсегда</button>
-      </div>
+      </form>
       <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-open">Удалить аккаунт</button>
     </div>`;
   loadAccountDevices(user);
@@ -291,6 +293,17 @@ function renderAccountDevices(list, q){
 }
 
 // Действия в разделе «Аккаунт».
+// Формы пароля в настройках аккаунта - отдельные <form> со скрытой почтой,
+// чтобы менеджер паролей браузера не принимал поля размеров и массы груза за
+// логин. Enter в поле пароля - то же, что кнопка формы, страница не
+// перезагружается.
+document.addEventListener('submit', e => {
+  const form = e.target;
+  if(form.id !== 'siteAccPw' && form.id !== 'siteAccDelete') return;
+  e.preventDefault();
+  const btn = form.querySelector('button[data-acc]');
+  if(btn) btn.click();
+});
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-acc]');
   if(!el || !el.closest('#siteAccountBox')) return;
