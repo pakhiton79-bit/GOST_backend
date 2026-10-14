@@ -18,7 +18,7 @@
 // (t21Value), полоз (t9Value) и торцовый брус дна (t11Value) - подставляются
 // везде, где участвуют.
 const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, inputLimitsError, computeNormaVremeni } = require('../helpers');
-const { wallThickness } = require('../i3/tables');
+const { wallThickness } = require('./tables');
 const { buildDno } = require('./dno');
 const { buildKryshka } = require('./kryshka');
 const { buildEndPanel } = require('./end-panel');

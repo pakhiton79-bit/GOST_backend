@@ -3,7 +3,7 @@
 // доски обшивки - с промежутками (boards.js), на длину груза + толщину
 // стойки торцевого щита с каждой стороны.
 const { vol } = require('../helpers');
-const { STOJKA_W } = require('../ii1/frame');
+const { STOJKA_W } = require('./frame');
 const { fillGapBoards, gapBoards, BOARD_W } = require('./boards');
 
 // Раскладка досок бока (вид результата - как у fillGapBoards). Доски бока продолжают линии досок крышки (по указанию

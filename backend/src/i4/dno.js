@@ -5,7 +5,7 @@ const { fillGapBoards } = require('./boards');
 const {
   subfloorThicknessRaw, polozSection165, selectSkid19, minSkidsByWidth162,
   endBeamSection, floorBoardThicknessNew, floorBoardThickness, T4_LOADS, T4_DISTANCES,
-} = require('../i3/tables');
+} = require('./tables');
 
 // Полозья: при сплошном жёстком основании груза - сечение по п.1.6.5 и число
 // по ширине (п.1.6.2), иначе - по Табл. 19. Толщина полоза округляется вверх

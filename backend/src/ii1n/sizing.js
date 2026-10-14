@@ -4,10 +4,10 @@
 // высота - от полоза, доски дна и брусьев крышки, а полоз (Табл. 19) - от
 // длины ящика, которая сама зависит от толщины стойки. Замкнутый круг
 // решается 4 итерациями - за это время значения стабилизируются.
-const { subfloorThicknessRaw, polozSection165, floorBoardThicknessNew } = require('../i3/sections');
-const { floorBoardThickness } = require('../i3/data/table4');
-const { crossBeamThickness } = require('../i3/data/table14');
-const { selectSkid19, minSkidsByWidth162 } = require('../i3/data/table19');
+const { subfloorThicknessRaw, polozSection165, floorBoardThicknessNew } = require('./sections');
+const { floorBoardThickness } = require('./data/table4');
+const { crossBeamThickness } = require('./data/table14');
+const { selectSkid19, minSkidsByWidth162 } = require('./data/table19');
 const { stojkaSection, minCountBySpan, clearGapBySpan, longBeamSection } = require('./logic');
 
 const CROSS_BEAM_W = 100;         // ширина поперечного бруса крышки (Табл. 14 - всегда 100 мм)

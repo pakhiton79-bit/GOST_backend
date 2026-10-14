@@ -2,7 +2,7 @@
 // поперечные брусья.
 const { vol } = require('../helpers');
 const { fillGapBoards } = require('./boards');
-const { crossBeamThickness } = require('../i3/tables');
+const { crossBeamThickness } = require('./tables');
 const { plankLayout, PLANK_W } = require('./plank-layout');
 
 const BEAM_W = 100;          // ширина поперечного бруса (по Табл. 14 всегда 100 мм)

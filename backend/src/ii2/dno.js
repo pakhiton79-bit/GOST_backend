@@ -2,7 +2,7 @@
 // и доски дна (как у II-1, ../ii1/dno.js), доски дна - с промежутками
 // (boards.js).
 const { vol } = require('../helpers');
-const { endBeamSection } = require('../ii1/logic');
+const { endBeamSection } = require('./logic');
 const { fillGapBoards } = require('./boards');
 
 // c - контекст расчёта (см. compute.js); s - согласованные размеры (sizing.js).

@@ -4,7 +4,7 @@
 const { vol } = require('../helpers');
 const { fillGapBoards, BOARD_W } = require('./boards');
 
-// c - контекст расчёта (см. compute.js); s - согласованные размеры (../ii1/sizing.js).
+// c - контекст расчёта (см. compute.js); s - согласованные размеры (sizing.js).
 function buildKryshka(c, s) {
   const { L, W, warnings, skinT, optimizeSizes } = c;
   const rows = [];

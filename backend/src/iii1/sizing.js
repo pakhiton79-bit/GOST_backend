@@ -4,9 +4,9 @@
 // наружная высота - от полоза и доски дна, а полоз (Табл. 19) - от длины
 // ящика, которая сама зависит от толщины каркаса торцевого щита. Замкнутый
 // круг решается 4 итерациями - за это время значения стабилизируются.
-const { subfloorThicknessRaw, polozSection165, floorBoardThicknessNew } = require('../i3/sections');
-const { floorBoardThickness } = require('../i3/data/table4');
-const { selectSkid19, minSkidsByWidth162 } = require('../i3/data/table19');
+const { subfloorThicknessRaw, polozSection165, floorBoardThicknessNew } = require('./sections');
+const { floorBoardThickness } = require('./data/table4');
+const { selectSkid19, minSkidsByWidth162 } = require('./data/table19');
 const { stojkaSection } = require('./logic');
 
 const BEAM_W = 100;               // ширина стоек, горизонтальных брусьев щитов, брусьев крышки и продольного бруса дна

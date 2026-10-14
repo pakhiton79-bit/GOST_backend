@@ -1,6 +1,6 @@
 // ГОСТ 10198-91, тип II-2: чертёж «Крышка» (вид снизу) - как сгенерированная
 // крышка II-1 (KRYSHKA_GEN, kryshkaGeneratedRecords, kryshkaGapRecords,
-// crossBeamWidth - js/ii1/diagrams/kryshka.js), но с досками: доски крышки с
+// crossBeamWidth - копия II-1 в kryshka-gen.js), но с досками: доски крышки с
 // промежутками (boards.js) светло-серые, брусья поверх - продольные белые,
 // поперечные тёмно-серые; брусья и доски - одной ширины на экране
 // (drawnMemberWidth в common-diagrams.js). Доски идут поперёк ящика (полосы по

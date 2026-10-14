@@ -1,12 +1,12 @@
 // ГОСТ 10198-91, тип II-2: чертежи «Щит торцевой» и «Щит боковой» -
 // генерируются (SVG) на любое число стоек в геометрии сгенерированного щита
-// II-1 (PANEL_GEN_II1, ii1BraceStrip - js/ii1/diagrams/panel-generated.js):
+// II-1 (PANEL_GEN_II1, ii1BraceStrip - копия II-1 в panel-generated.js):
 // за каркасом - стоячие доски обшивки с промежутками (boards.js), каркас
 // (брусья, стойки, раскосины) - белый поверх. Стойки, брусья, раскосины и
 // доски - одной ширины на экране (drawnMemberWidth в common-diagrams.js);
 // наружные кромки каркаса - как у II-1 (подписи на тех же местах). Подписи -
 // как у щита II-1 на 4 стойки (TOREC_VARIANTS, postGapRecords -
-// js/ii1/diagrams/torec.js), кроме выступа обшивки за каркас: он - по
+// torec.js - копия II-1), кроме выступа обшивки за каркас: он - по
 // расчёту (ii2PanelOverhang; у II-1 там всегда нарисован выступ и подписана
 // толщина обшивки или стойки, из-за чего размеры не сходились с наружной
 // длиной), плюс размер «промежуток между досками» над щитом.
@@ -101,7 +101,7 @@ function ii2PanelDiagram(calc, frame, widthVal, overhangMm, boardGap, alt, opora
   }
   records.push(...postGapRecords(v, frame.sectionW, II2_PANEL_WIDTH, II2_PANEL_LABEL_SCALE));
   // Опорная планка (только бок, oporaW - её ширина, мм; oporaRecords -
-  // js/ii1/diagrams/torec.js): подпись правее середины - у 40% ширины над
+  // torec.js - копия II-1): подпись правее середины - у 40% ширины над
   // щитом размер промежутка между досками.
   if(oporaW > 0) records.unshift(...oporaRecords(v.IW, G.frameL, G.frameR, g.topBar[0], g.topBar[1], oporaW, 0.68));
   // Промежуток между досками - над щитом, у 40% ширины (левее - размер

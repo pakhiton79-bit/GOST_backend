@@ -1,11 +1,11 @@
 // ГОСТ 10198-91, тип II-2: расчёт каркасно-щитового ящика - тот же ящик,
-// что II-1 (../ii1), но доски обшивки всех щитов (дно, крышка, торцевые и
+// что II-1, но доски обшивки всех щитов (дно, крышка, торцевые и
 // боковые) - с промежутками (boards.js): доски по 100 мм, крайние - по
 // краям щита, остальные равномерно, промежуток между соседними - не больше
 // заданного (boardGapMax, 10-150 мм, обязательно). При поперечном
 // расположении досок крышки - конструктив тот же, что у II-1 (доски бока - на
 // длину груза + 2 стойки торцевого щита, доски торца - по наружной ширине). Пергамина нет (как у I-2, I-4). Согласование размеров,
-// каркасы щитов и таблицы - общие с II-1 (../ii1/sizing.js, frame.js,
+// каркасы щитов и таблицы - как у II-1 (свои копии sizing.js, frame.js,
 // logic.js).
 //
 // Порядок расчёта:
@@ -20,11 +20,11 @@
 // участвуют.
 // Таблицы и формулы, общие с типом I-3, берутся из ../i3.
 const { makeRoundUpToAvailable, thicknessPartWarnings, findNegativeField, inputLimitsError, computeNormaVremeni } = require('../helpers');
-const { skinThickness } = require('../ii1/logic');
-const { stabilizeSizes } = require('../ii1/sizing');
+const { skinThickness } = require('./logic');
+const { stabilizeSizes } = require('./sizing');
 const { buildDno } = require('./dno');
 const { buildKryshka } = require('./kryshka');
-const { buildFrame, frameAngleDeg, tooManyPostsText, MIN_ANGLE, MAX_ANGLE } = require('../ii1/frame');
+const { buildFrame, frameAngleDeg, tooManyPostsText, MIN_ANGLE, MAX_ANGLE } = require('./frame');
 const { buildEndPanel } = require('./end-panel');
 const { GAP_MIN, GAP_MAX } = require('./boards');
 

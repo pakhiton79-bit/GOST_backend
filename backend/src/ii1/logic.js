@@ -1,7 +1,7 @@
 // ГОСТ 10198-91, тип II-1: формулы, специфичные для этого типа. Общие с
 // типом I-3 таблицы и формулы (Табл. 4/14/19, subfloorThicknessRaw,
-// polozSection165, floorBoardThicknessNew) берутся из ../i3/data и
-// ../i3/sections (см. require() в compute.js). endBeamSection - своя
+// polozSection165, floorBoardThicknessNew) берутся из своих
+// копий ./data и ./sections (см. require() в sizing.js). endBeamSection - своя
 // (диапазон до 20000 кг, у I-3 - до 5000 кг).
 const { stockWidth } = require('../helpers');
 
