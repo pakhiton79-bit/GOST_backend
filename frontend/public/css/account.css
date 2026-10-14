@@ -486,8 +486,16 @@ body.auth-page{margin:0;background:var(--bg);}
 #siteAccDelete:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;}
 #siteAccDelete .auth-msg{flex:0 0 100%;margin:0;}
 #siteAccDelete .auth-field{flex:1 1 220px;margin:0;}
-#siteAccDelete .site-acc-del-btn{margin:0;align-self:stretch;}
+#siteAccDelete .site-sub-btn{margin:0;align-self:stretch;}
 #siteAccDelPw:focus{outline-color:var(--error);border-color:var(--error);}
+/* Смена пароля по шагам (common-account.js, setAccPwStep): подсказка шага,
+   поля, кнопки «Далее»/«Отмена» и ссылка «Забыли пароль?» в один ряд. */
+.site-acc-pw [data-pw-field][hidden], .site-acc-pw-link[hidden], .site-acc-pw-done[hidden]{display:none;}
+.site-acc-pw .site-sub-text{margin:4px 0 0;}
+.site-acc-pw-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px;}
+.site-acc-pw-actions .site-sub-btn{margin:0;}
+.site-acc-pw-link{font-size:13px;font-weight:500;color:var(--accent);margin-left:4px;}
+.site-acc-pw-done{margin:8px 0 0;}
 .site-acc-pw-btn{margin-top:10px;}
 
 /* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */

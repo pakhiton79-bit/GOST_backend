@@ -257,12 +257,21 @@ function renderSiteAccount(user){
     </div>
     <div class="site-acc-block">
       <div class="site-usage-title">Пароль</div>
-      <form class="site-acc-delete" id="siteAccPw" hidden novalidate>
+      <div class="auth-msg auth-msg-ok site-acc-pw-done" id="siteAccPwDone" hidden></div>
+      <form class="site-acc-delete site-acc-pw" id="siteAccPw" hidden novalidate>
         <input type="email" autocomplete="username" value="${escHtml(user.email)}" hidden tabindex="-1" aria-hidden="true">
+        <p class="site-sub-text" id="siteAccPwHint"></p>
         <div class="auth-msg" id="siteAccPwMsg" hidden></div>
-        <div class="auth-field"><input type="password" id="siteAccPwOld" placeholder="Текущий пароль" autocomplete="current-password" maxlength="200" aria-label="Текущий пароль"></div>
-        <div class="auth-field"><input type="password" id="siteAccPwNew" placeholder="Новый пароль, не короче 8 символов" autocomplete="new-password" maxlength="200" aria-label="Новый пароль"></div>
-        <button type="button" class="btn-secondary site-sub-btn" data-acc="password-save">Сохранить пароль</button>
+        ${accPwField('siteAccPwOld', 'Текущий пароль', 'current-password')}
+        <div class="auth-field" data-pw-field="siteAccPwCode"><input type="text" id="siteAccPwCode" placeholder="Код из письма" autocomplete="one-time-code" inputmode="numeric" maxlength="6" aria-label="Код из письма"></div>
+        ${accPwField('siteAccPwNew', 'Новый пароль (от 8 символов)', 'new-password')}
+        ${accPwField('siteAccPwNew2', 'Повторите новый пароль', 'new-password')}
+        <div class="site-acc-pw-actions">
+          <button type="button" class="site-sub-btn site-sub-btn-main" data-acc="password-next" id="siteAccPwNext"></button>
+          <button type="button" class="btn-secondary site-sub-btn" data-acc="password-cancel">Отмена</button>
+          <a href="#" class="site-acc-pw-link" data-acc="password-forgot" id="siteAccPwForgot">Забыли пароль?</a>
+          <a href="#" class="site-acc-pw-link" data-acc="password-resend" id="siteAccPwResend">Отправить код ещё раз</a>
+        </div>
       </form>
       <button type="button" class="btn-secondary site-sub-btn site-acc-pw-btn" data-acc="password-open">Сменить пароль</button>
     </div>
@@ -274,11 +283,64 @@ function renderSiteAccount(user){
         <div class="auth-msg" id="siteAccDelMsg" hidden></div>
         <div class="auth-field"><input type="password" id="siteAccDelPw" placeholder="Пароль для подтверждения" autocomplete="current-password" maxlength="200" aria-label="Пароль для подтверждения"></div>
         <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-confirm">Удалить навсегда</button>
+        <button type="button" class="btn-secondary site-sub-btn" data-acc="delete-cancel">Отмена</button>
       </form>
       <button type="button" class="btn-secondary site-sub-btn site-acc-del-btn" data-acc="delete-open">Удалить аккаунт</button>
     </div>`;
   loadAccountDevices(user);
 }
+// Поле пароля со значком «показать пароль» (как на странице входа).
+const ACC_EYE_OPEN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ACC_EYE_CLOSED = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18M10.6 5.1A10.6 10.6 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+function accPwField(id, label, auto){
+  return `<div class="auth-field auth-pw" data-pw-field="${id}"><input type="password" id="${id}" placeholder="${label}" autocomplete="${auto}" maxlength="200" aria-label="${label}">`
+    + `<button type="button" class="auth-eye" data-acc="pw-eye" data-eye="${id}" aria-label="Показать пароль">${ACC_EYE_OPEN}</button></div>`;
+}
+
+// Смена пароля - по шагам, как у больших сервисов (по указанию
+// пользователя): сначала текущий пароль (сервер проверяет), потом новый
+// дважды. «Забыли пароль?» - код на почту аккаунта, затем код и новый
+// пароль. «Отмена» сворачивает форму.
+const accPw = { step: 'current', current: '' };
+const ACC_PW_STEPS = {
+  current: { hint: () => 'Подтвердите, что это вы: введите текущий пароль.', fields: ['siteAccPwOld'], next: 'Далее', forgot: true },
+  send: { hint: email => `Отправим код для смены пароля на почту <b>${escHtml(email)}</b>.`, fields: [], next: 'Отправить код' },
+  code: { hint: email => `Код отправлен на почту <b>${escHtml(email)}</b>. Введите его и новый пароль.`, fields: ['siteAccPwCode', 'siteAccPwNew', 'siteAccPwNew2'], next: 'Сохранить пароль', resend: true },
+  new: { hint: () => 'Придумайте новый пароль - не короче 8 символов.', fields: ['siteAccPwNew', 'siteAccPwNew2'], next: 'Сохранить пароль' },
+};
+function setAccPwStep(step){
+  const form = document.getElementById('siteAccPw');
+  if(!form) return;
+  const st = ACC_PW_STEPS[step], email = accountUserCache ? accountUserCache.email : '';
+  accPw.step = step;
+  document.getElementById('siteAccPwHint').innerHTML = st.hint(email);
+  document.getElementById('siteAccPwMsg').hidden = true;
+  form.querySelectorAll('[data-pw-field]').forEach(f => {
+    f.hidden = !st.fields.includes(f.dataset.pwField);
+    const inp = f.querySelector('input');
+    inp.value = '';
+    if(inp.type === 'text' && f.querySelector('.auth-eye')) inp.type = 'password';
+    const eye = f.querySelector('.auth-eye');
+    if(eye){ eye.innerHTML = ACC_EYE_OPEN; eye.setAttribute('aria-label', 'Показать пароль'); }
+  });
+  document.getElementById('siteAccPwNext').textContent = st.next;
+  document.getElementById('siteAccPwForgot').hidden = !st.forgot;
+  document.getElementById('siteAccPwResend').hidden = !st.resend;
+  const first = st.fields[0] && document.getElementById(st.fields[0]);
+  (first || document.getElementById('siteAccPwNext')).focus();
+}
+function closeAccPw(doneText){
+  const form = document.getElementById('siteAccPw');
+  if(!form) return;
+  form.hidden = true;
+  form.querySelectorAll('input:not([hidden])').forEach(i => { i.value = ''; });
+  accPw.current = '';
+  document.querySelector('#siteAccountBox [data-acc="password-open"]').hidden = false;
+  const done = document.getElementById('siteAccPwDone');
+  done.hidden = !doneText;
+  done.textContent = doneText || '';
+}
+
 function loadAccountDevices(user){
   fetch('/api/auth/devices', { credentials: 'same-origin' }).then(r => r.json())
     .then(d => renderAccountDevices(d.devices || [], user.quota)).catch(() => {});
@@ -295,14 +357,21 @@ function renderAccountDevices(list, q){
 // Действия в разделе «Аккаунт».
 // Формы пароля в настройках аккаунта - отдельные <form> со скрытой почтой,
 // чтобы менеджер паролей браузера не принимал поля размеров и массы груза за
-// логин. Enter в поле пароля - то же, что кнопка формы, страница не
+// логин. Enter в поле пароля - то же, что главная кнопка формы, страница не
 // перезагружается.
+// В форме несколько полей и нет кнопки отправки - браузер сам её по Enter не
+// отправляет, поэтому Enter обрабатывается здесь.
+const accFormMainBtn = form => form.querySelector(form.id === 'siteAccPw' ? '#siteAccPwNext' : '[data-acc="delete-confirm"]');
 document.addEventListener('submit', e => {
   const form = e.target;
   if(form.id !== 'siteAccPw' && form.id !== 'siteAccDelete') return;
   e.preventDefault();
-  const btn = form.querySelector('button[data-acc]');
-  if(btn) btn.click();
+  accFormMainBtn(form).click();
+});
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter' || !e.target.matches || !e.target.matches('#siteAccPw input, #siteAccDelete input')) return;
+  e.preventDefault();
+  accFormMainBtn(e.target.form).click();
 });
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-acc]');
@@ -316,31 +385,63 @@ document.addEventListener('click', async e => {
     el.disabled = true;
     const d = await post('devices/logout', { id: el.dataset.id }).then(r => r.json()).catch(() => ({}));
     if(d.devices && accountUserCache) renderAccountDevices(d.devices, accountUserCache.quota); else el.disabled = false;
+  } else if(act === 'pw-eye'){
+    const inp = document.getElementById(el.dataset.eye), shown = inp.type === 'password';
+    inp.type = shown ? 'text' : 'password';
+    el.innerHTML = shown ? ACC_EYE_CLOSED : ACC_EYE_OPEN;
+    el.setAttribute('aria-label', shown ? 'Скрыть пароль' : 'Показать пароль');
   } else if(act === 'password-open'){
     el.hidden = true;
+    document.getElementById('siteAccPwDone').hidden = true;
     document.getElementById('siteAccPw').hidden = false;
-    document.getElementById('siteAccPwOld').focus();
-  } else if(act === 'password-save'){
-    // Смена пароля: текущий + новый; входы на других устройствах завершаются.
+    setAccPwStep('current');
+  } else if(act === 'password-cancel'){
+    closeAccPw();
+  } else if(act === 'password-forgot'){
+    e.preventDefault();
+    setAccPwStep('send');
+  } else if(act === 'password-resend'){
+    e.preventDefault();
+    setAccPwStep('send');
+  } else if(act === 'password-next'){
     const msg = document.getElementById('siteAccPwMsg');
-    const oldPw = document.getElementById('siteAccPwOld').value, newPw = document.getElementById('siteAccPwNew').value;
-    const show = (t, ok) => { msg.hidden = false; msg.className = 'auth-msg ' + (ok ? 'auth-msg-ok' : 'auth-msg-error'); msg.textContent = t; };
-    if(!oldPw || !newPw) return show('Введите текущий и новый пароль.');
+    const fail = t => { msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = t; };
+    const val = id => document.getElementById(id).value;
+    const step = accPw.step;
+    let body = null;
+    if(step === 'current'){
+      if(!val('siteAccPwOld')) return fail('Введите текущий пароль.');
+    } else if(step === 'new' || step === 'code'){
+      if(step === 'code' && !/^\d{6}$/.test(val('siteAccPwCode').trim())) return fail('Введите 6 цифр кода из письма.');
+      if(val('siteAccPwNew').length < 8) return fail('Новый пароль - не короче 8 символов.');
+      if(val('siteAccPwNew') !== val('siteAccPwNew2')) return fail('Пароли не совпадают.');
+      body = step === 'code' ? { code: val('siteAccPwCode').trim(), password: val('siteAccPwNew') } : { current: accPw.current, password: val('siteAccPwNew') };
+    }
     el.disabled = true;
     try{
-      const r = await post('password', { current: oldPw, password: newPw });
+      const r = step === 'current' ? await post('password', { current: val('siteAccPwOld'), checkOnly: true })
+        : step === 'send' ? await post('password-code')
+        : await post('password', body);
       const d = await r.json();
       if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
-      document.getElementById('siteAccPwOld').value = '';
-      document.getElementById('siteAccPwNew').value = '';
-      show('Пароль изменён. На других устройствах выполнен выход.', true);
-      if(accountUserCache) loadAccountDevices(accountUserCache);
-    }catch(err){ show(err.message); }
+      if(step === 'current'){ accPw.current = val('siteAccPwOld'); setAccPwStep('new'); }
+      else if(step === 'send') setAccPwStep('code');
+      else {
+        closeAccPw('Пароль изменён. На других устройствах выполнен выход.');
+        if(accountUserCache) loadAccountDevices(accountUserCache);
+      }
+    }catch(err){ fail(err.message); }
     el.disabled = false;
   } else if(act === 'delete-open'){
     el.hidden = true;
     document.getElementById('siteAccDelete').hidden = false;
     document.getElementById('siteAccDelPw').focus();
+  } else if(act === 'delete-cancel'){
+    const form = document.getElementById('siteAccDelete');
+    form.hidden = true;
+    document.getElementById('siteAccDelPw').value = '';
+    document.getElementById('siteAccDelMsg').hidden = true;
+    document.querySelector('#siteAccountBox [data-acc="delete-open"]').hidden = false;
   } else if(act === 'delete-confirm'){
     const msg = document.getElementById('siteAccDelMsg'), pw = document.getElementById('siteAccDelPw').value;
     const fail = t => { msg.hidden = false; msg.className = 'auth-msg auth-msg-error'; msg.textContent = t; };

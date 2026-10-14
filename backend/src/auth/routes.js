@@ -20,7 +20,10 @@
 //   POST /api/auth/devices/logout { id }               - выйти на устройстве
 //   POST /api/auth/delete   { password, checkOnly }    - удалить свой аккаунт (checkOnly - только проверить пароль)
 //   POST /api/auth/password { current, password }      - сменить пароль (входы на
-//                                                        других устройствах завершаются)
+//                                                        других устройствах завершаются;
+//                                                        { current, checkOnly } - только проверить
+//                                                        текущий; { code, password } - по коду из письма)
+//   POST /api/auth/password-code                       - код для смены пароля на почту аккаунта
 //
 // Вход, когда устройств уже столько, сколько разрешает подписка (по
 // указанию пользователя): вместо входа - список устройств, пользователь
@@ -380,15 +383,37 @@ router.post('/delete', rateLimit, async (req, res, next) => {
 router.post('/password', rateLimit, async (req, res, next) => {
   try {
     if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+    const user = req.user, sessionId = req.sessionId;
+    // Шаг 1 (checkOnly) - только проверить текущий пароль.
+    if (req.body.checkOnly) {
+      if (!(await verifyPassword(String(req.body.current || ''), user.passHash))) {
+        return res.status(401).json({ error: 'Неверный пароль.' });
+      }
+      return res.json({ ok: true });
+    }
     const pErr = checkPassword(req.body.password);
     if (pErr) return res.status(400).json({ error: pErr });
-    const user = req.user, sessionId = req.sessionId;
-    if (!(await verifyPassword(String(req.body.current || ''), user.passHash))) {
+    // Подтверждение - текущий пароль или код из письма («Забыли пароль?»,
+    // /password-code).
+    if (req.body.code !== undefined) {
+      const err = checkCode(user.email, 'reset', req.body.code);
+      if (err) return res.status(400).json({ error: err });
+    } else if (!(await verifyPassword(String(req.body.current || ''), user.passHash))) {
       return res.status(401).json({ error: 'Текущий пароль указан неверно.' });
     }
     const passHash = await hashPassword(req.body.password);
-    store.updateUser(user, { passHash });
+    store.updateUser(user, { passHash, loginFails: 0, loginLockUntil: 0 });
     store.listUserSessions(user.id).filter(s => s.id !== sessionId).forEach(s => store.deleteSessionById(user.id, s.id));
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+// «Забыли пароль?» в настройках вошедшего: код восстановления - на почту
+// аккаунта (без капчи - человек уже вошёл; лимиты писем - как у кодов).
+router.post('/password-code', rateLimit, async (req, res, next) => {
+  try {
+    if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+    const err = await issueCode(req.user.email, 'reset', req.ip);
+    if (err) return res.status(429).json({ error: err });
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
