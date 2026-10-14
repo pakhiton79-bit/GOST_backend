@@ -89,26 +89,10 @@ function toNum(v) {
 }
 
 // manualOverrides - правки толщины, введённые пользователем прямо в таблице
-// деталей, - объект { ключ: число }. На входе в API оставляем только
-// конечные положительные числа под известными ключами - произвольные поля из
-// тела запроса дальше в расчёт не пропускаются.
-const I1_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask'];
-// I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
-// computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
-// изолированные.
-const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value'];
-// II-1: skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina каскадные
-// (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
-// изолированные.
-const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
-// III-1: tTorFrame/tBokFrame - каркас торцевого/бокового щита (стойки и
-// горизонтальные брусья), tLidBeam - брусья крышки, tDnoBeam - продольный
-// брус дна; остальные - как у II-1.
-const III1_OVERRIDE_KEYS = ['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11'];
-// «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js и
-// src/iii1/compute.js).
-const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
-const III1_FINE_THICKNESS_KEYS = ['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam'];
+// деталей, и fineThickness - «Тонкая настройка» толщин, - объекты
+// { ключ: число }. На входе в API оставляем только конечные положительные
+// числа под известными ключами типа (overrides/fine в CALC_TYPES ниже) -
+// произвольные поля из тела запроса дальше в расчёт не пропускаются.
 function sanitizeManualOverrides(obj, allowedKeys) {
   const result = {};
   if (!obj || typeof obj !== 'object') return result;
@@ -123,68 +107,110 @@ function sanitizeManualOverrides(obj, allowedKeys) {
 // расчёт не попадает.
 const num = k => [k, b => toNum(b[k])];
 const flag = k => [k, b => !!b[k]];
-const DIMS = ['L', 'W', 'H', 'MASS'].map(num);
-const TIME = ['baseProductivity', 'woodDensity', 'timeCoeff'].map(num);
-const PLANK_LAYOUT = [
-  ['plankLayoutMode', b => (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null],
-  num('plankLayoutValue'),
-];
+const choice = k => [k, b => b[k]];
+const plankLayoutMode = ['plankLayoutMode', b => (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null];
 const thicknesses = options => ['availableThicknesses', b => sanitizeThicknesses(b.availableThicknesses, options)];
+const widths = options => ['availableWidths', b => sanitizeThicknesses(b.availableWidths, options)];
+const species = ['species', b => typeof b.species === 'string' ? b.species : 'conifer'];
 const overrides = keys => ['manualOverrides', b => sanitizeManualOverrides(b.manualOverrides, keys)];
 const fine = keys => ['fineThickness', b => sanitizeManualOverrides(b.fineThickness, keys)];
-const choice = k => [k, b => b[k]];
-
-const I1_FIELDS = [...DIMS, flag('skidEnabled'), num('skidThicknessRaw'), flag('roundBoardWidths'),
-  flag('removeLidBottomRaskosina'), flag('addRaskosina'), flag('xRaskosina'), flag('addEndTape')];
-const I3_FIELDS = [choice('variant'), ...DIMS, flag('optimizeSizes'), flag('removeFloorBoards'), flag('removeSkidBoards'),
-  flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'), flag('addRaskosina'), flag('addEndTape')];
-const I3_TAIL = [...PLANK_LAYOUT, num('beamGapValue'), num('beamCountValue'), thicknesses(), overrides(I3_OVERRIDE_KEYS), ...TIME];
-const II1_FIELDS = [...DIMS, choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'), flag('removeFloorBoards'),
-  flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'), flag('addRaskosina')];
-const II1_POSTS = [num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount')];
-const II1_TAIL = [thicknesses(), overrides(II1_OVERRIDE_KEYS), fine(II1_FINE_THICKNESS_KEYS), ...TIME];
-const G2991_FIELDS = [...DIMS, ['species', b => typeof b.species === 'string' ? b.species : 'conifer'],
-  flag('packet'), flag('concentrated'), flag('noLid')];
-const G2991_TAIL = [flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS),
-  ['availableWidths', b => sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS)], num('mainWidth'), ...TIME];
 
 // Типы расчёта: функция расчёта, разделы таблицы деталей и их множители в
 // итоговом объёме (щиты торцевой/боковой - по 2 шт.; 0 - не входит в объём:
 // endTape - лента обшивки торцов, parchment - пергамин, bolts - болты),
 // обязательный выбор крепления (variant/fasteningType) и поля запроса.
+// У каждого типа - свой полный список полей и ключей правок, без общих
+// кусков: правка одного типа не задевает другие.
+// Ключи правок толщин в таблице: у I-3/I-4 wallValue/t12Value/t21Value/
+// t10Value каскадные (см. ov() в computeGost10198I3), t9Value/t11Value
+// (полоз/торцовый брус дна) - изолированные; у II-1/II-2 так же
+// skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina и t9/t11; у
+// III-1 tTorFrame/tBokFrame - каркас торцевого/бокового щита, tLidBeam -
+// брусья крышки, tDnoBeam - продольный брус дна.
 const SKID_CHOICE = ['skid', 'floor_boards'];
 const CALC_TYPES = {
   i1: { compute: computeGost10198I1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 },
-    fields: [...I1_FIELDS, flag('addParchment'), ...PLANK_LAYOUT, thicknesses(), overrides(I1_OVERRIDE_KEYS), ...TIME] },
+    fields: [num('L'), num('W'), num('H'), num('MASS'), flag('skidEnabled'), num('skidThicknessRaw'), flag('roundBoardWidths'),
+      flag('removeLidBottomRaskosina'), flag('addRaskosina'), flag('xRaskosina'), flag('addEndTape'), flag('addParchment'),
+      plankLayoutMode, num('plankLayoutValue'), thicknesses(),
+      overrides(['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
   // I-2 - тот же ящик, что I-1, но обшивка с промежутками (boardGapPercent), без пергамина.
   i2: { compute: computeGost10198I2, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0 },
-    fields: [...I1_FIELDS, ...PLANK_LAYOUT, thicknesses(), overrides(I1_OVERRIDE_KEYS), ...TIME, num('boardGapPercent')] },
-  i3: { compute: computeGost10198I3, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 },
-    choice: 'variant', fields: [...I3_FIELDS, flag('addParchment'), ...I3_TAIL] },
+    fields: [num('L'), num('W'), num('H'), num('MASS'), flag('skidEnabled'), num('skidThicknessRaw'), flag('roundBoardWidths'),
+      flag('removeLidBottomRaskosina'), flag('addRaskosina'), flag('xRaskosina'), flag('addEndTape'),
+      plankLayoutMode, num('plankLayoutValue'), thicknesses(),
+      overrides(['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff'), num('boardGapPercent')] },
+  i3: { compute: computeGost10198I3, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }, choice: 'variant',
+    fields: [choice('variant'), num('L'), num('W'), num('H'), num('MASS'), flag('optimizeSizes'), flag('removeFloorBoards'),
+      flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'),
+      flag('addRaskosina'), flag('addEndTape'), flag('addParchment'), plankLayoutMode, num('plankLayoutValue'),
+      num('beamGapValue'), num('beamCountValue'), thicknesses(),
+      overrides(['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
   // I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapMax), без пергамина.
-  i4: { compute: computeGost10198I4, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 },
-    choice: 'variant', fields: [...I3_FIELDS, ...I3_TAIL, num('boardGapMax')] },
-  ii1: { compute: computeGost10198II1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 },
-    choice: 'fasteningType', fields: [...II1_FIELDS, flag('addParchment'), ...II1_POSTS, ...II1_TAIL] },
-  // II-1 оптимальный - независимая копия II-1 (src/ii1n), запрос тот же.
-  ii1n: { compute: computeGost10198II1N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 },
-    choice: 'fasteningType', fields: [...II1_FIELDS, flag('addParchment'), ...II1_POSTS, ...II1_TAIL] },
+  i4: { compute: computeGost10198I4, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 }, choice: 'variant',
+    fields: [choice('variant'), num('L'), num('W'), num('H'), num('MASS'), flag('optimizeSizes'), flag('removeFloorBoards'),
+      flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'),
+      flag('addRaskosina'), flag('addEndTape'), plankLayoutMode, num('plankLayoutValue'),
+      num('beamGapValue'), num('beamCountValue'), thicknesses(),
+      overrides(['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff'), num('boardGapMax')] },
+  ii1: { compute: computeGost10198II1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'),
+      flag('removeFloorBoards'), flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'),
+      flag('xRaskosina'), flag('addRaskosina'), flag('addParchment'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), thicknesses(),
+      overrides(['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // II-1 оптимальный - независимая копия II-1 (src/ii1n).
+  ii1n: { compute: computeGost10198II1N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'),
+      flag('removeFloorBoards'), flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'),
+      flag('xRaskosina'), flag('addRaskosina'), flag('addParchment'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), thicknesses(),
+      overrides(['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
   // II-2 - тот же ящик, что II-1, но обшивка с промежутками (boardGapMax), без пергамина.
-  ii2: { compute: computeGost10198II2, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 },
-    choice: 'fasteningType', fields: [...II1_FIELDS, ...II1_POSTS, num('boardGapMax'), ...II1_TAIL] },
-  // II-2 оптимальный - независимая копия II-2 (src/ii2n), запрос тот же.
-  ii2n: { compute: computeGost10198II2N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 },
-    choice: 'fasteningType', fields: [...II1_FIELDS, ...II1_POSTS, num('boardGapMax'), ...II1_TAIL] },
-  iii1: { compute: computeGost10198III1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 },
-    choice: 'fasteningType', fields: [...DIMS, choice('fasteningType'), flag('removeFloorBoards'), flag('removeSkidBoards'),
+  ii2: { compute: computeGost10198II2, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'),
+      flag('removeFloorBoards'), flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'),
+      flag('xRaskosina'), flag('addRaskosina'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), num('boardGapMax'), thicknesses(),
+      overrides(['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // II-2 оптимальный - независимая копия II-2 (src/ii2n).
+  ii2n: { compute: computeGost10198II2N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'),
+      flag('removeFloorBoards'), flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'),
+      flag('xRaskosina'), flag('addRaskosina'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), num('boardGapMax'), thicknesses(),
+      overrides(['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // III-1 и III-1 оптимальный (optimized).
+  iii1: { compute: computeGost10198III1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('removeFloorBoards'), flag('removeSkidBoards'),
       flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('bulkCargo'), flag('addRaskosina'),
-      flag('xRaskosina'), flag('addParchment'), flag('optimized'), ...II1_POSTS, num('lidCrossBeamAxis'),
-      thicknesses(), overrides(III1_OVERRIDE_KEYS), fine(III1_FINE_THICKNESS_KEYS), ...TIME] },
-  // ГОСТ 2991-85, типы I и II-1.
+      flag('xRaskosina'), flag('addParchment'), flag('optimized'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), num('lidCrossBeamAxis'), thicknesses(),
+      overrides(['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // ГОСТ 2991-85, тип I.
   g2991i: { compute: computeGost2991I, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
-    fields: [...G2991_FIELDS, ...G2991_TAIL] },
+    fields: [num('L'), num('W'), num('H'), num('MASS'), species, flag('packet'), flag('concentrated'), flag('noLid'),
+      flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS), widths(G2991_WIDTH_OPTIONS), num('mainWidth'),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // ГОСТ 2991-85, тип II-1.
   g2991ii1: { compute: computeGost2991II1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
-    fields: [...G2991_FIELDS, flag('verticalEnd'), ...G2991_TAIL] },
+    fields: [num('L'), num('W'), num('H'), num('MASS'), species, flag('packet'), flag('concentrated'), flag('noLid'),
+      flag('verticalEnd'), flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS), widths(G2991_WIDTH_OPTIONS), num('mainWidth'),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
 };
 
 // Расчёты - только после входа и в пределах лимита подписки.
