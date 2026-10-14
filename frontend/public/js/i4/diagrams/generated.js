@@ -25,12 +25,6 @@ function i3render(title, IW, IH, shapes, records, join, strokeK){
 }
 const i3f = v => v.toFixed(1);
 function i3rect(x, y, w, h){ return `<rect x="${i3f(x)}" y="${i3f(y)}" width="${i3f(w)}" height="${i3f(h)}"/>`; }
-// Раскосина-полоса в прямоугольнике (l..r, top..bot): rising - «/».
-function i3band(l, r, top, bot, rising, T){
-  return rising
-    ? `<polygon points="${i3f(l)},${i3f(bot-T)} ${i3f(r)},${i3f(top)} ${i3f(r)},${i3f(top+T)} ${i3f(l)},${i3f(bot)}"/>`
-    : `<polygon points="${i3f(l)},${i3f(top)} ${i3f(r)},${i3f(bot-T)} ${i3f(r)},${i3f(bot)} ${i3f(l)},${i3f(top+T)}"/>`;
-}
 // Раскосина - полоса шириной PW (как у планок) из угла в угол секции,
 // обрезанная по секции. hTop/hBot - есть ли у верхней/нижней кромки секции
 // горизонтальная планка (по указанию пользователя): если есть - конец

@@ -150,12 +150,8 @@
 .lp-compare td:first-child{color:var(--ink);font-weight:500;}
 .lp-compare .lp-us{background:var(--accent-wash);color:var(--ink);font-weight:600;}
 .lp-compare th.lp-us{color:var(--accent);font-size:15px;}
-.lp-yes, .lp-no{position:relative;display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px;}
-.lp-yes{border-radius:50%;background:var(--accent);}
+.lp-yes{position:relative;display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px;border-radius:50%;background:var(--accent);}
 .lp-yes::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg);}
-.lp-no::before, .lp-no::after{content:'';position:absolute;left:7px;top:2px;width:2px;height:12px;border-radius:1px;background:var(--ink-soft);opacity:.6;}
-.lp-no::before{transform:rotate(45deg);}
-.lp-no::after{transform:rotate(-45deg);}
 
 /* Типы ящиков. */
 .lp-types{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}

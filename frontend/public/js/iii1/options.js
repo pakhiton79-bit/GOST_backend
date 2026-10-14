@@ -2,8 +2,8 @@
 // крепления груза, взаимоисключающие галочки, запоминание галочек и
 // расположения досок крышки в localStorage (ключи - свои для типа III-1).
 // Оптимальный вариант III-1 (страница iii1-opt.html задаёт
-// window.III1_OPTIMIZED) - та же страница со своими ключами: у III-1 ключи
-// прежние (gost10198-iii1-...), у оптимального - gost10198-iii1o-...
+// window.III1_OPTIMIZED) - та же страница со своими ключами: у III-1 -
+// gost10198-iii1-..., у оптимального - gost10198-iii1o-...
 const III1_OPTIMIZED = !!window.III1_OPTIMIZED;
 const III1_STORAGE_TYPE = III1_OPTIMIZED ? 'iii1o' : 'iii1';
 const THICKNESS_STORAGE_KEY = `gost10198-${III1_STORAGE_TYPE}-available-thickness`;

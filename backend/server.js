@@ -1,9 +1,7 @@
-// ГОСТ 10198-91 - бэкенд: чистые расчётные формулы (тип I-3, тип I-1, тип
-// II-1) за HTTP API + раздача статического фронтенда (frontend/public).
-// Расчётная логика перенесена из src/app.js, src/i1/calc.js и src/ii1/calc.js
-// фронтенд-only репозитория pakhiton79-bit/GOST_10198-91 (см. комментарии в
-// src/i3/compute.js, src/i1/compute.js и src/ii1/compute.js) - сама методика
-// ГОСТа не менялась.
+// Тара+ - бэкенд: расчёты ящиков по ГОСТ 10198-91 (I-1, I-2, I-3, I-4, II-1,
+// II-2 и их оптимальные версии, III-1) и ГОСТ 2991-85 (I, II-1) за HTTP API
+// (src/<тип>/compute.js), аккаунты и подписки (src/auth), раздача
+// фронтенда (frontend/public).
 const path = require('path');
 const express = require('express');
 
@@ -29,26 +27,15 @@ const { publicPlans } = require('./src/auth/plans');
 const { attachUser } = require('./src/auth/session');
 const { AVAILABLE_THICKNESS_OPTIONS, applyTableEdits, sanitizeTableEdits, computeNormaVremeni } = require('./src/helpers');
 
-// Разделы таблицы деталей и их множители в итоговом объёме (щиты
-// торцевой/боковой - по 2 шт.) - для ручных правок таблицы (tableEdits).
-const I1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
-const I2_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-2 нет)
-const I3_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 }; // endTape - лента обшивки торцов, parchment - пергамин, в объём не входят
-const I4_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 }; // endTape - лента обшивки торцов, в объём не входит (пергамина у I-4 нет)
-const II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 }; // parchment - пергамин, в объём не входит
-const II2_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 };
-const III1_TABLE_SECTIONS = { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }; // bolts - болты, parchment - пергамин, в объём не входят
-
-// Ручные правки таблицы деталей (по указанию пользователя - учитываются
-// только при нажатии "Рассчитать", т.е. здесь, на сервере): подставляются в
-// строки результата, объём/норма времени (и масса ящика у I-1)
-// пересчитываются с их учётом.
-function withTableEdits(result, rawEdits, sections, input, extra) {
+// Ручные правки таблицы деталей учитываются только при нажатии
+// "Рассчитать", т.е. здесь, на сервере: подставляются в строки результата,
+// объём, норма времени и масса ящика пересчитываются с их учётом.
+function withTableEdits(result, rawEdits, sections, input) {
   if (!result || result.error) return result;
   const edits = sanitizeTableEdits(rawEdits, sections);
   if (applyTableEdits(result, edits, sections)) {
     result.normaVremeni = computeNormaVremeni(result.totalVolume, input.baseProductivity, input.timeCoeff);
-    if (extra) extra(result);
+    result.crateMass = result.totalVolume * result.woodDensity;
   }
   return result;
 }
@@ -89,13 +76,8 @@ app.use('/api/feedback', feedbackRoutes);
 app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
 // Проверка, что сервер жив (для самопинга ниже и мониторинга).
 app.get('/api/health', (req, res) => res.json({ ok: true }));
-// Расчёты - только после входа и в пределах лимита подписки.
-// Не больше 60 расчётов в минуту с одного IP (сверх - ожидание, см. throttle.js).
-app.post('/api/:type/calculate', makeThrottle(), calcQuota);
-
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -
-// на входе в API фильтруем до допустимого сортаментного ряда и сортируем,
-// как это раньше делал loadAvailableThicknesses() во фронтенд-коде.
+// на входе в API фильтруем до допустимого сортаментного ряда и сортируем.
 function sanitizeThicknesses(arr, options) {
   if (!Array.isArray(arr)) return [];
   const allowed = options || AVAILABLE_THICKNESS_OPTIONS;
@@ -107,26 +89,24 @@ function toNum(v) {
 }
 
 // manualOverrides - правки толщины, введённые пользователем прямо в таблице
-// деталей (см. src/i1/calc.js/src/app.js исходного репозитория) - объект
-// { ключ: число }. На входе в API оставляем только конечные положительные
-// числа под известными ключами - произвольные поля из тела запроса дальше в
-// расчёт не пропускаются.
+// деталей, - объект { ключ: число }. На входе в API оставляем только
+// конечные положительные числа под известными ключами - произвольные поля из
+// тела запроса дальше в расчёт не пропускаются.
 const I1_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask'];
-const I2_OVERRIDE_KEYS = ['t9Value', 'tDnoPlanka', 'tDnoBoard', 'tDnoRask', 'tKrPlanka', 'tKrBoard', 'tKrRask', 'tBokPlanka', 'tBokBoard', 'tBokRask', 'tTorPlanka', 'tTorBoard', 'tTorRask'];
 // I-3: wallValue/t12Value/t21Value/t10Value каскадные (см. ov() в
 // computeGost10198I3), t9Value/t11Value (полоз/торцовый брус дна) -
-// изолированные (полное объяснение см. computeGost10198I3).
+// изолированные.
 const I3_OVERRIDE_KEYS = ['wallValue', 't9Value', 't10Value', 't11Value', 't12Value', 't21Value'];
-const I4_OVERRIDE_KEYS = I3_OVERRIDE_KEYS; // I-4 - копия I-3, ключи те же
 // II-1: skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina каскадные
 // (см. ov() в computeGost10198II1), t9/t11 (полоз/торцовый брус дна) -
-// изолированные (тот же принцип, что и у I3_OVERRIDE_KEYS выше).
+// изолированные.
 const II1_OVERRIDE_KEYS = ['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11'];
 // III-1: tTorFrame/tBokFrame - каркас торцевого/бокового щита (стойки и
 // горизонтальные брусья), tLidBeam - брусья крышки, tDnoBeam - продольный
 // брус дна; остальные - как у II-1.
 const III1_OVERRIDE_KEYS = ['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11'];
-// II-1, «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js).
+// «Тонкая настройка» толщин (см. FINE_THICKNESS_KEYS в src/ii1/compute.js и
+// src/iii1/compute.js).
 const II1_FINE_THICKNESS_KEYS = ['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam'];
 const III1_FINE_THICKNESS_KEYS = ['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam'];
 function sanitizeManualOverrides(obj, allowedKeys) {
@@ -139,330 +119,86 @@ function sanitizeManualOverrides(obj, allowedKeys) {
   return result;
 }
 
-app.post('/api/i3/calculate', (req, res) => {
+// Поля тела запроса расчёта: [имя, разбор]. Всё, чего нет в списке типа, в
+// расчёт не попадает.
+const num = k => [k, b => toNum(b[k])];
+const flag = k => [k, b => !!b[k]];
+const DIMS = ['L', 'W', 'H', 'MASS'].map(num);
+const TIME = ['baseProductivity', 'woodDensity', 'timeCoeff'].map(num);
+const PLANK_LAYOUT = [
+  ['plankLayoutMode', b => (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null],
+  num('plankLayoutValue'),
+];
+const thicknesses = options => ['availableThicknesses', b => sanitizeThicknesses(b.availableThicknesses, options)];
+const overrides = keys => ['manualOverrides', b => sanitizeManualOverrides(b.manualOverrides, keys)];
+const fine = keys => ['fineThickness', b => sanitizeManualOverrides(b.fineThickness, keys)];
+const choice = k => [k, b => b[k]];
+
+const I1_FIELDS = [...DIMS, flag('skidEnabled'), num('skidThicknessRaw'), flag('roundBoardWidths'),
+  flag('removeLidBottomRaskosina'), flag('addRaskosina'), flag('xRaskosina'), flag('addEndTape')];
+const I3_FIELDS = [choice('variant'), ...DIMS, flag('optimizeSizes'), flag('removeFloorBoards'), flag('removeSkidBoards'),
+  flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'), flag('addRaskosina'), flag('addEndTape')];
+const I3_TAIL = [...PLANK_LAYOUT, num('beamGapValue'), num('beamCountValue'), thicknesses(), overrides(I3_OVERRIDE_KEYS), ...TIME];
+const II1_FIELDS = [...DIMS, choice('fasteningType'), flag('bulkCargo'), flag('optimizeSizes'), flag('removeFloorBoards'),
+  flag('removeSkidBoards'), flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('xRaskosina'), flag('addRaskosina')];
+const II1_POSTS = [num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount')];
+const II1_TAIL = [thicknesses(), overrides(II1_OVERRIDE_KEYS), fine(II1_FINE_THICKNESS_KEYS), ...TIME];
+const G2991_FIELDS = [...DIMS, ['species', b => typeof b.species === 'string' ? b.species : 'conifer'],
+  flag('packet'), flag('concentrated'), flag('noLid')];
+const G2991_TAIL = [flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS),
+  ['availableWidths', b => sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS)], num('mainWidth'), ...TIME];
+
+// Типы расчёта: функция расчёта, разделы таблицы деталей и их множители в
+// итоговом объёме (щиты торцевой/боковой - по 2 шт.; 0 - не входит в объём:
+// endTape - лента обшивки торцов, parchment - пергамин, bolts - болты),
+// обязательный выбор крепления (variant/fasteningType) и поля запроса.
+const SKID_CHOICE = ['skid', 'floor_boards'];
+const CALC_TYPES = {
+  i1: { compute: computeGost10198I1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 },
+    fields: [...I1_FIELDS, flag('addParchment'), ...PLANK_LAYOUT, thicknesses(), overrides(I1_OVERRIDE_KEYS), ...TIME] },
+  // I-2 - тот же ящик, что I-1, но обшивка с промежутками (boardGapPercent), без пергамина.
+  i2: { compute: computeGost10198I2, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0 },
+    fields: [...I1_FIELDS, ...PLANK_LAYOUT, thicknesses(), overrides(I1_OVERRIDE_KEYS), ...TIME, num('boardGapPercent')] },
+  i3: { compute: computeGost10198I3, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0, parchment: 0 },
+    choice: 'variant', fields: [...I3_FIELDS, flag('addParchment'), ...I3_TAIL] },
+  // I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapMax), без пергамина.
+  i4: { compute: computeGost10198I4, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, endTape: 0 },
+    choice: 'variant', fields: [...I3_FIELDS, ...I3_TAIL, num('boardGapMax')] },
+  ii1: { compute: computeGost10198II1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 },
+    choice: 'fasteningType', fields: [...II1_FIELDS, flag('addParchment'), ...II1_POSTS, ...II1_TAIL] },
+  // II-1 оптимальный - независимая копия II-1 (src/ii1n), запрос тот же.
+  ii1n: { compute: computeGost10198II1N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, parchment: 0 },
+    choice: 'fasteningType', fields: [...II1_FIELDS, flag('addParchment'), ...II1_POSTS, ...II1_TAIL] },
+  // II-2 - тот же ящик, что II-1, но обшивка с промежутками (boardGapMax), без пергамина.
+  ii2: { compute: computeGost10198II2, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 },
+    choice: 'fasteningType', fields: [...II1_FIELDS, ...II1_POSTS, num('boardGapMax'), ...II1_TAIL] },
+  // II-2 оптимальный - независимая копия II-2 (src/ii2n), запрос тот же.
+  ii2n: { compute: computeGost10198II2N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2 },
+    choice: 'fasteningType', fields: [...II1_FIELDS, ...II1_POSTS, num('boardGapMax'), ...II1_TAIL] },
+  iii1: { compute: computeGost10198III1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 },
+    choice: 'fasteningType', fields: [...DIMS, choice('fasteningType'), flag('removeFloorBoards'), flag('removeSkidBoards'),
+      flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('bulkCargo'), flag('addRaskosina'),
+      flag('xRaskosina'), flag('addParchment'), flag('optimized'), ...II1_POSTS, num('lidCrossBeamAxis'),
+      thicknesses(), overrides(III1_OVERRIDE_KEYS), fine(III1_FINE_THICKNESS_KEYS), ...TIME] },
+  // ГОСТ 2991-85, типы I и II-1.
+  g2991i: { compute: computeGost2991I, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
+    fields: [...G2991_FIELDS, ...G2991_TAIL] },
+  g2991ii1: { compute: computeGost2991II1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
+    fields: [...G2991_FIELDS, flag('verticalEnd'), ...G2991_TAIL] },
+};
+
+// Расчёты - только после входа и в пределах лимита подписки.
+// Не больше 60 расчётов в минуту с одного IP (сверх - ожидание, см. throttle.js).
+app.post('/api/:type/calculate', makeThrottle(), calcQuota, (req, res, next) => {
+  const type = Object.hasOwn(CALC_TYPES, req.params.type) ? CALC_TYPES[req.params.type] : null;
+  if (!type) return next();
   const b = req.body || {};
-  if (b.variant !== 'skid' && b.variant !== 'floor_boards') {
-    return res.status(400).json({ error: 'variant должен быть "skid" или "floor_boards".' });
+  if (type.choice && !SKID_CHOICE.includes(b[type.choice])) {
+    return res.status(400).json({ error: `${type.choice} должен быть "skid" или "floor_boards".` });
   }
-  const input = {
-    variant: b.variant,
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    addEndTape: !!b.addEndTape,
-    addParchment: !!b.addParchment,
-    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
-    plankLayoutValue: toNum(b.plankLayoutValue),
-    beamGapValue: toNum(b.beamGapValue),
-    beamCountValue: toNum(b.beamCountValue),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I3_OVERRIDE_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198I3(input), b.tableEdits, I3_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// ГОСТ 2991-85, тип I. Правки таблицы деталей - как у II-1.
-const G2991_I_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 };
-app.post('/api/g2991i/calculate', (req, res) => {
-  const b = req.body || {};
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    species: typeof b.species === 'string' ? b.species : 'conifer',
-    packet: !!b.packet,
-    concentrated: !!b.concentrated,
-    noLid: !!b.noLid,
-    roundBoardWidths: !!b.roundBoardWidths,
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
-    availableWidths: sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS),
-    mainWidth: toNum(b.mainWidth),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost2991I(input), b.tableEdits, G2991_I_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// ГОСТ 2991-85, тип II-1. Правки таблицы деталей - как у ГОСТ 10198-91
-// (ширины и всё остальное, по указанию пользователя).
-const G2991_II1_TABLE_SECTIONS = { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 };
-app.post('/api/g2991ii1/calculate', (req, res) => {
-  const b = req.body || {};
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    species: typeof b.species === 'string' ? b.species : 'conifer',
-    packet: !!b.packet,
-    concentrated: !!b.concentrated,
-    noLid: !!b.noLid,
-    verticalEnd: !!b.verticalEnd,
-    roundBoardWidths: !!b.roundBoardWidths,
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses, G2991_THICKNESS_OPTIONS),
-    availableWidths: sanitizeThicknesses(b.availableWidths, G2991_WIDTH_OPTIONS),
-    mainWidth: toNum(b.mainWidth),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost2991II1(input), b.tableEdits, G2991_II1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// Тип I-4 - тот же ящик, что I-3, но обшивка с промежутками (boardGapMax).
-app.post('/api/i4/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.variant !== 'skid' && b.variant !== 'floor_boards') {
-    return res.status(400).json({ error: 'variant должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    variant: b.variant,
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    addEndTape: !!b.addEndTape,
-    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
-    plankLayoutValue: toNum(b.plankLayoutValue),
-    beamGapValue: toNum(b.beamGapValue),
-    beamCountValue: toNum(b.beamCountValue),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I4_OVERRIDE_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-    boardGapMax: toNum(b.boardGapMax),
-  };
-  res.json(withTableEdits(computeGost10198I4(input), b.tableEdits, I4_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-app.post('/api/i1/calculate', (req, res) => {
-  const b = req.body || {};
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    skidEnabled: !!b.skidEnabled,
-    skidThicknessRaw: toNum(b.skidThicknessRaw),
-    roundBoardWidths: !!b.roundBoardWidths,
-    removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    xRaskosina: !!b.xRaskosina,
-    addEndTape: !!b.addEndTape,
-    addParchment: !!b.addParchment,
-    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
-    plankLayoutValue: toNum(b.plankLayoutValue),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I1_OVERRIDE_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198I1(input), b.tableEdits, I1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// Тип I-2 - тот же ящик, что I-1, но обшивка с промежутками (boardGapPercent).
-app.post('/api/i2/calculate', (req, res) => {
-  const b = req.body || {};
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    skidEnabled: !!b.skidEnabled,
-    skidThicknessRaw: toNum(b.skidThicknessRaw),
-    roundBoardWidths: !!b.roundBoardWidths,
-    removeLidBottomRaskosina: !!b.removeLidBottomRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    xRaskosina: !!b.xRaskosina,
-    addEndTape: !!b.addEndTape,
-    plankLayoutMode: (b.plankLayoutMode === 'count' || b.plankLayoutMode === 'gap') ? b.plankLayoutMode : null,
-    plankLayoutValue: toNum(b.plankLayoutValue),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, I2_OVERRIDE_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-    boardGapPercent: toNum(b.boardGapPercent),
-  };
-  res.json(withTableEdits(computeGost10198I2(input), b.tableEdits, I2_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-app.post('/api/ii1/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
-    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    fasteningType: b.fasteningType,
-    bulkCargo: !!b.bulkCargo,
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    addParchment: !!b.addParchment,
-    torecPostCount: toNum(b.torecPostCount),
-    bokPostCount: toNum(b.bokPostCount),
-    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
-    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198II1(input), b.tableEdits, II1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// Тип II-1 (новая версия) - независимая копия II-1 для доработок (src/ii1n).
-app.post('/api/ii1n/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
-    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    fasteningType: b.fasteningType,
-    bulkCargo: !!b.bulkCargo,
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    addParchment: !!b.addParchment,
-    torecPostCount: toNum(b.torecPostCount),
-    bokPostCount: toNum(b.bokPostCount),
-    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
-    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198II1N(input), b.tableEdits, II1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// Тип II-2 - тот же ящик, что II-1, но обшивка с промежутками (boardGapMax);
-// пергамина нет. Ручные толщины и «Тонкая настройка» - те же ключи, что у II-1.
-app.post('/api/ii2/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
-    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    fasteningType: b.fasteningType,
-    bulkCargo: !!b.bulkCargo,
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    torecPostCount: toNum(b.torecPostCount),
-    bokPostCount: toNum(b.bokPostCount),
-    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
-    boardGapMax: toNum(b.boardGapMax),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
-    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198II2(input), b.tableEdits, II2_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-// Тип II-2 (оптимальный) - независимая копия II-2 с изменениями оптимального
-// II-1 (src/ii2n); тело запроса - как у II-2.
-app.post('/api/ii2n/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
-    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    fasteningType: b.fasteningType,
-    bulkCargo: !!b.bulkCargo,
-    optimizeSizes: !!b.optimizeSizes,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    xRaskosina: !!b.xRaskosina,
-    addRaskosina: !!b.addRaskosina,
-    torecPostCount: toNum(b.torecPostCount),
-    bokPostCount: toNum(b.bokPostCount),
-    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
-    boardGapMax: toNum(b.boardGapMax),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, II1_OVERRIDE_KEYS),
-    fineThickness: sanitizeManualOverrides(b.fineThickness, II1_FINE_THICKNESS_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198II2N(input), b.tableEdits, II2_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
-});
-
-app.post('/api/iii1/calculate', (req, res) => {
-  const b = req.body || {};
-  if (b.fasteningType !== 'skid' && b.fasteningType !== 'floor_boards') {
-    return res.status(400).json({ error: 'fasteningType должен быть "skid" или "floor_boards".' });
-  }
-  const input = {
-    L: toNum(b.L), W: toNum(b.W), H: toNum(b.H), MASS: toNum(b.MASS),
-    fasteningType: b.fasteningType,
-    removeFloorBoards: !!b.removeFloorBoards,
-    removeSkidBoards: !!b.removeSkidBoards,
-    roundBoardWidths: !!b.roundBoardWidths,
-    solidRigidBase: !!b.solidRigidBase,
-    forkliftLoading: !!b.forkliftLoading,
-    bulkCargo: !!b.bulkCargo,
-    addRaskosina: !!b.addRaskosina,
-    xRaskosina: !!b.xRaskosina,
-    addParchment: !!b.addParchment,
-    optimized: !!b.optimized,
-    torecPostCount: toNum(b.torecPostCount),
-    bokPostCount: toNum(b.bokPostCount),
-    lidCrossBeamCount: toNum(b.lidCrossBeamCount),
-    lidCrossBeamAxis: toNum(b.lidCrossBeamAxis),
-    availableThicknesses: sanitizeThicknesses(b.availableThicknesses),
-    manualOverrides: sanitizeManualOverrides(b.manualOverrides, III1_OVERRIDE_KEYS),
-    fineThickness: sanitizeManualOverrides(b.fineThickness, III1_FINE_THICKNESS_KEYS),
-    baseProductivity: toNum(b.baseProductivity),
-    woodDensity: toNum(b.woodDensity),
-    timeCoeff: toNum(b.timeCoeff),
-  };
-  res.json(withTableEdits(computeGost10198III1(input), b.tableEdits, III1_TABLE_SECTIONS, input,
-    r => { r.crateMass = r.totalVolume * r.woodDensity; }));
+  const input = {};
+  type.fields.forEach(([k, parse]) => { input[k] = parse(b); });
+  res.json(withTableEdits(type.compute(input), b.tableEdits, type.sections, input));
 });
 
 // Очистка хранилища аккаунтов от устаревших записей - при запуске и раз в
@@ -491,8 +227,8 @@ setInterval(runAutoRenewNotices, 3600 * 1000).unref();
 const FRONTEND_DIR = path.join(__dirname, '..', 'frontend', 'public');
 app.use(express.static(FRONTEND_DIR));
 
-// Ошибки: посетителю - короткий текст без подробностей (раньше Express
-// показывал стек с путями к файлам), подробности - только в журнал сервера.
+// Ошибки: посетителю - короткий текст без подробностей (без стека и путей
+// к файлам), подробности - только в журнал сервера.
 app.use((err, req, res, next) => {
   if (res.headersSent) return next(err);
   if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Неверный формат запроса.' });

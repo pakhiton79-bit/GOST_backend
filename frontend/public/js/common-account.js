@@ -17,8 +17,8 @@ const ACCOUNT_ICON = '<svg viewBox="0 0 24 24" width="22" height="22" aria-hidde
 // Кто вошёл: { email, createdAt, quota, isAdmin } или null.
 // По замечанию пользователя («вошёл, а просит войти»): ошибка связи (сервер
 // на Render перезапускается или «просыпается») - не повод считать человека
-// гостем. Запрос повторяется; если сервер так и не ответил - остаётся то, что
-// было известно. Ответ «не вошёл» при известном входе (аккаунты стёрлись при
+// гостем. Запрос повторяется; если сервер так и не ответил - остаётся
+// последнее известное состояние. Ответ «не вошёл» при известном входе (аккаунты стёрлись при
 // перезапуске или вход на другом устройстве) - панель переключается на
 // «Войти» и объясняет причину (noteAccountUser).
 function fetchAccountUser(){
@@ -469,7 +469,7 @@ function initSettingsAccount(){
     if(accountUserCache !== undefined) render(accountUserCache);
     fetchAccountUser().then(render);
   });
-  // #subscription - прежний раздел «Подписка», теперь часть «Аккаунта».
+  // Старые ссылки на #subscription открывают «Аккаунт».
   const section = location.hash.replace('#', '').replace(/^subscription$/, 'account');
   if(section === 'account' || section === 'help'){
     openSettingsSection(section);

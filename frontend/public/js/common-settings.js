@@ -37,7 +37,7 @@ const SITE_THICKNESS_OPTIONS = [16, 19, 22, 25, 32, 40, 50, 60, 75, 100, 125, 15
 const SITE_G2991_THICKNESS_OPTIONS = [...new Set([...Array.from({ length: 17 }, (_, i) => 9 + i), ...SITE_THICKNESS_OPTIONS])].sort((a, b) => a - b);
 const SITE_G2991_WIDTH_OPTIONS = Array.from({ length: 23 }, (_, i) => 40 + i * 5);
 // Списки «в наличии» по ГОСТам: ключ в общих настройках и варианты.
-// Ключ ГОСТ 10198-91 - прежний (availableThickness), сохранённый выбор не теряется.
+// Ключ ГОСТ 10198-91 - availableThickness (не менять: в нём сохранён выбор пользователей).
 const SITE_STOCK_LISTS = {
   thickness: { key: 'availableThickness', options: SITE_THICKNESS_OPTIONS },
   thickness2991: { key: 'availableThickness2991', options: SITE_G2991_THICKNESS_OPTIONS },
@@ -136,7 +136,6 @@ function saveSiteStockList(list, arr){
   saveSiteSetting(SITE_STOCK_LISTS[list].key, arr);
   window.dispatchEvent(new CustomEvent('site-thickness-change', { detail: { list } }));
 }
-function saveSiteThicknesses(arr){ saveSiteStockList('thickness', arr); }
 function siteStockListHtml(list){
   const d = SITE_STOCK_LISTS[list], sel = siteStockList(list);
   const boxes = d.options.map(t =>
@@ -147,7 +146,6 @@ function siteStockListHtml(list){
     </div>
     <div class="thickness-checkbox-list" data-site-list-box="${list}">${boxes}</div>`;
 }
-function siteThicknessHtml(){ return siteStockListHtml('thickness'); }
 
 // Общие норма времени и плотность (ключи настроек - имена в SITE_CALC_PARAMS).
 function siteCalcParam(name){

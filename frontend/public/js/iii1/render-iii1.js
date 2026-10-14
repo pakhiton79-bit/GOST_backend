@@ -46,8 +46,7 @@ function renderPartBlock(title, tableHtml){
 }
 // Узел с чертежом: заголовок, чертёж слева, таблица справа (как у II-1).
 // Слот и предел высоты чертежа - обычные, как у остальных типов (по
-// указанию пользователя - для единообразия; раньше слот был шире и чертёж
-// выше). Отступ под заголовком - под размер над чертежом.
+// указанию пользователя - для единообразия). Отступ под заголовком - под размер над чертежом.
 function renderPartBlockDiagram(title, diagramHtml, tableHtml){
   return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram"><div class="diagram-slot">${diagramHtml}</div>${tableHtml}</div>`;
 }

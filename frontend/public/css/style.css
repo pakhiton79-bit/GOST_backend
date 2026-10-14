@@ -101,10 +101,8 @@
     line-height:1.35;
     overflow-x:hidden;
   }
-  /* 1080px (было 960px) - по указанию пользователя: при 960px заголовки
-     колонок таблиц деталей («ТОЛЩИНА» и т.п.) переносились на 2 строки;
-     1080px - наименьшая ширина, при которой они в одну строку во всех трёх
-     типах (замер). */
+  /* 1080px - наименьшая ширина, при которой заголовки колонок таблиц деталей
+     («ТОЛЩИНА» и т.п.) помещаются в одну строку (по указанию пользователя). */
   .wrap{max-width:1080px;margin:0 auto;padding:32px 20px 80px;}
 
   /* ============ Верхняя панель сайта и настройки (js/common-settings.js) ============
@@ -808,8 +806,6 @@
     letter-spacing:.05em;
     font-weight:600;
   }
-  th.num{text-align:right;}
-  td.num{text-align:right;}
   /* Числовые ЗНАЧЕНИЯ (толщина/ширина/длина/кол-во) не переносим никогда - в
      отличие от названия детали (первая колонка), где перенос длинного
      названия на несколько строк - это нормально и ожидаемо, перенос ЧИСЛА
@@ -822,8 +818,8 @@
      границу своей ячейки и наезжал на соседний ("ТОЛЩИНАШИРИНА" слитно) - по
      репорту пользователя. overflow-wrap:break-word переносит слово на 2-ю
      строку внутри своей колонки вместо наезда на соседнюю. */
-  td.num{white-space:nowrap;}
-  th.num{white-space:normal;overflow-wrap:break-word;}
+  td.num{text-align:right;white-space:nowrap;}
+  th.num{text-align:right;white-space:normal;overflow-wrap:break-word;}
 
   .spec-table{margin-bottom:26px;}
   .spec-table:last-child{margin-bottom:0;}
@@ -881,7 +877,7 @@
   .bolts-removed-note{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 0;line-height:1.3;}
   .is-removed{display:none !important;}
   /* Лента обшивки торцов (I-1) - табличка 1×1 на всю ширину под всеми
-     элементами, см. calculate() в src/i1/calc.js. */
+     элементами, см. i1/render-i1.js. */
   .spec-table.tape-table{margin-top:22px;}
 
   /* ===== Шапка калькулятора: заголовок + поле «Номер или название ящика»
@@ -902,7 +898,6 @@
   /* статус версии - контурная плашка цвета статуса (на выбранной коричневой
      кнопке - на белом фоне в обеих темах, статус коричневым не заливается) */
   .version-badge{display:inline-block;padding:1px 9px;border:1px solid var(--warn);border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;color:var(--warn);background:transparent;}
-  .version-badge-danger{border-color:var(--error);color:var(--error);}
   .version-opt.active .version-badge{background:#fff;}
   /* «?» у оптимальной версии - пояснение (по наведению, фокусу, на телефоне -
      по нажатию: common-version-switch.js, класс .open) */
@@ -963,14 +958,6 @@
     line-height:1.6;
   }
 
-  /* Красное уведомление «тип ещё не готов» над результатами (III-1). */
-  .note-danger{
-    color:var(--error);
-    background:rgba(194,59,44,.08);
-    border-left-color:var(--error);
-    margin:0 0 16px;
-  }
-
   .disclaimer{
     font-size:12px;
     color:var(--ink-soft);
@@ -1014,15 +1001,6 @@
     width:340px;
     margin-left:12px;
   }
-  /* III-1: чертёж щита занимает больше места (по указанию пользователя). */
-  #boardTables .diagram-slot-wide{
-    flex-basis:420px;
-    width:420px;
-  }
-  /* Таблица рядом с ним уже - числовым колонкам больше места, чтобы
-     заголовки («Толщина») не переносились. */
-  #boardTables .spec-row-wide th:first-child, #boardTables .spec-row-wide td:first-child{width:24%;}
-  #boardTables .spec-row-wide th:not(:first-child), #boardTables .spec-row-wide td:not(:first-child){width:19%;}
   .diagram-wrap{
     position:relative;
     flex:0 0 260px;
@@ -1337,21 +1315,21 @@
      Оставшуюся высоту распределяет JS (см. printBox) - за счёт этого лист
      заполняется целиком, а не наполовину. */
   #printArea{
-    /* Раньше прятали экстремальным сдвигом (left:-100000px) - на части
-       систем (другой DPI/масштаб экрана) такой огромный offset у
-       position:fixed элемента мог раздувать scrollWidth всего документа
-       и визуально "растягивать" видимую страницу вбок при вызове печати
-       (по репорту пользователя). opacity+pointer-events прячет элемент,
-       оставляя его на обычном месте (left:0;top:0) в пределах обычного
-       viewport - никакого экстремального смещения, которое могло бы
-       повлиять на layout документа.
-    */
+    /* Спрятан прозрачностью на обычном месте (left:0;top:0), а не большим
+       сдвигом за экран: сдвиг у position:fixed на части систем раздувал
+       ширину документа и растягивал страницу вбок при печати. */
     position:fixed;
     left:0;
     top:0;
     opacity:0;
     pointer-events:none;
     overflow:hidden;   /* иначе при масштабировании появляется полоса прокрутки */
+    background:#fff;
+    font-family:'Courier New', monospace;
+    color:#091135;
+    font-size:16px;
+    font-weight:700;
+    line-height:1.4;
   }
   /* Внутренний слой - его и масштабируем. Внешний #printArea всегда остаётся
      шириной с печатное поле, поэтому браузер не видит переполнения и не
@@ -1369,8 +1347,9 @@
      по ширине своего текста. */
   #printArea .print-summary-col{
     display:flex;
-    flex-direction:column;
-    gap:calc(var(--pk)*14px);
+    flex-direction:row;
+    gap:calc(var(--pk)*28px);
+    align-items:flex-start;
     flex:1;
     min-width:0;
   }
@@ -1378,21 +1357,12 @@
      таблицы и чертежи узлов): картинка ящика меньше, «Груз» и «Итог» - рядом. */
   #printScale > .spec-row-diagram{gap:calc(var(--pk)*24px);}
   #printScale > .spec-row-diagram .diagram-slot{flex-basis:calc(var(--pk)*180px);width:calc(var(--pk)*180px);margin-left:0;}
-  #printArea .print-summary-col{flex-direction:row;gap:calc(var(--pk)*28px);align-items:flex-start;}
   #printArea .print-watermark{
     position:absolute;right:4px;bottom:0;
     width:176px;height:auto;
     opacity:.22;
     /* поверх чертежей (у них белый фон, по указанию пользователя знак должен быть виден) */
     z-index:10;pointer-events:none;
-  }
-  #printArea{
-    background:#fff;
-    font-family:'Courier New', monospace;
-    color:#091135;
-    font-size:16px;
-    font-weight:700;
-    line-height:1.4;
   }
   #printArea h1{font-size:calc(var(--pk)*24px);margin:0 0 6px;font-family:Georgia, serif;color:#8A4B26;font-weight:700;}
   #printArea .print-box-name{margin-left:calc(var(--pk)*24px);color:#091135;}
@@ -1508,8 +1478,8 @@
      контейнером прокрутки, и position:sticky не работает; clip обрезает так
      же, но контейнером прокрутки не делает. */
   html:has(body.layout-v2), body.layout-v2{overflow-x:clip;}
-  /* Одна колонка, как раньше (две колонки пользователь отменил): обёртки
-     .io-* только группируют разметку и на раскладку не влияют. */
+  /* Одна колонка: обёртки .io-* только группируют разметку и на раскладку
+     не влияют. */
   .layout-v2 .io-grid, .layout-v2 .io-inputs, .layout-v2 .io-side{display:contents;}
   /* 1) узкий экран: панель с кнопкой «Рассчитать» прилипает к низу, пока не дошли до неё */
   @media screen and (max-width:1099px){

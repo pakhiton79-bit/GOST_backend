@@ -34,7 +34,7 @@ router.use((req, res, next) => {
 });
 
 // Срок текущей платной подписки, мес. (для списка срока в админке): записан
-// при выдаче (planMonths), у выданных раньше - по датам начала и окончания.
+// при выдаче (planMonths), если не записан - по датам начала и окончания.
 function planMonthsOf(u) {
   if (u.plan === 'free') return null;
   if (PLAN_TERMS.includes(u.planMonths)) return u.planMonths;

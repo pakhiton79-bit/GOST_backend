@@ -35,7 +35,7 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
   const valEdgePlanka   = dimLabel(edgeDistKryshkaMm);
   // Расстояние от края крышки до кромки крайнего поперечного бруса - из расчёта
   // (beamEdgeMm: зазор между брусьями ровно beamGapMm=800, остаток пополам - см.
-  // l21 в расчёте), а не прежнее равномерное деление.
+  // l21 в расчёте).
   const valEdgeBeam     = dimLabel(beamEdgeMm);
   const valBeamGap      = dimLabel(beamGapMm);
   // Зазор между кромками соседних поясов-планок (plankEdgeGapVal) - по более
@@ -67,7 +67,7 @@ function diagramKryshkaDefault(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKr
   if(beamSideGapMm > 0) records.push(...lidSideGapRecords([649, 1075], [666, 1110], [0.954, -0.300], 150, 80, 70, dimLabel(beamSideGapMm)+' мм'));
   // Выступ 1-й планки за задний край крышки (= толщина вертикальной планки
   // бокового щита) - размером с выносными линиями влево (по указанию
-  // пользователя; раньше - сноска): угол конца планки и край крышки - по фото.
+  // пользователя): угол конца планки и край крышки - по фото.
   records.push(...lidSideGapRecords([144, 340], [176, 398], [-0.954, 0.300], 220, 80, 70, valPlankaThick+' мм'));
 
   return renderDiagram(KRYSHKA_IMG_B64, 'Крышка - схема расположения деталей', 1718, 1274, records, null, photoStrokeScale(1718));
@@ -135,8 +135,8 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const P = Math.max(1, Math.round(plankCount)), B = Math.max(0, Math.round(crossBeamQty));
   const eu = [0.9507, -0.3101], ev = [-0.4406, -0.8977];
   // Длина чертежа - не больше 2.5 ширин (по указанию пользователя «поплотнее»:
-  // схема не в масштабе, реальные размеры - в подписях; раньше было до 4, и
-  // длинная крышка превращалась в узкую полосу).
+  // схема не в масштабе, реальные размеры - в подписях; иначе длинная крышка
+  // превращалась бы в узкую полосу).
   const Wv = 850, Lu = Wv * Math.min(2.5, Math.max(1.4, lidLen / lidW));
   const k = Lu / lidLen;                            // единиц чертежа на 1 мм вдоль длины
   // Как на фото крышки (по уточнению пользователя): пояса-планки - снизу, из-под

@@ -225,7 +225,7 @@ function computeGost10198II2(input) {
     return { error: `Внутренняя высота груза ${H} мм слишком мала для каркаса бокового щита - расчёт не выполняется.` };
   }
   // Толщина раскосины - как у стоек и горизонтальных брусьев щита (по
-  // указанию пользователя; раньше - 2/3 толщины стойки).
+  // указанию пользователя).
   const rask = { t: ov('tRaskosina', round(s.stojkaT), 'Толщина раскосины'), w: 100 };
   const endPanel = buildEndPanel(c, s, torecFrame, rask);
   const bokovoy = buildBokovoy(c, s, bokFrame, rask);

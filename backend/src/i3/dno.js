@@ -68,12 +68,12 @@ function buildDno(c) {
   rows.push({ name: 'Полоз', t: skid.t, w: skid.w, l: skidLen, qty: skid.count, overrideKey: 't9Value' });
 
   // Подполозная доска (п.1.6.11): длина = 4/6 полоза, вверх до целого мм
-  // (по указанию пользователя; раньше - полоз - 400 мм); при погрузке
+  // (по указанию пользователя); при погрузке
   // погрузчиком - не тоньше 50 мм и не короче 300 мм. Невозможная длина
   // (≤ 0 или < 300 при погрузчике) - в таблице ⚠ вместо длины.
   const t10Raw = c.forkliftLoading ? Math.max(subfloorThicknessRaw(MASS), 50) : subfloorThicknessRaw(MASS);
   // Ширина подполозной доски - всегда как у полоза (по указанию
-  // пользователя; раньше - не больше 150 мм).
+  // пользователя).
   const sub = { t: ov('t10Value', round(t10Raw), 'Толщина подполозной доски'), w: skid.w, l: Math.ceil(skidLen * 4 / 6 - 1e-9), qty: skid.count };
   if (sub.l < 300) {
     warnings.push(`Длина подполозной доски ${Math.round(sub.l)} мм менее 300 мм.`);

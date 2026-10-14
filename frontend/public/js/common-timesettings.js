@@ -1,12 +1,8 @@
 // Настройки нормы времени (шестерёнка у плитки "Норма времени" в ИТОГ) -
-// общие для всех 3 типов ящика, но сохраняются в localStorage отдельно
+// общие для всех типов ящика, но сохраняются в localStorage отдельно
 // для каждого типа (ключ storageKey передаётся в initTimeSettings() из
-// calc-i1.js/calc-ii1.js/app-i3.js этого типа - тот же приём, что и у
-// THICKNESS_STORAGE_KEY). Порт src/common-timesettings.js исходного
-// (фронтенд-only) репозитория pakhiton79-bit/GOST_10198-91 - отличие: там
-// computeNormaVremeni() и есть источник итогового значения нормы времени
-// (расчёт целиком в браузере), здесь норма времени считается только на
-// сервере: baseProductivity/timeCoeff уходят в теле запроса (POST
+// calc-*.js этого типа - тот же приём, что и у THICKNESS_STORAGE_KEY).
+// Норма времени считается только на сервере: baseProductivity/timeCoeff уходят в теле запроса (POST
 // /api/*/calculate, computeNormaVremeni() в backend/src/helpers.js) вместе
 // с остальными входными данными, и итоговое normaVremeni приходит уже
 // оттуда (calc.normaVremeni). Изменение настроек в шестерёнке только
