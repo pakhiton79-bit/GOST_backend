@@ -13,16 +13,18 @@ function renderSummary(calc){
 // Числа в таблице - целые, с округлением вверх (не занижаем размер детали).
 function displayVal(v){ return typeof v === 'number' ? Math.ceil(v - 1e-9) : v; }
 
-// Таблица деталей узла; правки уходят в расчёт как правки таблицы
-// (readTableEdits в common-table-edits.js).
-function renderPartTable(rows, sectionKey){
+// Таблица деталей узла; правка толщины уходит в расчёт как ручная толщина
+// (manualOverrides, data-override - пересчёт зависимых деталей), прочие -
+// как правки таблицы (readTableEdits в common-table-edits.js).
+function renderPartTable(rows, sectionKey, manualOverrides){
   let html = `<div class="spec-table"><table data-section="${sectionKey}">
       <thead><tr><th>Деталь</th><th class="num">Толщина</th><th class="num">Ширина</th><th class="num">Длина</th><th class="num">Кол-во</th></tr></thead><tbody>`;
   const rowKeys = tableRowKeys(rows);
   rows.forEach((r, i)=>{
+    const overrideAttr = r.overrideKey ? ` data-override="${r.overrideKey}"` : '';
     html += `<tr data-row-key="${escapeAttr(rowKeys[i])}">
         <td>${r.name}</td>
-        <td class="num editable-cell" contenteditable="true" data-role="t"${editedAttr(r, 't')}>${displayVal(r.t)}</td>
+        <td class="num editable-cell" contenteditable="true" data-role="t"${overrideAttr}${editedAttr(r, 't', manualOverrides)}>${displayVal(r.t)}</td>
         <td class="num editable-cell" contenteditable="true" data-role="w"${editedAttr(r, 'w')}>${displayVal(r.w)}</td>
         <td class="num editable-cell" contenteditable="true" data-role="l"${editedAttr(r, 'l')}>${displayVal(r.l)}</td>
         <td class="num editable-cell" contenteditable="true" data-role="qty"${editedAttr(r, 'qty')}>${displayVal(r.qty)}</td>
@@ -36,13 +38,13 @@ function renderPartBlock(title, diagramHtml, tableHtml){
   return `<div class="part-title" style="margin-bottom:26px">${title}</div><div class="spec-row-diagram"><div class="diagram-slot">${diagramHtml}</div>${tableHtml}</div>`;
 }
 
-function renderBoardTables(calc){
+function renderBoardTables(calc, manualOverrides){
   const dg = G2991_TYPE.diagrams(calc);
   let html = '';
-  html += renderPartBlock('Дно', dg.dno, renderPartTable(calc.dno, 'dno'));
-  html += renderPartBlock(calc.noLid ? 'Вместо крышки' : 'Крышка', dg.kryshka, renderPartTable(calc.kryshka, 'kryshka'));
-  html += renderPartBlock('Щит торцевой (2 шт.)', dg.torec, renderPartTable(calc.torec, 'torec'));
-  html += renderPartBlock('Щит боковой (2 шт.)', dg.bokovoy, renderPartTable(calc.bokovoy, 'bokovoy'));
+  html += renderPartBlock('Дно', dg.dno, renderPartTable(calc.dno, 'dno', manualOverrides));
+  html += renderPartBlock(calc.noLid ? 'Вместо крышки' : 'Крышка', dg.kryshka, renderPartTable(calc.kryshka, 'kryshka', manualOverrides));
+  html += renderPartBlock('Щит торцевой (2 шт.)', dg.torec, renderPartTable(calc.torec, 'torec', manualOverrides));
+  html += renderPartBlock('Щит боковой (2 шт.)', dg.bokovoy, renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   const boardTablesEl = document.getElementById('boardTables');
   boardTablesEl.innerHTML = html;
   // Место под вылет подписей чертежей - когда картинки загрузятся.

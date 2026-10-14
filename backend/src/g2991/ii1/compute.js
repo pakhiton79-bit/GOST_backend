@@ -37,6 +37,24 @@ const NO_LID_BOARD_W = 50;     // доски вместо крышки (п. 1.2:
 const WOOD_DENSITY_KG_M3 = 700; // плотность по умолчанию (как у ГОСТ 10198-91)
 const SPECIES = ['conifer', 'birch', 'softDeciduous'];
 
+// Ручные толщины из таблицы (manualOverrides): значение подставляется вместо
+// расчётного по ГОСТ как есть (без подгонки к «в наличии»), меньше ГОСТ - с
+// предупреждением. Без правки - толщина по ГОСТ вверх до «в наличии» (round).
+function makeThicknessOverrides(manualOverrides, round) {
+  const belowGost = [];
+  let applied = 0;
+  function ov(key, gostValue, label) {
+    const v = manualOverrides[key];
+    if (!(v > 0)) return round(gostValue, label);
+    applied++;
+    if (v < gostValue) belowGost.push({ value: v, gostValue, label });
+    return v;
+  }
+  return { ov, belowGost, appliedCount: () => applied };
+}
+// Строки деталей с ключом ручной толщины (data-override в таблице).
+const withKey = (rows, key) => rows.map(r => ({ ...r, overrideKey: key }));
+
 function computeGost2991II1(input) {
   const { L, W, H, MASS } = input;
   if (![L, W, H, MASS].every(v => v > 0)) return { error: 'Заполните все поля размеров и массы положительными числами.' };
@@ -54,18 +72,26 @@ function computeGost2991II1(input) {
   const bok = T.table2Thickness(MASS, L, H, TYPE_II1_MAX_MASS);
   const dno = T.table2Thickness(MASS, L, W, TYPE_II1_MAX_MASS);
   const bokG = T.g2991Corrected(bok.thickness, opts), dnoG = T.g2991Corrected(dno.thickness, opts);
-  const t3 = T.g2991Table3(Math.max(bokG, dnoG));
   const available = input.availableThicknesses || [];
   const round = makeRoundUpToAvailable(available);
-  const bokT = round(bokG, 'Доски боковых стенок');
-  const dnoT = round(dnoG, 'Доски дна');
-  const lidT = round(dnoG, noLid ? 'Доски вместо крышки' : 'Доски крышки');
-  const torecT = round(t3.torec, 'Доски торцовых стенок');
-  const plankT = round(t3.plankT, 'Планки торца');
+  // Правка толщины в таблице - как у ГОСТ 10198-91, с пересчётом зависимых:
+  // крышка - по толщине дна, торец и планки - по таблице 3 от толщин бока и
+  // дна (их своя правка важнее).
+  const mo = input.manualOverrides || {};
+  const { ov, belowGost, appliedCount } = makeThicknessOverrides(mo, round);
+  const bokT = ov('tBok', bokG, 'Доски боковых стенок');
+  const dnoT = ov('tDno', dnoG, 'Доски дна');
+  const lidLabel = noLid ? 'Доски вместо крышки' : 'Доски крышки';
+  const lidT = mo.tDno > 0 && !(mo.tLid > 0) ? dnoT : ov('tLid', dnoG, lidLabel);
+  const t3 = T.g2991Table3(Math.max(mo.tBok > 0 ? bokT : bokG, mo.tDno > 0 ? dnoT : dnoG));
+  const torecT = ov('tTorec', t3.torec, 'Доски торцовых стенок');
+  const plankT = ov('tPlank', t3.plankT, 'Планки торца');
   const plankW = T.g2991RoundWidth(t3.plankW, widths);
   warnings.push(...thicknessPartWarnings(round, available));
   if (MASS > TYPE_II1_MAX_MASS) warnings.push(`Тип II-1 - для грузов до ${TYPE_II1_MAX_MASS} кг (таблица 1 ГОСТ 2991-85). Толщины взяты по строке 125 кг.`);
   if (L > 1200 && MASS <= 35) warnings.push('Длина больше 1200 мм: для масс до 35 кг в таблице 2 нет строки «св. 1200», толщины взяты по строке 1200 мм.');
+  belowGost.forEach(b => warnings.push(`${b.label}: вручную указано ${b.value} мм (< расчётных ${Math.round(b.gostValue * 100) / 100} мм по ГОСТ) - использовано введённое значение.`));
+  if (appliedCount() > 0) warnings.push('Использованы вручную введённые толщины, а не расчётные по ГОСТ.');
 
   // Детали.
   const fill = (space, label) => {
@@ -74,15 +100,15 @@ function computeGost2991II1(input) {
     return fb;
   };
   const dnoLen = L + torecT * 2;
-  const dnoRows = B.g2991BoardRows('Доска дна', dnoT, dnoLen, fill(W + bokT * 2, 'Дно'), mainW);
-  const lidRows = noLid
+  const dnoRows = withKey(B.g2991BoardRows('Доска дна', dnoT, dnoLen, fill(W + bokT * 2, 'Дно'), mainW), 'tDno');
+  const lidRows = withKey(noLid
     ? [{ name: 'Доска вместо крышки', t: lidT, w: NO_LID_BOARD_W, l: dnoLen, qty: 2 }]
-    : B.g2991BoardRows('Доска крышки', lidT, dnoLen, fill(W + bokT * 2, 'Крышка'), mainW);
+    : B.g2991BoardRows('Доска крышки', lidT, dnoLen, fill(W + bokT * 2, 'Крышка'), mainW), 'tLid');
   const bokLen = verticalEnd ? L + torecT * 2 : L + (torecT + plankT) * 2;
-  const bokRows = B.g2991BoardRows('Доска бока', bokT, bokLen, fill(H, 'Бок'), mainW);
+  const bokRows = withKey(B.g2991BoardRows('Доска бока', bokT, bokLen, fill(H, 'Бок'), mainW), 'tBok');
   const torecRows = verticalEnd
-    ? [...B.g2991BoardRows('Доска торца', torecT, H, fill(W, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: W, qty: 2 }]
-    : [...B.g2991BoardRows('Доска торца', torecT, W, fill(H, 'Торец'), mainW), { name: 'Планка торца', t: plankT, w: plankW, l: H, qty: 2 }];
+    ? [...withKey(B.g2991BoardRows('Доска торца', torecT, H, fill(W, 'Торец'), mainW), 'tTorec'), { name: 'Планка торца', t: plankT, w: plankW, l: W, qty: 2, overrideKey: 'tPlank' }]
+    : [...withKey(B.g2991BoardRows('Доска торца', torecT, W, fill(H, 'Торец'), mainW), 'tTorec'), { name: 'Планка торца', t: plankT, w: plankW, l: H, qty: 2, overrideKey: 'tPlank' }];
 
   const totalVolume = B.g2991RowsVolume(dnoRows) + B.g2991RowsVolume(lidRows) + B.g2991RowsVolume(torecRows) * 2 + B.g2991RowsVolume(bokRows) * 2;
   const woodDensity = Number.isFinite(input.woodDensity) && input.woodDensity > 0 ? input.woodDensity : WOOD_DENSITY_KG_M3;

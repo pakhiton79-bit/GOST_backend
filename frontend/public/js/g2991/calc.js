@@ -9,6 +9,19 @@ function checked(id){
   return !!(el && el.checked);
 }
 
+// Ручные толщины из таблицы: только ячейки толщины, которые пользователь
+// действительно правил (data-user-edited) - иначе нетронутая ячейка
+// «замораживала» бы прошлое расчётное значение.
+function readManualOverrides(){
+  const overrides = {};
+  document.querySelectorAll('#boardTables td[data-override][data-user-edited="true"]').forEach(cell=>{
+    const key = cell.getAttribute('data-override');
+    const val = parseFloat(cell.textContent.replace(',','.'));
+    if(!Number.isNaN(val) && val>0) overrides[key] = val;
+  });
+  return overrides;
+}
+
 // Тело запроса на расчёт. По нему же common-calc-state.js сравнивает текущую
 // форму с последним расчётом (calcStateSignature).
 function buildCalcInput(){
@@ -25,6 +38,7 @@ function buildCalcInput(){
     availableThicknesses: thicknessPicker.get(),
     availableWidths: widthPicker.get(),
     mainWidth: mainWidthPicker.get(),
+    manualOverrides: readManualOverrides(),
     tableEdits: readTableEdits(),
     ...loadTimeSettings(TIME_SETTINGS_STORAGE_KEY),
     woodDensity: loadWoodDensity(WOOD_DENSITY_STORAGE_KEY),
@@ -62,7 +76,7 @@ async function calculateNow(){
   }
 
   renderSummary(calc);
-  renderBoardTables(calc);
+  renderBoardTables(calc, input.manualOverrides);
   renderWarnings(calc.warnings);
 
   document.getElementById('results').style.display = 'block';

@@ -127,7 +127,8 @@ const fine = keys => ['fineThickness', b => sanitizeManualOverrides(b.fineThickn
 // (полоз/торцовый брус дна) - изолированные; у II-1/II-2 так же
 // skinValue/t21/tStojka/t10/tLongbeam/floorBoardT/tRaskosina и t9/t11; у
 // III-1 tTorFrame/tBokFrame - каркас торцевого/бокового щита, tLidBeam -
-// брусья крышки, tDnoBeam - продольный брус дна.
+// брусья крышки, tDnoBeam - продольный брус дна; у ГОСТ 2991-85 tBok/tDno/
+// tLid/tTorec/tPlank - бок, дно, крышка, торец, планки торца (каскадные).
 const SKID_CHOICE = ['skid', 'floor_boards'];
 const CALC_TYPES = {
   i1: { compute: computeGost10198I1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2, endTape: 0, parchment: 0 },
@@ -214,11 +215,13 @@ const CALC_TYPES = {
   g2991i: { compute: computeGost2991I, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
     fields: [num('L'), num('W'), num('H'), num('MASS'), species, flag('packet'), flag('concentrated'), flag('noLid'),
       flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS), widths(G2991_WIDTH_OPTIONS), num('mainWidth'),
+      overrides(['tBok', 'tDno', 'tLid', 'tTorec']),
       num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
   // ГОСТ 2991-85, тип II-1.
   g2991ii1: { compute: computeGost2991II1, sections: { dno: 1, kryshka: 1, torec: 2, bokovoy: 2 },
     fields: [num('L'), num('W'), num('H'), num('MASS'), species, flag('packet'), flag('concentrated'), flag('noLid'),
       flag('verticalEnd'), flag('roundBoardWidths'), thicknesses(G2991_THICKNESS_OPTIONS), widths(G2991_WIDTH_OPTIONS), num('mainWidth'),
+      overrides(['tBok', 'tDno', 'tLid', 'tTorec', 'tPlank']),
       num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
 };
 
