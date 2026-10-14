@@ -357,9 +357,8 @@ function diagramBokovoy(Hmm, t12val, t41val, k41val, overhangVal, edgeDistVal, r
     return diagramBokovoy2Floors4Planks(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankLenVal, midPlankWidthVal, plankGapVal, lidTVal);
   }
   // Выбор фото идёт по числу планок (plankCountVal = l19) и наличию раскосины
-  // (raskosinCountVal > 0 <=> bokHasRaskosina). Для 5+ планок фото ещё нет -
-  // показываем чертёж с максимальным доступным числом планок (4): расположение
-  // то же самое, просто на фото меньше планок, чем в реальном ящике.
+  // (raskosinCountVal > 0 <=> bokHasRaskosina). 5+ планок и X-раскосины -
+  // сгенерированная схема (diagramBokovoyFor ниже), сюда не попадают.
   if(plankCount <= 2){
     return hasRaskosina
       ? diagramBokovoy2Planks1Raskosina(k41val, overhangVal, edgeDistVal, heightPlusFloor, plankGapVal, lidTVal)
