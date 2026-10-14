@@ -82,7 +82,9 @@ function stabilizeSizes(c) {
 
     // Доска дна: при креплении к доскам дна - Табл. 4, иначе - по массе.
     if (c.fasteningType === 'floor_boards') {
-      const distanceMm = skid.count > 1 ? skidSpace / (skid.count - 1) : skidSpace;
+      // Расстояние между осями полозьев: крайние оси - на половину ширины
+      // полоза от краёв (как у II-1, I-3).
+      const distanceMm = skid.count > 1 ? (skidSpace - skid.w) / (skid.count - 1) : skidSpace;
       const fb = floorBoardThickness(MASS, L, W, distanceMm);
       floorBoardT = round(fb.value); floorBoardExceeded = fb.exceeded;
     } else {
