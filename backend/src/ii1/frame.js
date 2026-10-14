@@ -11,8 +11,6 @@ const RASKOSINA_MIN_H = 600; // п.1.7.7: раскосины - при внутр
 // fillspace - ширина щита под стойки, panelH - высота щита, H - высота груза
 // (внутренняя высота ящика). Раскосины - при H свыше 600 мм (п.1.7.7) или по
 // галочке «Добавить раскосины» (forceRaskosina) и при меньшей высоте.
-// (Временно: правило угла 60° для этажей отключено - этажи только по
-// высоте груза; число стоек - как с правилом, см. angleFloors.)
 // Этажи: 2 при высоте груза больше 2000 мм или если на 1 этаже угол раскосины
 // при 2 стойках больше 60°. Стоек - не меньше, чем по шагу осей 800 мм, и
 // (при раскосинах) столько, чтобы угол раскосины был не меньше 20° (пока
@@ -44,11 +42,7 @@ function buildFrameParts(fillspace, panelH, H, manualCount, forceRaskosina) {
 
   const needRaskosina = H > RASKOSINA_MIN_H || !!forceRaskosina;
   let floors = H > 2000 ? 2 : 1;
-  // Временно (по указанию пользователя): этажи - только по высоте груза,
-  // правило «на 1 этаже угол раскосины больше 60° - 2 этажа» отключено.
-  // if (needRaskosina && floors === 1 && angleDeg(2, stojkaLen(1)) > MAX_ANGLE) floors = 2;
-  // Число секций (стоек) - как раньше, по этажности с этим правилом.
-  const angleFloors = (needRaskosina && floors === 1 && angleDeg(2, stojkaLen(1)) > MAX_ANGLE) ? 2 : floors;
+  if (needRaskosina && floors === 1 && angleDeg(2, stojkaLen(1)) > MAX_ANGLE) floors = 2;
   const len = stojkaLen(floors);
   const hasRaskosina = needRaskosina && len > 0;
 
@@ -60,9 +54,8 @@ function buildFrameParts(fillspace, panelH, H, manualCount, forceRaskosina) {
   let warn = null;
   let angleCount = 2;
   if (hasRaskosina) {
-    const angleLen = stojkaLen(angleFloors);
-    while (sectionW(angleCount + 1) > 0 && angleDeg(angleCount, angleLen) < MIN_ANGLE) angleCount++;
-    if (angleDeg(angleCount, angleLen) < MIN_ANGLE) {
+    while (sectionW(angleCount + 1) > 0 && angleDeg(angleCount, len) < MIN_ANGLE) angleCount++;
+    if (angleDeg(angleCount, len) < MIN_ANGLE) {
       warn = `угол раскосины <20° даже при максимуме секций (${angleCount})`;
     }
   }
