@@ -14,6 +14,7 @@ const { computeGost10198II1N } = require('./src/ii1n/compute');
 const { computeGost10198II2 } = require('./src/ii2/compute');
 const { computeGost10198II2N } = require('./src/ii2n/compute');
 const { computeGost10198III1 } = require('./src/iii1/compute');
+const { computeGost10198III1N } = require('./src/iii1n/compute');
 const { computeGost2991I } = require('./src/g2991/i/compute');
 const { computeGost2991II1 } = require('./src/g2991/ii1/compute');
 const { G2991_THICKNESS_OPTIONS, G2991_WIDTH_OPTIONS } = require('./src/g2991/table2');
@@ -192,11 +193,19 @@ const CALC_TYPES = {
       overrides(['skinValue', 't21', 'tStojka', 't10', 'tLongbeam', 'floorBoardT', 'tRaskosina', 't9', 't11']),
       fine(['frame', 'skid', 'sub', 'skin', 'floor', 'endBeam', 'crossBeam', 'longBeam']),
       num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
-  // III-1 и III-1 оптимальный (optimized).
   iii1: { compute: computeGost10198III1, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }, choice: 'fasteningType',
     fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('removeFloorBoards'), flag('removeSkidBoards'),
       flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('bulkCargo'), flag('addRaskosina'),
-      flag('xRaskosina'), flag('addParchment'), flag('optimized'),
+      flag('xRaskosina'), flag('addParchment'),
+      num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), num('lidCrossBeamAxis'), thicknesses(),
+      overrides(['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11']),
+      fine(['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam']),
+      num('baseProductivity'), num('woodDensity'), num('timeCoeff')] },
+  // III-1 оптимальный - независимая копия III-1 (src/iii1n).
+  iii1n: { compute: computeGost10198III1N, sections: { dno: 1, kryshka: 1, endPanel: 2, bokovoy: 2, bolts: 0, parchment: 0 }, choice: 'fasteningType',
+    fields: [num('L'), num('W'), num('H'), num('MASS'), choice('fasteningType'), flag('removeFloorBoards'), flag('removeSkidBoards'),
+      flag('roundBoardWidths'), flag('solidRigidBase'), flag('forkliftLoading'), flag('bulkCargo'), flag('addRaskosina'),
+      flag('xRaskosina'), flag('addParchment'),
       num('torecPostCount'), num('bokPostCount'), num('lidCrossBeamCount'), num('lidCrossBeamAxis'), thicknesses(),
       overrides(['skinValue', 'tTorFrame', 'tBokFrame', 'tLidBeam', 'tDnoBeam', 't10', 'floorBoardT', 'tRaskosina', 't9', 't11']),
       fine(['skid', 'sub', 'endBeam', 'dnoBeam', 'floor', 'frame', 'skin', 'lidBeam']),

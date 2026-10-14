@@ -87,9 +87,8 @@ function makeThicknessOverrides(manualOverrides, fine) {
 //   addParchment, fineThickness ({ skid, sub, endBeam, dnoBeam, floor,
 //   frame, skin, lidBeam } - толщины из «Тонкой настройки», мм;
 //   нет - по расчёту), availableThicknesses, manualOverrides, baseProductivity,
-//   timeCoeff, woodDensity, optimized (оптимальный конструктивный вариант
-//   по таблице заказчика: без продольных брусьев дна, щиты по высоте с
-//   досками дна, см. sizing.js, dno.js, kryshka.js) }.
+//   timeCoeff, woodDensity }. Оптимальный вариант - отдельная копия
+//   (src/iii1n).
 function computeGost10198III1(input) {
   const { L, W, H, MASS, baseProductivity, timeCoeff, woodDensity } = input;
   const availableThicknesses = input.availableThicknesses || [];
@@ -169,13 +168,11 @@ function computeGost10198III1(input) {
   const dno = buildDno(c, s, s.sub.l <= 0 || forkliftFail);
   const kryshka = buildKryshka(c, s);
 
-  // Каркасы щитов. Высота щита - высота груза; в оптимальном варианте
-  // (input.optimized) щиты закрывают и доски дна - высота груза + толщина
-  // доски дна.
+  // Каркасы щитов. Высота щита - высота груза.
   // Торцевой щит - по ширине груза, боковой - по наружной длине ящика.
   // Штатное число стоек считается всегда - его клиент показывает центром
   // ползунков ручной настройки.
-  const panelH = input.optimized ? H + s.floorBoardT : H;
+  const panelH = H;
   c.panelH = panelH;
   const torecSpace = W, bokSpace = s.len;
   const torecManual = input.torecPostCount > 0, bokManual = input.bokPostCount > 0;
@@ -243,7 +240,7 @@ function computeGost10198III1(input) {
     torecFrame, bokFrame, panelH,
     crossBeamCount: s.crossBeamCount, longbeamCount: s.longBeamCount,
     gapDistCross: Math.round(crossGap), axisDistCross: Math.round(s.crossBeamLayout.axis),
-    xRaskosina: !!input.xRaskosina, optimized: !!input.optimized,
+    xRaskosina: !!input.xRaskosina, optimized: false,
     standardTorecPostCount: torecStandard.count, standardBokPostCount: bokStandard.count,
     standardCrossBeamCount: s.standardCrossBeamCount, maxCrossBeamCount,
     // Болты - отдельный раздел, в объём не входят.

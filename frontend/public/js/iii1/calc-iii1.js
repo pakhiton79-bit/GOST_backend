@@ -1,5 +1,5 @@
 // ГОСТ 10198-91, тип III-1: сбор входных данных, запрос расчёта на сервер
-// (POST /api/iii1/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
+// (POST /api/iii1/calculate, у оптимального - /api/iii1n/calculate) и вывод результата. Кнопка «Рассчитать» вызывает
 // общую обёртку calculate() из common-calc-state.js, та - calculateNow().
 
 // Ручные толщины из таблицы: только ячейки толщины, которые пользователь
@@ -37,7 +37,6 @@ function buildCalcInput(){
     addRaskosina: document.getElementById('addRaskosina').checked,
     xRaskosina: document.getElementById('xRaskosina').checked,
     addParchment: document.getElementById('addParchment').checked,
-    optimized: III1_OPTIMIZED,
     torecPostCount: manualCount.torec,
     bokPostCount: manualCount.bok,
     lidCrossBeamCount: manualCount.cross,
@@ -65,7 +64,8 @@ async function calculateNow(){
 
   let calc;
   try{
-    const resp = await fetch('/api/iii1/calculate', {
+    // Оптимальный вариант - свой расчёт на сервере (src/iii1n).
+    const resp = await fetch(III1_OPTIMIZED ? '/api/iii1n/calculate' : '/api/iii1/calculate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(input),
