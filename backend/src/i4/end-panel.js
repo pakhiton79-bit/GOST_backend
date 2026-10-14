@@ -11,8 +11,8 @@ function floorsForHeight(H) {
   return H > 2000 ? 2 : 1;
 }
 
-// c - контекст расчёта (см. compute.js); t12 - толщина доски дна (щит
-// закрывает груз и доску дна).
+// c - контекст расчёта (см. compute.js); t12 - толщина доски дна плюс
+// поперечного бруса крышки (щит закрывает груз, доску дна и брус крышки).
 function buildEndPanel(c, t12) {
   const { W, H, wall, warnings } = c;
   const floors = floorsForHeight(H);

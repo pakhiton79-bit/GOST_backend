@@ -169,7 +169,9 @@ function computeGost10198II1(input) {
   const kryshka = buildKryshka(c, s);
 
   // Каркасы щитов. Высота щита на 1 этаж - без опоры снизу (полоза и доски дна).
-  const panelHeightFull = H + s.floorBoardT + s.longBeamT;
+  // Поперечные брусья крышки не заходят в пространство груза (по указанию
+  // пользователя): щиты и стойки выше на толщину бруса.
+  const panelHeightFull = H + s.floorBoardT + s.longBeamT + s.crossBeamT;
   // Каркасы щитов. Штатное число стоек считается всегда - его клиент
   // показывает центром ползунков ручной настройки.
   const torecSpace = W + s.stojkaT * 2, bokSpace = L; // бок - по длине груза

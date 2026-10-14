@@ -96,16 +96,18 @@ function computeGost10198I4(input) {
 
   const outerL = len;
   const outerW = W + wall * 4;
-  const outerH = (input.removeSkidBoards ? 0 : dno.subT) + dno.skidT + dno.t12 + wall + wall + H;
-
   const kryshka = buildKryshka(c, len, outerW);
   if (kryshka.error) return { error: kryshka.error };
+  // Внутренние поперечные брусья крышки не заходят в пространство груза (по
+  // указанию пользователя): щиты выше на толщину бруса, наружная высота тоже.
+  const lidT = kryshka.beamT;
+  const outerH = (input.removeSkidBoards ? 0 : dno.subT) + dno.skidT + dno.t12 + wall + wall + H + lidT;
   const { planks, beams } = kryshka;
   // Шаг поясов по осям - ширина секции бокового щита.
   const sectionW = planks.count > 1 ? planks.gap + PLANK_W : 0;
 
-  const endPanel = buildEndPanel(c, dno.t12);
-  const bokovoy = buildBokovoy(c, { len, t12: dno.t12, skidT: dno.skidT, plankQty: planks.count, sectionW });
+  const endPanel = buildEndPanel(c, dno.t12 + lidT);
+  const bokovoy = buildBokovoy(c, { len, t12: dno.t12 + lidT, skidT: dno.skidT, plankQty: planks.count, sectionW });
 
   // --- 4. Итог ---
   const totalVolume = dno.volume + kryshka.volume + 2 * endPanel.volume + 2 * bokovoy.volume;
@@ -136,7 +138,7 @@ function computeGost10198I4(input) {
     edgeDistKryshka: planks.edgeDist, l21: beams.count, w21: kryshka.beamW, l19: planks.count, bokSectionW: sectionW, plankGap: planks.gap,
     beamEdgeDist: beams.edgeDist, beamGap: beams.gap, beamSideGap: kryshka.beamSideGap, standardBeamCount: beams.standardCount,
     standardPlankCount: kryshka.standardPlanks.count, standardPlankGap: kryshka.standardPlanks.gap,
-    k32: endPanel.boardLen, torecSections: endPanel.sections, torecHasRaskosina: endPanel.hasRaskosina, HplusT12: H + dno.t12,
+    k32: endPanel.boardLen, torecSections: endPanel.sections, torecHasRaskosina: endPanel.hasRaskosina, HplusT12: H + dno.t12 + lidT, lidBeamT: lidT,
     torecNoRaskosinaDiagram: endPanel.noRaskosinaDiagram, torecFloors: endPanel.floors, k30plusW31: endPanel.floorSpan,
     H, t12: dno.t12, k41: len, bokOverhang: bokovoy.overhang, l42: bokovoy.raskQty, bokFloors: bokovoy.floors, bokVertSpan: bokovoy.vertSpan,
     k40: bokovoy.vertLen, w43: bokovoy.horizW, xRaskosina: !!input.xRaskosina, t20: wall,
@@ -144,7 +146,7 @@ function computeGost10198I4(input) {
     // периметру торца: длина одной ленты = (ширина груза + 2 доски бока +
     // высота груза + доска крышки + доска дна) × 2, лент 2; без досок дна
     // («Убрать доски дна») их толщина 0. В объём не входит.
-    endTape: input.addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + wall * 2) + (H + wall + dno.t12)) * 2 - 1e-9), qty: 2 }] : [],
+    endTape: input.addEndTape ? [{ name: 'Обшивочная лента', l: Math.ceil(((W + wall * 2) + (H + wall + dno.t12 + lidT)) * 2 - 1e-9), qty: 2 }] : [],
     // Промежутки обшивки по щитам (для чертежей): { qty, gap, share } или
     // null - щит сплошной (или доски дна убраны).
     boardGaps: { dno: dno.boardGap, kryshka: kryshka.boardGap, torec: endPanel.boardGap, bokovoy: bokovoy.boardGap },
