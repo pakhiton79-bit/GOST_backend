@@ -65,9 +65,11 @@ function stabilizeSizes(c) {
 
     // Подполозная доска (п.1.6.11): при погрузке погрузчиком - не тоньше 50 мм.
     const t10Raw = c.forkliftLoading ? Math.max(subfloorThicknessRaw(MASS), 50) : subfloorThicknessRaw(MASS);
+    // Длина подполозной доски - 4/6 длины полоза, вверх до целого мм (по
+    // указанию пользователя; раньше - полоз - 400 мм).
     // Ширина подполозной доски - всегда как у полоза (по указанию
     // пользователя; раньше - не больше 150 мм).
-    sub = { t: ov('t10', round(t10Raw), 'Толщина подполозной доски'), w: skid.w, l: len - 400, qty: skid.count };
+    sub = { t: ov('t10', round(t10Raw), 'Толщина подполозной доски'), w: skid.w, l: Math.ceil(len * 4 / 6 - 1e-9), qty: skid.count };
 
     // Доска дна: при креплении к доскам дна - Табл. 4, иначе - по массе.
     if (c.fasteningType === 'floor_boards') {
