@@ -266,6 +266,7 @@ function renderSiteAccount(user){
         <div class="auth-field" data-pw-field="siteAccPwCode"><input type="text" id="siteAccPwCode" placeholder="Код из письма" autocomplete="one-time-code" inputmode="numeric" maxlength="6" aria-label="Код из письма"></div>
         ${accPwField('siteAccPwNew', 'Новый пароль (от 8 символов)', 'new-password')}
         ${accPwField('siteAccPwNew2', 'Повторите новый пароль', 'new-password')}
+        <label class="auth-check site-acc-pw-keep" data-pw-field="siteAccPwKeep"><input type="checkbox" id="siteAccPwKeep"><span>Не выходить на других устройствах</span></label>
         <div class="site-acc-pw-actions">
           <button type="button" class="site-sub-btn site-sub-btn-main" data-acc="password-next" id="siteAccPwNext"></button>
           <button type="button" class="btn-secondary site-sub-btn" data-acc="password-cancel">Отмена</button>
@@ -305,8 +306,8 @@ const accPw = { step: 'current', current: '' };
 const ACC_PW_STEPS = {
   current: { hint: () => 'Подтвердите, что это вы: введите текущий пароль.', fields: ['siteAccPwOld'], next: 'Далее', forgot: true },
   send: { hint: email => `Отправим код для смены пароля на почту <b>${escHtml(email)}</b>.`, fields: [], next: 'Отправить код' },
-  code: { hint: email => `Код отправлен на почту <b>${escHtml(email)}</b>. Введите его и новый пароль.`, fields: ['siteAccPwCode', 'siteAccPwNew', 'siteAccPwNew2'], next: 'Сохранить пароль', resend: true },
-  new: { hint: () => 'Придумайте новый пароль - не короче 8 символов.', fields: ['siteAccPwNew', 'siteAccPwNew2'], next: 'Сохранить пароль' },
+  code: { hint: email => `Код отправлен на почту <b>${escHtml(email)}</b>. Введите его и новый пароль.`, fields: ['siteAccPwCode', 'siteAccPwNew', 'siteAccPwNew2', 'siteAccPwKeep'], next: 'Сохранить пароль', resend: true },
+  new: { hint: () => 'Придумайте новый пароль - не короче 8 символов.', fields: ['siteAccPwNew', 'siteAccPwNew2', 'siteAccPwKeep'], next: 'Сохранить пароль' },
 };
 function setAccPwStep(step){
   const form = document.getElementById('siteAccPw');
@@ -318,6 +319,7 @@ function setAccPwStep(step){
   form.querySelectorAll('[data-pw-field]').forEach(f => {
     f.hidden = !st.fields.includes(f.dataset.pwField);
     const inp = f.querySelector('input');
+    if(inp.type === 'checkbox'){ inp.checked = false; return; }
     inp.value = '';
     if(inp.type === 'text' && f.querySelector('.auth-eye')) inp.type = 'password';
     const eye = f.querySelector('.auth-eye');
@@ -333,7 +335,7 @@ function closeAccPw(doneText){
   const form = document.getElementById('siteAccPw');
   if(!form) return;
   form.hidden = true;
-  form.querySelectorAll('input:not([hidden])').forEach(i => { i.value = ''; });
+  form.querySelectorAll('input:not([hidden])').forEach(i => { if(i.type === 'checkbox') i.checked = false; else i.value = ''; });
   accPw.current = '';
   document.querySelector('#siteAccountBox [data-acc="password-open"]').hidden = false;
   const done = document.getElementById('siteAccPwDone');
@@ -416,6 +418,7 @@ document.addEventListener('click', async e => {
       if(val('siteAccPwNew').length < 8) return fail('Новый пароль - не короче 8 символов.');
       if(val('siteAccPwNew') !== val('siteAccPwNew2')) return fail('Пароли не совпадают.');
       body = step === 'code' ? { code: val('siteAccPwCode').trim(), password: val('siteAccPwNew') } : { current: accPw.current, password: val('siteAccPwNew') };
+      body.keepSessions = document.getElementById('siteAccPwKeep').checked;
     }
     el.disabled = true;
     try{
@@ -427,7 +430,7 @@ document.addEventListener('click', async e => {
       if(step === 'current'){ accPw.current = val('siteAccPwOld'); setAccPwStep('new'); }
       else if(step === 'send') setAccPwStep('code');
       else {
-        closeAccPw('Пароль изменён. На других устройствах выполнен выход.');
+        closeAccPw(body.keepSessions ? 'Пароль изменён.' : 'Пароль изменён. На других устройствах выполнен выход.');
         if(accountUserCache) loadAccountDevices(accountUserCache);
       }
     }catch(err){ fail(err.message); }

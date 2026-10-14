@@ -496,6 +496,7 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-pw-actions .site-sub-btn{margin:0;}
 .site-acc-pw-link{font-size:13px;font-weight:500;color:var(--accent);margin-left:4px;}
 .site-acc-pw-done{margin:8px 0 0;}
+.site-acc-pw .site-acc-pw-keep{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--ink);cursor:pointer;}
 .site-acc-pw-btn{margin-top:10px;}
 
 /* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */

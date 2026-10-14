@@ -20,7 +20,7 @@
 //   POST /api/auth/devices/logout { id }               - выйти на устройстве
 //   POST /api/auth/delete   { password, checkOnly }    - удалить свой аккаунт (checkOnly - только проверить пароль)
 //   POST /api/auth/password { current, password }      - сменить пароль (входы на
-//                                                        других устройствах завершаются;
+//                                                        других устройствах завершаются, кроме keepSessions;
 //                                                        { current, checkOnly } - только проверить
 //                                                        текущий; { code, password } - по коду из письма)
 //   POST /api/auth/password-code                       - код для смены пароля на почту аккаунта
@@ -403,7 +403,9 @@ router.post('/password', rateLimit, async (req, res, next) => {
     }
     const passHash = await hashPassword(req.body.password);
     store.updateUser(user, { passHash, loginFails: 0, loginLockUntil: 0 });
-    store.listUserSessions(user.id).filter(s => s.id !== sessionId).forEach(s => store.deleteSessionById(user.id, s.id));
+    // Входы на других устройствах завершаются, если не отмечено «Не выходить
+    // на других устройствах» (keepSessions).
+    if (!req.body.keepSessions) store.listUserSessions(user.id).filter(s => s.id !== sessionId).forEach(s => store.deleteSessionById(user.id, s.id));
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
