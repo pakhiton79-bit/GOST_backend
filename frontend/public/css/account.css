@@ -480,6 +480,14 @@ body.auth-page{margin:0;background:var(--bg);}
 .site-acc-delete .auth-field{margin:10px 0 0;max-width:320px;}
 .site-acc-delete .auth-msg{margin:10px 0 0;}
 .site-acc-delete[hidden], .site-acc-del-btn[hidden], .site-acc-pw-btn[hidden]{display:none;}
+/* Удаление аккаунта (по указанию пользователя): поле пароля и «Удалить
+   навсегда» - в один ряд на месте кнопки «Удалить аккаунт», рамка поля при
+   вводе - красная. На узком экране - друг под другом. */
+#siteAccDelete:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:10px;}
+#siteAccDelete .auth-msg{flex:0 0 100%;margin:0;}
+#siteAccDelete .auth-field{flex:1 1 220px;margin:0;}
+#siteAccDelete .site-acc-del-btn{margin:0;align-self:stretch;}
+#siteAccDelPw:focus{outline-color:var(--error);border-color:var(--error);}
 .site-acc-pw-btn{margin-top:10px;}
 
 /* Pro и Team - печатный лист без водяного знака (класс ставит applyPlanClass в common-account.js). */
