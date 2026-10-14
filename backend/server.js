@@ -239,6 +239,9 @@ app.post('/api/:type/calculate', makeThrottle(), calcQuota, (req, res, next) => 
 // Очистка хранилища аккаунтов от устаревших записей - при запуске и раз в
 // сутки (store.cleanup).
 const accountStore = require('./src/auth/store');
+// Файл данных повреждён - сервер не запускается (store.load), данные не
+// стираются.
+accountStore.load();
 function runCleanup() {
   try {
     const n = accountStore.cleanup(Date.now());

@@ -13,13 +13,34 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', '..', 'data'
 const FILE = path.join(DATA_DIR, 'accounts.json');
 
 let db = null;
+let loadError = null;
 
+// Файла нет - пустое хранилище (первый запуск). Файл есть, но не читается
+// или повреждён - ошибка: сервер не работает с пустой базой, иначе первая же
+// запись стёрла бы все данные (по указанию пользователя, после аудита).
+// Испорченный файл один раз копируется рядом (accounts.json.corrupt-<время>).
 function load() {
   if (db) return db;
+  if (loadError) throw loadError;
+  let raw = null;
   try {
-    db = JSON.parse(fs.readFileSync(FILE, 'utf8'));
+    raw = fs.readFileSync(FILE, 'utf8');
   } catch (e) {
+    if (e.code !== 'ENOENT') { loadError = new Error(`Файл данных ${FILE} не читается: ${e.message}`); throw loadError; }
+  }
+  if (raw === null) {
     db = {};
+  } else {
+    let parsed = null, why = '';
+    try { parsed = JSON.parse(raw); } catch (e) { why = e.message; }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      const copy = `${FILE}.corrupt-${Date.now()}`;
+      try { fs.copyFileSync(FILE, copy); } catch (e) { /* копия не обязательна */ }
+      loadError = new Error(`Файл данных ${FILE} повреждён${why ? ` (${why})` : ''}; копия - ${copy}. `
+        + 'Сервер не работает с пустой базой, чтобы не стереть данные: восстановите файл из резервной копии.');
+      throw loadError;
+    }
+    db = parsed;
   }
   db.users = Array.isArray(db.users) ? db.users : [];
   db.sessions = db.sessions && typeof db.sessions === 'object' ? db.sessions : {};
@@ -33,10 +54,18 @@ function load() {
   return db;
 }
 
+// Запись: временный файл, сброс на диск (fsync), переименование - при сбое
+// питания остаётся либо старый, либо новый файл целиком.
 function save() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const tmp = FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(db));
+  const fd = fs.openSync(tmp, 'w', 0o600);
+  try {
+    fs.writeSync(fd, JSON.stringify(db));
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
   fs.renameSync(tmp, FILE);
 }
 
@@ -212,7 +241,7 @@ function statsData() {
 }
 
 module.exports = {
-  save, statsData, cleanup,
+  load, save, statsData, cleanup,
   findUserByEmail, findUserById, createUser, updateUser, listUsers, deleteUser,
   createSession, touchSession, getSession, deleteSession, deleteUserSessions, listUserSessions, deleteSessionById,
   getCode, setCode, deleteCode,
