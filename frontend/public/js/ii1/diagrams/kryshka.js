@@ -68,7 +68,7 @@ function kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, gapDistVal, 
 // Подписи сгенерированной крышки: записи фото-шаблона, у которых подписи
 // отступа и толщины бокового щита привязаны к первому поперечному брусу -
 // сдвинуты к его месту (xb - левая кромка, w - ширина).
-function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDist, beamGap){
+function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDist, beamGap, sideEdge){
   const xb = g.firstBeamX, w = g.beamW;
   if(g.tpl === '0_3') return [
     {type:'line', x1:xb + w, y1:716, x2:xb, y2:716},
@@ -93,14 +93,16 @@ function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDi
   // поперечного бруса (он - на p ниже, чем был).
   const p = g.pad || 0;
   // Выступ досок по боку. С продольными брусьями (p > 0) - по указанию
-  // пользователя две выноски: край досок - крайний продольный брус (как у
-  // торцов, torecBoard) и продольный брус - поперечный (beamGap); иначе одна
-  // - край досок - поперечный брус (sideFrame).
+  // пользователя две выноски: край досок - крайний продольный брус
+  // (sideEdge - обшивка бока; продольные брусья по ширине не укорачиваются)
+  // и продольный брус - поперечный (beamGap - стойка бока и укорочение
+  // поперечного бруса при оптимизации размеров); иначе одна - край досок -
+  // поперечный брус (sideFrame).
   const yl = 10.5 + p, yc = 49 + p, xa = xb - 40;
-  const sideRecords = p > 0 && beamGap !== undefined ? [
+  const sideRecords = p > 0 && beamGap !== undefined && sideEdge !== undefined ? [
     {type:'line', x1:xa - 20, y1:12, x2:xa + 20, y2:11},
     {type:'line', x1:xa, y1:12, x2:xa, y2:yl},
-    {type:'single', x1:-134, y1:-60, x2:xa, y2:(12 + yl) / 2, lx:-145, ly:-60, text:torecBoard+' мм'},
+    {type:'single', x1:-134, y1:-60, x2:xa, y2:(12 + yl) / 2, lx:-145, ly:-60, text:sideEdge+' мм'},
     {type:'line', x1:xb, y1:yl, x2:xb + w, y2:yl},
     {type:'line', x1:xb, y1:yc, x2:xb + w, y2:yc},
     {type:'line', x1:xb + 0.65 * w, y1:yl, x2:xb + 0.65 * w, y2:yc},
@@ -165,11 +167,12 @@ function crossBeamWidth(kryshkaRows){
 // (calc.edgeDistCross), gapDistVal - между краями соседних брусьев
 // (calc.gapDistCross): брусья делят длину крышки на (count+1) равных
 // промежутков, а не flush-edge, как у стоек каркаса.
-function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal, crossBeamW, gapDistVal){
+function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameVal, widthVal, lengthVal, widthPxOverride, edgeDistVal, crossBeamW, gapDistVal, sideEdgeVal){
   const g = kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, gapDistVal, crossBeamW);
   if(!g) return diagramTooDense();
-  // beamGap - от крайнего продольного бруса до поперечного (стойка бока).
-  const records = kryshkaGeneratedRecords(g, dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal), dimLabel(sideFrameVal - torecBoardVal))
+  // sideEdgeVal - выступ досок по боку за крайний продольный брус (обшивка
+  // бока); от продольного бруса до поперечного - остаток выступа sideFrameVal.
+  const records = kryshkaGeneratedRecords(g, dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal), dimLabel(sideFrameVal - sideEdgeVal), dimLabel(sideEdgeVal))
     .concat(kryshkaGapRecords(g, dimLabel(gapDistVal)));
   return renderDiagram(g.img, 'Крышка - схема расположения деталей', g.IW, g.IH, records, widthPxOverride, photoStrokeScale(g.IW));
 }

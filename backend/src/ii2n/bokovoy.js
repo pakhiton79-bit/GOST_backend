@@ -33,9 +33,11 @@ function buildBokovoy(c, s, frame, rask) {
   // Опорных планок нет (по указанию пользователя) - брусья крышки лежат на
   // каркасе (см. compute.js).
   // Доски: + толщина поперечного бруса крышки (каркас ниже на неё).
-  const boardLen = 100 * 2 + frame.len + s.longBeamT + s.crossBeamT;
+  // Длина доски - на всю высоту щита (каркас и брусья крышки над ним;
+  // по указанию пользователя - цельная и у 2-этажного).
+  const boardLen = frame.height + s.longBeamT + s.crossBeamT;
   const fb = sideBoards(c, s, L + s.stojkaT * 2);
-  const boardQty = fb.mainQty * frame.floors;
+  const boardQty = fb.mainQty;
   if (fb.warn) warnings.push('Доска бока: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска бока: одна доска уже менее 100 мм.');
 
@@ -51,12 +53,12 @@ function buildBokovoy(c, s, frame, rask) {
   if (boardQty > 0) rows.push({ name: 'Доска', t: skinT, w: 100, l: boardLen, qty: boardQty, overrideKey: 'skinValue' });
   fb.extra.forEach((e, i) => {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
-    rows.push({ name: e.name || 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty * frame.floors, overrideKey: 'skinValue' });
+    rows.push({ name: e.name || 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty, overrideKey: 'skinValue' });
   });
 
   const volume = vol(stojka.t, stojka.w, stojka.l, stojka.qty) + vol(horiz.t, horiz.w, horiz.l, horiz.qty)
     + vol(rask.t, rask.w, raskLen, raskQty)
-    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty * frame.floors), 0)
+    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty), 0)
     + (withX ? vol(rask.t, rask.w, (raskLen - rask.w) / 2, raskQty * 2) : 0);
 
   return { rows, volume, boardGap: fb.gap };

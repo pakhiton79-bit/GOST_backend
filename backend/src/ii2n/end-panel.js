@@ -12,12 +12,13 @@ function buildEndPanel(c, s, frame, rask) {
   const raskLen = Math.sqrt(Math.pow(frame.sectionW, 2) + Math.pow(frame.len, 2));
   const raskQty = frame.hasRaskosina ? (frame.count - 1) * frame.floors : 0;
 
-  // Доски обшивки - на каждый этаж, по наружной ширине ящика, с
+  // Доски обшивки - цельные на всю высоту щита (каркас и брусья крышки над
+  // ним; по указанию пользователя - и у 2-этажного), по наружной ширине ящика, с
   // промежутками.
   // + толщина поперечного бруса крышки (каркас ниже на неё - см. compute.js).
-  const boardLen = 100 * 2 + frame.len + s.longBeamT + s.crossBeamT;
+  const boardLen = frame.height + s.longBeamT + s.crossBeamT;
   const fb = fillGapBoards(s.outerW, c.roundBoardWidths, c.boardGapMax, 'Щит торцевой', warnings);
-  const boardQty = fb.mainQty * frame.floors;
+  const boardQty = fb.mainQty;
   if (fb.warn) warnings.push('Доска торца: остаток - нестандартная ширина (вне 75–99 мм).');
   if (fb.singleNarrow) warnings.push('Доска торца: одна доска уже менее 100 мм.');
 
@@ -33,12 +34,12 @@ function buildEndPanel(c, s, frame, rask) {
   if (boardQty > 0) rows.push({ name: 'Доска', t: skinT, w: 100, l: boardLen, qty: boardQty, overrideKey: 'skinValue' });
   fb.extra.forEach((e, i) => {
     const suffix = fb.extra.length > 1 ? ' ' + (i + 1) : '';
-    rows.push({ name: 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty * frame.floors, overrideKey: 'skinValue' });
+    rows.push({ name: 'Доска (дополнительная)' + suffix, t: skinT, w: e.width, l: boardLen, qty: e.qty, overrideKey: 'skinValue' });
   });
 
   const volume = vol(stojka.t, stojka.w, stojka.l, stojka.qty) + vol(horiz.t, horiz.w, horiz.l, horiz.qty)
     + vol(rask.t, rask.w, raskLen, raskQty)
-    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty * frame.floors), 0)
+    + vol(skinT, 100, boardLen, boardQty) + fb.extra.reduce((s2, e) => s2 + vol(skinT, e.width, boardLen, e.qty), 0)
     + (withX ? vol(rask.t, rask.w, (raskLen - rask.w) / 2, raskQty * 2) : 0);
 
   return { rows, volume, boardGap: fb.gap };
