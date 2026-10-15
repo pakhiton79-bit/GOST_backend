@@ -861,6 +861,48 @@
     background:var(--accent-wash);
     border-bottom:1px solid var(--accent);
   }
+  /* Подсказки о правке с пересчётом (common-table-edits.js): при наведении
+     на ячейку толщины и плашка после первого расчёта (с крестиком). Тёмная
+     плашка со стрелкой вверх, к ячейке (--arrow-x - середина ячейки). */
+  .table-hint{
+    position:absolute;
+    z-index:60;
+    transform:translateX(-50%);
+    max-width:260px;
+    padding:8px 12px;
+    border-radius:8px;
+    background:var(--ink);
+    color:var(--bg);
+    font-size:13px;
+    line-height:1.4;
+    pointer-events:none;
+  }
+  .table-hint::before{
+    content:'';
+    position:absolute;
+    top:-6px;
+    left:var(--arrow-x, 50%);
+    margin-left:-6px;
+    border:6px solid transparent;
+    border-top:0;
+    border-bottom-color:var(--ink);
+  }
+  .table-hint-first{pointer-events:auto;padding-right:32px;}
+  .table-hint-close{
+    position:absolute;
+    top:4px;
+    right:6px;
+    padding:0 4px;
+    border:0;
+    background:none;
+    color:inherit;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    opacity:.8;
+  }
+  .table-hint-close:hover{opacity:1;}
+  @media print{ .table-hint{display:none;} }
 
   .part-title{
     font-size:15px;

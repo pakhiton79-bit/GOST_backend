@@ -174,3 +174,98 @@ function onTableCellInput(cell){
     invalidateCalc(); // статус - по правкам, требующим пересчёта (calcStateSignature)
   }
 }
+
+// ============ Подсказки о правке с пересчётом ============
+// По указанию пользователя: пользователь должен узнать, что толщины в
+// таблице деталей можно менять с пересчётом ящика. Ячейки, правка которых
+// пересчитывает ящик (tableRecalcRoles): при наведении - всплывающий текст;
+// после первого расчёта - плашка у первой такой ячейки, с крестиком. Плашка
+// больше не показывается после крестика или любой правки в таблице
+// (TABLE_HINT_SEEN_KEY).
+const TABLE_HINT_SEEN_KEY = 'tableRecalcHintSeen';
+function tableRecalcHintText(role){
+  return `Измените ${role === 'w' ? 'ширину' : 'толщину'} - ящик и чертежи пересчитаются по кнопке «Рассчитать».`;
+}
+function tableHintSeen(){
+  try{ return localStorage.getItem(TABLE_HINT_SEEN_KEY) === '1'; }catch(e){ return true; }
+}
+function markTableHintSeen(){
+  try{ localStorage.setItem(TABLE_HINT_SEEN_KEY, '1'); }catch(e){}
+  const first = document.getElementById('tableRecalcHint');
+  if(first) first.remove();
+}
+function isRecalcCell(el){
+  const cell = el && el.closest && el.closest('#boardTables td.editable-cell');
+  return cell && tableRecalcRoles().includes(cell.dataset.role) ? cell : null;
+}
+// Плашка - под ячейкой, по её середине, не выходя за края окна.
+function placeTableHint(hint, cell){
+  const r = cell.getBoundingClientRect(), w = hint.offsetWidth;
+  const x = Math.min(Math.max(r.left + r.width / 2, w / 2 + 8), document.documentElement.clientWidth - w / 2 - 8);
+  hint.style.left = (x + window.scrollX) + 'px';
+  hint.style.top = (r.bottom + window.scrollY + 8) + 'px';
+  hint.style.setProperty('--arrow-x', (r.left + r.width / 2 - x + w / 2) + 'px');
+}
+function makeTableHint(id, text, closable){
+  const hint = document.createElement('div');
+  hint.className = 'table-hint' + (closable ? ' table-hint-first' : '');
+  if(id) hint.id = id;
+  hint.textContent = text;
+  if(closable){
+    const x = document.createElement('button');
+    x.type = 'button'; x.className = 'table-hint-close'; x.setAttribute('aria-label', 'Закрыть'); x.textContent = '×';
+    x.addEventListener('click', markTableHintSeen);
+    hint.appendChild(x);
+  }
+  document.body.appendChild(hint);
+  return hint;
+}
+// При наведении.
+let tableHoverHint = null;
+document.addEventListener('mouseover', e=>{
+  const cell = isRecalcCell(e.target);
+  if(!cell || document.getElementById('tableRecalcHint')){
+    if(tableHoverHint){ tableHoverHint.remove(); tableHoverHint = null; }
+    return;
+  }
+  if(tableHoverHint && tableHoverHint.cell === cell) return;
+  if(tableHoverHint) tableHoverHint.remove();
+  tableHoverHint = makeTableHint(null, tableRecalcHintText(cell.dataset.role), false);
+  tableHoverHint.cell = cell;
+  placeTableHint(tableHoverHint, cell);
+});
+// После первого расчёта: таблицы перерисованы и видны - плашка у первой
+// ячейки с пересчётом.
+(function(){
+  const tables = document.getElementById('boardTables');
+  if(!tables) return;
+  // Результаты (#results) у части типов показываются чуть позже вставки
+  // таблиц - плашка ждёт, пока ячейка станет видна (до 3 с).
+  let showTimer = null;
+  function showFirstHint(tries){
+    if(tableHintSeen() || document.getElementById('tableRecalcHint')) return;
+    const cell = [...tables.querySelectorAll('td.editable-cell')].find(c => isRecalcCell(c));
+    if(!cell) return;
+    if(!cell.offsetParent){
+      if(tries > 0) showTimer = setTimeout(()=>showFirstHint(tries - 1), 100);
+      return;
+    }
+    const hint = makeTableHint('tableRecalcHint', tableRecalcHintText(cell.dataset.role), true);
+    placeTableHint(hint, cell);
+    // Таблицы ещё въезжают (анимация common-motion.js) - место плашки
+    // уточняется, пока они не встанут.
+    [150, 400, 800, 1500].forEach(ms => setTimeout(()=>{ if(hint.isConnected) placeTableHint(hint, cell); }, ms));
+  }
+  new MutationObserver(()=>{
+    const old = document.getElementById('tableRecalcHint');
+    if(old) old.remove();
+    clearTimeout(showTimer);
+    showFirstHint(30);
+  }).observe(tables, {childList: true});
+  tables.addEventListener('input', markTableHintSeen);
+  window.addEventListener('resize', ()=>{
+    const hint = document.getElementById('tableRecalcHint');
+    const cell = [...tables.querySelectorAll('td.editable-cell')].find(c => isRecalcCell(c));
+    if(hint && cell) placeTableHint(hint, cell);
+  });
+})();
