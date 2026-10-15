@@ -82,23 +82,29 @@ function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDi
     {type:'double', x1:1276, y1:10, x2:1276, y2:752},
     {type:'label', lx:1276, ly:344, text:width+' мм', vertical:true},
   ];
+  // Доски выступают и по бокам (см. ii2KryshkaImage в kryshka.js; без
+  // него pad нет - как было): всё ниже верхнего края
+  // досок сдвинуто на p, нижний край досок - на 2p. Подпись выступа досок
+  // за торцы поперечных брусьев (sideFrame) - от верхнего края досок до
+  // поперечного бруса (он - на p ниже, чем был).
+  const p = g.pad || 0;
   return [
-    {type:'line', x1:49, y1:511, x2:49, y2:830},
-    {type:'line', x1:11, y1:332, x2:11, y2:953},
-    {type:'line', x1:11, y1:744, x2:49, y2:744},
-    {type:'single', x1:31, y1:1002, x2:31, y2:744, lx:31, ly:1003, text:torecBoard+' мм'},
-    {type:'line', x1:xb, y1:49, x2:xb + w, y2:49},
+    {type:'line', x1:49, y1:511 + p, x2:49, y2:830 + p},
+    {type:'line', x1:11, y1:332 + p, x2:11, y2:953 + 2 * p},
+    {type:'line', x1:11, y1:744 + p, x2:49, y2:744 + p},
+    {type:'single', x1:31, y1:1002 + 2 * p, x2:31, y2:744 + p, lx:31, ly:1003 + 2 * p, text:torecBoard+' мм'},
+    {type:'line', x1:xb, y1:49 + p, x2:xb + w, y2:49 + p},
     {type:'line', x1:xb, y1:12, x2:xb + w, y2:11},
-    {type:'line', x1:xb + 0.65 * w, y1:12, x2:xb + 0.65 * w, y2:49},
-    {type:'single', x1:-134, y1:32, x2:xb + 0.65 * w, y2:32, lx:-145, ly:32, text:sideFrame+' мм'},
+    {type:'line', x1:xb + 0.65 * w, y1:12, x2:xb + 0.65 * w, y2:49 + p},
+    {type:'single', x1:-134, y1:(12 + 49 + p) / 2, x2:xb + 0.65 * w, y2:(12 + 49 + p) / 2, lx:-145, ly:(12 + 49 + p) / 2, text:sideFrame+' мм'},
     {type:'line', x1:1046, y1:12, x2:1343, y2:10},
-    {type:'line', x1:1046, y1:829, x2:1352, y2:829},
-    {type:'double', x1:1312, y1:10, x2:1313, y2:829, lx:1313, ly:308, text:width+' мм', vertical:true},
-    {type:'line', x1:1195, y1:752, x2:1198, y2:930},
-    {type:'double', x1:11, y1:911, x2:1198, y2:910, lx:611, ly:912, text:length+' мм'},
-    {type:'line', x1:xb, y1:331, x2:xb, y2:509},
-    {type:'line', x1:10, y1:372, x2:xb, y2:373},
-    {type:'single', x1:-105, y1:517, x2:(10 + xb) / 2, y2:374, lx:-121, ly:534, text:edgeDist+' мм'},
+    {type:'line', x1:1046, y1:829 + 2 * p, x2:1352, y2:829 + 2 * p},
+    {type:'double', x1:1312, y1:10, x2:1313, y2:829 + 2 * p, lx:1313, ly:(10 + 829 + 2 * p) / 2, text:width+' мм', vertical:true},
+    {type:'line', x1:1195, y1:752 + p, x2:1198, y2:930 + 2 * p},
+    {type:'double', x1:11, y1:911 + 2 * p, x2:1198, y2:910 + 2 * p, lx:611, ly:912 + 2 * p, text:length+' мм'},
+    {type:'line', x1:xb, y1:331 + p, x2:xb, y2:509 + p},
+    {type:'line', x1:10, y1:372 + p, x2:xb, y2:373 + p},
+    {type:'single', x1:-105, y1:517 + p, x2:(10 + xb) / 2, y2:374 + p, lx:-121, ly:534 + p, text:edgeDist+' мм'},
   ];
 }
 
@@ -111,7 +117,7 @@ function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDi
 function kryshkaGapRecords(g, gapDist){
   const x1 = g.firstBeamX + g.beamW, x2 = g.secondBeamX, mid = (x1 + x2) / 2;
   const below = g.tpl === '0_3';
-  const y = below ? 690 : 120;
+  const y = below ? 690 : 120 + (g.pad || 0); // под первым продольным брусом
   // дальше подписи толщины бокового щита, чтобы не касаться её
   const tail = below ? g.IH + 100 : -100, ly = below ? tail + 16 : tail - 16;
   return [

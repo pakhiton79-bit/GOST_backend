@@ -24,21 +24,25 @@ function ii2KryshkaImage(calc, crossBeamW){
 
   // Доски - полосы по x.
   const strips = ii2BoardStrips(G.x0, G.x1, bg, k);
-  let shapes = rect(G.x0, G.y0, G.x1, G.y1, '#fff');
-  shapes += ii2BoardRects(strips, true, G.y0, G.y1);
+  // Как у II-1: доски выступают и по бокам на ту же величину, что и у
+  // торцов - доски шире на pad сверху и снизу, всё остальное сдвинуто вниз
+  // на pad; брусья - на прежних местах. Без продольных брусьев - как было.
+  const pad = longbeamCount > 0 ? KRYSHKA_GEN_INSET : 0, IH = G.IH + pad * 2;
+  let shapes = rect(G.x0, G.y0, G.x1, G.y1 + pad * 2, '#fff');
+  shapes += ii2BoardRects(strips, true, G.y0, G.y1 + pad * 2);
   if(longbeamCount > 0){
     const lx0 = G.x0 + KRYSHKA_GEN_INSET, lx1 = G.x1 - KRYSHKA_GEN_INSET;
     for(let i = 0; i < longbeamCount; i++){
-      const y = G.y0 + (G.y1 - G.y0 - mw) * i / (longbeamCount - 1);
+      const y = G.y0 + pad + (G.y1 - G.y0 - mw) * i / (longbeamCount - 1);
       shapes += rect(lx0, y, lx1, y + mw, '#fff');
     }
   }
-  const cy0 = G.y0 + KRYSHKA_GEN_INSET + 0.5, cy1 = G.y1 - KRYSHKA_GEN_INSET - 0.5;
+  const cy0 = G.y0 + KRYSHKA_GEN_INSET + 0.5 + pad, cy1 = G.y1 - KRYSHKA_GEN_INSET - 0.5 + pad;
   centers.forEach(c => { shapes += rect(c - beamW / 2, cy0, c + beamW / 2, cy1, '#a6a6a6'); });
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${G.IH}" viewBox="0 0 ${G.IW} ${G.IH}">`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${G.IW}" height="${IH}" viewBox="0 0 ${G.IW} ${IH}">`
     + `<rect width="100%" height="100%" fill="#fff"/>`
     + `<g stroke="#000" stroke-width="${KRYSHKA_GEN_STROKE}">${shapes}</g></svg>`;
-  return { img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), IW: G.IW, IH: G.IH, tpl: G.tpl, G,
+  return { img: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), IW: G.IW, IH, tpl: G.tpl, G, pad, boardY1: G.y1 + pad * 2,
     firstBeamX: centers[0] - beamW / 2, secondBeamX: centers[1] - beamW / 2, beamW, strips };
 }
 
@@ -52,7 +56,7 @@ function diagramKryshkaII2(calc){
     // Под чертежом, ниже размера длины, у 60% длины (левее внизу - подпись
     // толщины торцевой доски).
     const pick = ii2PickGap(g.strips, g.G.x0 + (g.G.x1 - g.G.x0) * 0.6);
-    if(pick) records.push(...ii2BoardGapRecords(pick[0], pick[1], g.G.y1, g.IH + 40 * k, 7 * k, bg.gap, k, 1, true));
+    if(pick) records.push(...ii2BoardGapRecords(pick[0], pick[1], g.boardY1, g.IH + 40 * k, 7 * k, bg.gap, k, 1, true));
   }
   return renderDiagram(g.img, 'Крышка - схема расположения деталей', g.IW, g.IH, records, undefined, photoStrokeScale(g.IW));
 }
