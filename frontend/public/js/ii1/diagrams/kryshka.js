@@ -94,10 +94,10 @@ function kryshkaGeneratedRecords(g, torecBoard, sideFrame, width, length, edgeDi
   const p = g.pad || 0;
   // Выступ досок по боку. С продольными брусьями (p > 0) - по указанию
   // пользователя две выноски: край досок - крайний продольный брус
-  // (sideEdge - обшивка бока; продольные брусья по ширине не укорачиваются)
-  // и продольный брус - поперечный (beamGap - стойка бока и укорочение
-  // поперечного бруса при оптимизации размеров); иначе одна - край досок -
-  // поперечный брус (sideFrame).
+  // (sideEdge - обшивка бока; при оптимизации размеров продольный брус
+  // смещён к центру на 2 мм - +2) и продольный брус - поперечный (beamGap -
+  // стойка бока: поперечный укорочен на те же 2 мм с конца); иначе одна -
+  // край досок - поперечный брус (sideFrame).
   const yl = 10.5 + p, yc = 49 + p, xa = xb - 40;
   const sideRecords = p > 0 && beamGap !== undefined && sideEdge !== undefined ? [
     {type:'line', x1:xa - 20, y1:12, x2:xa + 20, y2:11},
@@ -171,7 +171,9 @@ function diagramKryshka(longbeamCount, crossBeamCount, torecBoardVal, sideFrameV
   const g = kryshkaGenerated(longbeamCount, crossBeamCount, lengthVal, gapDistVal, crossBeamW);
   if(!g) return diagramTooDense();
   // sideEdgeVal - выступ досок по боку за крайний продольный брус (обшивка
-  // бока); от продольного бруса до поперечного - остаток выступа sideFrameVal.
+  // бока; при оптимизации размеров продольный брус смещён к центру на 2 мм -
+  // +2); от продольного бруса до поперечного - остаток выступа sideFrameVal
+  // (стойка бока).
   const records = kryshkaGeneratedRecords(g, dimLabel(torecBoardVal), dimLabel(sideFrameVal), dimLabel(widthVal), dimLabel(lengthVal), dimLabel(edgeDistVal), dimLabel(sideFrameVal - sideEdgeVal), dimLabel(sideEdgeVal))
     .concat(kryshkaGapRecords(g, dimLabel(gapDistVal)));
   return renderDiagram(g.img, 'Крышка - схема расположения деталей', g.IW, g.IH, records, widthPxOverride, photoStrokeScale(g.IW));
