@@ -114,15 +114,40 @@
         <thead><tr><th></th><th class="lp-us">Тара+</th><th>Свои таблицы Excel</th><th>Вручную по ГОСТ</th></tr></thead>
         <tbody>
           <tr><td>Время на ящик</td><td class="lp-us"><i class="lp-yes"></i>около минуты</td><td>быстро, если файл готов</td><td>около 30 минут</td></tr>
-          <tr><td>Риск ошибки</td><td class="lp-us"><i class="lp-yes"></i>один алгоритм по ГОСТ для каждого ящика</td><td>высокий</td><td>высокий</td></tr>
           <tr><td>Подбор сечений по ГОСТ</td><td class="lp-us"><i class="lp-yes"></i>сам, по размерам и массе груза</td><td>по формулам файла - верно настолько, насколько их составили</td><td>по таблицам ГОСТ вручную</td></tr>
           <tr><td>Изменили размер груза</td><td class="lp-us"><i class="lp-yes"></i>весь ящик пересчитывается сразу</td><td>пересчёт, если все формулы связаны между собой</td><td>пересчитывать заново</td></tr>
           <tr><td>Чертежи узлов</td><td class="lp-us"><i class="lp-yes"></i>сразу, размеры из того же расчёта</td><td>очень неточные</td><td>рисовать отдельно</td></tr>
-          <tr><td>Толщины на складе</td><td class="lp-us"><i class="lp-yes"></i>учитываются; если тоньше ГОСТ - предупреждение</td><td>только если заложено в файл</td><td>держать в голове</td></tr>
           <tr><td>Лист для цеха</td><td class="lp-us"><i class="lp-yes"></i>один лист А4 с таблицами и чертежами, печать или PDF</td><td>оформлять самому</td><td>оформлять самому</td></tr>
-          <tr><td>Сделать самим</td><td class="lp-us"><i class="lp-yes"></i>уже готово</td><td>сложно добиться точности</td><td>-</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+
+  <!-- Гибкость: толщину любой детали можно поменять в таблице - ящик и
+       чертежи пересчитываются (по указанию пользователя - отдельно от
+       таблицы сравнения). Справа - пример таблицы с исправленной толщиной. -->
+  <section class="lp-section">
+    <div class="lp-flex">
+      <div class="lp-flex-text">
+        <h2 class="lp-h2">Любая толщина - под вас</h2>
+        <p class="lp-flex-lead">Толщину любой детали можно поменять прямо в таблице: под то, что есть на складе, или под свой опыт. Нажали «Рассчитать» - и весь ящик собран заново по новой толщине.</p>
+        <ul class="lp-flex-list">
+          <li>Пересчитываются длины связанных деталей, габариты, объём, масса и чертежи</li>
+          <li>Толщины «в наличии» подставляются сами, тоньше ГОСТ - с предупреждением</li>
+          <li>Каждая правка видна в таблице и в листе для цеха</li>
+        </ul>
+        <p class="lp-flex-excel">В Excel под каждую новую толщину пришлось бы вручную собирать и выверять отдельный файл с формулами - долгая и тяжёлая работа. Здесь достаточно поменять число в таблице.</p>
+      </div>
+      <div class="lp-flex-art" aria-hidden="true">
+        <div class="lp-flex-table">
+          <div class="lp-flex-row lp-flex-head"><span>Деталь</span><span>Толщина</span><span>Длина</span></div>
+          <div class="lp-flex-row"><span>Стойка</span><span class="lp-flex-edit"><s>32</s> 40</span><span>1151</span></div>
+          <div class="lp-flex-row"><span>Горизонтальный брус</span><span class="lp-flex-edit"><s>32</s> 40</span><span class="lp-flex-new"><s>1464</s> 1480</span></div>
+          <div class="lp-flex-row"><span>Доска крышки</span><span>16</span><span class="lp-flex-new"><s>1496</s> 1512</span></div>
+          <div class="lp-flex-row"><span>Доска дна</span><span>19</span><span>1400</span></div>
+        </div>
+        <div class="lp-flex-note">Толщину стойки поменяли с 32 на 40 мм - длины зависимых деталей пересчитаны сами</div>
+      </div>
     </div>
   </section>
 

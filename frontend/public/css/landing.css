@@ -150,6 +150,29 @@
 .lp-compare td:first-child{color:var(--ink);font-weight:500;}
 .lp-compare .lp-us{background:var(--accent-wash);color:var(--ink);font-weight:600;}
 .lp-compare th.lp-us{color:var(--accent);font-size:15px;}
+
+/* Гибкость (после сравнения): текст слева, пример таблицы с исправленной
+   толщиной справа. */
+.lp-flex{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;padding:32px;border:1px solid var(--rule);border-radius:20px;background:var(--panel);}
+.lp-flex .lp-h2{margin-bottom:14px;}
+.lp-flex-lead{font-size:17px;line-height:1.6;color:var(--ink);margin:0 0 16px;}
+.lp-flex-list{margin:0 0 18px;padding:0;list-style:none;}
+.lp-flex-list li{position:relative;padding-left:24px;margin-bottom:8px;font-size:15px;line-height:1.5;color:var(--ink-soft);}
+.lp-flex-list li::before{content:'';position:absolute;left:2px;top:6px;width:10px;height:6px;border:solid var(--accent);border-width:0 0 2px 2px;transform:rotate(-45deg);}
+.lp-flex-excel{margin:0;padding:12px 14px;border-left:3px solid var(--accent);border-radius:0 10px 10px 0;background:var(--accent-wash);font-size:15px;line-height:1.5;color:var(--ink);}
+.lp-flex-art{padding:20px;border-radius:16px;background:var(--accent-wash);}
+.lp-flex-table{border:1px solid var(--rule);border-radius:12px;background:var(--panel);overflow:hidden;font-size:14px;}
+.lp-flex-row{display:grid;grid-template-columns:1.6fr .9fr .9fr;border-bottom:1px solid var(--rule);}
+.lp-flex-row:last-child{border-bottom:none;}
+.lp-flex-row span{padding:11px 14px;color:var(--ink);}
+.lp-flex-row span:not(:first-child){white-space:nowrap;}
+.lp-flex-row span:not(:first-child){text-align:right;}
+.lp-flex-head span{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft);background:var(--table-header-bg);}
+.lp-flex-edit{background:var(--accent-wash);color:var(--manual-ink)!important;font-weight:700;}
+.lp-flex-edit s{color:var(--ink-soft);font-weight:400;margin-right:6px;}
+.lp-flex-new{font-weight:700;}
+.lp-flex-new s{color:var(--ink-soft);font-weight:400;margin-right:6px;}
+.lp-flex-note{margin-top:12px;font-size:13px;line-height:1.45;color:var(--ink-soft);}
 .lp-yes{position:relative;display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px;border-radius:50%;background:var(--accent);}
 .lp-yes::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg);}
 
@@ -210,6 +233,7 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-lead{font-size:16px;}
   .lp-cards-3, .lp-cards-2, .lp-plans{grid-template-columns:1fr;}
   .lp-h2{font-size:24px;}
+  .lp-flex{grid-template-columns:1fr;gap:24px;padding:20px;}
   .landing .lp-section{margin-top:56px;}
   .lp-final{padding:36px 20px;}
   .lp-final h2{font-size:26px;}
