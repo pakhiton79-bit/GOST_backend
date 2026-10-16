@@ -307,7 +307,8 @@ const LP_TYPES = [
 ];
 function lpRenderTypes(){
   const box = document.getElementById('lpTypes');
-  box.innerHTML = LP_TYPES.map(t => `<a class="lp-type" href="${t.href}"><div class="lp-type-img"><img src="${t.image}" alt="${t.name}, ${t.gost}" loading="lazy"></div><span class="lp-type-name">${t.name}<small>${t.gost}</small></span></a>`).join('');
+  box.innerHTML = LP_TYPES.map(t => `<a class="lp-type" href="${t.href}"><div class="lp-type-img"><img src="${t.image}" alt="${t.name}, ${t.gost}" loading="lazy"></div><span class="lp-type-name">${t.name}<small>${t.gost}</small></span></a>`).join('')
+    + '<div class="lp-type lp-type-soon"><div class="lp-type-img"><span>Остальные типы ГОСТ&nbsp;2991-85<br>и другие стандарты</span></div><span>В работе</span></div>';
 }
 
 // ---------- Подписки ----------
