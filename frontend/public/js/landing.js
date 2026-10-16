@@ -309,6 +309,18 @@ function lpRenderTypes(){
   const box = document.getElementById('lpTypes');
   box.innerHTML = LP_TYPES.map(t => `<a class="lp-type" href="${t.href}"><div class="lp-type-img"><img src="${t.image}" alt="${t.name}, ${t.gost}" loading="lazy"></div><span class="lp-type-name">${t.name}<small>${t.gost}</small></span></a>`).join('')
     + '<div class="lp-type lp-type-soon"><div class="lp-type-img"><span>ГОСТ&nbsp;2991-85<br>и другие</span></div><span>В работе</span></div>';
+  // Сначала - 2 ряда (CSS .lp-types:not(.open)), кнопка разворачивает
+  // остальные плитки; кнопки нет, если плиток не больше двух рядов.
+  const more = document.getElementById('lpTypesMore');
+  const hidden = () => [...box.children].some(el => getComputedStyle(el).display === 'none');
+  const sync = () => { more.parentNode.hidden = !box.classList.contains('open') && !hidden(); };
+  more.addEventListener('click', () => {
+    const open = box.classList.toggle('open');
+    more.setAttribute('aria-expanded', String(open));
+    more.textContent = open ? 'Свернуть' : 'Показать все типы';
+  });
+  sync();
+  window.addEventListener('resize', sync);
 }
 
 // ---------- Подписки ----------
