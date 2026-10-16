@@ -189,8 +189,8 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
 :root[data-theme="dark"] .lp-type-img{background:var(--panel-hover);}
 /* Чертежи в ролике - приглушены, как светлые островки на страницах расчёта (style.css). */
 :root[data-theme="dark"] .lpd-drawing, :root[data-theme="dark"] .lpd-sum-img{filter:brightness(.86) sepia(.08);}
-.lp-type-soon{color:var(--ink-soft);}
-.lp-type-soon .lp-type-img{background:var(--accent-wash);color:var(--accent);font-size:18px;font-weight:700;}
+.lp-type-name small{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink-soft);}
+.lp-types-more{margin:16px 0 0;font-size:14px;color:var(--ink-soft);}
 
 /* Подписки. */
 .lp-plans{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;}

@@ -291,19 +291,23 @@ function lpDemo(){
 }
 
 // ---------- Галерея типов ----------
+// Под названием - стандарт (у ГОСТ 10198-91 и ГОСТ 2991-85 есть одноимённые
+// типы); ссылка - на страницу типов своего стандарта.
+const G10198 = { gost: 'ГОСТ 10198-91', href: 'gost-10198-91.html' };
+const G2991 = { gost: 'ГОСТ 2991-85', href: 'gost-2991-85.html' };
 const LP_TYPES = [
-  { name: 'Тип I-1', image: '/images/box_i1.jpg' },
-  { name: 'Тип I-2', image: '/images/box_i2.png' },
-  { name: 'Тип I-3', image: '/images/box.png' },
-  { name: 'Тип I-4', image: '/images/box_i4.png' },
-  { name: 'Тип II-1', image: '/images/box_ii1.png' },
-  { name: 'Тип II-2', image: '/images/box_ii2.png' },
-  { name: 'Тип III-1', image: '/images/box_iii1.png' },
+  { name: 'Тип I-1', image: '/images/box_i1.jpg', ...G10198 },
+  { name: 'Тип I-2', image: '/images/box_i2.png', ...G10198 },
+  { name: 'Тип I-3', image: '/images/box.png', ...G10198 },
+  { name: 'Тип I-4', image: '/images/box_i4.png', ...G10198 },
+  { name: 'Тип II-1', image: '/images/box_ii1.png', ...G10198 },
+  { name: 'Тип II-2', image: '/images/box_ii2.png', ...G10198 },
+  { name: 'Тип III-1', image: '/images/box_iii1.png', ...G10198 },
+  { name: 'Тип II-1', image: '/images/box_g2991_ii1.png', ...G2991 },
 ];
 function lpRenderTypes(){
   const box = document.getElementById('lpTypes');
-  box.innerHTML = LP_TYPES.map(t => `<a class="lp-type" href="gost-10198-91.html"><div class="lp-type-img"><img src="${t.image}" alt="${t.name}" loading="lazy"></div><span>${t.name}</span></a>`).join('')
-    + '<div class="lp-type lp-type-soon"><div class="lp-type-img"><span>ГОСТ 2991-85<br>и другие</span></div><span>В работе</span></div>';
+  box.innerHTML = LP_TYPES.map(t => `<a class="lp-type" href="${t.href}"><div class="lp-type-img"><img src="${t.image}" alt="${t.name}, ${t.gost}" loading="lazy"></div><span class="lp-type-name">${t.name}<small>${t.gost}</small></span></a>`).join('');
 }
 
 // ---------- Подписки ----------
