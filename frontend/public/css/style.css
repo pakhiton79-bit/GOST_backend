@@ -887,7 +887,8 @@
     border-top:0;
     border-bottom-color:var(--ink);
   }
-  .table-hint-first{pointer-events:auto;padding-right:32px;}
+  /* Плашка не мешает кликать по ячейкам под ней - клики ловит только крестик. */
+  .table-hint-first{padding-right:32px;}
   .table-hint-close{
     position:absolute;
     top:4px;
@@ -900,6 +901,7 @@
     line-height:1;
     cursor:pointer;
     opacity:.8;
+    pointer-events:auto;
   }
   .table-hint-close:hover{opacity:1;}
   @media print{ .table-hint{display:none;} }

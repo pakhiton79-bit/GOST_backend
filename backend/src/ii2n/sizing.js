@@ -24,7 +24,7 @@ function stabilizeSizes(c) {
   let len = L, outerW = W, skidCalcWidth = W;
   let skid = { t: 0, w: 0, count: 0 }, skidTableInfo = null, polozSimpleExceeded = false;
   let crossBeamT = 0, crossBeamExceeded = false, crossBeamCount = 0, standardCrossBeamCount = 0;
-  let longBeamT = 0, longBeamW = 100, longBeamCount = 0, longBeamExceeded = false;
+  let longBeamT = 0, longBeamW = 100, longBeamCount = 0;
   let floorBoardT = 0, floorBoardExceeded = false;
   let sub = { t: 0, w: 0, l: 0, qty: 0 };
   let outerH = 0;
@@ -95,8 +95,11 @@ function stabilizeSizes(c) {
     const longBeamAxis = clearGapBySpan(W, 100, longBeamCount) + 100; // ось-в-ось
     const crossBeamAxis = (L + CROSS_BEAM_W) / (crossBeamCount + 1);
     const lb = longBeamSection(crossBeamAxis, c.roundBoardWidths, longBeamAxis);
-    longBeamT = ov('tLongbeam', round(lb.t), 'Толщина продольного бруса крышки');
-    longBeamW = lb.w; longBeamExceeded = lb.exceeded;
+    // Толщина продольного бруса - всегда толщина каркаса (стойки) по расчёту
+    // (по указанию пользователя); ручные правки бруса и стойки независимы.
+    // Таблица продольных брусьев задаёт только ширину.
+    longBeamT = ov('tLongbeam', round(stj.t), 'Толщина продольного бруса крышки');
+    longBeamW = lb.w;
   }
 
   return {
@@ -104,7 +107,7 @@ function stabilizeSizes(c) {
     skid, skidTableInfo, polozSimpleExceeded, sub,
     crossBeamT, crossBeamW: CROSS_BEAM_W, crossBeamCount, standardCrossBeamCount, crossBeamExceeded,
     crossBeamMaxGap: CROSS_BEAM_MAX_GAP,
-    longBeamT, longBeamW, longBeamCount, longBeamExceeded,
+    longBeamT, longBeamW, longBeamCount,
     floorBoardT, floorBoardExceeded,
   };
 }
