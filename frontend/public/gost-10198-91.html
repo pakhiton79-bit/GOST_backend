@@ -52,10 +52,6 @@
   .type-badge-ok{
     background:var(--ok);
   }
-  .type-card:hover{
-    border-color:var(--accent);
-    background:var(--accent-wash);
-  }
   .type-info{flex:1;min-width:0;}
   .type-info h3{
     font-size:18px;
@@ -81,6 +77,18 @@
   @media (max-width:560px){
     .type-card{flex-direction:column;align-items:stretch;}
     .type-image{width:100%;flex-basis:auto;}
+  }
+  /* Наведение (вариант D, по выбору пользователя): тёплый фон, мягкая
+     коричневая рамка, название сдвигается на 4 px. */
+  .type-info h3{transition:transform .2s ease;}
+  .type-card:not(.type-card-off):hover, .type-card:focus-visible{
+    border-color:color-mix(in srgb, var(--accent) 40%, var(--border-input));
+    background:var(--panel-hover);
+  }
+  .type-card:not(.type-card-off):hover .type-info h3, .type-card:focus-visible .type-info h3{transform:translateX(4px);}
+  @media (prefers-reduced-motion:reduce){
+    .type-info h3{transition:none;}
+    .type-card:hover .type-info h3, .type-card:focus-visible .type-info h3{transform:none;}
   }
 </style>
 </head>

@@ -28,10 +28,6 @@
     text-decoration:none;
     transition:border-color .15s ease, background-color .15s ease;
   }
-  .gost-link:hover{
-    border-color:var(--accent);
-    background:var(--accent-wash);
-  }
   .gost-link .gost-name{font-size:16px;font-weight:600;}
   /* ГОСТ в работе (по указанию пользователя): карточка не нажимается, без
      стрелки и без подсветки, красная плашка - как у типов (.type-badge). */
@@ -54,6 +50,25 @@
   }
   .gost-link .arrow{color:var(--accent);font-size:18px;line-height:1;flex:none;}
   .empty-note{color:var(--ink-soft);font-size:14px;}
+  /* Наведение (вариант D, по выбору пользователя): тёплый фон, мягкая
+     коричневая рамка, название сдвигается на 4 px, стрелка появляется (на
+     устройствах без наведения - видна всегда). */
+  .gost-link .gost-name{transition:transform .2s ease;}
+  .gost-link .arrow{transition:opacity .2s ease, transform .2s ease;}
+  .gost-link:not(.gost-link-off):hover, .gost-link:focus-visible{
+    border-color:color-mix(in srgb, var(--accent) 40%, var(--border-input));
+    background:var(--panel-hover);
+  }
+  .gost-link:not(.gost-link-off):hover .gost-name, .gost-link:focus-visible .gost-name{transform:translateX(4px);}
+  @media (hover:hover){
+    .gost-link .arrow{opacity:0;}
+    .gost-link:hover .arrow, .gost-link:focus-visible .arrow{opacity:1;transform:translateX(4px);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .gost-link .gost-name, .gost-link .arrow{transition:none;}
+    .gost-link:hover .gost-name, .gost-link:focus-visible .gost-name,
+    .gost-link:hover .arrow, .gost-link:focus-visible .arrow{transform:none;}
+  }
 </style>
 </head>
 <body>
