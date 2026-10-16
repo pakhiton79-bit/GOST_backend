@@ -172,6 +172,9 @@
 .lp-flex-edit s{color:var(--ink-soft);font-weight:400;margin-right:6px;}
 .lp-flex-new{font-weight:700;}
 .lp-flex-new s{color:var(--ink-soft);font-weight:400;margin-right:6px;}
+.lp-flex-dims{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;padding:11px 14px;border:1px solid var(--rule);border-radius:12px;background:var(--panel);font-size:14px;color:var(--ink);}
+.lp-flex-dims b{font-weight:700;}
+.lp-flex-dims s{color:var(--ink-soft);font-weight:400;margin-right:6px;}
 .lp-flex-note{margin-top:12px;font-size:13px;line-height:1.45;color:var(--ink-soft);}
 .lp-yes{position:relative;display:inline-block;width:16px;height:16px;margin-right:6px;vertical-align:-3px;border-radius:50%;background:var(--accent);}
 .lp-yes::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:7px;border-right:2px solid #fff;border-bottom:2px solid #fff;transform:rotate(45deg);}
@@ -233,7 +236,13 @@ a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
   .lp-lead{font-size:16px;}
   .lp-cards-3, .lp-cards-2, .lp-plans{grid-template-columns:1fr;}
   .lp-h2{font-size:24px;}
-  .lp-flex{grid-template-columns:1fr;gap:24px;padding:20px;}
+  .lp-flex{grid-template-columns:minmax(0,1fr);gap:24px;padding:20px;}
+  .lp-flex-art{padding:12px;}
+  .lp-flex-table{font-size:13px;}
+  .lp-flex-row{grid-template-columns:1.3fr 1fr 1fr;}
+  .lp-flex-row span{padding:9px 10px;}
+  .lp-flex-row span:not(:first-child){white-space:normal;}
+  .lp-flex-row s{display:block;margin-right:0 !important;}
   .landing .lp-section{margin-top:56px;}
   .lp-final{padding:36px 20px;}
   .lp-final h2{font-size:26px;}
