@@ -939,6 +939,10 @@
   .version-opt{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:9px 18px;border-radius:9px;text-decoration:none;color:var(--ink-soft);font-size:16px;font-weight:600;white-space:nowrap;transition:background-color .15s ease,color .15s ease;}
   .version-opt:hover{background:var(--accent-wash);color:var(--ink);}
   .version-opt.active{background:var(--accent);color:#fff;cursor:default;}
+  /* статус версии - контурная плашка цвета статуса (на выбранной коричневой
+     кнопке - на белом фоне в обеих темах, статус коричневым не заливается) */
+  .version-badge{display:inline-block;padding:1px 9px;border:1px solid var(--warn);border-radius:999px;font-size:12px;font-weight:600;line-height:1.5;color:var(--warn);background:transparent;}
+  .version-opt.active .version-badge{background:#fff;}
   /* «?» у оптимальной версии - пояснение (по наведению, фокусу, на телефоне -
      по нажатию: common-version-switch.js, класс .open) */
   .version-info{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:18px;height:18px;border:1.5px solid currentColor;border-radius:50%;font-size:12px;font-weight:700;line-height:1;cursor:help;outline:none;}
