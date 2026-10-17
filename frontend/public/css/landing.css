@@ -184,10 +184,11 @@
 /* Свёрнуто - 2 ряда (по 4 плитки, на узких экранах - 4 плитки), остальное -
    по кнопке «Показать все типы». */
 .lp-types:not(.open) .lp-type:nth-child(n+9){display:none;}
-.lp-types.open .lp-type{animation:lpTypeIn .3s ease both;}
-@keyframes lpTypeIn{from{opacity:0;transform:translateY(6px);}}
 .lp-types-toggle{display:flex;justify-content:center;margin-top:20px;}
-@media (prefers-reduced-motion:reduce){ .lp-types.open .lp-type{animation:none;} }
+#lpTypesMore{gap:10px;}
+#lpTypesMore svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .35s cubic-bezier(.2,.7,.3,1);}
+#lpTypesMore[aria-expanded="true"] svg{transform:rotate(180deg);}
+@media (prefers-reduced-motion:reduce){ #lpTypesMore svg{transition:none;} }
 .lp-type{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid var(--rule);border-radius:16px;background:var(--panel);text-decoration:none;color:var(--ink);font-weight:600;font-size:15px;transition:border-color .15s ease, transform .15s ease;}
 a.lp-type:hover{border-color:var(--accent);transform:translateY(-2px);}
 .lp-type-img{height:150px;border-radius:10px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;}

@@ -311,13 +311,56 @@ function lpRenderTypes(){
     + '<div class="lp-type lp-type-soon"><div class="lp-type-img"><span>ГОСТ&nbsp;2991-85<br>и другие</span></div><span>В работе</span></div>';
   // Сначала - 2 ряда (CSS .lp-types:not(.open)), кнопка разворачивает
   // остальные плитки; кнопки нет, если плиток не больше двух рядов.
+  // Анимация (по выбору пользователя, вариант C «из кнопки»): высота
+  // галереи плавно меняется, скрытые плитки по очереди «вырастают» снизу,
+  // со стороны кнопки; сворачивание - в обратную сторону. При «уменьшении
+  // движения» - сразу, без анимации.
   const more = document.getElementById('lpTypesMore');
-  const hidden = () => [...box.children].some(el => getComputedStyle(el).display === 'none');
-  const sync = () => { more.parentNode.hidden = !box.classList.contains('open') && !hidden(); };
-  more.addEventListener('click', () => {
-    const open = box.classList.toggle('open');
+  const moreText = more.querySelector('span');
+  const hiddenTiles = () => [...box.children].filter(el => getComputedStyle(el).display === 'none');
+  const sync = () => { more.parentNode.hidden = !box.classList.contains('open') && !hiddenTiles().length; };
+  const reduce = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const OUT = { opacity: 0, transform: 'translateY(24px) scale(.92)' };
+  const IN = { opacity: 1, transform: 'none' };
+  let extra = [], busy = false;
+  const animHeight = (from, to, ms) => box.animate([{ height: from + 'px' }, { height: to + 'px' }],
+    { duration: ms, easing: 'cubic-bezier(.2,.7,.3,1)' }).finished;
+  const setOpen = open => {
+    box.classList.toggle('open', open);
     more.setAttribute('aria-expanded', String(open));
-    more.textContent = open ? 'Свернуть' : 'Показать все типы';
+    moreText.textContent = open ? 'Свернуть' : 'Показать все типы';
+  };
+  more.addEventListener('click', async () => {
+    if(busy) return;
+    const opening = !box.classList.contains('open');
+    if(reduce() || !box.animate){
+      if(opening) extra = hiddenTiles();
+      setOpen(opening);
+      return;
+    }
+    busy = true;
+    box.style.overflow = 'hidden';
+    try{
+      if(opening){
+        extra = hiddenTiles();
+        const h0 = box.offsetHeight;
+        setOpen(true);
+        const h1 = box.offsetHeight;
+        extra.forEach((el, i) => el.animate([OUT, IN], { duration: 500, delay: 120 + i * 70, easing: 'cubic-bezier(.34,1.4,.64,1)', fill: 'backwards' }));
+        await animHeight(h0, h1, 400);
+      } else {
+        const n = extra.length;
+        await Promise.all(extra.map((el, i) => el.animate([IN, OUT], { duration: 260, delay: (n - 1 - i) * 40, easing: 'ease-in', fill: 'forwards' }).finished));
+        const h0 = box.offsetHeight;
+        setOpen(false);
+        extra.forEach(el => el.getAnimations().forEach(a => a.cancel()));
+        const h1 = box.offsetHeight;
+        await animHeight(h0, h1, 300);
+      }
+    } finally {
+      box.style.overflow = '';
+      busy = false;
+    }
   });
   sync();
   window.addEventListener('resize', sync);
