@@ -26,11 +26,11 @@ function calcQuota(req, res, next) {
     // Есть подписка больше - предложить её (по указанию пользователя).
     const next = PLANS[nextPlan(q.plan)];
     return res.status(402).json({
-      error: q.monthly ? `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.` : 'Пробные расчёты закончились.',
+      error: q.monthly ? `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.` : (q.welcomeTotal ? 'Пробные расчёты закончились.' : 'Пробные расчёты не начислены.'),
       errorLink: next ? { href: 'plans.html', text: `Больше в ${next.name}` } : undefined,
       limit: {
         kind: q.monthly ? 'month' : 'trial', plan: q.plan, planName: q.planName, monthly: q.monthly,
-        periodEnd: q.periodEnd, welcome: WELCOME_CALCS,
+        periodEnd: q.periodEnd, welcome: q.welcomeTotal,
         next: next ? { name: next.name, monthly: next.monthly, price: next.price } : null,
       },
     });

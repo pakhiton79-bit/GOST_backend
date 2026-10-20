@@ -1,8 +1,10 @@
 // Подписки и лимиты расчётов (по указанию пользователя). Пока без оплаты:
 // платные подписки выдаёт администратор вручную (admin.html).
 //
-//   Пробная (id free) - только 20 расчётов за регистрацию (один раз, не
+//   Пробная (id free) - только 10 расчётов за регистрацию (один раз, не
 //          сгорают; месячных расчётов нет), 1 устройство, бесплатно;
+//          бонус получают не больше WELCOME_PER_IP аккаунтов с одного IP за
+//          WELCOME_IP_DAYS дней (остальные регистрируются без бонуса);
 //   Base - 25 расчётов в месяц, 1 устройство, 5 000 ₽ в месяц;
 //   Pro  - 150 расчётов в месяц, 1 устройство, 10 000 ₽ в месяц;
 //   Team - 2500 расчётов в месяц на аккаунт, 4 устройства, 30 000 ₽ в месяц.
@@ -26,7 +28,10 @@ const PLANS = {
   pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000, customStandards: true, prioritySupport: true },
   team: { name: 'Team', monthly: 2500, devices: 4, price: 30000, customStandards: true, prioritySupport: true },
 };
-const WELCOME_CALCS = 20;
+const WELCOME_CALCS = 10;
+const OLD_WELCOME_CALCS = 20;   // столько выдавалось до 10 (у старых аккаунтов)
+const WELCOME_PER_IP = 5;
+const WELCOME_IP_DAYS = 14;
 const PERIOD_MS = 30 * 24 * 3600 * 1000;  // «месяц» подписки
 const PLAN_TERMS = [1, 3];                // срок платной подписки, месяцев
 // Следующая подписка (для предложения «Больше в ...»): по порядку PLANS.
@@ -53,7 +58,11 @@ function syncUser(user, now) {
   let changed = false;
   if (!PLANS[user.plan]) { user.plan = 'free'; changed = true; }
   if (!Number.isFinite(user.planSince)) { user.planSince = Date.parse(user.createdAt) || now; changed = true; }
-  if (!Number.isInteger(user.welcomeLeft)) { user.welcomeLeft = WELCOME_CALCS; changed = true; }
+  // welcomeTotal - сколько бонусных выдано (0 - не выдано из-за лимита по IP);
+  // выдаётся при подтверждении почты (grantWelcome в routes.js), до этого
+  // не задаётся. У аккаунтов до этого поля бонус был OLD_WELCOME_CALCS.
+  if (user.verified && !Number.isInteger(user.welcomeTotal)) { user.welcomeTotal = Number.isInteger(user.welcomeLeft) ? OLD_WELCOME_CALCS : WELCOME_CALCS; changed = true; }
+  if (user.verified && !Number.isInteger(user.welcomeLeft)) { user.welcomeLeft = user.welcomeTotal; changed = true; }
   if (!Number.isInteger(user.used)) { user.used = 0; changed = true; }
   if (!Number.isInteger(user.extraLeft)) { user.extraLeft = 0; user.extraTotal = 0; changed = true; }
   // Платная подписка без срока (выдана до появления сроков) - на 1 месяц от
@@ -78,13 +87,14 @@ function quotaInfo(user, now) {
   const p = planOf(user);
   const { start, end } = periodBounds(user.planSince, now);
   const monthlyLeft = Math.max(0, p.monthly - user.used);
+  const welcomeLeft = user.welcomeLeft || 0, welcomeTotal = user.welcomeTotal || 0;
   return {
     plan: user.plan, planName: p.name, devices: p.devices,
     planUntil: Number.isFinite(user.planUntil) ? new Date(user.planUntil).toISOString() : null,
     monthly: p.monthly, used: user.used, monthlyLeft,
-    welcomeLeft: user.welcomeLeft, welcomeTotal: WELCOME_CALCS,
+    welcomeLeft, welcomeTotal,
     extraLeft: user.extraLeft, extraTotal: user.extraTotal || user.extraLeft,
-    left: monthlyLeft + user.welcomeLeft + user.extraLeft,
+    left: monthlyLeft + welcomeLeft + user.extraLeft,
     periodStart: new Date(start).toISOString(), periodEnd: new Date(end).toISOString(),
   };
 }
@@ -103,4 +113,4 @@ function publicPlans() {
   return Object.keys(PLANS).map(id => ({ id, ...PLANS[id], welcome: id === 'free' ? WELCOME_CALCS : 0 }));
 }
 
-module.exports = { PLANS, WELCOME_CALCS, PERIOD_MS, PLAN_TERMS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans, nextPlan };
+module.exports = { PLANS, WELCOME_CALCS, WELCOME_PER_IP, WELCOME_IP_DAYS, PERIOD_MS, PLAN_TERMS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans, nextPlan };

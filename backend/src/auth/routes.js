@@ -33,7 +33,17 @@ const store = require('./store');
 const { hashPassword, verifyPassword, newCode, newToken, sha256, hashCode, sameHash } = require('./crypto');
 const { sendCode } = require('./mailer');
 const { startSession, endSession } = require('./session');
-const { planOf, quotaInfo, syncUser } = require('./plans');
+const { planOf, quotaInfo, syncUser, WELCOME_CALCS, WELCOME_PER_IP, WELCOME_IP_DAYS } = require('./plans');
+
+// Бонус за регистрацию - при подтверждении почты (один раз): не больше
+// WELCOME_PER_IP аккаунтов с одного IP за WELCOME_IP_DAYS дней.
+function grantWelcome(user, ip) {
+  if (Number.isInteger(user.welcomeTotal)) return;
+  const ok = store.takeWelcomeSlot(ip, Date.now(), WELCOME_PER_IP, WELCOME_IP_DAYS * 24 * 3600 * 1000);
+  const n = ok ? WELCOME_CALCS : 0;
+  if (!ok) console.log(`[вход] бонус за регистрацию не выдан (${user.email}): лимит с IP ${ip}`);
+  store.updateUser(user, { welcomeTotal: n, welcomeLeft: n });
+}
 const stats = require('./stats');
 const { consentsFromRequest } = require('./legal');
 const { publicAutoRenew } = require('./auto-renew');
@@ -258,6 +268,7 @@ router.post('/verify', rateLimit, (req, res) => {
   const err = checkCode(email, 'register', req.body.code);
   if (err) return res.status(400).json({ error: err });
   store.updateUser(user, { verified: true });
+  grantWelcome(user, req.ip);
   stats.recordRegistration(Date.now());
   finishLogin(req, res, user);
 });
@@ -459,7 +470,9 @@ router.post('/reset', rateLimit, async (req, res, next) => {
     // Новый пароль: прежние входы на всех устройствах завершаются, пауза
     // после неверных паролей снимается. Код пришёл на почту - значит,
     // почта подтверждена.
+    const firstVerify = !user.verified;
     store.updateUser(user, { passHash, verified: true, loginFails: 0, loginLockUntil: 0 });
+    if (firstVerify) grantWelcome(user, req.ip);
     store.deleteUserSessions(user.id);
     if (user.blocked) return res.status(403).json(blockedError(user));
     startSession(req, res, user.id);

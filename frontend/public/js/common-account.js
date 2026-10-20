@@ -175,7 +175,10 @@ function renderSiteSub(user){
   let html = `<div class="site-sub-head"><div><div class="site-sub-plan">${q.planName}</div><div class="site-sub-text">${q.devices === 1 ? '1 устройство' : q.devices + ' устройства'}${until}${renew}</div></div>`
     + (upgrade ? '<a class="site-sub-btn site-sub-btn-main" href="plans.html">Улучшить</a>' : '<a class="btn-secondary site-sub-btn" href="plans.html">Все подписки</a>') + '</div>';
   if(q.monthly) html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
-  if(q.welcomeLeft > 0 || q.plan === 'free'){
+  // Бонус не начислен (лимит регистраций с одного IP, plans.js на сервере).
+  if(q.plan === 'free' && !q.welcomeTotal){
+    html += '<p class="site-sub-text">Бонус за регистрацию не начислен: с этого интернет-подключения за последние 2 недели уже зарегистрировано несколько аккаунтов. Чтобы считать, выберите подписку.</p>';
+  } else if(q.welcomeLeft > 0 || q.plan === 'free'){
     const used = q.welcomeTotal - q.welcomeLeft;
     html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
   }
@@ -652,8 +655,9 @@ function showLimitDialog(limit){
     text = `Расчёты доступны после входа. При регистрации - ${limit.welcome} ${calcWord(limit.welcome)} бесплатно.`;
     actions = btn('btn-secondary', 'Войти', ` href="login.html?next=${page}"`) + btn('limit-main', 'Зарегистрироваться', ` href="login.html?mode=register&amp;next=${page}"`);
   } else if(limit.kind === 'trial'){
-    title = 'Пробные расчёты закончились';
-    text = `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`;
+    title = limit.welcome ? 'Пробные расчёты закончились' : 'Пробные расчёты не начислены';
+    text = limit.welcome ? `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`
+      : 'С этого интернет-подключения за последние 2 недели уже зарегистрировано несколько аккаунтов, поэтому бонус за регистрацию не начислен. Чтобы считать, выберите подписку.';
     extra = '<div class="limit-plans" id="limitPlans"></div>';
     actions = btn('btn-secondary limit-close', 'Позже') + btn('limit-main', 'Выбрать подписку', ' href="plans.html"');
   } else {

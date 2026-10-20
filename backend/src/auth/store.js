@@ -50,6 +50,8 @@ function load() {
   db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
   db.requests = Array.isArray(db.requests) ? db.requests : [];
   db.reports = Array.isArray(db.reports) ? db.reports : [];
+  // IP (ipKey) -> времена выдачи бонуса за регистрацию (plans.js, WELCOME_PER_IP).
+  db.welcomeIps = db.welcomeIps && typeof db.welcomeIps === 'object' ? db.welcomeIps : {};
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
   return db;
 }
@@ -216,6 +218,7 @@ function listReports() {
 // Возвращает, сколько записей удалено.
 const UNVERIFIED_DAYS = 7;
 const DAY_MS = 24 * 3600 * 1000;
+const WELCOME_KEEP_MS = 14 * DAY_MS;   // = WELCOME_IP_DAYS в plans.js
 function cleanup(now) {
   const d = load();
   let removed = 0;
@@ -231,8 +234,34 @@ function cleanup(now) {
     Object.keys(d.codes).forEach(k => { if (k.endsWith(':' + u.email)) delete d.codes[k]; });
     removed++;
   });
+  Object.keys(d.welcomeIps).forEach(k => {
+    const list = d.welcomeIps[k].filter(t => now - t < WELCOME_KEEP_MS);
+    if (list.length !== d.welcomeIps[k].length) removed++;
+    if (list.length) d.welcomeIps[k] = list; else delete d.welcomeIps[k];
+  });
   if (removed) save();
   return removed;
+}
+
+// ---- Бонус за регистрацию по IP ----
+// Ключ: IPv4 целиком, IPv6 - первые 4 группы (сеть /64 обычно у одного
+// абонента и меняется внутри неё).
+function ipKey(ip) {
+  const s = String(ip || '').replace(/^::ffff:/i, '');
+  if (!s.includes(':')) return s;
+  return s.split(':').slice(0, 4).join(':') + '::/64';
+}
+// true - бонус можно выдать (выдача записывается), false - лимит с этого IP
+// за окно исчерпан. Удалённые аккаунты не освобождают место.
+function takeWelcomeSlot(ip, now, perIp, windowMs) {
+  const d = load();
+  const key = ipKey(ip);
+  const list = (d.welcomeIps[key] || []).filter(t => now - t < windowMs);
+  if (list.length >= perIp) { d.welcomeIps[key] = list; save(); return false; }
+  list.push(now);
+  d.welcomeIps[key] = list;
+  save();
+  return true;
 }
 
 // ---- Статистика по дням (см. stats.js) ----
@@ -248,4 +277,5 @@ module.exports = {
   setTicket, getTicket, deleteTicket,
   addRequest, listRequests,
   addReport, listReports, countRecentByUser,
+  takeWelcomeSlot,
 };
