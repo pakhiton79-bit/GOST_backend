@@ -155,10 +155,7 @@
    толщиной справа. */
 .lp-flex{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:center;padding:32px;border:1px solid var(--rule);border-radius:20px;background:var(--panel);}
 .lp-flex .lp-h2{margin-bottom:14px;}
-.lp-flex-lead{font-size:17px;line-height:1.6;color:var(--ink);margin:0 0 16px;}
-.lp-flex-list{margin:0 0 18px;padding:0;list-style:none;}
-.lp-flex-list li{position:relative;padding-left:24px;margin-bottom:8px;font-size:15px;line-height:1.5;color:var(--ink-soft);}
-.lp-flex-list li::before{content:'';position:absolute;left:2px;top:6px;width:10px;height:6px;border:solid var(--accent);border-width:0 0 2px 2px;transform:rotate(-45deg);}
+.lp-flex-lead{font-size:18px;line-height:1.55;color:var(--ink);margin:0 0 18px;}
 .lp-flex-excel{margin:0;padding:12px 14px;border-left:3px solid var(--accent);border-radius:0 10px 10px 0;background:var(--accent-wash);font-size:15px;line-height:1.5;color:var(--ink);}
 .lp-flex-art{padding:20px;border-radius:16px;background:var(--accent-wash);}
 .lp-flex-table{border:1px solid var(--rule);border-radius:12px;background:var(--panel);overflow:hidden;font-size:14px;}
