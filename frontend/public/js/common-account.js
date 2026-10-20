@@ -177,7 +177,7 @@ function renderSiteSub(user){
   if(q.monthly) html += usageBlock('Расчёты в этом месяце', q.used, q.monthly, `Обновятся через ${days} ${plural(days, 'день', 'дня', 'дней')}`, `Использовано ${q.used} из ${q.monthly.toLocaleString('ru-RU')}`);
   // Бонус не начислен (лимит регистраций с одного IP, plans.js на сервере).
   if(q.plan === 'free' && !q.welcomeTotal){
-    html += '<p class="site-sub-text">Бонус за регистрацию не начислен: с этого интернет-подключения за последние 2 недели уже зарегистрировано несколько аккаунтов. Чтобы считать, выберите подписку.</p>';
+    html += '<p class="site-sub-text">Бонус за регистрацию не начислен: с этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:</p><div class="site-help-email site-nowelcome-email"></div>';
   } else if(q.welcomeLeft > 0 || q.plan === 'free'){
     const used = q.welcomeTotal - q.welcomeLeft;
     html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
@@ -186,6 +186,7 @@ function renderSiteSub(user){
   if(q.extraLeft > 0) html += usageBlock('Дополнительные расчёты', q.extraTotal - q.extraLeft, q.extraTotal, 'Не сгорают', `Осталось ${q.extraLeft.toLocaleString('ru-RU')} из ${q.extraTotal.toLocaleString('ru-RU')}`);
   html += autoRenewHtml(user);
   box.innerHTML = html;
+  renderHelpEmail(box.querySelector('.site-nowelcome-email'));
 }
 // Автопродление платной подписки (по указанию пользователя; сервер -
 // src/auth/auto-renew.js). user.autoRenew - null, пока функция выключена на
@@ -522,7 +523,11 @@ function loadPow(){
 }
 const HELP_POW_TEXT = { work: 'Проверяем, что вы не робот...', ok: 'Проверка пройдена, загружаем адрес...', fail: 'Проверка «Я не робот» не удалась.' };
 function renderSiteHelp(){
-  const el = document.getElementById('siteHelpEmail');
+  renderHelpEmail(document.getElementById('siteHelpEmail'));
+}
+// Адрес поддержки в элементе el (раздел «Помощь», окно и блок «Бонус не
+// начислен»).
+function renderHelpEmail(el){
   if(!el) return;
   // Значок - как на странице входа: кольцо заполняется по ходу проверки.
   const showState = state => {
@@ -534,7 +539,7 @@ function renderSiteHelp(){
   };
   if(!helpEmailPromise){
     helpEmailPromise = loadPow()
-      .then(() => powSolve(state => { if(document.getElementById('siteHelpEmail') === el) showState(state); }, showProgress))
+      .then(() => powSolve(state => { if(el.isConnected) showState(state); }, showProgress))
       .then(captchaToken => fetch('/api/feedback/contact', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ captchaToken }) }))
       .then(r => r.ok ? r.json() : Promise.reject(new Error('contact ' + r.status)))
       .then(d => d.email || '');
@@ -542,14 +547,12 @@ function renderSiteHelp(){
   }
   showState('work');
   helpEmailPromise.then(email => {
-    const box = document.getElementById('siteHelpEmail');
-    if(!box) return;
-    box.innerHTML = email
+    if(!el.isConnected) return;
+    el.innerHTML = email
       ? `<a class="site-help-mail" href="mailto:${escHtml(email)}">${escHtml(email)}</a>`
       : `<span class="site-sub-text">Почта поддержки скоро появится.${sitePageMode() === 'full' ? ' Пока сообщите о проблеме кнопкой «Сообщить об ошибке».' : ''}</span>`;
   }).catch(() => {
-    const box = document.getElementById('siteHelpEmail');
-    if(box) box.innerHTML = '<span class="site-sub-text">Не удалось показать адрес. Закройте и откройте «Помощь» ещё раз.</span>';
+    if(el.isConnected) el.innerHTML = '<span class="site-sub-text">Не удалось показать адрес. Закройте и откройте окно ещё раз.</span>';
   });
 }
 document.addEventListener('click', e => {
@@ -657,8 +660,10 @@ function showLimitDialog(limit){
   } else if(limit.kind === 'trial'){
     title = limit.welcome ? 'Пробные расчёты закончились' : 'Пробные расчёты не начислены';
     text = limit.welcome ? `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`
-      : 'С этого интернет-подключения за последние 2 недели уже зарегистрировано несколько аккаунтов, поэтому бонус за регистрацию не начислен. Чтобы считать, выберите подписку.';
-    extra = '<div class="limit-plans" id="limitPlans"></div>';
+      : 'С этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов, поэтому бонус за регистрацию не начислен. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:';
+    // Адрес поддержки - после проверки «Я не робот» (renderHelpEmail).
+    if(!limit.welcome) extra = '<div class="site-help-email limit-help-email"></div>';
+    extra += '<div class="limit-plans" id="limitPlans"></div>';
     actions = btn('btn-secondary limit-close', 'Позже') + btn('limit-main', 'Выбрать подписку', ' href="plans.html"');
   } else {
     const days = Math.max(1, Math.ceil((new Date(limit.periodEnd) - Date.now()) / 86400000));
@@ -688,6 +693,7 @@ function showLimitDialog(limit){
   });
   document.addEventListener('keydown', onKey, true);
   document.body.appendChild(overlay);
+  renderHelpEmail(overlay.querySelector('.limit-help-email'));
   overlay.querySelector('.limit-main').focus();
   // Карточки подписок: у пробной - все платные (выделена Pro), у
   // закончившейся платной - все подписки больше текущей (выделена следующая).

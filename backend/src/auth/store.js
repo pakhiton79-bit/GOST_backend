@@ -218,7 +218,7 @@ function listReports() {
 // Возвращает, сколько записей удалено.
 const UNVERIFIED_DAYS = 7;
 const DAY_MS = 24 * 3600 * 1000;
-const WELCOME_KEEP_MS = 14 * DAY_MS;   // = WELCOME_IP_DAYS в plans.js
+const WELCOME_KEEP_MS = 30 * DAY_MS;   // = WELCOME_IP_DAYS в plans.js
 function cleanup(now) {
   const d = load();
   let removed = 0;

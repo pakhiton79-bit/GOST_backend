@@ -30,8 +30,8 @@ const PLANS = {
 };
 const WELCOME_CALCS = 10;
 const OLD_WELCOME_CALCS = 20;   // столько выдавалось до 10 (у старых аккаунтов)
-const WELCOME_PER_IP = 5;
-const WELCOME_IP_DAYS = 14;
+const WELCOME_PER_IP = 4;
+const WELCOME_IP_DAYS = 30;
 const PERIOD_MS = 30 * 24 * 3600 * 1000;  // «месяц» подписки
 const PLAN_TERMS = [1, 3];                // срок платной подписки, месяцев
 // Следующая подписка (для предложения «Больше в ...»): по порядку PLANS.
