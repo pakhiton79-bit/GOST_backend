@@ -179,7 +179,7 @@ function renderSiteSub(user){
   if(q.plan === 'free' && !q.welcomeTotal){
     html += '<p class="site-sub-text">Бонус за регистрацию не начислен: с этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:</p><div class="site-help-email site-nowelcome-email"></div>';
   } else if(q.welcomeExpired && q.plan === 'free'){
-    html += `<p class="site-sub-text">Пробный доступ закончился: бонус за регистрацию действует ${q.welcomeHours} ${plural(q.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку.</p>`;
+    html += `<p class="site-sub-text">Пробный доступ закончился: бонус за регистрацию действует ${q.welcomeHours} ${plural(q.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку. Если не успели попробовать сервис, напишите нам:</p><div class="site-help-email site-nowelcome-email"></div>`;
   } else if(q.welcomeLeft > 0 || q.plan === 'free'){
     // Срок бонуса - с первого расчёта (welcomeUntil с сервера).
     const used = q.welcomeTotal - q.welcomeLeft;
@@ -665,11 +665,11 @@ function showLimitDialog(limit){
     actions = btn('btn-secondary', 'Войти', ` href="login.html?next=${page}"`) + btn('limit-main', 'Зарегистрироваться', ` href="login.html?mode=register&amp;next=${page}"`);
   } else if(limit.kind === 'trial'){
     title = !limit.welcome ? 'Пробные расчёты не начислены' : limit.welcomeExpired ? 'Пробный доступ закончился' : 'Пробные расчёты закончились';
-    text = limit.welcomeExpired ? `Пробный доступ действует ${limit.welcomeHours} ${plural(limit.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку.`
+    text = limit.welcomeExpired ? `Пробный доступ действует ${limit.welcomeHours} ${plural(limit.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку. Если не успели попробовать сервис, напишите нам:`
       : limit.welcome ? `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`
       : 'С этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов, поэтому бонус за регистрацию не начислен. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:';
     // Адрес поддержки - после проверки «Я не робот» (renderHelpEmail).
-    if(!limit.welcome) extra = '<div class="site-help-email limit-help-email"></div>';
+    if(!limit.welcome || limit.welcomeExpired) extra = '<div class="site-help-email limit-help-email"></div>';
     extra += '<div class="limit-plans" id="limitPlans"></div>';
     actions = btn('btn-secondary limit-close', 'Позже') + btn('limit-main', 'Выбрать подписку', ' href="plans.html"');
   } else {
