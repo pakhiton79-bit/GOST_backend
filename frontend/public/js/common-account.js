@@ -752,11 +752,19 @@ function initLegalFooter(){
   const f = document.createElement('footer');
   f.id = 'siteLegalFooter';
   f.className = 'site-legal-footer';
+  // Сведения об исполнителе (Закон о защите прав потребителей, ст. 9) -
+  // из js/legal-config.js, как в документах. Почта - в документах и в
+  // «Помощи» после проверки «Я не робот» (по указанию пользователя).
   f.innerHTML = `<span>© Тара+, ${new Date().getFullYear()}</span>`
-    + '<a href="terms.html">Пользовательское соглашение</a>'
+    + '<span>Самозанятый <span data-legal="operator"></span>, ИНН <span data-legal="inn"></span></span>'
+    + '<a href="terms.html">Пользовательское соглашение (публичная оферта)</a>'
     + '<a href="privacy.html">Политика обработки персональных данных</a>'
     + '<a href="consent.html">Согласие на обработку персональных данных</a>';
   wrap.insertAdjacentElement('afterend', f);
+  if(typeof fillLegal === 'function') return fillLegal();
+  const s = document.createElement('script');
+  s.src = '/js/legal-config.js';
+  document.body.appendChild(s);
 }
 
 // Кнопки «Помощь» (на всех страницах) и «Сообщить об ошибке» (кроме главной
