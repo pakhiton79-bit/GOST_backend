@@ -753,11 +753,12 @@ function initLegalFooter(){
   f.id = 'siteLegalFooter';
   f.className = 'site-legal-footer';
   // Сведения о владельце сайта и исполнителе (149-ФЗ ч. 2 ст. 10:
-  // наименование, адрес, почта; Закон о защите прав потребителей, ст. 9) -
-  // из js/legal-config.js, как в документах. Закон важнее скрытия почты от
-  // ботов (по указанию пользователя).
+  // наименование, адрес, почта; Закон о защите прав потребителей, ст. 9):
+  // ФИО и ИНН - здесь (из js/legal-config.js), адрес и почта - в оферте
+  // (п. 18.2) по ссылке «Реквизиты и контакты» (по указанию пользователя).
   f.innerHTML = `<span>© Тара+, ${new Date().getFullYear()}</span>`
-    + '<span>Самозанятый <span data-legal="operator"></span>, ИНН <span data-legal="inn"></span>, адрес: <span data-legal="address"></span>, почта: <span data-legal="email"></span></span>'
+    + '<span>Самозанятый <span data-legal="operator"></span>, ИНН <span data-legal="inn"></span></span>'
+    + '<a href="terms.html#terms-requisites">Реквизиты и контакты</a>'
     + '<a href="terms.html">Пользовательское соглашение (публичная оферта)</a>'
     + '<a href="privacy.html">Политика обработки персональных данных</a>'
     + '<a href="consent.html">Согласие на обработку персональных данных</a>';
