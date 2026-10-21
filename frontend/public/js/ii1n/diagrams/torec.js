@@ -65,7 +65,7 @@ function raiseSkinRecords(v, records){
   const [L, R, top, bar] = v.skin, d = bar - top;
   const sy = y => y >= bar - 4 ? y : (y >= top - 15 ? bar - (bar - y) * 2 : y - d);
   records.forEach(r => ['y1', 'y2', 'ly'].forEach(k => { if(typeof r[k] === 'number') r[k] = sy(r[k]); }));
-  records.unshift({type:'part', x1:L, y1:top - d, x2:R, y2:bar, w:6 * v.IW / 2222, fill:'#fff'});
+  records.unshift({type:'part', x1:L, y1:top - d, x2:R, y2:bar, w:6 * v.IW / 2222, fill:'#fff', openBottom:true});
   return records;
 }
 

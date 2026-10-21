@@ -84,7 +84,15 @@ function renderDiagram(imgB64, altText, IW, IH, records, widthPx, strokeScale, l
       } else if(r.type==='part'){
         // Деталь поверх фото (опорная планка бока II-1/II-2): прямоугольник
         // x1..x2 × y1..y2 с заливкой и контуром толщиной r.w (как линии фото).
-        shapes += `<rect x="${r.x1}" y="${r.y1}" width="${(r.x2-r.x1).toFixed(1)}" height="${(r.y2-r.y1).toFixed(1)}" fill="${r.fill || '#fff'}" stroke="#000" stroke-width="${r.w}"/>`;
+        // openBottom - без нижней кромки (поднятая обшивка оптимальной II-1:
+        // снизу её продолжает фото, лишняя линия торчала бы слева и справа от
+        // каркаса - по замечанию пользователя).
+        if(r.openBottom){
+          shapes += `<rect x="${r.x1}" y="${r.y1}" width="${(r.x2-r.x1).toFixed(1)}" height="${(r.y2-r.y1).toFixed(1)}" fill="${r.fill || '#fff'}"/>`;
+          shapes += `<path d="M${r.x1} ${r.y2}V${r.y1}H${r.x2}V${r.y2}" fill="none" stroke="#000" stroke-width="${r.w}"/>`;
+        } else {
+          shapes += `<rect x="${r.x1}" y="${r.y1}" width="${(r.x2-r.x1).toFixed(1)}" height="${(r.y2-r.y1).toFixed(1)}" fill="${r.fill || '#fff'}" stroke="#000" stroke-width="${r.w}"/>`;
+        }
       } else if(r.type==='single'){
         const head = headTriangle(r.x1,r.y1,r.x2,r.y2,scale);
         shapes += `<line x1="${r.x1}" y1="${r.y1}" x2="${head.bx.toFixed(1)}" y2="${head.by.toFixed(1)}" stroke="#8A4B26" stroke-width="${lineWidth}"/>`;
