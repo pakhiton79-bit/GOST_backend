@@ -178,9 +178,15 @@ function renderSiteSub(user){
   // Бонус не начислен (лимит регистраций с одного IP, plans.js на сервере).
   if(q.plan === 'free' && !q.welcomeTotal){
     html += '<p class="site-sub-text">Бонус за регистрацию не начислен: с этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:</p><div class="site-help-email site-nowelcome-email"></div>';
+  } else if(q.welcomeExpired && q.plan === 'free'){
+    html += `<p class="site-sub-text">Пробный доступ закончился: бонус за регистрацию действует ${q.welcomeHours} ${plural(q.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку.</p>`;
   } else if(q.welcomeLeft > 0 || q.plan === 'free'){
+    // Срок бонуса - с первого расчёта (welcomeUntil с сервера).
     const used = q.welcomeTotal - q.welcomeLeft;
-    html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, 'Не сгорает', `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
+    const term = q.welcomeUntil
+      ? `До ${new Date(q.welcomeUntil).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}`
+      : `${q.welcomeHours} ${plural(q.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта`;
+    html += usageBlock('Бонус за регистрацию', used, q.welcomeTotal, term, `Осталось ${q.welcomeLeft} из ${q.welcomeTotal}`);
   }
   // Расчёты, выданные администратором (сверх подписки).
   if(q.extraLeft > 0) html += usageBlock('Дополнительные расчёты', q.extraTotal - q.extraLeft, q.extraTotal, 'Не сгорают', `Осталось ${q.extraLeft.toLocaleString('ru-RU')} из ${q.extraTotal.toLocaleString('ru-RU')}`);
@@ -655,11 +661,12 @@ function showLimitDialog(limit){
   if(limit.kind === 'guest'){
     icon = LIMIT_ICONS.user;
     title = 'Войдите, чтобы посчитать';
-    text = `Расчёты доступны после входа. При регистрации - ${limit.welcome} ${calcWord(limit.welcome)} бесплатно.`;
+    text = `Расчёты доступны после входа. При регистрации - ${limit.welcome} ${calcWord(limit.welcome)} бесплатно на ${limit.welcomeHours} ${plural(limit.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта.`;
     actions = btn('btn-secondary', 'Войти', ` href="login.html?next=${page}"`) + btn('limit-main', 'Зарегистрироваться', ` href="login.html?mode=register&amp;next=${page}"`);
   } else if(limit.kind === 'trial'){
-    title = limit.welcome ? 'Пробные расчёты закончились' : 'Пробные расчёты не начислены';
-    text = limit.welcome ? `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`
+    title = !limit.welcome ? 'Пробные расчёты не начислены' : limit.welcomeExpired ? 'Пробный доступ закончился' : 'Пробные расчёты закончились';
+    text = limit.welcomeExpired ? `Пробный доступ действует ${limit.welcomeHours} ${plural(limit.welcomeHours, 'час', 'часа', 'часов')} с первого расчёта. Чтобы продолжить, выберите подписку.`
+      : limit.welcome ? `Вы сделали все ${limit.welcome} бесплатных ${calcWord(limit.welcome)}. Чтобы продолжить, выберите подписку.`
       : 'С этого интернет-подключения за последний месяц уже зарегистрировано несколько аккаунтов, поэтому бонус за регистрацию не начислен. Чтобы считать, выберите подписку. Если это ошибка, напишите нам:';
     // Адрес поддержки - после проверки «Я не робот» (renderHelpEmail).
     if(!limit.welcome) extra = '<div class="site-help-email limit-help-email"></div>';

@@ -1,8 +1,10 @@
 // Подписки и лимиты расчётов (по указанию пользователя). Пока без оплаты:
 // платные подписки выдаёт администратор вручную (admin.html).
 //
-//   Пробная (id free) - только 10 расчётов за регистрацию (один раз, не
-//          сгорают; месячных расчётов нет), 1 устройство, бесплатно;
+//   Пробная (id free) - только 50 расчётов за регистрацию (один раз;
+//          действуют WELCOME_HOURS часов с первого расчёта, потом остаток
+//          сгорает - и на платной подписке тоже; месячных расчётов нет),
+//          1 устройство, бесплатно;
 //          бонус получают не больше WELCOME_PER_IP аккаунтов с одного IP за
 //          WELCOME_IP_DAYS дней (остальные регистрируются без бонуса);
 //   Base - 25 расчётов в месяц, 1 устройство, 5 000 ₽ в месяц;
@@ -28,8 +30,10 @@ const PLANS = {
   pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000, customStandards: true, prioritySupport: true },
   team: { name: 'Team', monthly: 2500, devices: 4, price: 30000, customStandards: true, prioritySupport: true },
 };
-const WELCOME_CALCS = 10;
-const OLD_WELCOME_CALCS = 20;   // столько выдавалось до 10 (у старых аккаунтов)
+const WELCOME_CALCS = 50;
+const WELCOME_HOURS = 5;
+const WELCOME_MS = WELCOME_HOURS * 3600 * 1000;
+const OLD_WELCOME_CALCS = 20;   // столько выдавалось до welcomeTotal (у старых аккаунтов)
 const WELCOME_PER_IP = 4;
 const WELCOME_IP_DAYS = 30;
 const PERIOD_MS = 30 * 24 * 3600 * 1000;  // «месяц» подписки
@@ -63,6 +67,10 @@ function syncUser(user, now) {
   // не задаётся. У аккаунтов до этого поля бонус был OLD_WELCOME_CALCS.
   if (user.verified && !Number.isInteger(user.welcomeTotal)) { user.welcomeTotal = Number.isInteger(user.welcomeLeft) ? OLD_WELCOME_CALCS : WELCOME_CALCS; changed = true; }
   if (user.verified && !Number.isInteger(user.welcomeLeft)) { user.welcomeLeft = user.welcomeTotal; changed = true; }
+  // Срок бонуса вышел (welcomeStart - первый расчёт, см. consume) - остаток сгорает.
+  if (user.welcomeLeft > 0 && Number.isFinite(user.welcomeStart) && now >= user.welcomeStart + WELCOME_MS) {
+    user.welcomeLeft = 0; user.welcomeExpired = true; changed = true;
+  }
   if (!Number.isInteger(user.used)) { user.used = 0; changed = true; }
   if (!Number.isInteger(user.extraLeft)) { user.extraLeft = 0; user.extraTotal = 0; changed = true; }
   // Платная подписка без срока (выдана до появления сроков) - на 1 месяц от
@@ -92,7 +100,8 @@ function quotaInfo(user, now) {
     plan: user.plan, planName: p.name, devices: p.devices,
     planUntil: Number.isFinite(user.planUntil) ? new Date(user.planUntil).toISOString() : null,
     monthly: p.monthly, used: user.used, monthlyLeft,
-    welcomeLeft, welcomeTotal,
+    welcomeLeft, welcomeTotal, welcomeHours: WELCOME_HOURS, welcomeExpired: !!user.welcomeExpired,
+    welcomeUntil: Number.isFinite(user.welcomeStart) ? new Date(user.welcomeStart + WELCOME_MS).toISOString() : null,
     extraLeft: user.extraLeft, extraTotal: user.extraTotal || user.extraLeft,
     left: monthlyLeft + welcomeLeft + user.extraLeft,
     periodStart: new Date(start).toISOString(), periodEnd: new Date(end).toISOString(),
@@ -103,6 +112,8 @@ function quotaInfo(user, now) {
 // выданные администратором.
 // false - расчётов не осталось.
 function consume(user) {
+  // Первый расчёт при неистраченном бонусе - начало его срока (WELCOME_HOURS).
+  if (user.welcomeLeft > 0 && !Number.isFinite(user.welcomeStart)) user.welcomeStart = Date.now();
   if (user.used < planOf(user).monthly) { user.used += 1; return true; }
   if (user.welcomeLeft > 0) { user.welcomeLeft -= 1; return true; }
   if (user.extraLeft > 0) { user.extraLeft -= 1; return true; }
@@ -110,7 +121,7 @@ function consume(user) {
 }
 
 function publicPlans() {
-  return Object.keys(PLANS).map(id => ({ id, ...PLANS[id], welcome: id === 'free' ? WELCOME_CALCS : 0 }));
+  return Object.keys(PLANS).map(id => ({ id, ...PLANS[id], welcome: id === 'free' ? WELCOME_CALCS : 0, welcomeHours: WELCOME_HOURS }));
 }
 
-module.exports = { PLANS, WELCOME_CALCS, WELCOME_PER_IP, WELCOME_IP_DAYS, PERIOD_MS, PLAN_TERMS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans, nextPlan };
+module.exports = { PLANS, WELCOME_CALCS, WELCOME_HOURS, WELCOME_PER_IP, WELCOME_IP_DAYS, PERIOD_MS, PLAN_TERMS, planOf, periodBounds, syncUser, quotaInfo, consume, publicPlans, nextPlan };

@@ -14,7 +14,7 @@ function planCard(p, current){
   const price = p.price ? `${p.price.toLocaleString('ru-RU')} ₽ <small>в месяц</small>` : (p.id === 'free' ? 'Бесплатно' : 'Цена уточняется');
   const features = [
     ...(p.monthly ? [`${p.monthly.toLocaleString('ru-RU')} расчётов в месяц`] : []),
-    ...(p.welcome ? [`${p.welcome} расчётов при регистрации${p.monthly ? ' дополнительно' : ''}`] : []),
+    ...(p.welcome ? [`${p.welcome} расчётов на ${p.welcomeHours} часов пробного доступа`] : []),
     PLAN_DEVICES(p.devices),
     ...(p.customStandards ? ['Внутренние стандарты вашего завода'] : []),
     ...(p.prioritySupport ? ['Приоритетное обслуживание'] : []),

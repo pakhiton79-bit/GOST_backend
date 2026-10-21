@@ -4,7 +4,7 @@
 // заполнены поля и т.п.) не списывается. В ответ расчёта добавляется
 // quota - сколько осталось.
 const store = require('./store');
-const { PLANS, WELCOME_CALCS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
+const { PLANS, WELCOME_CALCS, WELCOME_HOURS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
 const stats = require('./stats');
 
 function fmtDate(iso) {
@@ -17,7 +17,7 @@ function calcQuota(req, res, next) {
   if (!user) {
     // limit - для окна на странице (common-account.js, showLimitDialog).
     return res.status(401).json({ error: 'Войдите в аккаунт, чтобы выполнить расчёт.', errorLink: { href: 'login.html', text: 'Войти' },
-      limit: { kind: 'guest', welcome: WELCOME_CALCS } });
+      limit: { kind: 'guest', welcome: WELCOME_CALCS, welcomeHours: WELCOME_HOURS } });
   }
   const now = Date.now();
   if (syncUser(user, now)) store.updateUser(user);
@@ -26,11 +26,11 @@ function calcQuota(req, res, next) {
     // Есть подписка больше - предложить её (по указанию пользователя).
     const next = PLANS[nextPlan(q.plan)];
     return res.status(402).json({
-      error: q.monthly ? `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.` : (q.welcomeTotal ? 'Пробные расчёты закончились.' : 'Пробные расчёты не начислены.'),
+      error: q.monthly ? `Расчёты на этот месяц закончились, новые будут ${fmtDate(q.periodEnd)}.` : (!q.welcomeTotal ? 'Пробные расчёты не начислены.' : q.welcomeExpired ? `Пробный доступ закончился: он действует ${WELCOME_HOURS} часов с первого расчёта.` : 'Пробные расчёты закончились.'),
       errorLink: next ? { href: 'plans.html', text: `Больше в ${next.name}` } : undefined,
       limit: {
         kind: q.monthly ? 'month' : 'trial', plan: q.plan, planName: q.planName, monthly: q.monthly,
-        periodEnd: q.periodEnd, welcome: q.welcomeTotal,
+        periodEnd: q.periodEnd, welcome: q.welcomeTotal, welcomeHours: WELCOME_HOURS, welcomeExpired: q.welcomeExpired,
         next: next ? { name: next.name, monthly: next.monthly, price: next.price } : null,
       },
     });
