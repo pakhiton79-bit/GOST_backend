@@ -43,6 +43,7 @@ function noteAccountUser(user){
   applyPlanClass(user);
   renderAccountButton(user);
   renderAutoRenewNotice(user);
+  maybeShowLegalUpdate(user);
 }
 // Сообщение об автопродлении (по указанию пользователя - вместе с письмом):
 // за 3 дня до продления (autoRenew.noticeDue с сервера) - полоса вверху
@@ -624,8 +625,66 @@ function calcWord(n){ return plural(n, 'расчёт', 'расчёта', 'рас
 const LIMIT_ICONS = {
   clock: '<svg viewBox="0 0 28 28" aria-hidden="true"><circle class="limit-draw" cx="14" cy="14" r="11" style="--len:70"/><path d="M14 8v6l4 2.5"/></svg>',
   user: '<svg viewBox="0 0 28 28" aria-hidden="true"><circle class="limit-draw" cx="14" cy="10" r="5" style="--len:32"/><path class="limit-draw" d="M5 24c1.5-5 5-7 9-7s7.5 2 9 7" style="--len:30"/></svg>',
+  doc: '<svg viewBox="0 0 28 28" aria-hidden="true"><path class="limit-draw" d="M8 3h9l5 5v17H8z" style="--len:66"/><path d="M17 3v5h5M11.5 14h7M11.5 18h7M11.5 22h4"/></svg>',
 };
 const fmtLimitDate = iso => new Date(iso).toLocaleDateString('ru-RU');
+
+// Документы обновлены (по указанию пользователя): у вошедшего согласия
+// старой редакции (user.legalUpdate - версия, backend/src/auth/legal.js).
+// Окно - на всех страницах, кроме самих документов (их можно прочитать);
+// «Позже» закрывает его, но считать до принятия нельзя (сервер отвечает
+// limit.kind 'legal' - окно снова). Принять - две галочки, как при
+// регистрации.
+// Что изменилось в последней редакции - менять вместе с LEGAL_VERSION
+// (backend/src/auth/legal.js) и датой в js/legal-config.js.
+const LEGAL_UPDATE_NOTE = 'указаны компании, которые обрабатывают данные по нашему поручению (хостинг, отправка писем, почта поддержки), и платёжный сервис; сроки хранения журналов сервера; пробный доступ - 50 расчётов на 5 часов; порядок возврата денег.';
+let legalUpdateShown = false;
+function maybeShowLegalUpdate(user){
+  if(!user || !user.legalUpdate || legalUpdateShown || document.querySelector('.legal-wrap')) return;
+  legalUpdateShown = true;
+  showLegalUpdateDialog(user.legalUpdate);
+}
+function showLegalUpdateDialog(version){
+  document.querySelectorAll('.limit-dialog').forEach(o => o.remove());
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(version || '') ? version.split('-').reverse().join('.') : '';
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay limit-dialog legal-update-dialog';
+  overlay.innerHTML = `<div class="modal-box limit-box" role="dialog" aria-modal="true" aria-labelledby="legalUpdTitle">
+      <div class="limit-icon">${LIMIT_ICONS.doc}</div>
+      <h3 id="legalUpdTitle">Мы обновили документы</h3>
+      <p class="limit-text">Новая редакция${date ? ' от ' + date : ''}: ${LEGAL_UPDATE_NOTE} Чтобы продолжить считать, примите обновлённые документы.</p>
+      <div class="legal-upd-checks">
+        <label class="auth-check"><input type="checkbox" id="legalUpdTerms"><span>Я принимаю условия <a href="terms.html" target="_blank">Пользовательского соглашения</a></span></label>
+        <label class="auth-check"><input type="checkbox" id="legalUpdPd"><span>Даю <a href="consent.html" target="_blank">согласие на обработку персональных данных</a> и ознакомлен(а) с <a href="privacy.html" target="_blank">Политикой</a></span></label>
+      </div>
+      <div class="auth-msg" id="legalUpdMsg" hidden></div>
+      <div class="limit-actions"><button type="button" class="btn-secondary limit-close">Позже</button><button type="button" class="limit-main" id="legalUpdOk" disabled>Принять</button></div>
+    </div>`;
+  const close = () => { document.removeEventListener('keydown', onKey, true); overlay.remove(); };
+  const onKey = e => { if(e.key === 'Escape'){ e.preventDefault(); close(); } };
+  const ok = overlay.querySelector('#legalUpdOk');
+  const terms = overlay.querySelector('#legalUpdTerms'), pd = overlay.querySelector('#legalUpdPd');
+  overlay.addEventListener('change', () => { ok.disabled = !(terms.checked && pd.checked); });
+  overlay.addEventListener('click', async e => {
+    if(e.target === overlay || e.target.closest('.limit-close')) return close();
+    if(e.target !== ok || ok.disabled) return;
+    ok.disabled = true;
+    const msg = overlay.querySelector('#legalUpdMsg');
+    try{
+      const r = await fetch('/api/auth/consents', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ consents: { terms: true, pd: true } }) });
+      const d = await r.json().catch(() => ({}));
+      if(!r.ok) throw new Error(d.error || 'Не удалось сохранить. Попробуйте ещё раз.');
+      if(d.user) noteAccountUser(d.user);
+      close();
+    }catch(err){
+      msg.hidden = false; msg.textContent = err.message;
+      ok.disabled = false;
+    }
+  });
+  document.addEventListener('keydown', onKey, true);
+  document.body.appendChild(overlay);
+  terms.focus();
+}
 function showQuotaHint(q){
   const err = document.getElementById('err');
   if(!err) return;
@@ -652,6 +711,7 @@ function showQuotaHint(q){
 // Окно: не вошли (kind 'guest'), закончились месячные ('month') или пробные
 // ('trial') - данные приходят с сервера (calc-quota.js, limit).
 function showLimitDialog(limit){
+  if(limit.kind === 'legal') return showLegalUpdateDialog(limit.version);
   document.querySelectorAll('.limit-dialog').forEach(o => o.remove());
   const page = encodeURIComponent(location.pathname.replace(/^\//, ''));
   const overlay = document.createElement('div');

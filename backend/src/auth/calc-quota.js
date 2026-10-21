@@ -6,6 +6,7 @@
 const store = require('./store');
 const { PLANS, WELCOME_CALCS, WELCOME_HOURS, syncUser, quotaInfo, consume, nextPlan } = require('./plans');
 const stats = require('./stats');
+const { needsReconsent, LEGAL_VERSION } = require('./legal');
 
 function fmtDate(iso) {
   const d = new Date(iso);
@@ -18,6 +19,10 @@ function calcQuota(req, res, next) {
     // limit - для окна на странице (common-account.js, showLimitDialog).
     return res.status(401).json({ error: 'Войдите в аккаунт, чтобы выполнить расчёт.', errorLink: { href: 'login.html', text: 'Войти' },
       limit: { kind: 'guest', welcome: WELCOME_CALCS, welcomeHours: WELCOME_HOURS } });
+  }
+  // Документы обновлены и ещё не приняты - сначала принять (окно на сайте).
+  if (needsReconsent(user)) {
+    return res.status(409).json({ error: 'Мы обновили документы. Примите их, чтобы продолжить.', limit: { kind: 'legal', version: LEGAL_VERSION } });
   }
   const now = Date.now();
   if (syncUser(user, now)) store.updateUser(user);

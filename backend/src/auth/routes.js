@@ -24,6 +24,7 @@
 //                                                        { current, checkOnly } - только проверить
 //                                                        текущий; { code, password } - по коду из письма)
 //   POST /api/auth/password-code                       - код для смены пароля на почту аккаунта
+//   POST /api/auth/consents { consents }               - принять обновлённые документы (legal.js)
 //
 // Вход, когда устройств уже столько, сколько разрешает подписка (по
 // указанию пользователя): вместо входа - список устройств, пользователь
@@ -45,7 +46,7 @@ function grantWelcome(user, ip) {
   store.updateUser(user, { welcomeTotal: n, welcomeLeft: n });
 }
 const stats = require('./stats');
-const { consentsFromRequest } = require('./legal');
+const { LEGAL_VERSION, consentsFromRequest, needsReconsent, reconsentFromRequest } = require('./legal');
 const { publicAutoRenew } = require('./auto-renew');
 const antibot = require('./antibot');
 const mailLimits = require('./mail-limits');
@@ -187,7 +188,8 @@ function checkCode(email, purpose, code) {
 function publicUser(u) {
   const now = Date.now();
   if (syncUser(u, now)) store.updateUser(u);
-  return { email: u.email, createdAt: u.createdAt, quota: quotaInfo(u, now), isAdmin: isAdmin(u), autoRenew: publicAutoRenew(u) };
+  return { email: u.email, createdAt: u.createdAt, quota: quotaInfo(u, now), isAdmin: isAdmin(u), autoRenew: publicAutoRenew(u),
+    legalUpdate: needsReconsent(u) ? LEGAL_VERSION : null };
 }
 
 function publicDevices(user, currentId) {
@@ -223,6 +225,15 @@ const router = express.Router();
 
 router.get('/me', (req, res) => {
   res.json({ user: req.user ? publicUser(req.user) : null });
+});
+
+// Принять обновлённые документы (legal.js, needsReconsent).
+router.post('/consents', rateLimit, (req, res) => {
+  if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
+  const r = reconsentFromRequest(req, req.user);
+  if (r.error) return res.status(400).json({ error: r.error });
+  store.updateUser(req.user, r);
+  res.json({ ok: true, user: publicUser(req.user) });
 });
 
 router.get('/challenge', (req, res) => {

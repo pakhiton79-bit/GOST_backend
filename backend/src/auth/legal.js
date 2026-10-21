@@ -22,4 +22,25 @@ function consentsFromRequest(req) {
   };
 }
 
-module.exports = { LEGAL_VERSION, consentsFromRequest };
+// Документы обновлены (согласия у пользователя - старой редакции или их нет):
+// до принятия новой редакции расчёты недоступны (calc-quota.js), на сайте -
+// окно «Документы обновлены» (common-account.js), принятие - POST
+// /api/auth/consents. Прежние согласия сохраняются в consentsHistory
+// (последние 10), согласие на рассылки переносится как было.
+function needsReconsent(user) {
+  return !user.consents || user.consents.version !== LEGAL_VERSION;
+}
+function reconsentFromRequest(req, user) {
+  const c = req.body && req.body.consents || {};
+  if (c.terms !== true || c.pd !== true) return { error: 'Чтобы продолжить, примите обновлённые документы.' };
+  const prev = user.consents || null;
+  return {
+    consents: {
+      version: LEGAL_VERSION, at: new Date().toISOString(), ip: req.ip,
+      terms: true, pd: true, marketing: !!(prev && prev.marketing),
+    },
+    consentsHistory: (user.consentsHistory || []).concat(prev ? [prev] : []).slice(-10),
+  };
+}
+
+module.exports = { LEGAL_VERSION, consentsFromRequest, needsReconsent, reconsentFromRequest };
