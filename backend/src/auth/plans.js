@@ -1,7 +1,7 @@
 // Подписки и лимиты расчётов (по указанию пользователя). Пока без оплаты:
 // платные подписки выдаёт администратор вручную (admin.html).
 //
-//   Пробная (id free) - только 50 расчётов за регистрацию (один раз;
+//   Пробная (id free) - только 15 расчётов за регистрацию (один раз;
 //          действуют WELCOME_HOURS часов с первого расчёта, потом остаток
 //          сгорает - и на платной подписке тоже; месячных расчётов нет),
 //          1 устройство, бесплатно;
@@ -30,7 +30,7 @@ const PLANS = {
   pro:  { name: 'Pro',  monthly: 150, devices: 1, price: 10000, customStandards: true, prioritySupport: true },
   team: { name: 'Team', monthly: 2500, devices: 4, price: 30000, customStandards: true, prioritySupport: true },
 };
-const WELCOME_CALCS = 50;
+const WELCOME_CALCS = 15;
 const WELCOME_HOURS = 5;
 const WELCOME_MS = WELCOME_HOURS * 3600 * 1000;
 const OLD_WELCOME_CALCS = 20;   // столько выдавалось до welcomeTotal (у старых аккаунтов)
