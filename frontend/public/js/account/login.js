@@ -194,7 +194,9 @@ function setMode(mode, msg, ok){
   }
   if(!first && prev !== mode && !swap) slideScreen(pair.includes(mode));
   const firstField = m.fields.find(f => f !== 'email' || !$('authEmail').value) || m.fields[0];
-  const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2', consents: 'consentTerms' }[firstField];
+  // Галочки согласий в фокус не ставятся: у галочки в фокусе коричневая
+  // обводка (по замечанию пользователя - галочки без обводки).
+  const input = { email: 'authEmail', code: 'authCode', password: 'authPassword', password2: 'authPassword2' }[firstField];
   if(input) $(input).focus();
 }
 

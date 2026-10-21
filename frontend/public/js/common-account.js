@@ -683,7 +683,10 @@ function showLegalUpdateDialog(version){
   });
   document.addEventListener('keydown', onKey, true);
   document.body.appendChild(overlay);
-  terms.focus();
+  // Фокус - на само окно, не на галочку: у галочки в фокусе коричневая
+  // обводка (по замечанию пользователя - галочки без обводки).
+  const box = overlay.querySelector('.limit-box');
+  box.tabIndex = -1; box.style.outline = 'none'; box.focus();
 }
 function showQuotaHint(q){
   const err = document.getElementById('err');
