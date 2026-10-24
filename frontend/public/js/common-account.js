@@ -317,7 +317,7 @@ const accPw = { step: 'current', current: '' };
 const ACC_PW_STEPS = {
   current: { hint: () => 'Подтвердите, что это вы: введите текущий пароль.', fields: ['siteAccPwOld'], next: 'Далее', forgot: true },
   send: { hint: email => `Отправим код для смены пароля на почту <b>${escHtml(email)}</b>.`, fields: [], next: 'Отправить код' },
-  code: { hint: email => `Код отправлен на почту <b>${escHtml(email)}</b>. Введите его и новый пароль.`, fields: ['siteAccPwCode', 'siteAccPwNew', 'siteAccPwNew2', 'siteAccPwKeep'], next: 'Сохранить пароль', resend: true },
+  code: { hint: email => `Код отправлен на почту <b>${escHtml(email)}</b>. Введите его и новый пароль. Не пришло? Проверьте папку «Спам».`, fields: ['siteAccPwCode', 'siteAccPwNew', 'siteAccPwNew2', 'siteAccPwKeep'], next: 'Сохранить пароль', resend: true },
   new: { hint: () => 'Придумайте новый пароль - не короче 8 символов.', fields: ['siteAccPwNew', 'siteAccPwNew2', 'siteAccPwKeep'], next: 'Сохранить пароль' },
 };
 function setAccPwStep(step){

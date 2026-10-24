@@ -176,9 +176,9 @@ function setMode(mode, msg, ok){
   document.querySelectorAll('.auth-eye').forEach(b => setEye(b, false));
   const text = $('authText');
   text.hidden = !(mode === 'verify' || mode === 'reset' || mode === 'loginCode');
-  if(mode === 'verify') text.innerHTML = 'Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут.';
-  if(mode === 'loginCode') text.innerHTML = 'Мы отправили 6-значный код для входа на <b></b>. Код действует 15 минут.';
-  if(mode === 'reset') text.innerHTML = 'Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль.';
+  if(mode === 'verify') text.innerHTML = 'Мы отправили 6-значный код на <b></b>. Введите его, чтобы подтвердить почту. Код действует 15 минут. Не пришло? Проверьте папку «Спам».';
+  if(mode === 'loginCode') text.innerHTML = 'Мы отправили 6-значный код для входа на <b></b>. Код действует 15 минут. Не пришло? Проверьте папку «Спам».';
+  if(mode === 'reset') text.innerHTML = 'Если аккаунт с почтой <b></b> есть, на неё отправлен 6-значный код. Введите его и новый пароль. Не пришло? Проверьте папку «Спам».';
   if(!text.hidden) text.querySelector('b').textContent = authEmail;
   $('authSubmit').hidden = !m.submit;
   $('authDevices').hidden = mode !== 'devices';
