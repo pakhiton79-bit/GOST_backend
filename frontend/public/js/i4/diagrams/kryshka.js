@@ -89,7 +89,12 @@ function diagramKryshkaGen(widthMm, lengthMm, t30, t32, t41, t40, edgeDistKryshk
   const boardPolyTo = polys.length;
   // внутренние поперечные брусья - сверху
   // расстановка - как в расчёте: отступ beamEdgeMm, зазор между кромками beamGapMm
-  const beamU = i => Math.min(Math.max((beamEdgeMm + i*((crossBeamWidthMm||100) + beamGapMm)) * k, 0), Lu - bw);
+  // Брус на чертеже шире настоящего (bw - см. выше): лишняя ширина делится
+  // между брусьями поровну - первый брус на своём отступе от левого края,
+  // последний на своём отступе от правого (по замечанию пользователя: справа
+  // брус упирался в край крышки).
+  const bmm = crossBeamWidthMm || 100, bExtra = bw - bmm*k;
+  const beamU = i => Math.min(Math.max((beamEdgeMm + i*(bmm + beamGapMm)) * k - (B > 1 ? bExtra*i/(B-1) : bExtra/2), 0), Lu - bw);
   for(let i=0; i<B; i++){
     const u0 = beamU(i);
     box(u0, u0 + bw, 0.05*Wv, 0.95*Wv);
