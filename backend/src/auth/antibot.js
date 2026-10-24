@@ -57,6 +57,10 @@ const POW_MAX = 100000;
 const POW_TTL_MS = 10 * 60 * 1000;
 const POW_SECRET = process.env.CAPTCHA_SECRET || crypto.randomBytes(32).toString('hex');
 const powUsed = new Map(); // подпись -> срок; повторно ответ не принимается
+// Использованные ответы помнятся и после перезапуска (limits-file.js): с
+// постоянным CAPTCHA_SECRET старый ответ иначе прошёл бы ещё раз.
+const limitsFile = require('./limits-file');
+limitsFile.register('captchaUsed', () => limitsFile.mapDump(powUsed), d => limitsFile.mapRestore(powUsed, d));
 
 const sha256hex = s => crypto.createHash('sha256').update(s).digest('hex');
 const powSign = challenge => crypto.createHmac('sha256', POW_SECRET).update(challenge).digest('hex');

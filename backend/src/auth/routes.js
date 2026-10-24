@@ -91,6 +91,10 @@ const PASSWORD_MIN = 8;
 const RATE_WINDOW_MS = 10 * 60 * 1000;
 const RATE_MAX = 30;
 const hits = new Map();
+// Счётчики переживают перезапуск (limits-file.js).
+const limitsFile = require('./limits-file');
+limitsFile.register('loginFails', () => limitsFile.mapDump(loginFails), d => limitsFile.mapRestore(loginFails, d));
+limitsFile.register('authHits', () => limitsFile.mapDump(hits), d => limitsFile.mapRestore(hits, d));
 // Раз в 10 минут - убрать IP без свежих запросов (таблица не растёт без конца).
 setInterval(() => {
   const now = Date.now();

@@ -1,7 +1,7 @@
 // Лимиты писем (по указанию пользователя: у почтового сервиса лимит около
 // 100 писем в сутки - злоумышленник не должен израсходовать его запросами
-// кодов). Сутки - по московскому времени, счётчики - в памяти сервера
-// (после перезапуска начинаются заново, это допустимо).
+// кодов). Сутки - по московскому времени, счётчики переживают перезапуск
+// (limits-file.js).
 //
 //   - коды подтверждения: не больше CODES_PER_EMAIL в сутки на одну почту и
 //     CODES_PER_IP с одного IP; всего - не больше доли CODE_SHARE от
@@ -27,6 +27,11 @@ function mskDay(now) {
 let day = '';
 let codesTotal = 0, supportTotal = 0;
 const byEmail = new Map(), byIp = new Map();
+const limitsFile = require('./limits-file');
+limitsFile.register('mail', () => ({ day, codesTotal, supportTotal, byEmail: limitsFile.mapDump(byEmail), byIp: limitsFile.mapDump(byIp) }), d => {
+  day = String(d.day || ''); codesTotal = Number(d.codesTotal) || 0; supportTotal = Number(d.supportTotal) || 0;
+  limitsFile.mapRestore(byEmail, d.byEmail); limitsFile.mapRestore(byIp, d.byIp);
+});
 function roll(now) {
   const d = mskDay(now);
   if (d !== day) { day = d; codesTotal = 0; supportTotal = 0; byEmail.clear(); byIp.clear(); }
