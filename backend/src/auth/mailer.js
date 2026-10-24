@@ -19,6 +19,12 @@
 // Пока ключ или отправитель не заданы - тестовый режим: письма не
 // отправляются, всё пишется в журнал сервера (логи Render).
 const SITE_NAME = 'Тара+';
+// Логотип в шапке письма (по указанию пользователя - как значок сайта,
+// images/favicon.png, 72×72 для чётких 36 px) - вложением прямо в письмо
+// (cid:logo): виден без «показать картинки». Не прочитался - шапка без
+// картинки (знак «Т+» текстом).
+let MAIL_LOGO = '';
+try { MAIL_LOGO = require('fs').readFileSync(require('path').join(__dirname, 'mail-logo.png')).toString('base64'); } catch (e) { /* без логотипа */ }
 const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
 const PURPOSE_TEXT = {
   register: 'подтверждение почты',
@@ -61,6 +67,7 @@ async function sendMail(cfg, { to, subject, text, html, replyTo }) {
     track_read: 0,
   };
   if (replyTo) message.reply_to = replyTo;
+  if (MAIL_LOGO && html && html.includes('cid:logo')) message.inline_attachments = [{ type: 'image/png', name: 'logo', content: MAIL_LOGO }];
   if (cfg.skipUnsubscribe) message.skip_unsubscribe = 1;
   const res = await fetch(cfg.url + '/email/send.json', {
     method: 'POST',
@@ -75,10 +82,11 @@ async function sendMail(cfg, { to, subject, text, html, replyTo }) {
   return data;
 }
 
-// Оформление письма в стиле сайта (по указанию пользователя): шапка со знаком
-// «Т+», белая карточка на бежевом фоне, подвал со ссылкой на сайт и почтой
+// Оформление письма в стиле сайта (по указанию пользователя): шапка с
+// логотипом (MAIL_LOGO; если почта картинку не покажет - коричневый квадрат
+// с «Т+»), белая карточка на бежевом фоне, подвал со ссылкой на сайт и почтой
 // поддержки. Вёрстка для почтовых программ: таблицы, стили в атрибутах, без
-// картинок и внешних шрифтов. title и htmlLines - уже экранированные;
+// внешних картинок и шрифтов. title и htmlLines - уже экранированные;
 // preheader - строка, которую почта показывает в списке писем (без
 // оформления, экранируется здесь); toSupport - письмо в поддержку (ответ на
 // него уходит пользователю, подвал другой).
@@ -95,7 +103,9 @@ function layout(title, htmlLines, preheader, toSupport) {
     // шапка: знак и название
     + `<tr><td style="padding:0 4px 20px"><a href="${SITE_URL}" style="text-decoration:none;color:${c.ink}">`
     + `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
-    + `<td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:${c.accent};border-radius:9px;color:#FFFFFF;font:bold 16px ${MAIL_FONT}">Т+</td>`
+    + `<td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:${c.accent};border-radius:9px;color:#FFFFFF;font:bold 16px ${MAIL_FONT}">`
+    + (MAIL_LOGO ? `<img src="cid:logo" width="36" height="36" alt="Т+" style="display:block;width:36px;height:36px;border:0;border-radius:9px;color:#FFFFFF;font:bold 16px/36px ${MAIL_FONT};text-align:center">` : 'Т+')
+    + `</td>`
     + `<td style="padding-left:10px;font:bold 20px ${MAIL_FONT};color:${c.ink}">${SITE_NAME}</td>`
     + `</tr></table></a></td></tr>`
     // карточка
