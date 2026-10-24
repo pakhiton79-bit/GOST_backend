@@ -13,14 +13,23 @@
 //   SUPPORT_EMAIL         - куда приходят заявки на стандарты и сообщения об
 //                           ошибках (ответ на письмо уходит пользователю);
 //   MAIL_SKIP_UNSUBSCRIBE - 1, если поддержка сервиса разрешила письма без
-//                           ссылки «отписаться» (для кодов это уместно).
+//                           ссылки «отписаться» (для кодов это уместно);
+//   SITE_URL              - адрес сайта для ссылок в письмах (по умолчанию
+//                           https://taraplus.site).
 // Пока ключ или отправитель не заданы - тестовый режим: письма не
 // отправляются, всё пишется в журнал сервера (логи Render).
 const SITE_NAME = 'Тара+';
+const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
 const PURPOSE_TEXT = {
   register: 'подтверждение почты',
   reset: 'восстановление пароля',
   login: 'вход в аккаунт',
+};
+// Заголовок письма с кодом.
+const CODE_TITLE = {
+  register: 'Код подтверждения почты',
+  reset: 'Код для восстановления пароля',
+  login: 'Код для входа',
 };
 
 function mailConfig() {
@@ -66,11 +75,43 @@ async function sendMail(cfg, { to, subject, text, html, replyTo }) {
   return data;
 }
 
-// Простое оформление письма: заголовок и строки (уже экранированные).
-function layout(title, htmlLines) {
-  return '<div style="font-family:Arial,sans-serif;font-size:15px;line-height:1.5;color:#222;max-width:560px">'
-    + `<h2 style="font-size:18px;margin:0 0 16px">${title}</h2>${htmlLines.join('')}`
-    + `<p style="color:#888;font-size:13px;margin-top:24px">${SITE_NAME}</p></div>`;
+// Оформление письма в стиле сайта (по указанию пользователя): шапка со знаком
+// «Т+», белая карточка на бежевом фоне, подвал со ссылкой на сайт и почтой
+// поддержки. Вёрстка для почтовых программ: таблицы, стили в атрибутах, без
+// картинок и внешних шрифтов. title и htmlLines - уже экранированные;
+// preheader - строка, которую почта показывает в списке писем (без
+// оформления, экранируется здесь); toSupport - письмо в поддержку (ответ на
+// него уходит пользователю, подвал другой).
+const MAIL_C = { bg: '#F6F2EC', card: '#FFFFFF', ink: '#091135', soft: '#4A4D5C', accent: '#8A4B26', wash: '#F1E4D8', rule: '#E6DED3' };
+const MAIL_FONT = "Arial,'Helvetica Neue',Helvetica,sans-serif";
+function layout(title, htmlLines, preheader, toSupport) {
+  const c = MAIL_C;
+  const support = mailConfig().support;
+  const pre = preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:${c.bg}">${escapeHtml(preheader)}</div>` : '';
+  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${title}</title></head>`
+    + `<body style="margin:0;padding:0;background:${c.bg}">${pre}`
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${c.bg}"><tr><td align="center" style="padding:32px 16px">`
+    + `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px">`
+    // шапка: знак и название
+    + `<tr><td style="padding:0 4px 20px"><a href="${SITE_URL}" style="text-decoration:none;color:${c.ink}">`
+    + `<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>`
+    + `<td width="36" height="36" align="center" valign="middle" style="width:36px;height:36px;background:${c.accent};border-radius:9px;color:#FFFFFF;font:bold 16px ${MAIL_FONT}">Т+</td>`
+    + `<td style="padding-left:10px;font:bold 20px ${MAIL_FONT};color:${c.ink}">${SITE_NAME}</td>`
+    + `</tr></table></a></td></tr>`
+    // карточка
+    + `<tr><td style="background:${c.card};border:1px solid ${c.rule};border-radius:14px;padding:32px 32px 28px;font:15px/1.55 ${MAIL_FONT};color:${c.ink}">`
+    + `<h1 style="margin:0 0 16px;font:bold 22px/1.3 ${MAIL_FONT};color:${c.ink}">${title}</h1>${htmlLines.join('')}</td></tr>`
+    // подвал
+    + `<tr><td style="padding:20px 4px 0;font:13px/1.55 ${MAIL_FONT};color:${c.soft}">`
+    + (toSupport ? 'Ответ на это письмо уйдёт на почту пользователя.'
+      : `Письмо отправлено автоматически, отвечать на него не нужно.`
+        + (support ? ` Вопросы - на <a href="mailto:${escapeHtml(support)}" style="color:${c.accent}">${escapeHtml(support)}</a>.` : ''))
+    + `<br><a href="${SITE_URL}" style="color:${c.accent};text-decoration:none">${SITE_URL.replace(/^https?:\/\//, '')}</a> - расчёт деревянных ящиков по ГОСТ`
+    + `</td></tr></table></td></tr></table></body></html>`;
+}
+// Абзац текста письма (строка уже экранирована).
+function mailP(html, last) {
+  return `<p style="margin:0 0 ${last ? 0 : 14}px;color:${MAIL_C.ink}">${html}</p>`;
 }
 
 // Код подтверждения. Ошибка отправки - исключение (routes.js сообщает
@@ -83,12 +124,14 @@ async function sendCode(email, code, purpose) {
     return;
   }
   const subject = `${SITE_NAME}: код ${code}`;
-  const note = 'Код действует ограниченное время. Если вы ничего не запрашивали, просто удалите это письмо.';
+  const note = 'Код действует 15 минут. Если вы ничего не запрашивали, просто удалите это письмо.';
   const text = `Ваш код (${what}): ${code}\n\n${note}\n\n${SITE_NAME}`;
-  const html = layout(`Код: ${escapeHtml(what)}`, [
-    `<p style="font-size:28px;font-weight:bold;letter-spacing:4px;margin:8px 0 16px">${escapeHtml(code)}</p>`,
-    `<p>${note}</p>`,
-  ]);
+  const html = layout(CODE_TITLE[purpose] || 'Код подтверждения', [
+    mailP(`Введите этот код на сайте ${SITE_NAME}:`),
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 18px"><tr><td style="background:${MAIL_C.wash};border-radius:12px;padding:14px 22px;font:bold 32px/1 ${MAIL_FONT};letter-spacing:8px;color:${MAIL_C.accent}">${escapeHtml(code)}</td></tr></table>`,
+    mailP('Код действует 15 минут.'),
+    `<p style="margin:0;font-size:13px;color:${MAIL_C.soft}">Если вы ничего не запрашивали, просто удалите это письмо: без кода никто не войдёт в ваш аккаунт.</p>`,
+  ], `Код ${code} - ${what}`);
   await sendMail(cfg, { to: email, subject, text, html });
   // Сам код в журнал не пишется - только факт отправки.
   console.log(`[почта] код отправлен письмом: ${email} (${what})`);
@@ -112,7 +155,7 @@ async function sendToSupport(kind, rec, subject, fields) {
     return;
   }
   const html = layout(escapeHtml(subject), lines.map(([k, v]) =>
-    `<p style="margin:0 0 8px"><b>${escapeHtml(k)}:</b> ${escapeHtml(v).replace(/\n/g, '<br>')}</p>`));
+    `<p style="margin:0 0 8px"><b>${escapeHtml(k)}:</b> ${escapeHtml(v).replace(/\n/g, '<br>')}</p>`), subject, true);
   try {
     await sendMail(cfg, { to: cfg.support, subject, text, html, replyTo: rec.userEmail || undefined });
   } catch (e) {
@@ -154,7 +197,10 @@ async function sendAutoRenewNotice(email, { planName, date, amount }) {
     return;
   }
   const subject = `${SITE_NAME}: подписка ${planName} продлится ${day}`;
-  const html = layout('Автопродление подписки', lines.map(l => `<p>${escapeHtml(l)}</p>`));
+  const html = layout('Автопродление подписки', [
+    ...lines.map((l, i) => mailP(escapeHtml(l))),
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px"><tr><td style="background:${MAIL_C.accent};border-radius:10px"><a href="${SITE_URL}/gosts.html" style="display:inline-block;padding:12px 22px;font:bold 15px ${MAIL_FONT};color:#FFFFFF;text-decoration:none">Открыть сайт</a></td></tr></table>`,
+  ], `Подписка ${planName} продлится ${day}, сумма ${sum}`);
   await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
 }
 
