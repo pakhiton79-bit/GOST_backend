@@ -147,6 +147,45 @@ certbot --nginx -d ваш-домен.ru -d www.ваш-домен.ru --redirect
 
 После этого сайт открывается по `https://ваш-домен.ru`.
 
+## 5а. Защита nginx
+
+Скрыть версию nginx и ограничить поток запросов к API с одного IP
+(`deploy/nginx-security.conf`, пояснения - в самом файле):
+
+```sh
+cp /opt/taraplus/deploy/nginx-security.conf /etc/nginx/conf.d/taraplus-security.conf
+nginx -t && systemctl reload nginx
+```
+
+Если `nginx -t` пишет `"server_tokens" directive is duplicate` - в
+`/etc/nginx/nginx.conf` уже есть строка `server_tokens off;`: удалить её из
+`/etc/nginx/conf.d/taraplus-security.conf` и повторить.
+
+## 5б. Вход на сервер не под root
+
+Работать под отдельным пользователем с `sudo`, вход под root по SSH -
+запретить. **Окно с текущим входом под root не закрывать**, пока вход
+под новым пользователем не проверен.
+
+```sh
+adduser --gecos "" tara            # придумать пароль - он для sudo
+usermod -aG sudo tara
+mkdir -p /home/tara/.ssh && cp /root/.ssh/authorized_keys /home/tara/.ssh/
+chown -R tara:tara /home/tara/.ssh && chmod 700 /home/tara/.ssh && chmod 600 /home/tara/.ssh/authorized_keys
+```
+
+В новом окне PowerShell: `ssh tara@<IP сервера>`, затем `sudo whoami` -
+должно быть `root`. Только после этого (в окне root):
+
+```sh
+printf 'PermitRootLogin no\n' > /etc/ssh/sshd_config.d/20-noroot.conf
+sshd -t && systemctl reload ssh
+```
+
+Дальше вход - `ssh tara@<IP>`, команды администрирования - через `sudo`
+(например, `sudo sh /opt/taraplus/deploy/update.sh`). Консоль в панели
+Рег.облака по-прежнему пускает под root по паролю root.
+
 ## 6. Перенос данных с Render (если на Render уже есть пользователи)
 
 На бесплатном Render файл данных стирается при каждом перезапуске, поэтому
