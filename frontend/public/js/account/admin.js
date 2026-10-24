@@ -174,19 +174,48 @@ function renderRequests(){
 
 const planNameOf = id => ((adminData && adminData.plans.find(p => p.id === id)) || {}).name || id;
 // Сообщения об ошибках (кнопка «Сообщить об ошибке», feedback.js). Pro и
-// Team (приоритетное обслуживание) - первыми, с пометкой.
+// Team (приоритетное обслуживание) - первыми, с пометкой. Страницами по
+// REP_PAGE (по указанию пользователя список не бесконечный), каждое можно
+// удалить.
+const REP_PAGE = 10;
+let repOffset = 0;
 function renderReports(){
-  const list = repData.reports || [];
-  $('repCount').textContent = list.length ? `(${list.length})` : '';
+  const all = repData.reports || [];
+  $('repCount').textContent = all.length ? `(${all.length})` : '';
+  if(repOffset >= all.length) repOffset = Math.max(0, Math.floor((all.length - 1) / REP_PAGE) * REP_PAGE);
+  const list = all.slice(repOffset, repOffset + REP_PAGE);
+  $('repPager').hidden = all.length <= REP_PAGE;
+  $('repRange').textContent = list.length ? `${repOffset + 1}-${repOffset + list.length} из ${all.length}` : '';
+  $('repNewer').disabled = repOffset <= 0;
+  $('repOlder').disabled = repOffset + REP_PAGE >= all.length;
   const dims = i => i ? `${i.L || '-'} × ${i.W || '-'} × ${i.H || '-'} мм<div class="admin-sub">${i.M ? i.M + ' кг' : ''}</div>` : '<span class="admin-sub">не приложены</span>';
-  $('repRows').innerHTML = list.map(r => `<tr>
+  $('repRows').innerHTML = list.map(r => `<tr data-id="${r.id}">
       <td>${fmtDate(r.at)}</td>
       <td>${r.userEmail ? `<a href="mailto:${esc(r.userEmail)}">${esc(r.userEmail)}</a>` : '<span class="admin-sub">гость</span>'}${r.priority ? ' <span class="admin-tag admin-tag-priority">приоритет</span>' : ''}${r.plan ? `<div class="admin-sub">${esc(planNameOf(r.plan))}</div>` : ''}</td>
       <td>${esc(r.gost)}<div class="admin-sub">${esc(r.type)}</div><div class="admin-sub">${esc(r.page)}</div></td>
       <td>${dims(r.inputs)}</td>
       <td class="admin-req-details">${esc(r.description)}</td>
-    </tr>`).join('') || '<tr><td colspan="5" class="admin-empty">Сообщений пока нет</td></tr>';
+      <td><button type="button" class="btn-secondary admin-rep-del">Удалить</button></td>
+    </tr>`).join('') || '<tr><td colspan="6" class="admin-empty">Сообщений пока нет</td></tr>';
 }
+
+$('repNewer').addEventListener('click', () => { repOffset = Math.max(0, repOffset - REP_PAGE); renderReports(); });
+$('repOlder').addEventListener('click', () => { repOffset += REP_PAGE; renderReports(); });
+$('repRows').addEventListener('click', async e => {
+  const btn = e.target.closest('.admin-rep-del');
+  if(!btn || btn.disabled) return;
+  const id = Number(btn.closest('tr').dataset.id);
+  if(!await siteConfirm({ title: 'Удалить сообщение об ошибке?', text: 'Оно будет удалено без возможности восстановления.', ok: 'Удалить', danger: true })) return;
+  btn.disabled = true;
+  try{
+    await api('reports/delete', { id });
+    repData.reports = repData.reports.filter(r => r.id !== id);
+    renderReports();
+  }catch(err){
+    showMsg(err.message);
+    btn.disabled = false;
+  }
+});
 
 async function api(path, body){
   const r = await fetch('/api/admin/' + path, body ? { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : { credentials: 'same-origin' });

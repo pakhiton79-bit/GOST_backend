@@ -57,9 +57,9 @@
       </div>
       <div class="auth-msg" id="mailMsg" hidden></div>
       <div class="admin-mail-list" id="mailList"></div>
-      <div class="admin-mail-pager" id="mailPager" hidden>
+      <div class="admin-pager" id="mailPager" hidden>
         <button type="button" class="btn-secondary" id="mailNewer">← Новее</button>
-        <span class="admin-mail-range" id="mailRange"></span>
+        <span class="admin-pager-range" id="mailRange"></span>
         <button type="button" class="btn-secondary" id="mailOlder">Старше →</button>
       </div>
       <div class="admin-mail-view" id="mailView" hidden></div>
@@ -69,9 +69,14 @@
       <p class="admin-chart-note">Из кнопки «Сообщить об ошибке» в верхней панели. Сначала Pro и Team (приоритетное обслуживание), дальше новые сверху.</p>
       <div class="admin-table-wrap">
         <table class="admin-table admin-req-table">
-          <thead><tr><th>Дата</th><th>От кого</th><th>ГОСТ и тип</th><th>Размеры, масса</th><th>Что не так</th></tr></thead>
+          <thead><tr><th>Дата</th><th>От кого</th><th>ГОСТ и тип</th><th>Размеры, масса</th><th>Что не так</th><th></th></tr></thead>
           <tbody id="repRows"></tbody>
         </table>
+      </div>
+      <div class="admin-pager" id="repPager" hidden>
+        <button type="button" class="btn-secondary" id="repNewer">← Новее</button>
+        <span class="admin-pager-range" id="repRange"></span>
+        <button type="button" class="btn-secondary" id="repOlder">Старше →</button>
       </div>
     </div>
     <div class="card">

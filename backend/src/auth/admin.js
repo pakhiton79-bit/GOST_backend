@@ -17,6 +17,7 @@
 //   /api/admin/mail/...                   - почта поддержки (support-mail.js)
 //   GET  /api/admin/reports               - сообщения об ошибках (feedback.js)
 //                                           (Pro и Team - первыми с пометкой priority, дальше новые сверху)
+//   POST /api/admin/reports/delete { id } - удалить сообщение об ошибке
 const express = require('express');
 const store = require('./store');
 const { PLANS, PERIOD_MS, PLAN_TERMS, planOf, quotaInfo, syncUser } = require('./plans');
@@ -146,6 +147,11 @@ router.get('/requests', (req, res) => {
 
 router.get('/reports', (req, res) => {
   res.json({ reports: withPriority(store.listReports()) });
+});
+
+router.post('/reports/delete', (req, res) => {
+  if (!store.deleteReport(Number(req.body.id))) return res.status(404).json({ error: 'Сообщение не найдено (возможно, уже удалено).' });
+  res.json({ ok: true });
 });
 
 router.get('/stats', (req, res) => {

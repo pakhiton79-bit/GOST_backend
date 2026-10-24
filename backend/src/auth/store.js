@@ -50,6 +50,10 @@ function load() {
   db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
   db.requests = Array.isArray(db.requests) ? db.requests : [];
   db.reports = Array.isArray(db.reports) ? db.reports : [];
+  // Номер сообщения об ошибке (удаление из админки); старым записям без
+  // номера - по порядку.
+  db.nextReportId = Number.isInteger(db.nextReportId) ? db.nextReportId : 1;
+  db.reports.forEach(r => { if (!Number.isInteger(r.id)) r.id = db.nextReportId++; });
   // Платежи Робокассы (payments.js): номер счёта (InvId) -> запись.
   db.payments = db.payments && typeof db.payments === 'object' ? db.payments : {};
   db.nextInvId = Number.isInteger(db.nextInvId) ? db.nextInvId : 1;
@@ -202,7 +206,7 @@ function listRequests() {
 // ---- Сообщения об ошибках (см. feedback.js) ----
 function addReport(rec) {
   const d = load();
-  d.reports.push(rec);
+  d.reports.push({ id: d.nextReportId++, ...rec });
   if (d.reports.length > LIST_MAX) d.reports.splice(0, d.reports.length - LIST_MAX);
   save();
 }
@@ -213,6 +217,15 @@ function countRecentByUser(list, email, now) {
 }
 function listReports() {
   return load().reports.slice();
+}
+// Удалить сообщение (админка); false - такого нет.
+function deleteReport(id) {
+  const d = load();
+  const i = d.reports.findIndex(r => r.id === id);
+  if (i < 0) return false;
+  d.reports.splice(i, 1);
+  save();
+  return true;
 }
 
 // ---- Платежи (см. payments.js) ----
@@ -301,7 +314,7 @@ module.exports = {
   getCode, setCode, deleteCode,
   setTicket, getTicket, deleteTicket,
   addRequest, listRequests,
-  addReport, listReports, countRecentByUser,
+  addReport, listReports, deleteReport, countRecentByUser,
   takeWelcomeSlot,
   createPayment, getPayment, updatePayment, listPayments,
 };
