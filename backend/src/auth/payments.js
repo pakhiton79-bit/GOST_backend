@@ -20,8 +20,12 @@
 //   - та же подписка - срок добавляется к концу текущего;
 //   - подписка дороже - включается сразу, стоимость неиспользованных дней
 //     текущей зачитывается в цену;
-//   - подписка дешевле - начинается после окончания текущей (queuedPlan,
+//   - подписка дешевле - начинается после окончания текущей (очередь queue,
 //     syncUser в plans.js).
+// При оплате правило применяется к состоянию аккаунта на момент оплаты, а
+// не выставления счёта (счетов может быть несколько, оплачены в любом
+// порядке): оплаченное время никогда не пропадает - всё, что нельзя
+// применить, как было рассчитано, встаёт в очередь после текущей (applyPayment).
 // Подписка подключается только по уведомлению Робокассы (Result URL) с
 // проверенной подписью; страница Success лишь показывает результат.
 //
@@ -70,7 +74,7 @@ function quote(user, planId, months, now) {
   const total = p.price * months, len = months * PERIOD_MS;
   const active = user.plan !== 'free' && user.planUntil > now;
   if (!active) return { amount: total, kind: 'new', credit: 0, startsAt: now, until: now + len };
-  if (user.queuedPlan) return { error: 'Следующая подписка уже оплачена. Новую можно оформить, когда она начнётся.' };
+  if (user.queuedPlan || (Array.isArray(user.queue) && user.queue.length)) return { error: 'Следующая подписка уже оплачена. Новую можно оформить, когда она начнётся.' };
   if (user.plan === planId) return { amount: total, kind: 'extend', credit: 0, startsAt: user.planUntil, until: user.planUntil + len };
   const cur = planOf(user);
   if (p.price > cur.price) {
@@ -82,25 +86,40 @@ function quote(user, planId, months, now) {
 }
 
 // Подключить оплаченную подписку (уведомление Робокассы). Состояние аккаунта
-// могло измениться после выставления счёта - правило применяется к текущему.
+// могло измениться после выставления счёта (оплачен другой счёт, подписку
+// выдал администратор) - правило применяется к текущему, и оплаченное время
+// не теряется:
+//   - действующей подписки нет - новая с момента оплаты;
+//   - та же подписка - срок добавляется к концу текущей;
+//   - замена с зачётом (upgrade) - только если текущая подписка та же и не
+//     продлевалась после выставления счёта (зачёт был рассчитан по ней);
+//   - всё остальное - в очередь после текущей и уже оплаченных (та же
+//     подписка в конце очереди - добавляется срок).
 function applyPayment(pay, now) {
   const user = store.findUserById(pay.userId);
   if (!user) return 'аккаунт удалён';
   syncUser(user, now);
   const len = pay.months * PERIOD_MS;
   const active = user.plan !== 'free' && user.planUntil > now;
-  if (active && user.plan === pay.plan) {
+  if (!active) {
+    store.updateUser(user, { plan: pay.plan, planSince: now, planUntil: now + len, periodStart: now, used: 0, planMonths: pay.months });
+    return 'подключена';
+  }
+  if (user.plan === pay.plan) {
     store.updateUser(user, { planUntil: user.planUntil + len, planMonths: pay.months });
     return 'продлена';
   }
-  if (active && pay.kind === 'queue' && !user.queuedPlan) {
-    store.updateUser(user, { queuedPlan: { plan: pay.plan, months: pay.months } });
-    return 'начнётся после текущей';
+  if (pay.kind === 'upgrade' && pay.fromPlan === user.plan && user.planUntil <= pay.fromUntil && PLANS[pay.plan].price > planOf(user).price) {
+    // Очередь (если есть) начнётся после новой подписки.
+    store.updateUser(user, { plan: pay.plan, planSince: now, planUntil: now + len, periodStart: now, used: 0, planMonths: pay.months });
+    return 'подключена с зачётом';
   }
-  store.updateUser(user, { plan: pay.plan, planSince: now, planUntil: now + len, periodStart: now, used: 0, planMonths: pay.months });
-  delete user.queuedPlan;
-  store.updateUser(user);
-  return 'подключена';
+  const queue = Array.isArray(user.queue) ? user.queue.slice() : [];
+  const last = queue[queue.length - 1];
+  if (last && last.plan === pay.plan) queue[queue.length - 1] = { plan: last.plan, months: last.months + pay.months };
+  else queue.push({ plan: pay.plan, months: pay.months });
+  store.updateUser(user, { queue });
+  return 'начнётся после текущей';
 }
 
 const router = express.Router();
@@ -135,6 +154,8 @@ router.post('/create', (req, res) => {
   const cfg = payConfig();
   const pay = store.createPayment({
     userId: user.id, email: user.email, plan: planId, months, amount: q.amount, kind: q.kind, credit: q.credit,
+    // Для замены с зачётом - какая подписка была и до какого срока (applyPayment).
+    fromPlan: user.plan, fromUntil: user.planUntil,
     status: 'pending', test: cfg.test, createdAt: new Date(now).toISOString(),
   });
   const outSum = q.amount.toFixed(2);
