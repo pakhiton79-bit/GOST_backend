@@ -74,7 +74,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', makeThrottle(), adminRoutes);
 app.use('/api/standards', standardsRoutes);
 app.use('/api/feedback', feedbackRoutes);
-app.get('/api/plans', (req, res) => res.json({ plans: publicPlans() }));
+// Оплата подписок через Робокассу (src/auth/payments.js).
+const payments = require('./src/auth/payments');
+app.use('/api/pay', makeThrottle(), payments.router);
+// payEnabled - на странице подписок кнопки оплаты (иначе «Скоро»).
+app.get('/api/plans', (req, res) => res.json({ plans: publicPlans(), payEnabled: payments.payEnabled() }));
 // Проверка, что сервер жив (для самопинга ниже и мониторинга).
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -

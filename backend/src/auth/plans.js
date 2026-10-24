@@ -76,6 +76,14 @@ function syncUser(user, now) {
   // Платная подписка без срока (выдана до появления сроков) - на 1 месяц от
   // подключения.
   if (user.plan !== 'free' && !Number.isFinite(user.planUntil)) { user.planUntil = user.planSince + PERIOD_MS; changed = true; }
+  // Срок вышел, а следующая подписка уже оплачена (меньше текущей, куплена
+  // заранее, payments.js) - она начинается с конца прежней.
+  while (user.plan !== 'free' && now >= user.planUntil && user.queuedPlan && PLANS[user.queuedPlan.plan]) {
+    const q = user.queuedPlan, start = user.planUntil;
+    Object.assign(user, { plan: q.plan, planSince: start, planUntil: start + q.months * PERIOD_MS, planMonths: q.months, used: 0 });
+    delete user.queuedPlan;
+    changed = true;
+  }
   // Срок вышел - пробная с этого момента (бонус за регистрацию не меняется).
   if (user.plan !== 'free' && now >= user.planUntil) {
     Object.assign(user, { plan: 'free', planSince: now, planUntil: null, planExpiredAt: now, used: 0 });

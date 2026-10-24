@@ -184,6 +184,33 @@ sudo /opt/taraplus/deploy/update.sh
 Данные при обновлении не затрагиваются (они в `/var/lib/taraplus`, вне папки
 проекта).
 
+## 8а. Оплата: Робокасса
+
+Пока в `/etc/taraplus/env` не заданы логин и пароли магазина, оплаты на
+сайте нет (на странице подписок кнопки «Скоро»).
+
+1. Кабинет Робокассы → магазин → «Технические настройки»:
+   - Result URL: `https://taraplus.site/api/pay/result`, метод POST;
+   - Success URL: `https://taraplus.site/pay-success.html`, метод GET;
+   - Fail URL: `https://taraplus.site/pay-fail.html`, метод GET;
+   - алгоритм расчёта хеша: SHA256;
+   - пароли #1 и #2 (боевые и тестовые) придумать там же: латинские буквы и цифры.
+2. На сервере вписать логин и пароли (пароли не видны при вводе):
+
+```sh
+read -r  RL  && sed -i "s|^ROBOKASSA_LOGIN=.*|ROBOKASSA_LOGIN=$RL|" /etc/taraplus/env
+read -rs P1 && sed -i "s|^ROBOKASSA_PASS1=.*|ROBOKASSA_PASS1=$P1|" /etc/taraplus/env
+read -rs P2 && sed -i "s|^ROBOKASSA_PASS2=.*|ROBOKASSA_PASS2=$P2|" /etc/taraplus/env
+unset RL P1 P2; systemctl restart taraplus
+```
+
+   Если строк `ROBOKASSA_*` в файле ещё нет - сначала добавить их из
+   `deploy/env.example` (`grep ROBOKASSA /opt/taraplus/deploy/env.example >> /etc/taraplus/env`).
+3. Сначала `ROBOKASSA_TEST=1` и **тестовые** пароли: оплата проходит без
+   списания денег. Проверить покупку, затем вписать боевые пароли, поставить
+   `ROBOKASSA_TEST=` (пусто) и перезапустить.
+4. Журнал оплат: `journalctl -u taraplus | grep оплата`.
+
 ## 9. Полезное
 
 - Журнал сайта (в т.ч. коды подтверждения, пока почта не настроена):

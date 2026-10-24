@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Оплата не прошла - Тара+</title>
+<link rel="icon" type="image/png" href="/images/favicon.png">
+<link rel="stylesheet" href="/css/fonts.css">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-settings.js"></script>
+<script src="/js/common-account.js"></script>
+<script src="/js/legal-config.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="top-nav">
+    <a href="plans.html">← Подписки</a>
+    <a href="index.html">Главная</a>
+  </div>
+  <header>
+    <h1>Оплата не прошла</h1>
+    <div class="subtitle">Деньги не списаны, подписка не изменилась. Можно попробовать ещё раз.</div>
+  </header>
+  <div class="limit-actions pay-actions"><a class="limit-main" href="plans.html">Вернуться к подпискам</a></div>
+  <p class="plans-note" id="payHelp"></p>
+</div>
+<script>
+// Почта для вопросов (legal-config.js).
+if(typeof LEGAL !== 'undefined' && LEGAL.email){
+  const n = document.getElementById('payHelp'), a = document.createElement('a');
+  a.href = 'mailto:' + LEGAL.email; a.textContent = LEGAL.email;
+  n.append('Если деньги всё же списались, напишите на ', a, ' и укажите номер счёта.');
+}
+</script>
+</body>
+</html>

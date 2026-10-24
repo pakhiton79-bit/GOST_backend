@@ -50,6 +50,9 @@ function load() {
   db.stats.days = db.stats.days && typeof db.stats.days === 'object' ? db.stats.days : {};
   db.requests = Array.isArray(db.requests) ? db.requests : [];
   db.reports = Array.isArray(db.reports) ? db.reports : [];
+  // Платежи Робокассы (payments.js): номер счёта (InvId) -> запись.
+  db.payments = db.payments && typeof db.payments === 'object' ? db.payments : {};
+  db.nextInvId = Number.isInteger(db.nextInvId) ? db.nextInvId : 1;
   // IP (ipKey) -> времена выдачи бонуса за регистрацию (plans.js, WELCOME_PER_IP).
   db.welcomeIps = db.welcomeIps && typeof db.welcomeIps === 'object' ? db.welcomeIps : {};
   db.nextUserId = Number.isInteger(db.nextUserId) ? db.nextUserId : db.users.length + 1;
@@ -212,6 +215,28 @@ function listReports() {
   return load().reports.slice();
 }
 
+// ---- Платежи (см. payments.js) ----
+// Записи об оплатах не удаляются вместе с аккаунтом: это учёт доходов
+// (чеки, возвраты, претензии).
+function createPayment(rec) {
+  const d = load();
+  const id = d.nextInvId++;
+  d.payments[id] = { id, ...rec };
+  save();
+  return d.payments[id];
+}
+function getPayment(id) {
+  return load().payments[id] || null;
+}
+function updatePayment(rec, fields) {
+  Object.assign(rec, fields || {});
+  save();
+  return rec;
+}
+function listPayments() {
+  return Object.values(load().payments);
+}
+
 // ---- Очистка (по указанию пользователя, после аудита; раз в сутки, см.
 // server.js): истёкшие входы и пропуски, коды, срок и суточный счётчик
 // которых прошли, неподтверждённые аккаунты старше UNVERIFIED_DAYS дней.
@@ -278,4 +303,5 @@ module.exports = {
   addRequest, listRequests,
   addReport, listReports, countRecentByUser,
   takeWelcomeSlot,
+  createPayment, getPayment, updatePayment, listPayments,
 };
