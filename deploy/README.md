@@ -157,9 +157,16 @@ cp /opt/taraplus/deploy/nginx-security.conf /etc/nginx/conf.d/taraplus-security.
 nginx -t && systemctl reload nginx
 ```
 
-Если `nginx -t` пишет `"server_tokens" directive is duplicate` - в
-`/etc/nginx/nginx.conf` уже есть строка `server_tokens off;`: удалить её из
-`/etc/nginx/conf.d/taraplus-security.conf` и повторить.
+Если `nginx -t` пишет `"server_tokens" directive is duplicate` - строка
+`server_tokens` уже есть в `/etc/nginx/nginx.conf` (в Ubuntu 26.04 -
+`server_tokens build;`, версия видна): там поставить `off`, а из
+`/etc/nginx/conf.d/taraplus-security.conf` строку удалить, затем повторить:
+
+```sh
+sed -i 's/^\(\s*\)server_tokens build;/\1server_tokens off;/' /etc/nginx/nginx.conf
+sed -i '/^server_tokens off;/d' /etc/nginx/conf.d/taraplus-security.conf
+nginx -t && systemctl reload nginx
+```
 
 ## 5б. Вход на сервер не под root
 
