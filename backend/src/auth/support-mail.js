@@ -23,7 +23,7 @@ const { simpleParser } = require('mailparser');
 const store = require('./store');
 const { PLANS } = require('./plans');
 
-const PAGE = 30;
+const PAGE = 10;
 const MAX_SOURCE = 20 * 1024 * 1024;  // письма больше - без разбора (память сервера)
 const MAX_TEXT = 200000;              // символов текста письма на страницу
 const MAX_REPLY = 20000;              // символов в ответе

@@ -597,7 +597,7 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-mail-tabs{display:flex;gap:4px;padding:3px;border:1px solid var(--rule);border-radius:10px;background:var(--panel);}
 .admin-mail-tab{margin:0;padding:6px 14px;border:none;border-radius:7px;background:none;color:var(--ink-soft);font-size:14px;font-weight:500;cursor:pointer;}
 .admin-mail-tab[aria-selected="true"]{background:var(--accent-wash);color:var(--ink);}
-.admin-mail-bar .btn-secondary, .admin-mail-more, .admin-mail-view .btn-secondary{margin:0;padding:7px 12px;font-size:13px;}
+.admin-mail-bar .btn-secondary, .admin-mail-pager .btn-secondary, .admin-mail-view .btn-secondary{margin:0;padding:7px 12px;font-size:13px;}
 .admin-mail-list{border-top:1px solid var(--rule);}
 .admin-mail-list:empty{border-top:none;}
 .admin-mail-row{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr) auto;gap:12px;align-items:baseline;width:100%;margin:0;padding:10px 8px;border:none;border-bottom:1px solid var(--rule);border-radius:0;background:none;color:var(--ink);font-size:14px;text-align:left;cursor:pointer;}
@@ -607,8 +607,10 @@ body.auth-page{margin:0;background:var(--bg);}
 .admin-mail-unseen .admin-mail-who::before{content:"";display:inline-block;width:7px;height:7px;margin-right:6px;border-radius:50%;background:var(--accent);vertical-align:1px;}
 .admin-mail-date{color:var(--ink-soft);font-size:13px;font-variant-numeric:tabular-nums;font-weight:400;}
 .admin-mail-subj .admin-tag{margin-left:6px;font-weight:400;}
-.admin-mail-more{margin-top:12px;}
-.admin-mail-more[hidden], .admin-mail-view[hidden]{display:none;}
+.admin-mail-pager{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:12px;}
+.admin-mail-pager .btn-secondary:disabled{opacity:.45;cursor:default;}
+.admin-mail-range{font-size:13px;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+.admin-mail-pager[hidden], .admin-mail-view[hidden]{display:none;}
 .admin-mail-view h3{margin:14px 0 8px;font-size:18px;color:var(--ink);overflow-wrap:anywhere;}
 .admin-mail-meta{font-size:13px;color:var(--ink-soft);line-height:1.6;overflow-wrap:anywhere;}
 .admin-mail-meta b{font-weight:500;color:var(--ink);}

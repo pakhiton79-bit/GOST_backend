@@ -57,7 +57,11 @@
       </div>
       <div class="auth-msg" id="mailMsg" hidden></div>
       <div class="admin-mail-list" id="mailList"></div>
-      <button type="button" class="btn-secondary admin-mail-more" id="mailMore" hidden>Показать ещё</button>
+      <div class="admin-mail-pager" id="mailPager" hidden>
+        <button type="button" class="btn-secondary" id="mailNewer">← Новее</button>
+        <span class="admin-mail-range" id="mailRange"></span>
+        <button type="button" class="btn-secondary" id="mailOlder">Старше →</button>
+      </div>
       <div class="admin-mail-view" id="mailView" hidden></div>
     </div>
     <div class="card">

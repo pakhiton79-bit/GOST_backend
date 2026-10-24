@@ -1,8 +1,10 @@
 // Почта поддержки в админке (сервер - backend/src/auth/support-mail.js):
 // входящие и отправленные ящика поддержки, письмо целиком (только текст -
 // HTML письма на страницу не попадает), вложения скачиванием, ответ.
+// Список - страницами по 10 писем (PAGE в support-mail.js), «← Новее» /
+// «Старше →» (по указанию пользователя список не бесконечный).
 // Пользуется api, esc, el и fmtDate из admin.js.
-let mailFolder = 'inbox', mailItems = [], mailTotal = 0, mailOpen = null;
+let mailFolder = 'inbox', mailItems = [], mailTotal = 0, mailOffset = 0, mailPageSize = 10, mailOpen = null;
 const fmtDateTime = iso => iso ? new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 const mailAddr = a => a ? (a.name ? `${a.name} <${a.address}>` : a.address) : '';
 const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' МБ' : Math.max(1, Math.round(n / 1024)) + ' КБ';
@@ -26,21 +28,31 @@ function renderMailList(){
       <span class="admin-mail-date">${esc(fmtDateTime(m.date))}</span>
     </button>`;
   }).join('') || '<p class="admin-empty">Писем нет</p>';
-  $('mailMore').hidden = mailItems.length >= mailTotal;
+  renderMailPager();
 }
 
-async function loadMail(more){
+// «← Новее · 11-20 из 35 · Старше →»; одна страница - без переключателя.
+function renderMailPager(){
+  $('mailPager').hidden = mailTotal <= mailPageSize;
+  $('mailRange').textContent = mailItems.length ? `${mailOffset + 1}-${mailOffset + mailItems.length} из ${mailTotal}` : '';
+  $('mailNewer').disabled = mailOffset <= 0;
+  $('mailOlder').disabled = mailOffset + mailPageSize >= mailTotal;
+}
+
+async function loadMail(offset){
   $('mailRefresh').disabled = true;
   try{
-    const d = await api(`mail?folder=${mailFolder}&offset=${more ? mailItems.length : 0}`);
-    mailItems = more ? mailItems.concat(d.messages) : d.messages;
+    const d = await api(`mail?folder=${mailFolder}&offset=${offset}`);
+    mailItems = d.messages;
     mailTotal = d.total;
+    mailOffset = d.offset;
+    mailPageSize = d.pageSize || mailPageSize;
     if(mailFolder === 'inbox') $('mailCount').textContent = d.unseen ? `(новых: ${d.unseen})` : '';
     mailMsg('');
     renderMailList();
   }catch(e){
     $('mailList').innerHTML = '';
-    $('mailMore').hidden = true;
+    $('mailPager').hidden = true;
     if(e.notConfigured) $('mailBar').hidden = true;
     mailMsg(e.message, false);
   }finally{ $('mailRefresh').disabled = false; }
@@ -58,7 +70,7 @@ function showList(){
 async function openMail(uid){
   mailMsg('');
   $('mailList').hidden = true;
-  $('mailMore').hidden = true;
+  $('mailPager').hidden = true;
   const view = $('mailView');
   view.hidden = false;
   view.innerHTML = '<p class="admin-empty">Загрузка…</p>';
@@ -135,10 +147,11 @@ $('mailCard').addEventListener('click', e => {
   if(tab){
     mailFolder = tab.dataset.folder;
     document.querySelectorAll('.admin-mail-tab').forEach(t => t.setAttribute('aria-selected', String(t === tab)));
-    showList(); mailItems = []; $('mailList').innerHTML = ''; return loadMail(false);
+    showList(); mailItems = []; mailTotal = 0; mailOffset = 0; $('mailList').innerHTML = ''; return loadMail(0);
   }
-  if(e.target.closest('#mailRefresh')){ showList(); return loadMail(false); }
-  if(e.target.closest('#mailMore')) return loadMail(true);
+  if(e.target.closest('#mailRefresh')){ showList(); return loadMail(mailOffset); }
+  if(e.target.closest('#mailNewer')) return loadMail(Math.max(0, mailOffset - mailPageSize));
+  if(e.target.closest('#mailOlder')) return loadMail(mailOffset + mailPageSize);
   const row = e.target.closest('.admin-mail-row');
   if(row) return openMail(Number(row.dataset.uid));
   if(e.target.closest('.admin-mail-back')){ mailMsg(''); return showList(); }
@@ -152,4 +165,4 @@ $('mailCard').addEventListener('click', e => {
   }
 });
 
-loadMail(false);
+loadMail(0);
