@@ -81,8 +81,11 @@ function setPowState(state){
 function setPowProgress(p){
   $('authPowRing').style.strokeDashoffset = (56.55 * (1 - p)).toFixed(2);
 }
+// Сервер принимает форму не раньше чем через 3 с после выдачи задачи
+// (antibot.js, MIN_FILL_MS) - ждём чуть дольше, с запасом.
+const POW_MIN_MS = 3200;
 function startPow(){
-  powPromise = powSolve(setPowState, setPowProgress);
+  powPromise = powSolve(setPowState, setPowProgress, POW_MIN_MS);
   powPromise.catch(() => {});
 }
 

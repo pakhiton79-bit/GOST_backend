@@ -2,8 +2,11 @@
 // «доказательство работы», как в открытом проекте ALTCHA. Сервер выдаёт
 // задачу (GET /api/auth/challenge, backend/src/auth/antibot.js): соль и
 // SHA-256 от «соль + число»; браузер перебирает числа, пока хеш не совпадёт
-// (около секунды на телефоне), и возвращает токен для формы. Перебор идёт
-// порциями, чтобы страница не подвисала.
+// (около секунды на телефоне; при нагрузке сервер даёт задачу длиннее), и
+// возвращает токен для формы. Перебор идёт порциями, чтобы страница не
+// подвисала. Формы регистрации и восстановления пароля сервер принимает не
+// раньше чем через 3 с после выдачи задачи (MIN_FILL_MS в antibot.js) -
+// minMs: токен готов не раньше этого (человек заполняет форму дольше).
 
 // SHA-256 для коротких ASCII-строк (соль задачи + число).
 const SHA_K = new Uint32Array([0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2]);
@@ -37,17 +40,20 @@ function sha256hex(str){
 }
 
 // Решить задачу сервера. onState('work' | 'ok' | 'fail') - для надписи в
-// форме, onProgress(0..1) - доля перебранных чисел (кольцо у надписи).
+// форме, onProgress(0..1) - доля перебранных чисел (кольцо у надписи),
+// minMs - токен не раньше чем через столько после получения задачи.
 // Результат - токен (base64 от JSON) для поля captchaToken.
-async function powSolve(onState, onProgress){
+async function powSolve(onState, onProgress, minMs){
   onState('work');
   if(onProgress) onProgress(0);
   try{
     const r = await fetch('/api/auth/challenge', { credentials: 'same-origin', cache: 'no-store' });
     if(!r.ok) throw new Error('challenge ' + r.status);
-    const c = await r.json();
+    const c = await r.json(), got = Date.now();
     for(let n = 0; n <= c.maxnumber; n++){
       if(sha256hex(c.salt + n) === c.challenge){
+        const wait = (minMs || 0) - (Date.now() - got);
+        if(wait > 0) await new Promise(res => setTimeout(res, wait));
         onState('ok');
         return btoa(JSON.stringify({ salt: c.salt, number: n, challenge: c.challenge, signature: c.signature }));
       }

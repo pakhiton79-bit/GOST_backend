@@ -241,7 +241,7 @@ router.post('/consents', rateLimit, (req, res) => {
 });
 
 router.get('/challenge', (req, res) => {
-  res.json(antibot.createChallenge());
+  res.json(antibot.createChallenge(req.ip));
 });
 
 router.post('/register', rateLimit, async (req, res, next) => {
@@ -257,7 +257,7 @@ router.post('/register', rateLimit, async (req, res, next) => {
       console.log(`[почта] код не выдан (${email}, register): заполнено поле-ловушка для ботов`);
       return res.json({ ok: true, needVerify: true });
     }
-    if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
+    if (!antibot.verifyCaptcha(req, antibot.MIN_FILL_MS)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     if (antibot.isDisposableEmail(email)) return res.status(400).json({ error: antibot.DISPOSABLE_ERROR });
     // Хеш - до обращения к хранилищу: дальше без await, чтобы два
     // одновременных запроса не создали два аккаунта с одной почтой.
@@ -459,7 +459,7 @@ router.post('/forgot', rateLimit, async (req, res, next) => {
       console.log(`[почта] код не выдан (${email}, reset): заполнено поле-ловушка для ботов`);
       return res.json({ ok: true });
     }
-    if (!antibot.verifyCaptcha(req)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
+    if (!antibot.verifyCaptcha(req, antibot.MIN_FILL_MS)) return res.status(400).json({ error: antibot.CAPTCHA_ERROR, captcha: true });
     const user = store.findUserByEmail(email);
     // Ответ одинаковый, есть аккаунт или нет, - чтобы по нему нельзя было
     // проверять чужие почты.

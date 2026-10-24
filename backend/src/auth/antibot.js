@@ -20,6 +20,16 @@
 //      CAPTCHA_SECRET (необязательно) - ключ подписи; без него ключ
 //      случайный при каждом запуске (задачи, выданные до перезапуска,
 //      просто перевыдаются).
+//   4. Сложность по нагрузке (по указанию пользователя, после аудита):
+//      обычно задача - до POW_MAX (около секунды на телефоне). Много задач
+//      с одного IP или много проверок по всему сайту за POW_WINDOW_MS -
+//      задача в 4 или в 10 раз длиннее (powLevel): людям - пара секунд
+//      ожидания, массовому боту - намного дороже.
+//   5. Минимальное время заполнения формы: регистрация и восстановление
+//      пароля принимаются не раньше чем через MIN_FILL_MS после выдачи
+//      задачи (задача выдаётся, когда форма показана). Страница сама
+//      дожидается этого времени (js/account/pow.js), человек не замечает;
+//      бот, отправляющий форму сразу, - не проходит.
 const crypto = require('crypto');
 
 const DISPOSABLE_DOMAINS = new Set([
@@ -53,44 +63,82 @@ function honeypotFilled(req) {
   return String((req.body || {}).trap || '').trim() !== '';
 }
 
-const POW_MAX = 100000;
+const POW_MAX = 100000;                  // обычная сложность
+const POW_TOP = POW_MAX * 10;            // самая высокая (powLevel)
 const POW_TTL_MS = 10 * 60 * 1000;
+const POW_WINDOW_MS = 10 * 60 * 1000;    // окно подсчёта нагрузки
+const IP_EASY = 5, IP_HARD = 15;         // задач с одного IP за окно: до 5 - обычная, до 15 - ×4, больше - ×10
+const ALL_EASY = 30, ALL_HARD = 100;     // пройденных проверок по всему сайту за окно: так же
+const MIN_FILL_MS = 3000;
 const POW_SECRET = process.env.CAPTCHA_SECRET || crypto.randomBytes(32).toString('hex');
 const powUsed = new Map(); // подпись -> срок; повторно ответ не принимается
+const powByIp = new Map(); // ip -> времена выдачи задач (за окно)
+let powPassed = [];        // времена пройденных проверок (за окно)
 // Использованные ответы помнятся и после перезапуска (limits-file.js): с
 // постоянным CAPTCHA_SECRET старый ответ иначе прошёл бы ещё раз.
 const limitsFile = require('./limits-file');
 limitsFile.register('captchaUsed', () => limitsFile.mapDump(powUsed), d => limitsFile.mapRestore(powUsed, d));
+limitsFile.register('captchaLoad', () => ({ byIp: limitsFile.mapDump(powByIp), passed: powPassed }), d => {
+  limitsFile.mapRestore(powByIp, d.byIp);
+  powPassed = Array.isArray(d.passed) ? d.passed : [];
+});
+const recent = (list, now) => (list || []).filter(t => now - t < POW_WINDOW_MS);
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, list] of powByIp) { const r = recent(list, now); if (r.length) powByIp.set(ip, r); else powByIp.delete(ip); }
+  powPassed = recent(powPassed, now);
+}, POW_WINDOW_MS).unref();
+
+// Сложность задачи: 1 (обычная), 4 или 10 - по числу задач с этого IP и
+// пройденных проверок по всему сайту за окно.
+function powLevel(ipCount, allCount) {
+  if (ipCount > IP_HARD || allCount > ALL_HARD) return 10;
+  if (ipCount > IP_EASY || allCount > ALL_EASY) return 4;
+  return 1;
+}
 
 const sha256hex = s => crypto.createHash('sha256').update(s).digest('hex');
 const powSign = challenge => crypto.createHmac('sha256', POW_SECRET).update(challenge).digest('hex');
 
-function createChallenge() {
-  const salt = crypto.randomBytes(12).toString('hex') + '.' + (Date.now() + POW_TTL_MS);
-  const challenge = sha256hex(salt + crypto.randomInt(0, POW_MAX + 1));
-  return { salt, challenge, signature: powSign(challenge), maxnumber: POW_MAX };
+function createChallenge(ip) {
+  const now = Date.now();
+  const list = recent(powByIp.get(ip), now);
+  list.push(now);
+  powByIp.set(ip, list);
+  const max = POW_MAX * powLevel(list.length, recent(powPassed, now).length);
+  if (max > POW_MAX) console.log(`[капча] сложность ×${max / POW_MAX} для IP ${ip} (задач за 10 мин: ${list.length}, проверок по сайту: ${recent(powPassed, now).length})`);
+  const salt = crypto.randomBytes(12).toString('hex') + '.' + (now + POW_TTL_MS);
+  const challenge = sha256hex(salt + crypto.randomInt(0, max + 1));
+  return { salt, challenge, signature: powSign(challenge), maxnumber: max };
 }
 
-// true - ответ на задачу верный. Токен - base64 от JSON
-// { salt, number, challenge, signature }.
-function verifyCaptcha(req) {
+// true - ответ на задачу верный (и с выдачи задачи прошло не меньше
+// minFillMs). Токен - base64 от JSON { salt, number, challenge, signature }.
+function verifyCaptcha(req, minFillMs = 0) {
   let p;
   try { p = JSON.parse(Buffer.from(String((req.body || {}).captchaToken || ''), 'base64').toString('utf8')); } catch (e) { return false; }
   if (!p || typeof p.salt !== 'string' || typeof p.challenge !== 'string' || typeof p.signature !== 'string') return false;
-  if (!Number.isInteger(p.number) || p.number < 0 || p.number > POW_MAX) return false;
+  if (!Number.isInteger(p.number) || p.number < 0 || p.number > POW_TOP) return false;
   const expires = Number(p.salt.split('.')[1]);
   const now = Date.now();
   if (!(expires > now)) return false;
+  // Слишком быстро после выдачи задачи - форму отправил не человек.
+  if (now - (expires - POW_TTL_MS) < minFillMs) {
+    console.log(`[капча] форма отправлена через ${now - (expires - POW_TTL_MS)} мс после показа - отклонено (IP ${req.ip})`);
+    return false;
+  }
   if (sha256hex(p.salt + p.number) !== p.challenge) return false;
   const sig = powSign(p.challenge);
   if (sig.length !== p.signature.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(p.signature))) return false;
   for (const [k, t] of powUsed) if (t <= now) powUsed.delete(k);
   if (powUsed.has(sig)) return false;
   powUsed.set(sig, expires);
+  // Нагрузка - по формам (регистрация, восстановление), не по показу почты поддержки.
+  if (minFillMs) powPassed.push(now);
   return true;
 }
 
 const CAPTCHA_ERROR = 'Проверка «Я не робот» не пройдена. Попробуйте ещё раз.';
 const DISPOSABLE_ERROR = 'Временные (одноразовые) почтовые ящики не принимаются. Укажите постоянную почту.';
 
-module.exports = { isDisposableEmail, honeypotFilled, createChallenge, verifyCaptcha, CAPTCHA_ERROR, DISPOSABLE_ERROR };
+module.exports = { isDisposableEmail, honeypotFilled, createChallenge, verifyCaptcha, MIN_FILL_MS, CAPTCHA_ERROR, DISPOSABLE_ERROR };
