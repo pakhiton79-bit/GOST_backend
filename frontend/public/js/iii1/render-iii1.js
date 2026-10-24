@@ -89,9 +89,9 @@ function renderBoardTables(calc, manualOverrides){
   html += renderPartBlockDiagram('Щит торцевой (2 шт.)', diagramTorecIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.endPanel, 'endPanel', manualOverrides));
   html += renderPartBlockDiagram('Щит боковой (2 шт.)', diagramBokIII1(calc, III1_PANEL_WIDTH), renderPartTable(calc.bokovoy, 'bokovoy', manualOverrides));
   // Болты и пергамин - под всеми узлами, попадают и в печать.
-  html += `<div class="part-title bolts-part">Болты<button type="button" class="btn-secondary btn-small part-title-action screen-only" onclick="setBoltsRemoved(true)">Убрать</button></div>`
+  html += `<div class="part-title bolts-part">Болты<button type="button" class="btn-secondary btn-small part-title-action screen-only" data-onclick="setBoltsRemoved(true)">Убрать</button></div>`
     + renderTextRows('bolts', calc.bolts, r => `${r.name} Ø${r.d} мм - ${r.qty} шт.`).replace('class="spec-table tape-table"', 'class="spec-table tape-table bolts-part"')
-    + `<div class="note bolts-removed-note screen-only" id="boltsRemovedNote">Болты убраны из спецификации, печати и PDF.<button type="button" class="btn-secondary btn-small" onclick="setBoltsRemoved(false)">Вернуть</button></div>`;
+    + `<div class="note bolts-removed-note screen-only" id="boltsRemovedNote">Болты убраны из спецификации, печати и PDF.<button type="button" class="btn-secondary btn-small" data-onclick="setBoltsRemoved(false)">Вернуть</button></div>`;
   if(calc.parchment && calc.parchment.length){
     html += renderTextRows('parchment', calc.parchment, r => `Пергамин ${r.area.toFixed(2)} м²`);
   }

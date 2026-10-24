@@ -46,7 +46,7 @@ function onFineThicknessInput(){
     const id = fineThicknessInputId(f.key);
     return `<div class="fine-thickness-field">
       <label for="${id}">${f.label}${f.hint ? `<span class="fine-thickness-hint">${f.hint}</span>` : ''}</label>
-      <input type="number" id="${id}" min="1" step="1" inputmode="decimal" placeholder="по расчёту" oninput="onFineThicknessInput()">
+      <input type="number" id="${id}" min="1" step="1" inputmode="decimal" placeholder="по расчёту" data-oninput="onFineThicknessInput()">
     </div>`;
   }).join('');
   let saved = {};

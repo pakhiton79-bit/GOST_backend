@@ -25,13 +25,6 @@
   <div class="limit-actions pay-actions"><a class="limit-main" href="plans.html">Вернуться к подпискам</a></div>
   <p class="plans-note" id="payHelp"></p>
 </div>
-<script>
-// Почта для вопросов (legal-config.js).
-if(typeof LEGAL !== 'undefined' && LEGAL.email){
-  const n = document.getElementById('payHelp'), a = document.createElement('a');
-  a.href = 'mailto:' + LEGAL.email; a.textContent = LEGAL.email;
-  n.append('Если деньги всё же списались, напишите на ', a, ' и укажите номер счёта.');
-}
-</script>
+<script src="/js/account/pay-fail.js"></script>
 </body>
 </html>

@@ -45,7 +45,7 @@ function buildThicknessCheckboxList(){
   let html = '';
   AVAILABLE_THICKNESS_OPTIONS.forEach(t=>{
     const checked = availableThicknesses.includes(t) ? ' checked' : '';
-    html += `<label><input type="checkbox" value="${t}"${checked} onchange="onThicknessCheckboxChange(this)"> ${t} мм</label>`;
+    html += `<label><input type="checkbox" value="${t}"${checked} data-onchange="onThicknessCheckboxChange(this)"> ${t} мм</label>`;
   });
   list.innerHTML = html;
 }

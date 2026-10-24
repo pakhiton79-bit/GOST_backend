@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="/css/fonts.css">
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/account.css">
+<script src="/js/common-events.js"></script>
 <script src="/js/common-settings.js"></script>
 <script src="/js/common-account.js"></script>
 <script src="/js/account/standards.js"></script>
@@ -65,14 +66,14 @@
   <div class="card">
     <h2>Толщины пиломатериала в наличии</h2>
     <div class="thickness-filter dropdown-wrap">
-      <button type="button" class="thickness-dropdown-btn" id="thicknessDropdownBtn" onclick="toggleThicknessDropdown()">
+      <button type="button" class="thickness-dropdown-btn" id="thicknessDropdownBtn" data-onclick="toggleThicknessDropdown()">
         <span id="thicknessDropdownLabel">-</span>
         <span class="thickness-dropdown-arrow">▾</span>
       </button>
       <div class="thickness-dropdown-panel" id="thicknessDropdownPanel">
         <div class="thickness-dropdown-actions">
-          <button type="button" class="btn-secondary" onclick="setAllThickness(true)">Выбрать все</button>
-          <button type="button" class="btn-secondary" onclick="setAllThickness(false)">Снять все</button>
+          <button type="button" class="btn-secondary" data-onclick="setAllThickness(true)">Выбрать все</button>
+          <button type="button" class="btn-secondary" data-onclick="setAllThickness(false)">Снять все</button>
         </div>
         <div class="thickness-checkbox-list" id="thicknessCheckboxList"></div>
       </div>
@@ -90,18 +91,18 @@
   <div class="card">
     <h2>Тип крепления груза</h2>
     <div class="thickness-filter dropdown-wrap">
-      <button type="button" class="thickness-dropdown-btn" id="fasteningDropdownBtn" onclick="toggleFasteningDropdown()">
+      <button type="button" class="thickness-dropdown-btn" id="fasteningDropdownBtn" data-onclick="toggleFasteningDropdown()">
         <span id="fasteningDropdownLabel">-</span>
         <span class="thickness-dropdown-arrow">▾</span>
       </button>
       <div class="thickness-dropdown-panel" id="fasteningDropdownPanel">
         <div class="fastening-option-list">
           <label>
-            <input type="radio" name="fasteningType" value="skid" onchange="onFasteningTypeChange(this)">
+            <input type="radio" name="fasteningType" value="skid" data-onchange="onFasteningTypeChange(this)">
             <span>Крепление за полозья</span>
           </label>
           <label>
-            <input type="radio" name="fasteningType" value="floor_boards" checked onchange="onFasteningTypeChange(this)">
+            <input type="radio" name="fasteningType" value="floor_boards" checked data-onchange="onFasteningTypeChange(this)">
             <span>Крепление к доскам дна</span>
           </label>
         </div>
@@ -119,44 +120,44 @@
       </label>
       <div class="option-group-title">Брусья крышки</div>
       <label>
-        <input type="checkbox" id="customCrossBeams" onchange="onManualCountCheckboxChange('cross')">
+        <input type="checkbox" id="customCrossBeams" data-onchange="onManualCountCheckboxChange('cross')">
         <span>Настроить число поперечных брусьев<span class="option-hint">Крайние брусья - по концам крышки, остальные равномерно между ними. Штатно - наименьшее число, при котором расстояния между краями брусьев не больше 700 мм</span></span>
       </label>
       <div id="crossBeamsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="crossBeamsSlider"></div>
-          <input type="number" id="crossBeamsInput" step="1" min="2" oninput="onManualCountInputChange('cross')">
+          <input type="number" id="crossBeamsInput" step="1" min="2" data-oninput="onManualCountInputChange('cross')">
         </div>
       </div>
       <label>
-        <input type="checkbox" id="customCrossAxis" onchange="onManualCountCheckboxChange('crossAxis')">
+        <input type="checkbox" id="customCrossAxis" data-onchange="onManualCountCheckboxChange('crossAxis')">
         <span>Настроить расстояние между поперечными брусьями<span class="option-hint">Расстояние между осями соседних брусьев - от 500 до 800 мм (п.1.8.1). Берётся наименьшее число брусьев, при котором расстояние не больше заданного</span></span>
       </label>
       <div id="crossAxisRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="crossAxisSlider"></div>
-          <input type="number" id="crossAxisInput" step="1" min="500" max="800" oninput="onManualCountInputChange('crossAxis')">
+          <input type="number" id="crossAxisInput" step="1" min="500" max="800" data-oninput="onManualCountInputChange('crossAxis')">
         </div>
       </div>
       <div class="option-group-title">Стойки каркаса</div>
       <label>
-        <input type="checkbox" id="customTorecPosts" onchange="onManualCountCheckboxChange('torec')">
+        <input type="checkbox" id="customTorecPosts" data-onchange="onManualCountCheckboxChange('torec')">
         <span>Настроить число стоек торцевого щита<span class="option-hint">Крайние стойки - по краям щита, остальные равномерно между ними</span></span>
       </label>
       <div id="torecPostsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="torecPostsSlider"></div>
-          <input type="number" id="torecPostsInput" step="1" min="2" oninput="onManualCountInputChange('torec')">
+          <input type="number" id="torecPostsInput" step="1" min="2" data-oninput="onManualCountInputChange('torec')">
         </div>
       </div>
       <label>
-        <input type="checkbox" id="customBokPosts" onchange="onManualCountCheckboxChange('bok')">
+        <input type="checkbox" id="customBokPosts" data-onchange="onManualCountCheckboxChange('bok')">
         <span>Настроить число стоек бокового щита<span class="option-hint">Крайние стойки - по краям щита, остальные равномерно между ними</span></span>
       </label>
       <div id="bokPostsRow" class="modal-field" style="display:none;margin:6px 0 0 26px;">
         <div class="modal-slider-row">
           <div class="jump-slider" id="bokPostsSlider"></div>
-          <input type="number" id="bokPostsInput" step="1" min="2" oninput="onManualCountInputChange('bok')">
+          <input type="number" id="bokPostsInput" step="1" min="2" data-oninput="onManualCountInputChange('bok')">
         </div>
       </div>
       <div class="option-group-title">Раскосины</div>
@@ -174,11 +175,11 @@
         <span>Убрать доски дна</span>
       </label>
       <label>
-        <input type="checkbox" id="removeSkidBoards" onchange="onSkidForkliftExclusive(this)">
+        <input type="checkbox" id="removeSkidBoards" data-onchange="onSkidForkliftExclusive(this)">
         <span>Убрать подполозные доски</span>
       </label>
       <label>
-        <input type="checkbox" id="forkliftLoading" onchange="onSkidForkliftExclusive(this)">
+        <input type="checkbox" id="forkliftLoading" data-onchange="onSkidForkliftExclusive(this)">
         <span>Погрузка авто/электропогрузчиком</span>
       </label>
       <label>
@@ -198,8 +199,8 @@
   </div>
 
   <div class="card action-card">
-    <button id="calcBtn" onclick="calculate()">Рассчитать</button>
-    <button type="button" class="btn-secondary reset-btn" id="resetEditsBtn" onclick="resetTableEdits()" hidden>Сбросить до стандартных значений</button>
+    <button id="calcBtn" data-onclick="calculate()">Рассчитать</button>
+    <button type="button" class="btn-secondary reset-btn" id="resetEditsBtn" data-onclick="resetTableEdits()" hidden>Сбросить до стандартных значений</button>
     <span class="calc-status">
       <span class="calc-loading" id="calcLoading"><span class="spinner" aria-hidden="true"></span>Идёт расчёт…</span>
       <span class="calc-loading" id="calcPrinting"><span class="spinner" aria-hidden="true"></span>Подготовка к печати…</span>
@@ -209,8 +210,8 @@
       <span class="calc-error" id="calcError"><span class="mark mark-error"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><line x1="4.5" y1="4.5" x2="11.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/><line x1="11.5" y1="4.5" x2="4.5" y2="11.5" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg></span>Расчёт не проведён</span>
     </span>
     <span class="print-actions">
-      <button class="print-btn btn-secondary" onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5V2.5h7v3"/><rect x="3" y="5.5" width="10" height="5" rx="0.8"/><path d="M4.5 9.5v4h7v-4"/><line x1="6" y1="11.5" x2="10" y2="11.5"/></svg>Печать</button>
-      <button class="print-btn btn-secondary" onclick="downloadPdf()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v6.5"/><path d="M5 6.5 8 9.5 11 6.5"/><path d="M3.5 12.5h9"/></svg>Скачать PDF</button>
+      <button class="print-btn btn-secondary" data-onclick="printBox()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 5.5V2.5h7v3"/><rect x="3" y="5.5" width="10" height="5" rx="0.8"/><path d="M4.5 9.5v4h7v-4"/><line x1="6" y1="11.5" x2="10" y2="11.5"/></svg>Печать</button>
+      <button class="print-btn btn-secondary" data-onclick="downloadPdf()"><svg class="btn-icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.5v6.5"/><path d="M5 6.5 8 9.5 11 6.5"/><path d="M3.5 12.5h9"/></svg>Скачать PDF</button>
     </span>
     <div class="error" id="err"></div>
   </div>
@@ -233,12 +234,12 @@
           </div>
           <div class="time-tile">
             <div class="label">Масса ящика</div>
-            <button type="button" class="time-settings-btn" id="densitySettingsBtn" onclick="onDensitySettingsOpen()" aria-label="Настройки плотности древесины" title="Плотность древесины">⚙</button>
+            <button type="button" class="time-settings-btn" id="densitySettingsBtn" data-onclick="onDensitySettingsOpen()" aria-label="Настройки плотности древесины" title="Плотность древесины">⚙</button>
             <div class="value" id="outMass">- <span>кг</span></div>
           </div>
           <div class="time-tile">
             <div class="label">Норма времени</div>
-            <button type="button" class="time-settings-btn" id="timeSettingsBtn" onclick="onTimeSettingsOpen()" aria-label="Настройки нормы времени" title="Настройки нормы времени">⚙</button>
+            <button type="button" class="time-settings-btn" id="timeSettingsBtn" data-onclick="onTimeSettingsOpen()" aria-label="Настройки нормы времени" title="Настройки нормы времени">⚙</button>
             <div class="value" id="outTime">- <span>ч</span></div>
           </div>
         </div>
@@ -258,35 +259,35 @@
     <div class="disclaimer" style="margin-top:20px;">Калькулятор может ошибаться. Проверяйте результаты перед использованием в производстве.</div>
   </div>
 
-  <div class="modal-overlay" id="densitySettingsOverlay" onclick="onDensitySettingsOverlayClick(event)" hidden>
+  <div class="modal-overlay" id="densitySettingsOverlay" data-onclick="onDensitySettingsOverlayClick(event)" hidden>
     <div class="modal-box">
-      <button type="button" class="modal-close" onclick="onDensitySettingsClose()" aria-label="Закрыть">✕</button>
+      <button type="button" class="modal-close" data-onclick="onDensitySettingsClose()" aria-label="Закрыть">✕</button>
       <h3>Настройки массы ящика</h3>
       <div class="modal-field">
         <label id="woodDensityLabel" for="woodDensityInput">Плотность древесины, кг/м³</label>
         <div class="modal-slider-row">
           <div class="jump-slider" id="woodDensitySlider" aria-labelledby="woodDensityLabel"></div>
-          <input type="number" id="woodDensityInput" step="10" min="1" oninput="onWoodDensityInputChange()">
+          <input type="number" id="woodDensityInput" step="10" min="1" data-oninput="onWoodDensityInputChange()">
         </div>
       </div>
     </div>
   </div>
-  <div class="modal-overlay" id="timeSettingsOverlay" onclick="onTimeSettingsOverlayClick(event)" hidden>
+  <div class="modal-overlay" id="timeSettingsOverlay" data-onclick="onTimeSettingsOverlayClick(event)" hidden>
     <div class="modal-box">
-      <button type="button" class="modal-close" onclick="onTimeSettingsClose()" aria-label="Закрыть">✕</button>
+      <button type="button" class="modal-close" data-onclick="onTimeSettingsClose()" aria-label="Закрыть">✕</button>
       <h3>Настройки нормы времени</h3>
       <div class="modal-field">
         <label id="baseProductivityLabel" for="baseProductivityInput">Базовая производительность, м³/ч</label>
         <div class="modal-slider-row">
           <div class="jump-slider" id="baseProductivitySlider" aria-labelledby="baseProductivityLabel"></div>
-          <input type="number" id="baseProductivityInput" step="0.01" min="0.01" oninput="onBaseProductivityInputChange()">
+          <input type="number" id="baseProductivityInput" step="0.01" min="0.01" data-oninput="onBaseProductivityInputChange()">
         </div>
       </div>
       <div class="modal-field">
         <label id="timeCoeffLabel" for="timeCoeffInput">Коэффициент времени</label>
         <div class="modal-slider-row">
           <div class="jump-slider" id="timeCoeffSlider" aria-labelledby="timeCoeffLabel"></div>
-          <input type="number" id="timeCoeffInput" step="0.01" min="0.01" oninput="onTimeCoeffInputChange()">
+          <input type="number" id="timeCoeffInput" step="0.01" min="0.01" data-oninput="onTimeCoeffInputChange()">
         </div>
       </div>
     </div>

@@ -52,12 +52,24 @@ app.set('trust proxy', 1);
 //    (печать, PDF - common-print.js, html2canvas) разрешены: SAMEORIGIN;
 //  - браузер не угадывает тип файлов (nosniff);
 //  - адрес страницы уходит на другие сайты только без пути и параметров;
-//  - по https браузер запоминает, что сайт только https (HSTS, 180 дней).
+//  - по https браузер запоминает, что сайт только https (HSTS, 180 дней);
+//  - CSP (по указанию пользователя, после аудита): скрипты - только файлы
+//    этого сайта (встроенные <script> и атрибуты onclick не выполняются -
+//    обработчики из разметки через data-onclick, js/common-events.js),
+//    запросы, шрифты, картинки - только свои (картинки и шрифты ещё data:
+//    и blob: - чертежи, PDF), формы - только на свой сайт. Встроенные
+//    стили разрешены (style="" в разметке и из скриптов).
+const CSP = [
+  "default-src 'self'", "script-src 'self'", "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:", "font-src 'self' data:", "connect-src 'self'",
+  "frame-src 'self' blob:", "worker-src 'self' blob:", "object-src 'none'",
+  "base-uri 'self'", "form-action 'self'", "frame-ancestors 'self'",
+].join('; ');
 app.disable('x-powered-by');
 app.use((req, res, next) => {
   res.set({
     'X-Frame-Options': 'SAMEORIGIN',
-    'Content-Security-Policy': "frame-ancestors 'self'",
+    'Content-Security-Policy': CSP,
     'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
   });
