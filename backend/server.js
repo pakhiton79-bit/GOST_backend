@@ -78,7 +78,7 @@ app.use('/api/feedback', feedbackRoutes);
 const payments = require('./src/auth/payments');
 app.use('/api/pay', makeThrottle(), payments.router);
 // payEnabled - на странице подписок кнопки оплаты (иначе «Скоро»).
-app.get('/api/plans', (req, res) => res.json({ plans: publicPlans(), payEnabled: payments.payEnabled() }));
+app.get('/api/plans', (req, res) => res.json({ plans: publicPlans(), payEnabled: payments.payEnabled(req.user) }));
 // Проверка, что сервер жив (для самопинга ниже и мониторинга).
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -

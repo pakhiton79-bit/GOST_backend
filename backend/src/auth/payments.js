@@ -8,7 +8,10 @@
 //   ROBOKASSA_HASH   - алгоритм подписи, как в технических настройках
 //                      магазина: sha256 (по умолчанию), md5, sha1, sha384, sha512.
 // Пока логин или пароли не заданы - оплаты нет (на странице подписок кнопки
-// «Скоро»), маршруты отвечают 404.
+// «Скоро»), маршруты отвечают 404. В тестовом режиме оплата видна и
+// доступна только администраторам (ADMIN_EMAILS): посетители не получат
+// подписку тестовой картой, пока режим не выключен. В боевом режиме
+// уведомление о тестовом платеже (IsTest=1) не принимается.
 //
 // Технические настройки магазина в кабинете Робокассы:
 //   Result URL  - https://<домен>/api/pay/result (метод POST);
@@ -39,6 +42,7 @@ const express = require('express');
 const store = require('./store');
 const { PLANS, PLAN_TERMS, PERIOD_MS, planOf, syncUser, quotaInfo } = require('./plans');
 const { needsReconsent } = require('./legal');
+const { isAdmin } = require('./routes');
 
 const PAY_URL = 'https://auth.robokassa.ru/Merchant/Index.aspx';
 const HASHES = ['md5', 'sha1', 'sha256', 'sha384', 'sha512'];
@@ -51,10 +55,16 @@ function payConfig() {
     test: env.ROBOKASSA_TEST === '1', hash: HASHES.includes(hash) ? hash : 'sha256',
   };
 }
-function payEnabled() {
+function payConfigured() {
   const c = payConfig();
   return Boolean(c.login && c.pass1 && c.pass2);
 }
+// Оплата доступна этому посетителю: настроена и (в тестовом режиме) он
+// администратор.
+function payEnabled(user) {
+  return payConfigured() && (!payConfig().test || isAdmin(user));
+}
+if (payConfigured() && payConfig().test) console.log('[оплата] ТЕСТОВЫЙ режим Робокассы (ROBOKASSA_TEST=1): оплата доступна только администраторам');
 function sign(cfg, parts) {
   return crypto.createHash(cfg.hash).update(parts.join(':')).digest('hex');
 }
@@ -123,7 +133,8 @@ function applyPayment(pay, now) {
 }
 
 const router = express.Router();
-router.use((req, res, next) => (payEnabled() ? next() : res.status(404).json({ error: 'Оплата пока не подключена.' })));
+// Уведомление Робокассы (/result) приходит без входа - нужна только настройка.
+router.use((req, res, next) => ((req.path === '/result' ? payConfigured() : payEnabled(req.user)) ? next() : res.status(404).json({ error: 'Оплата пока не подключена.' })));
 
 // Кто может оплатить: вошёл, не заблокирован, принял действующие документы.
 function payer(req, res) {
@@ -180,6 +191,12 @@ router.all('/result', express.urlencoded({ extended: false }), (req, res) => {
   if (!pay || !sameSign(p.SignatureValue, sign(cfg, [p.OutSum, p.InvId, cfg.pass2]))) {
     console.log(`[оплата] отклонено уведомление по счёту ${p.InvId}: неверная подпись или счёт`);
     return res.status(400).send('bad sign');
+  }
+  // Тестовый платёж в боевом режиме - отклонить (на случай, если тестовые
+  // пароли совпали с боевыми).
+  if (!cfg.test && String(p.IsTest || '') === '1') {
+    console.log(`[оплата] счёт ${pay.id}: тестовый платёж в боевом режиме - отклонено`);
+    return res.status(400).send('test payment');
   }
   if (Math.abs(Number(p.OutSum) - pay.amount) > 0.005) {
     console.log(`[оплата] счёт ${pay.id}: сумма ${p.OutSum} не совпадает с ${pay.amount}`);
