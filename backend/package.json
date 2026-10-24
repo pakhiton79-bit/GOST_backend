@@ -11,7 +11,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "imapflow": "1.7.8",
-    "mailparser": "3.9.28",
-    "nodemailer": "10.0.10"
+    "mailparser": "3.9.47",
+    "nodemailer": "10.1.7"
   }
 }
