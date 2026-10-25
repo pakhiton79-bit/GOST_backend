@@ -189,6 +189,14 @@ printf 'PermitRootLogin no\n' > /etc/ssh/sshd_config.d/20-noroot.conf
 sshd -t && systemctl reload ssh
 ```
 
+Проверка: `sshd -T -C user=root,host=x,addr=1.2.3.4 | grep -iE "permitrootlogin|passwordauthentication"`
+- должно быть `no` и `no`. В образе Рег.облака есть
+`/etc/ssh/sshd_config.d/99-qemu.conf` с блоком `Match User root`, который
+разрешает root вход **и по паролю** (перекрывает настройки выше) - его
+убрать: `mv /etc/ssh/sshd_config.d/99-qemu.conf /root/99-qemu.conf.bak`,
+затем `sshd -t && systemctl reload ssh`. Консоль в панели Рег.облака и
+сброс пароля root из панели работают и без него.
+
 Дальше вход - `ssh tara@<IP>`, команды администрирования - через `sudo`
 (например, `sudo sh /opt/taraplus/deploy/update.sh`). Консоль в панели
 Рег.облака по-прежнему пускает под root по паролю root.
