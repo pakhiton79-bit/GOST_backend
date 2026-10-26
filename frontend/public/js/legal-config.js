@@ -25,7 +25,7 @@ const LEGAL = {
   payment: 'ООО «Робокасса»',         // платёжный сервис (Робокасса): наименование из договора
   paymentInn: '5047063929',
   site: 'Тара+',       // название сайта
-  version: '21.10.2026', // дата редакции документов (при изменении текста - поменять и LEGAL_VERSION на сервере, и LEGAL_UPDATE_NOTE в common-account.js)
+  version: '26.10.2026', // дата редакции документов (при изменении текста - поменять и LEGAL_VERSION на сервере, и LEGAL_UPDATE_NOTE в common-account.js)
 };
 const LEGAL_HINTS = {
   operator: 'ФИО или наименование оператора', status: 'статус оператора', inn: 'ИНН', ogrn: 'ОГРН / ОГРНИП',
