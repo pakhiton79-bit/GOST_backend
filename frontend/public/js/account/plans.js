@@ -1,5 +1,5 @@
 // Страница подписок (plans.html): подписки - расчёты, устройства, цена;
-// текущая подписка вошедшего отмечена. Оплата - через Робокассу
+// текущая подписка вошедшего отмечена. Оплата - через платёжный сервис
 // (backend/src/auth/payments.js), когда она подключена (payEnabled): у
 // платных подписок кнопка «Купить» («Продлить» у текущей); по ней - окно
 // с выбором срока (1 или 3 месяца, цена × срок), суммой и тем, что
@@ -45,7 +45,7 @@ Promise.all([fetch('/api/plans').then(r => r.json()), fetchAccountUser()]).then(
   const current = user ? user.quota.plan : null;
   d.plans.forEach(p => { plansById[p.id] = p; });
   document.getElementById('plansGrid').innerHTML = d.plans.map(p => planCard(p, p.id === current, d.payEnabled)).join('');
-  if(d.payEnabled) document.getElementById('plansNote').textContent = 'Оплата картой или через СБП на странице Робокассы. Чек придёт на почту аккаунта.';
+  if(d.payEnabled) document.getElementById('plansNote').textContent = 'Оплата картой или через СБП на странице платёжного сервиса. Чек придёт на почту аккаунта.';
   else showPlansContact();
 });
 
@@ -91,7 +91,7 @@ function showPayDialog(p, quotes){
       ${ok < 0 ? '' : `<div class="plan-terms" role="radiogroup" aria-label="Срок подписки">${terms}</div>
       <p class="limit-text" id="payWhat"></p>
       <div class="pay-sum"><span>К оплате</span><b id="paySum"></b></div>
-      <p class="limit-text pay-legal">Оплата картой или через СБП на странице Робокассы, чек придёт на почту. Нажимая «Перейти к оплате», вы принимаете условия <a href="terms.html" target="_blank">Пользовательского соглашения (публичной оферты)</a>.</p>`}
+      <p class="limit-text pay-legal">Оплата картой или через СБП на странице платёжного сервиса, чек придёт на почту. Нажимая «Перейти к оплате», вы принимаете условия <a href="terms.html" target="_blank">Пользовательского соглашения (публичной оферты)</a>.</p>`}
       <div class="auth-msg" id="payMsg"${err ? '' : ' hidden'}>${escHtml(err)}</div>
       <div class="limit-actions"><button type="button" class="btn-secondary limit-close">${ok < 0 ? 'Понятно' : 'Отмена'}</button>${ok < 0 ? '' : '<button type="button" class="limit-main" id="payGo">Перейти к оплате</button>'}</div>
     </div>`;

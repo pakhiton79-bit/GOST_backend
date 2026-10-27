@@ -637,7 +637,7 @@ const fmtLimitDate = iso => new Date(iso).toLocaleDateString('ru-RU');
 // регистрации.
 // Что изменилось в последней редакции - менять вместе с LEGAL_VERSION
 // (backend/src/auth/legal.js) и датой в js/legal-config.js.
-const LEGAL_UPDATE_NOTE = 'бонус за регистрацию начисляется не более чем 3 аккаунтам с одного IP-адреса за 30 дней (было 4).';
+const LEGAL_UPDATE_NOTE = 'платёжный сервис - ЮKassa (ООО НКО «ЮМани»); бонус за регистрацию начисляется не более чем 3 аккаунтам с одного IP-адреса за 30 дней (было 4).';
 let legalUpdateShown = false;
 function maybeShowLegalUpdate(user){
   if(!user || !user.legalUpdate || legalUpdateShown || document.querySelector('.legal-wrap')) return;
