@@ -12,6 +12,11 @@
 //   POST /api/admin/block { email, reason } - заблокировать (себя - нельзя): вход и
 //                                           расчёты запрещены, входы на всех устройствах завершаются
 //   POST /api/admin/unblock { email }     - разблокировать
+//   POST /api/admin/verify { email }      - подтвердить почту вручную (код не
+//                                           дошёл): аккаунт подтверждён, бонус за
+//                                           регистрацию - без лимита по IP
+//   POST /api/admin/login-code { email, skip } - вход без кода из письма (только
+//                                           пароль) для этого пользователя: вкл/выкл
 //   GET  /api/admin/stats                 - статистика (stats.js)
 //   GET  /api/admin/requests              - заявки на внутренние стандарты (standards.js)
 //   /api/admin/mail/...                   - почта поддержки (support-mail.js)
@@ -20,7 +25,7 @@
 //   POST /api/admin/reports/delete { id } - удалить сообщение об ошибке
 const express = require('express');
 const store = require('./store');
-const { PLANS, PERIOD_MS, PLAN_TERMS, planOf, quotaInfo, syncUser } = require('./plans');
+const { PLANS, PERIOD_MS, PLAN_TERMS, WELCOME_CALCS, planOf, quotaInfo, syncUser } = require('./plans');
 // Приоритетное обслуживание (Pro и Team): такие заявки и сообщения - первыми,
 // внутри групп - новые сверху.
 const withPriority = list => list.map(r => ({ ...r, priority: !!(PLANS[r.plan] && PLANS[r.plan].prioritySupport) }))
@@ -60,6 +65,7 @@ router.get('/users', (req, res) => {
       lastSeen: sessions.length ? new Date(sessions[0].lastSeen || sessions[0].createdAt).toISOString() : null,
       self: u.id === req.user.id,
       blocked: u.blocked ? { at: new Date(u.blocked.at).toISOString(), reason: u.blocked.reason || '' } : null,
+      skipLoginCode: !!u.skipLoginCode,
     };
   });
   res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })), terms: PLAN_TERMS });
@@ -136,6 +142,34 @@ router.post('/unblock', (req, res) => {
   const user = store.findUserByEmail(email);
   if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
   store.updateUser(user, { blocked: null });
+  res.json({ ok: true });
+});
+
+// Ручное подтверждение почты и вход без кода (по указанию пользователя: если
+// письма с кодами на адрес не доходят, администратор пропускает человека
+// сам, убедившись, что это он - например, по переписке в поддержке).
+router.post('/verify', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  if (user.verified) return res.status(400).json({ error: 'Почта уже подтверждена.' });
+  const patch = { verified: true };
+  // Бонус за регистрацию - как при подтверждении кодом, но без лимита по IP
+  // (решение администратора).
+  if (!Number.isInteger(user.welcomeTotal)) Object.assign(patch, { welcomeTotal: WELCOME_CALCS, welcomeLeft: WELCOME_CALCS });
+  store.updateUser(user, patch);
+  stats.recordRegistration(Date.now());
+  console.log(`[админ] ${req.user.email} подтвердил почту ${email} вручную`);
+  res.json({ ok: true });
+});
+
+router.post('/login-code', (req, res) => {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const user = store.findUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  const skip = req.body.skip === true;
+  store.updateUser(user, { skipLoginCode: skip });
+  console.log(`[админ] ${req.user.email}: вход ${skip ? 'без кода' : 'с кодом'} для ${email}`);
   res.json({ ok: true });
 });
 

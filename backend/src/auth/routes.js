@@ -337,6 +337,12 @@ router.post('/login', rateLimit, async (req, res, next) => {
       return res.json({ ok: true, needVerify: true, notice: err || undefined });
     }
     if (user.blocked) return res.status(403).json(blockedError(user));
+    // Вход без кода - если администратор разрешил этому пользователю (письма
+    // на его адрес не доходят, admin.js).
+    if (user.skipLoginCode) {
+      console.log(`[вход] ${email}: без кода (разрешено администратором)`);
+      return finishLogin(req, res, user);
+    }
     // Код при входе (по указанию пользователя): пароль верный - на почту код,
     // клиенту - пропуск «пароль проверен» (вид 'login', живёт как код); вход
     // завершает /login-verify с пропуском и кодом.
