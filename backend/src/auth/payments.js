@@ -21,7 +21,8 @@
 // У уведомлений ЮKassa нет подписи - сайт не верит телу уведомления, а
 // запрашивает платёж у API ЮKassa по его id (confirmPayment). Тот же запрос -
 // при проверке состояния со страницы после оплаты, если уведомление
-// задержалось.
+// задержалось, и раз в минуту по неоплаченным счетам (sweepPending) - так
+// подписка подключается и без HTTP-уведомлений.
 //
 // Правила (по указанию пользователя; цена - за месяц × срок, без скидок):
 //   - нет действующей платной подписки - новая подписка с момента оплаты;
@@ -180,6 +181,41 @@ async function confirmPayment(pay) {
   return pay.status;
 }
 
+// Сверка неоплаченных счетов с ЮKassa (по указанию пользователя: в кабинете
+// может не быть HTTP-уведомлений, а покупатель - закрыть вкладку до возврата
+// на сайт). Раз в минуту - счета моложе SWEEP_FRESH_MS, раз в
+// SWEEP_SLOW_EVERY_MS - остальные до SWEEP_MAX_AGE_MS. Счета другого режима
+// (тестовые при боевом ключе и наоборот) не проверяются - ЮKassa их не знает.
+const SWEEP_EVERY_MS = 60 * 1000;
+const SWEEP_FRESH_MS = 2 * 3600 * 1000;
+const SWEEP_SLOW_EVERY_MS = 30 * 60 * 1000;
+const SWEEP_MAX_AGE_MS = 3 * 24 * 3600 * 1000;
+const sweptAt = new Map(); // id счёта -> когда проверяли
+let sweeping = false;
+async function sweepPending(now) {
+  if (sweeping || !payConfigured()) return 0;
+  sweeping = true;
+  let paid = 0;
+  try {
+    const test = payConfig().test;
+    for (const pay of store.listPayments()) {
+      if (pay.status !== 'pending' || !pay.ykId || Boolean(pay.test) !== test) continue;
+      const age = now - Date.parse(pay.createdAt);
+      if (!(age < SWEEP_MAX_AGE_MS)) continue;
+      if (age >= SWEEP_FRESH_MS && now - (sweptAt.get(pay.id) || 0) < SWEEP_SLOW_EVERY_MS) continue;
+      sweptAt.set(pay.id, now);
+      try {
+        if (await confirmPayment(pay) === 'paid') paid++;
+      } catch (err) { console.log(`[оплата] сверка счёта ${pay.id}: нет связи с ЮKassa: ${err.message}`); }
+    }
+  } finally { sweeping = false; }
+  return paid;
+}
+setInterval(() => {
+  sweepPending(Date.now()).then(n => { if (n) console.log(`[оплата] сверка: подключено по оплаченным счетам - ${n}`); })
+    .catch(e => console.error('[оплата] сверка: ошибка:', e));
+}, SWEEP_EVERY_MS).unref();
+
 const router = express.Router();
 // Уведомление ЮKassa (/result) приходит без входа - нужна только настройка.
 router.use((req, res, next) => ((req.path === '/result' ? payConfigured() : payEnabled(req.user)) ? next() : res.status(404).json({ error: 'Оплата пока не подключена.' })));
@@ -275,4 +311,4 @@ router.get('/status', async (req, res) => {
   res.json({ status: pay.status, plan: PLANS[pay.plan] ? PLANS[pay.plan].name : pay.plan, months: pay.months, amount: pay.amount, quota: quotaInfo(req.user, Date.now()) });
 });
 
-module.exports = { router, payEnabled, quote };
+module.exports = { router, payEnabled, quote, sweepPending };
