@@ -16,15 +16,22 @@
 //   - подписка закончилась (стала пробной) - автопродление выключается
 //     (syncUser в plans.js, выдача пробной в админке).
 // Сумма продления - цена подписки × срок последнего подключения (planMonths,
-// записывает админка); само продление (списание и новый срок) подключается
-// вместе с оплатой.
+// записывает админка и оплата). Карта сохраняется при оплате с галочкой
+// «Продлевать автоматически» (user.card, payments.js); без сохранённой карты
+// включить автопродление нельзя. Списание - chargeRenewals в payments.js,
+// не раньше чем через 3 дня после письма (noticeAt): письмо уходит за
+// NOTICE_DAYS = 4 дня до окончания, с запасом к «не позднее чем за 3 дня».
+//
+//   POST /api/auth/auto-renew { on: true, consent: true } - включить (нужна карта);
+//   POST /api/auth/auto-renew { on: false }               - отключить;
+//   POST /api/auth/auto-renew { removeCard: true }        - отвязать карту (и отключить).
 const express = require('express');
 const store = require('./store');
 const { PLANS, syncUser } = require('./plans');
 const { LEGAL_VERSION } = require('./legal');
 const { sendAutoRenewNotice } = require('./mailer');
 
-const NOTICE_DAYS = 3;
+const NOTICE_DAYS = 4;
 const DAY_MS = 24 * 3600 * 1000;
 const enabled = () => process.env.AUTO_RENEW_ENABLED === '1';
 
@@ -45,6 +52,7 @@ function publicAutoRenew(user) {
     since: ar.on && ar.since ? new Date(ar.since).toISOString() : null,
     amount: renewAmount(user),
     noticeDays: NOTICE_DAYS,
+    card: user.card ? user.card.title : null,
     // До продления не больше NOTICE_DAYS дней - сообщение на сайте.
     noticeDue: !!ar.on && user.plan !== 'free' && Number.isFinite(user.planUntil) && user.planUntil - Date.now() <= NOTICE_DAYS * DAY_MS,
   };
@@ -60,8 +68,13 @@ router.use((req, res, next) => {
 router.post('/', (req, res) => {
   const user = req.user, now = Date.now();
   if (syncUser(user, now)) store.updateUser(user);
-  if (req.body.on === true) {
+  if (req.body.removeCard === true) {
+    // Id способа оплаты забываем - списывать больше нечем (п. 6.9).
+    store.updateUser(user, { card: null, autoRenew: { ...(user.autoRenew || {}), on: false, offAt: now, offReason: 'карта отвязана' } });
+    console.log(`[автопродление] ${user.email}: карта отвязана`);
+  } else if (req.body.on === true) {
     if (user.plan === 'free') return res.status(400).json({ error: 'Автопродление доступно только для платной подписки.' });
+    if (!user.card) return res.status(400).json({ error: 'Нет сохранённой карты: отметьте «Продлевать автоматически» при следующей оплате подписки.' });
     if (req.body.consent !== true) return res.status(400).json({ error: 'Отметьте согласие на автоматическое продление.' });
     store.updateUser(user, { autoRenew: { on: true, since: now, ip: req.ip, version: LEGAL_VERSION } });
   } else {
@@ -82,7 +95,8 @@ async function sendDueNotices(now) {
     if (user.planUntil - now > NOTICE_DAYS * DAY_MS || ar.noticeFor === user.planUntil) continue;
     try {
       await sendAutoRenewNotice(user.email, { planName: PLANS[user.plan].name, date: new Date(user.planUntil), amount: renewAmount(user) });
-      store.updateUser(user, { autoRenew: { ...ar, noticeFor: user.planUntil } });
+      // noticeAt - от него отсчитываются 3 дня до списания (payments.js).
+      store.updateUser(user, { autoRenew: { ...ar, noticeFor: user.planUntil, noticeAt: now } });
       sent++;
     } catch (e) {
       console.error(`[автопродление] письмо ${user.email} не отправлено: ${e.message}`);
@@ -91,4 +105,4 @@ async function sendDueNotices(now) {
   return sent;
 }
 
-module.exports = { router, publicAutoRenew, sendDueNotices, renewAmount, NOTICE_DAYS };
+module.exports = { router, publicAutoRenew, sendDueNotices, renewAmount, NOTICE_DAYS, autoRenewEnabled: enabled };

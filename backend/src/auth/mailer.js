@@ -212,4 +212,28 @@ async function sendAutoRenewNotice(email, { planName, date, amount }) {
   await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
 }
 
-module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice };
+// Автопродление не прошло (payments.js, chargeRenewals): final - попыток
+// больше не будет, cardDead - карта отвязана (банк больше её не принимает).
+async function sendAutoRenewFailed(email, { planName, date, final, cardDead }) {
+  const cfg = mailConfig();
+  const day = date.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
+  const lines = [
+    `Не удалось списать оплату за автопродление подписки ${planName}.`,
+    cardDead ? 'Банк больше не принимает сохранённую карту - она отвязана от аккаунта, автопродление выключено.'
+      : final ? 'Повторных попыток больше не будет.' : 'Попробуем списать ещё раз незадолго до окончания подписки.',
+    final ? `Подписка действует до ${day}, затем перейдёт на «Пробную». Продлить можно вручную на странице «Подписки» на сайте.`
+      : `Подписка действует до ${day}.`,
+  ];
+  if (!mailEnabled(cfg)) {
+    console.log(`[почта, тестовый режим] ${email}: ${lines.join(' ')}`);
+    return;
+  }
+  const subject = `${SITE_NAME}: не удалось продлить подписку ${planName}`;
+  const html = layout('Автопродление не прошло', [
+    ...lines.map(l => mailP(escapeHtml(l))),
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px"><tr><td style="background:${MAIL_C.accent};border-radius:10px"><a href="${SITE_URL}/plans.html" style="display:inline-block;padding:12px 22px;font:bold 15px ${MAIL_FONT};color:#FFFFFF;text-decoration:none">Подписки</a></td></tr></table>`,
+  ], `Не удалось продлить подписку ${planName}`);
+  await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
+}
+
+module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice, sendAutoRenewFailed };

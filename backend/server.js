@@ -89,8 +89,10 @@ app.use('/api/feedback', feedbackRoutes);
 // Оплата подписок через ЮKassa (src/auth/payments.js).
 const payments = require('./src/auth/payments');
 app.use('/api/pay', makeThrottle(), payments.router);
-// payEnabled - на странице подписок кнопки оплаты (иначе «Скоро»).
-app.get('/api/plans', (req, res) => res.json({ plans: publicPlans(), payEnabled: payments.payEnabled(req.user) }));
+// payEnabled - на странице подписок кнопки оплаты (иначе «Скоро»);
+// autoRenew - в окне оплаты галочка «Продлевать автоматически».
+const { autoRenewEnabled } = require('./src/auth/auto-renew');
+app.get('/api/plans', (req, res) => res.json({ plans: publicPlans(), payEnabled: payments.payEnabled(req.user), autoRenew: autoRenewEnabled() }));
 // Проверка, что сервер жив (для самопинга ниже и мониторинга).
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 // Толщины "в наличии" приходят от клиента (localStorage на его стороне) -

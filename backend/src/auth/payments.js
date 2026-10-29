@@ -39,16 +39,29 @@
 // (succeeded, сумма и счёт совпадают); страница после оплаты лишь
 // показывает результат.
 //
+// Автопродление (по указанию пользователя; п. 6.6-6.10 Пользовательского
+// соглашения, правила - auto-renew.js): при оплате с галочкой «Продлевать
+// автоматически» ЮKassa сохраняет способ оплаты (save_payment_method), сайт
+// хранит только его id и название вида «Mir •••• 4477» (user.card), данные
+// карты - у ЮKassa. Списание (chargeRenewals) - в конце срока подписки, но не
+// раньше чем через MIN_NOTICE_MS после письма-напоминания; не прошло -
+// ещё одна попытка за RETRY_BEFORE_MS до окончания, затем подписка
+// заканчивается как обычно. Об отказе - письмо. В кабинете ЮKassa для
+// магазина должны быть разрешены автоплатежи.
+//
 // Маршруты:
 //   GET  /api/pay/quote?plan&months - сумма и что произойдёт (для окна на сайте);
-//   POST /api/pay/create { plan, months } - счёт, платёж ЮKassa и ссылка на оплату;
+//   POST /api/pay/create { plan, months, autoRenew } - счёт, платёж ЮKassa и ссылка на оплату
+//                                      (autoRenew: true - согласие на автопродление, карта сохраняется);
 //   POST /api/pay/result - уведомление ЮKassa (ответ 200, иначе ЮKassa повторяет);
 //   GET  /api/pay/status?inv - состояние своего счёта (страница pay-success.html).
 const express = require('express');
 const store = require('./store');
 const { PLANS, PLAN_TERMS, PERIOD_MS, planOf, syncUser, quotaInfo } = require('./plans');
-const { needsReconsent } = require('./legal');
+const { LEGAL_VERSION, needsReconsent } = require('./legal');
 const { isAdmin } = require('./routes');
+const { autoRenewEnabled, renewAmount } = require('./auto-renew');
+const { sendAutoRenewFailed } = require('./mailer');
 
 const API_URL = 'https://api.yookassa.ru/v3/payments';
 const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
@@ -80,6 +93,30 @@ async function ykRequest(method, path, body, idempotenceKey) {
   const r = await fetch(API_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(15000) });
   const data = await r.json().catch(() => ({}));
   return { ok: r.ok, status: r.status, data };
+}
+
+// Тело платежа ЮKassa: сумма, описание, номер счёта и (YOOKASSA_VAT_CODE) чек.
+function paymentBody(pay, email, description) {
+  const cfg = payConfig(), value = pay.amount.toFixed(2);
+  const body = {
+    amount: { value, currency: 'RUB' },
+    capture: true,
+    description: description.slice(0, 128),
+    metadata: { inv: String(pay.id), userId: String(pay.userId) },
+  };
+  if (cfg.vatCode) {
+    body.receipt = {
+      customer: { email },
+      items: [{ description: description.slice(0, 128), quantity: '1.00', amount: { value, currency: 'RUB' }, vat_code: cfg.vatCode, payment_mode: 'full_payment', payment_subject: 'service' }],
+    };
+  }
+  return body;
+}
+
+// Название сохранённого способа оплаты для страницы: «Mir •••• 4477».
+function cardTitle(pm) {
+  if (pm.card && pm.card.last4) return `${pm.card.card_type && pm.card.card_type !== 'Unknown' ? pm.card.card_type + ' ' : 'Карта '}•••• ${pm.card.last4}`;
+  return pm.title || 'Сохранённый способ оплаты';
 }
 
 // Что произойдёт при оплате подписки planId на months месяцев: { amount (₽),
@@ -177,7 +214,15 @@ async function confirmPayment(pay) {
   const now = Date.now();
   const result = applyPayment(pay, now);
   store.updatePayment(pay, { status: 'paid', paidAt: new Date(now).toISOString(), result });
-  console.log(`[оплата] счёт ${pay.id} оплачен: ${pay.email}, ${pay.plan} × ${pay.months} мес., ${pay.amount} ₽ - подписка ${result}`);
+  console.log(`[оплата] счёт ${pay.id} оплачен: ${pay.email}, ${pay.plan} × ${pay.months} мес., ${pay.amount} ₽ - подписка ${result}${pay.renew ? ' (автопродление)' : ''}`);
+  // Оплата с согласием на автопродление - сохранить способ оплаты и включить.
+  const user = store.findUserById(pay.userId);
+  if (user && pay.arConsent && yk.payment_method && yk.payment_method.saved && yk.payment_method.id) {
+    syncUser(user, now);
+    const card = { id: yk.payment_method.id, title: cardTitle(yk.payment_method), savedAt: now, test: Boolean(yk.test) };
+    store.updateUser(user, { card, autoRenew: user.plan === 'free' ? user.autoRenew : { on: true, since: now, ...pay.arConsent } });
+    console.log(`[автопродление] ${user.email}: сохранён способ оплаты ${card.title}, автопродление включено`);
+  }
   return pay.status;
 }
 
@@ -211,10 +256,105 @@ async function sweepPending(now) {
   } finally { sweeping = false; }
   return paid;
 }
+// ---- Автопродление: списание с сохранённой карты ----
+// Попытка 1 - когда прошло MIN_NOTICE_MS после письма (noticeAt, auto-renew.js)
+// и до конца срока не больше CHARGE_BEFORE_MS; попытка 2 - если первая не
+// прошла, за RETRY_BEFORE_MS до конца. Счётчик попыток - на каждый срок
+// (renewFor = planUntil). Пока по аккаунту есть неоплаченный счёт
+// автопродления - новая попытка не начинается (его подтвердит sweepPending).
+const MIN_NOTICE_MS = 3 * 24 * 3600 * 1000;
+const CHARGE_BEFORE_MS = 12 * 3600 * 1000;
+const RETRY_BEFORE_MS = 2 * 3600 * 1000;
+const MAX_ATTEMPTS = 2;
+// Причины отказа ЮKassa, после которых карта больше не годится.
+const CARD_DEAD = ['permission_revoked', 'card_expired', 'payment_method_restricted', 'payment_method_limit_exceeded'];
+let charging = false;
+
+// Аккаунт, которому пора списывать: { attempt } или null.
+function renewalDue(user, now) {
+  const ar = user.autoRenew, cfg = payConfig();
+  if (!ar || !ar.on || !user.card || Boolean(user.card.test) !== cfg.test) return null;
+  if (user.plan === 'free' || !PLANS[user.plan].price || !Number.isFinite(user.planUntil) || now >= user.planUntil) return null;
+  if (Array.isArray(user.queue) && user.queue.length) return null; // следующая подписка уже оплачена
+  // Письмо-напоминание об этом списании ушло не меньше чем за 3 дня (п. 6.8).
+  if (ar.noticeFor !== user.planUntil || !Number.isFinite(ar.noticeAt) || now < ar.noticeAt + MIN_NOTICE_MS) return null;
+  const tries = ar.renewFor === user.planUntil ? (ar.renewTries || 0) : 0;
+  if (tries >= MAX_ATTEMPTS) return null;
+  const left = user.planUntil - now;
+  if (tries === 0 ? left > CHARGE_BEFORE_MS : left > RETRY_BEFORE_MS) return null;
+  if (store.listPayments().some(p => p.userId === user.id && p.renew && p.status === 'pending')) return null;
+  return { attempt: tries + 1 };
+}
+
+async function chargeRenewals(now) {
+  if (charging || !payConfigured() || !autoRenewEnabled()) return 0;
+  charging = true;
+  let done = 0;
+  try {
+    for (const user of store.listUsers()) {
+      if (syncUser(user, now)) store.updateUser(user);
+      const due = renewalDue(user, now);
+      if (!due) continue;
+      const months = Number.isInteger(user.planMonths) && PLAN_TERMS.includes(user.planMonths) ? user.planMonths : 1;
+      const until = user.planUntil;
+      store.updateUser(user, { autoRenew: { ...user.autoRenew, renewFor: until, renewTries: due.attempt, renewAt: now } });
+      const pay = store.createPayment({
+        userId: user.id, email: user.email, plan: user.plan, months, amount: renewAmount(user), kind: 'extend', credit: 0,
+        fromPlan: user.plan, fromUntil: until, status: 'pending', test: payConfig().test, createdAt: new Date(now).toISOString(),
+        renew: true, attempt: due.attempt,
+      });
+      const body = paymentBody(pay, user.email, `Автопродление подписки ${PLANS[user.plan].name} на ${months} мес. - доступ к онлайн-сервису Тара+`);
+      body.payment_method_id = user.card.id;
+      let status = 'pending', reason = '';
+      try {
+        const r = await ykRequest('POST', '', body, `taraplus-inv-${pay.id}`);
+        if (r.ok && r.data.id) {
+          store.updatePayment(pay, { ykId: r.data.id });
+          status = await confirmPayment(pay);
+          reason = (r.data.cancellation_details && r.data.cancellation_details.reason) || pay.cancelReason || '';
+        } else {
+          store.updatePayment(pay, { status: 'failed' });
+          status = 'failed';
+          reason = r.data.code || String(r.status);
+          console.log(`[автопродление] счёт ${pay.id}: ЮKassa не создала списание (${r.status}): ${r.data.code || ''} ${r.data.description || ''}`);
+        }
+      } catch (err) {
+        // Нет связи - счёт без платежа ЮKassa, попытка не считается.
+        store.updatePayment(pay, { status: 'failed' });
+        store.updateUser(user, { autoRenew: { ...user.autoRenew, renewTries: due.attempt - 1 } });
+        console.log(`[автопродление] ${user.email}: нет связи с ЮKassa: ${err.message}`);
+        continue;
+      }
+      console.log(`[автопродление] ${user.email}: попытка ${due.attempt}, счёт ${pay.id} - ${status}${reason ? ' (' + reason + ')' : ''}`);
+      if (status === 'paid') { done++; continue; }
+      if (status === 'pending') continue; // подтвердит sweepPending
+      await renewalFailed(user, until, due.attempt, reason);
+    }
+  } finally { charging = false; }
+  return done;
+}
+
+// Списание не прошло: карта больше не годится - отвязать и выключить
+// автопродление; письмо - после каждой неудачной попытки (п. 6.9).
+async function renewalFailed(user, until, attempt, reason) {
+  const dead = CARD_DEAD.includes(reason);
+  if (dead) {
+    store.updateUser(user, { card: null, autoRenew: { ...user.autoRenew, on: false, offAt: Date.now(), offReason: 'карта больше не принимается (' + reason + ')' } });
+  }
+  const final = dead || attempt >= MAX_ATTEMPTS;
+  try {
+    await sendAutoRenewFailed(user.email, { planName: PLANS[user.plan] ? PLANS[user.plan].name : user.plan, date: new Date(until), final, cardDead: dead });
+  } catch (e) { console.error(`[автопродление] письмо об отказе ${user.email} не отправлено: ${e.message}`); }
+}
+
 setInterval(() => {
   sweepPending(Date.now()).then(n => { if (n) console.log(`[оплата] сверка: подключено по оплаченным счетам - ${n}`); })
     .catch(e => console.error('[оплата] сверка: ошибка:', e));
 }, SWEEP_EVERY_MS).unref();
+setInterval(() => {
+  chargeRenewals(Date.now()).then(n => { if (n) console.log(`[автопродление] продлено подписок: ${n}`); })
+    .catch(e => console.error('[автопродление] ошибка:', e));
+}, 10 * 60 * 1000).unref();
 
 const router = express.Router();
 // Уведомление ЮKassa (/result) приходит без входа - нужна только настройка.
@@ -248,27 +388,19 @@ router.post('/create', async (req, res, next) => {
     const q = quote(user, planId, months, now);
     if (q.error) return res.status(400).json({ error: q.error });
     const cfg = payConfig();
+    // Согласие на автопродление (галочка в окне оплаты, п. 6.6) - записывается
+    // в счёт, включается после оплаты вместе с сохранённой картой.
+    const arConsent = req.body.autoRenew === true && autoRenewEnabled() ? { ip: req.ip, version: LEGAL_VERSION, consentAt: now } : null;
     const pay = store.createPayment({
       userId: user.id, email: user.email, plan: planId, months, amount: q.amount, kind: q.kind, credit: q.credit,
       // Для замены с зачётом - какая подписка была и до какого срока (applyPayment).
       fromPlan: user.plan, fromUntil: user.planUntil,
-      status: 'pending', test: cfg.test, createdAt: new Date(now).toISOString(),
+      status: 'pending', test: cfg.test, createdAt: new Date(now).toISOString(), arConsent,
     });
     const value = q.amount.toFixed(2);
-    const description = `Подписка ${PLANS[planId].name} на ${months} мес. - доступ к онлайн-сервису Тара+`;
-    const body = {
-      amount: { value, currency: 'RUB' },
-      capture: true,
-      confirmation: { type: 'redirect', return_url: `${SITE_URL}/pay-success.html?InvId=${pay.id}`, locale: 'ru_RU' },
-      description: description.slice(0, 128),
-      metadata: { inv: String(pay.id), userId: String(user.id) },
-    };
-    if (cfg.vatCode) {
-      body.receipt = {
-        customer: { email: user.email },
-        items: [{ description: description.slice(0, 128), quantity: '1.00', amount: { value, currency: 'RUB' }, vat_code: cfg.vatCode, payment_mode: 'full_payment', payment_subject: 'service' }],
-      };
-    }
+    const body = paymentBody(pay, user.email, `Подписка ${PLANS[planId].name} на ${months} мес. - доступ к онлайн-сервису Тара+`);
+    body.confirmation = { type: 'redirect', return_url: `${SITE_URL}/pay-success.html?InvId=${pay.id}`, locale: 'ru_RU' };
+    if (arConsent) body.save_payment_method = true;
     // Ключ идемпотентности - номер счёта: повтор запроса не создаст второй платёж.
     const r = await ykRequest('POST', '', body, `taraplus-inv-${pay.id}`);
     if (!r.ok || !r.data.confirmation || !r.data.confirmation.confirmation_url) {
@@ -311,4 +443,4 @@ router.get('/status', async (req, res) => {
   res.json({ status: pay.status, plan: PLANS[pay.plan] ? PLANS[pay.plan].name : pay.plan, months: pay.months, amount: pay.amount, quota: quotaInfo(req.user, Date.now()) });
 });
 
-module.exports = { router, payEnabled, quote, sweepPending };
+module.exports = { router, payEnabled, quote, sweepPending, chargeRenewals };

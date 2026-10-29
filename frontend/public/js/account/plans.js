@@ -41,8 +41,12 @@ function planCard(p, current, pay){
 }
 
 let plansById = {};
+// Автопродление включено на сервере - в окне оплаты галочка «Продлевать
+// автоматически» (не отмечена заранее, п. 6.6 Пользовательского соглашения).
+let payAutoRenew = false;
 Promise.all([fetch('/api/plans').then(r => r.json()), fetchAccountUser()]).then(([d, user]) => {
   const current = user ? user.quota.plan : null;
+  payAutoRenew = !!d.autoRenew;
   d.plans.forEach(p => { plansById[p.id] = p; });
   document.getElementById('plansGrid').innerHTML = d.plans.map(p => planCard(p, p.id === current, d.payEnabled)).join('');
   if(d.payEnabled) document.getElementById('plansNote').textContent = 'Оплата картой или через СБП на странице платёжного сервиса. Чек придёт на почту аккаунта.';
@@ -91,6 +95,7 @@ function showPayDialog(p, quotes){
       ${ok < 0 ? '' : `<div class="plan-terms" role="radiogroup" aria-label="Срок подписки">${terms}</div>
       <p class="limit-text" id="payWhat"></p>
       <div class="pay-sum"><span>К оплате</span><b id="paySum"></b></div>
+      ${payAutoRenew ? `<label class="site-ar-consent pay-autorenew"><input type="checkbox" id="payAutoRenew"> <span>Продлевать автоматически: по окончании срока подписка ${escHtml(p.name)} продлится на тот же срок со списанием по действующей цене с карты, которой вы оплатите. Карту хранит платёжный сервис. Письмо - за 4 дня до списания, отключить можно в любой момент в разделе «Аккаунт» окна «Настройки» (<a href="terms.html#terms-autorenew" target="_blank">п. 6.6-6.10 соглашения</a>).</span></label>` : ''}
       <p class="limit-text pay-legal">Оплата картой или через СБП на странице платёжного сервиса, чек придёт на почту. Нажимая «Перейти к оплате», вы принимаете условия <a href="terms.html" target="_blank">Пользовательского соглашения (публичной оферты)</a>.</p>`}
       <div class="auth-msg" id="payMsg"${err ? '' : ' hidden'}>${escHtml(err)}</div>
       <div class="limit-actions"><button type="button" class="btn-secondary limit-close">${ok < 0 ? 'Понятно' : 'Отмена'}</button>${ok < 0 ? '' : '<button type="button" class="limit-main" id="payGo">Перейти к оплате</button>'}</div>
@@ -113,7 +118,7 @@ function showPayDialog(p, quotes){
     const go = e.target.closest('#payGo');
     if(!go || go.disabled) return;
     go.disabled = true;
-    fetch('/api/pay/create', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: p.id, months: PAY_TERMS[sel] }) })
+    fetch('/api/pay/create', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: p.id, months: PAY_TERMS[sel], autoRenew: !!($('#payAutoRenew') && $('#payAutoRenew').checked) }) })
       .then(r => r.json().then(d => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
         if(ok && d.url){ location.href = d.url; return; }

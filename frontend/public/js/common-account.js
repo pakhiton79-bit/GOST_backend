@@ -200,17 +200,25 @@ function renderSiteSub(user){
 // сервере (до подключения онлайн-оплаты) - тогда блока нет. Включить - только
 // с отдельным согласием (галочка не отмечена заранее), отключить - одной
 // кнопкой в любой момент.
+// Карта сохраняется только при оплате с галочкой «Продлевать автоматически»
+// (payments.js): без карты - подсказка, с картой - её название и «Отвязать».
 function autoRenewHtml(user){
   const ar = user.autoRenew;
-  if(!ar || !ar.paid) return '';
+  if(!ar || (!ar.paid && !ar.card)) return '';
   const q = user.quota, sum = ar.amount.toLocaleString('ru-RU') + ' ₽';
   const until = q.planUntil ? new Date(q.planUntil).toLocaleDateString('ru-RU') : '';
-  const body = ar.on
-    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}. За ${ar.noticeDays} дня до списания придёт письмо.</p>
-       <div class="site-acc-actions"><button type="button" class="btn-secondary site-sub-btn" data-ar="off">Отключить автопродление</button></div>`
-    : `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную».</p>
-       <label class="site-ar-consent"><input type="checkbox" id="siteArConsent"> <span>Согласен(на) на автоматическое продление подписки ${escHtml(q.planName)} на тот же срок со списанием ${sum} (по действующей цене) тем же способом оплаты - на условиях <a href="terms.html#terms-autorenew" target="_blank">Пользовательского соглашения</a>. Отключить можно в любой момент.</span></label>
-       <div class="site-acc-actions"><button type="button" class="site-sub-btn site-sub-btn-main" data-ar="on" disabled>Включить автопродление</button></div>`;
+  const card = ar.card ? `<p class="site-sub-text">Карта для автопродления: <b>${escHtml(ar.card)}</b>. Данные карты хранит платёжный сервис.</p>` : '';
+  const unlink = ar.card ? '<button type="button" class="btn-secondary site-sub-btn" data-ar="unlink">Отвязать карту</button>' : '';
+  const body = !ar.paid
+    ? `${card}<div class="site-acc-actions">${unlink}</div>`
+    : ar.on
+    ? `<p class="site-sub-text">Включено. ${until ? until + ' ' : ''}подписка ${escHtml(q.planName)} продлится на тот же срок, сумма ${sum}. За ${ar.noticeDays} дня до списания придёт письмо.</p>${card}
+       <div class="site-acc-actions"><button type="button" class="btn-secondary site-sub-btn" data-ar="off">Отключить автопродление</button>${unlink}</div>`
+    : !ar.card
+    ? `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную». Чтобы включить, отметьте «Продлевать автоматически» при оплате или продлении на странице <a href="plans.html">«Подписки»</a> - карта сохранится для следующих списаний.</p>`
+    : `<p class="site-sub-text">Выключено: по окончании срока${until ? ' (' + until + ')' : ''} подписка перейдёт на «Пробную».</p>${card}
+       <label class="site-ar-consent"><input type="checkbox" id="siteArConsent"> <span>Согласен(на) на автоматическое продление подписки ${escHtml(q.planName)} на тот же срок со списанием ${sum} (по действующей цене) с карты ${escHtml(ar.card)} - на условиях <a href="terms.html#terms-autorenew" target="_blank">Пользовательского соглашения</a>. Отключить можно в любой момент.</span></label>
+       <div class="site-acc-actions"><button type="button" class="site-sub-btn site-sub-btn-main" data-ar="on" disabled>Включить автопродление</button>${unlink}</div>`;
   return `<div class="site-acc-block" id="siteAutoRenew"><div class="site-usage-title">Автопродление</div>${body}<div class="auth-msg" id="siteArMsg" hidden></div></div>`;
 }
 document.addEventListener('change', e => {
@@ -221,13 +229,14 @@ document.addEventListener('change', e => {
 document.addEventListener('click', async e => {
   const el = e.target.closest('#siteAutoRenew [data-ar]');
   if(!el) return;
-  const on = el.dataset.ar === 'on', msg = document.getElementById('siteArMsg');
+  const on = el.dataset.ar === 'on', unlink = el.dataset.ar === 'unlink', msg = document.getElementById('siteArMsg');
   const consent = document.getElementById('siteArConsent');
   if(on && !(consent && consent.checked)) return;
+  if(unlink && !await siteConfirm({ title: 'Отвязать карту?', text: 'Автопродление выключится. Оплаченный срок подписки сохранится.', ok: 'Отвязать', danger: true })) return;
   el.disabled = true;
   try{
     const r = await fetch('/api/auth/auto-renew', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(on ? { on: true, consent: true } : { on: false }) });
+      body: JSON.stringify(unlink ? { removeCard: true } : on ? { on: true, consent: true } : { on: false }) });
     const d = await r.json();
     if(!r.ok) throw new Error(d.error || 'Ошибка сервера.');
     if(accountUserCache){ accountUserCache.autoRenew = d.autoRenew; renderSiteSub(accountUserCache); }
