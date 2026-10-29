@@ -478,7 +478,13 @@ document.addEventListener('click', async e => {
     }catch(err){ fail(err.message); el.disabled = false; return; }
     msg.hidden = true;
     el.disabled = false;
-    if(!await siteConfirm({ title: 'Удалить аккаунт?', text: 'Аккаунт, подписка и расчёты будут удалены без возможности восстановления.', ok: 'Удалить', danger: true })) return;
+    // Оплаченная подписка (по указанию пользователя): до удаления - как вернуть
+    // деньги за неиспользованные дни (п. 6.4), заявление - с почты аккаунта.
+    const q = accountUserCache && accountUserCache.quota;
+    const paidText = q && q.plan !== 'free' && q.planUntil
+      ? ` У вас оплачена подписка ${q.planName} до ${new Date(q.planUntil).toLocaleDateString('ru-RU')}. Чтобы вернуть деньги за неиспользованные дни (п. 6.4 Пользовательского соглашения), сначала напишите в поддержку (адрес - в разделе «Помощь» этого окна) с почты этого аккаунта, а удаляйте после возврата.`
+      : '';
+    if(!await siteConfirm({ title: 'Удалить аккаунт?', text: 'Аккаунт, подписка и расчёты будут удалены без возможности восстановления.' + paidText, ok: paidText ? 'Всё равно удалить' : 'Удалить', danger: true })) return;
     el.disabled = true;
     try{
       const r = await post('delete', { password: pw });

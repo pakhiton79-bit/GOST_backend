@@ -64,10 +64,11 @@ const { PLANS, PLAN_TERMS, PERIOD_MS, planOf, syncUser, quotaInfo } = require('.
 const { LEGAL_VERSION, needsReconsent } = require('./legal');
 const { isAdmin } = require('./routes');
 const { autoRenewEnabled, renewAmount } = require('./auto-renew');
-const { sendAutoRenewFailed } = require('./mailer');
+const { sendAutoRenewFailed, sendExpiryReminder } = require('./mailer');
 
 const API_URL = 'https://api.yookassa.ru/v3';
 const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
+const DAY_MS = 24 * 3600 * 1000;
 
 function payConfig() {
   const env = process.env;
@@ -354,6 +355,36 @@ setInterval(() => {
   sweepPending(Date.now()).then(n => { if (n) console.log(`[оплата] сверка: подключено по оплаченным счетам - ${n}`); })
     .catch(e => console.error('[оплата] сверка: ошибка:', e));
 }, SWEEP_EVERY_MS).unref();
+// ---- Письмо «Подписка заканчивается» (по указанию пользователя) ----
+// За EXPIRY_NOTICE_MS до конца платной подписки - письмо со ссылкой на
+// оплату продления (plans.html?renew=<подписка>), один раз на срок
+// (expiryNoticeFor = planUntil). Не отправляется: автопродление включено с
+// картой (придёт его письмо), следующая подписка уже оплачена (очередь),
+// оплата на сайте недоступна посетителям (не настроена или тестовый режим).
+const EXPIRY_NOTICE_MS = 4 * DAY_MS;
+async function sendExpiryReminders(now) {
+  const cfg = payConfig();
+  if (!payConfigured() || cfg.test) return 0;
+  let sent = 0;
+  for (const user of store.listUsers()) {
+    if (syncUser(user, now)) store.updateUser(user);
+    if (user.plan === 'free' || !PLANS[user.plan].price || !Number.isFinite(user.planUntil) || user.blocked) continue;
+    if (user.planUntil - now > EXPIRY_NOTICE_MS || user.planUntil <= now || user.expiryNoticeFor === user.planUntil) continue;
+    if (Array.isArray(user.queue) && user.queue.length) continue;
+    if (autoRenewEnabled() && user.autoRenew && user.autoRenew.on && user.card) continue;
+    try {
+      await sendExpiryReminder(user.email, { planName: PLANS[user.plan].name, planId: user.plan, date: new Date(user.planUntil) });
+      store.updateUser(user, { expiryNoticeFor: user.planUntil });
+      sent++;
+    } catch (e) { console.error(`[подписка] письмо об окончании ${user.email} не отправлено: ${e.message}`); }
+  }
+  return sent;
+}
+setInterval(() => {
+  sendExpiryReminders(Date.now()).then(n => { if (n) console.log(`[подписка] писем об окончании подписки: ${n}`); })
+    .catch(e => console.error('[подписка] письма об окончании: ошибка:', e));
+}, 3600 * 1000).unref();
+
 setInterval(() => {
   chargeRenewals(Date.now()).then(n => { if (n) console.log(`[автопродление] продлено подписок: ${n}`); })
     .catch(e => console.error('[автопродление] ошибка:', e));
@@ -467,6 +498,8 @@ async function handleRefund(obj) {
   const r = await ykRequest('GET', '/payments/' + encodeURIComponent(ykId));
   if (!r.ok) throw new Error(`ЮKassa ответила ${r.status} на запрос платежа`);
   const refunded = Number(r.data.refunded_amount && r.data.refunded_amount.value) || 0;
+  // Возврат из админки (refundUser) - подписка уже переведена на пробную.
+  if (pay.adminRefund) { if (refunded > (pay.refunded || 0)) store.updatePayment(pay, { refunded }); return; }
   if (!(refunded > (pay.refunded || 0))) return; // уже учтено
   const now = Date.now(), full = refunded >= pay.amount - 0.005;
   store.updatePayment(pay, { refunded, refundedAt: new Date(now).toISOString() });
@@ -481,6 +514,68 @@ async function handleRefund(obj) {
     if (user) store.updateUser(user, { refundNote: `частичный возврат ${refunded} из ${pay.amount} ₽ по счёту ${pay.id} - подписка не изменена` });
     console.log(`[возврат] счёт ${pay.id}: ${pay.email}, возвращено ${refunded} из ${pay.amount} ₽ (частично) - подписка не изменена`);
   }
+}
+
+// Возврат из админки по заявлению пользователя (п. 6.4 соглашения, по
+// указанию пользователя): стоимость неиспользованной части - пропорционально
+// оставшимся полным дням. Неиспользованное время (до конца текущей подписки
+// и оплаченные вперёд из очереди) раскладывается по оплатам с последней:
+// последняя оплата покрывает самый конец. Время, выданное администратором
+// без оплаты, не возвращается. После возврата - «Пробная» (п. 6.4).
+function refundQuote(user, now) {
+  if (syncUser(user, now)) store.updateUser(user);
+  const cfg = payConfig();
+  let tail = (user.plan !== 'free' && user.planUntil > now ? user.planUntil - now : 0)
+    + (Array.isArray(user.queue) ? user.queue.reduce((s, q) => s + q.months * PERIOD_MS, 0) : 0);
+  const days = Math.floor(tail / DAY_MS);
+  const items = [];
+  const paid = store.listPayments()
+    .filter(p => p.userId === user.id && p.status === 'paid' && p.ykId && Boolean(p.test) === cfg.test && p.amount - (p.refunded || 0) > 0.005)
+    .sort((a, b) => Date.parse(b.paidAt) - Date.parse(a.paidAt));
+  for (const p of paid) {
+    if (tail <= 0) break;
+    const len = p.months * PERIOD_MS, covered = Math.min(len, tail);
+    tail -= covered;
+    const unusedDays = Math.floor(covered / DAY_MS);
+    const refundable = Math.min(p.amount - (p.refunded || 0), Math.floor(p.amount * unusedDays * DAY_MS / len));
+    if (refundable > 0) items.push({ inv: p.id, paidAt: p.paidAt, plan: p.plan, months: p.months, amount: p.amount, refunded: p.refunded || 0, unusedDays, refundable });
+  }
+  return { days, items, total: items.reduce((s, i) => s + i.refundable, 0) };
+}
+
+// Вернуть amount ₽ (не больше расчёта refundQuote) через ЮKassa и перевести
+// аккаунт на пробную. Сумма раскладывается по оплатам с последней.
+async function refundUser(user, amount, now) {
+  const q = refundQuote(user, now);
+  if (!(amount > 0) || amount > q.total + 0.005) return { error: `Сумма возврата - от 1 до ${q.total} ₽.` };
+  const cfg = payConfig();
+  let left = Math.round(amount * 100) / 100, done = 0;
+  const results = [];
+  for (const it of q.items) {
+    if (left <= 0) break;
+    const take = Math.min(it.refundable, left), pay = store.getPayment(it.inv);
+    const value = take.toFixed(2);
+    const body = { payment_id: pay.ykId, amount: { value, currency: 'RUB' }, description: `Возврат за неиспользованные дни подписки (счёт ${pay.id})` };
+    if (cfg.vatCode) body.receipt = { customer: { email: pay.email }, items: [{ description: `Подписка ${PLANS[pay.plan] ? PLANS[pay.plan].name : pay.plan} - возврат`, quantity: '1.00', amount: { value, currency: 'RUB' }, vat_code: cfg.vatCode, payment_mode: 'full_payment', payment_subject: 'service' }] };
+    // Уведомление refund.succeeded по этому счёту не меняет подписку (handleRefund).
+    store.updatePayment(pay, { adminRefund: true, refundApplied: true });
+    const r = await ykRequest('POST', '/refunds', body, `taraplus-refund-${pay.id}-${((pay.refunded || 0) + take).toFixed(2)}`);
+    if (!r.ok || !['succeeded', 'pending'].includes(r.data.status)) {
+      console.log(`[возврат] счёт ${pay.id}: ЮKassa не приняла возврат ${value} ₽ (${r.status}): ${r.data.code || ''} ${r.data.description || ''}`);
+      results.push({ inv: pay.id, error: r.data.description || 'ЮKassa не приняла возврат' });
+      break;
+    }
+    store.updatePayment(pay, { refunded: (pay.refunded || 0) + take, refundedAt: new Date(now).toISOString(), refundResult: 'возврат из админки' });
+    results.push({ inv: pay.id, refunded: take, status: r.data.status });
+    left -= take; done += take;
+    console.log(`[возврат] счёт ${pay.id}: ${pay.email}, возвращено ${value} ₽ из админки (${r.data.status})`);
+  }
+  if (done > 0) {
+    store.updateUser(user, { plan: 'free', planSince: now, planUntil: null, planExpiredAt: now, used: 0, queue: [], refundNote: null,
+      autoRenew: user.autoRenew ? { ...user.autoRenew, on: false, offAt: now, offReason: 'возврат по заявлению' } : user.autoRenew });
+    syncUser(user, now); store.updateUser(user);
+  }
+  return { refunded: done, results, error: done < amount - 0.005 ? `Возвращено ${done} из ${amount} ₽: ${(results.find(x => x.error) || {}).error || 'ошибка'}` : null };
 }
 
 // Уведомление ЮKassa: JSON { type: 'notification', event, object: платёж }.
@@ -519,4 +614,4 @@ router.get('/status', async (req, res) => {
   res.json({ status: pay.status, plan: PLANS[pay.plan] ? PLANS[pay.plan].name : pay.plan, months: pay.months, amount: pay.amount, quota: quotaInfo(req.user, Date.now()) });
 });
 
-module.exports = { router, payEnabled, quote, sweepPending, chargeRenewals };
+module.exports = { router, payEnabled, quote, sweepPending, chargeRenewals, refundQuote, refundUser, sendExpiryReminders };

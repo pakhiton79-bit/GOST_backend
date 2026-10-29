@@ -51,6 +51,11 @@ Promise.all([fetch('/api/plans').then(r => r.json()), fetchAccountUser()]).then(
   document.getElementById('plansGrid').innerHTML = d.plans.map(p => planCard(p, p.id === current, d.payEnabled)).join('');
   if(d.payEnabled) document.getElementById('plansNote').textContent = 'Оплата картой или через СБП на странице платёжного сервиса. Чек придёт на почту аккаунта.';
   else showPlansContact();
+  // Ссылка из письма «Подписка заканчивается» (plans.html?renew=<подписка>):
+  // сразу окно оплаты этой подписки (без входа - вход и возврат сюда же).
+  const renew = new URLSearchParams(location.search).get('renew');
+  const renewBtn = renew && d.payEnabled && document.querySelector(`[data-pay="${CSS.escape(renew)}"]`);
+  if(renewBtn) renewBtn.click();
 });
 
 const termName = m => m === 1 ? '1 месяц' : m + ' месяца';
@@ -60,7 +65,12 @@ document.addEventListener('click', e => {
   const b = e.target.closest && e.target.closest('[data-pay]');
   if(!b) return;
   const id = b.dataset.pay;
-  if(!accountUserCache){ location.href = 'login.html?mode=register&next=plans.html'; return; }
+  if(!accountUserCache){
+    // Пришёл по ссылке из письма - у него уже есть аккаунт: вход, не регистрация.
+    const renewing = /[?&]renew=/.test(location.search);
+    location.href = `login.html?${renewing ? '' : 'mode=register&'}next=${encodeURIComponent('plans.html' + location.search)}`;
+    return;
+  }
   b.disabled = true;
   Promise.all(PAY_TERMS.map(m => fetch(`/api/pay/quote?plan=${encodeURIComponent(id)}&months=${m}`, { credentials: 'same-origin' })
     .then(r => r.json().then(d => (r.ok ? { q: d } : { error: d.error || 'Не удалось рассчитать сумму.' })))))

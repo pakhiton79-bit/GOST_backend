@@ -568,6 +568,8 @@ function siteConfirm(opts){
     if(input){
       overlay.querySelector('label').textContent = o.input.label || '';
       input.placeholder = o.input.placeholder || '';
+      if(o.input.value !== undefined) input.value = String(o.input.value);
+      if(o.input.inputmode) input.inputMode = o.input.inputmode;
     }
     const before = document.activeElement;
     const done = value => {

@@ -23,6 +23,8 @@
 //   GET  /api/admin/reports               - сообщения об ошибках (feedback.js)
 //                                           (Pro и Team - первыми с пометкой priority, дальше новые сверху)
 //   POST /api/admin/reports/delete { id } - удалить сообщение об ошибке
+//   GET  /api/admin/refund-quote?email    - расчёт возврата за неиспользованные дни (п. 6.4)
+//   POST /api/admin/refund { email, amount } - возврат через ЮKassa, аккаунт - на «Пробную»
 const express = require('express');
 const store = require('./store');
 const { PLANS, PERIOD_MS, PLAN_TERMS, WELCOME_CALCS, planOf, quotaInfo, syncUser } = require('./plans');
@@ -174,6 +176,28 @@ router.post('/login-code', (req, res) => {
   store.updateUser(user, { skipLoginCode: skip });
   console.log(`[админ] ${req.user.email}: вход ${skip ? 'без кода' : 'с кодом'} для ${email}`);
   res.json({ ok: true });
+});
+
+// Возврат по заявлению (п. 6.4, payments.js - refundQuote / refundUser):
+//   GET  /refund-quote?email     - неиспользованные дни и сумма к возврату по оплатам;
+//   POST /refund { email, amount } - вернуть через ЮKassa, аккаунт - на «Пробную».
+const payments = require('./payments');
+router.get('/refund-quote', (req, res) => {
+  const user = store.findUserByEmail(String(req.query.email || '').trim().toLowerCase());
+  if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+  res.json(payments.refundQuote(user, Date.now()));
+});
+router.post('/refund', async (req, res, next) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const user = store.findUserByEmail(email);
+    if (!user) return res.status(404).json({ error: 'Аккаунт не найден.' });
+    const amount = Math.round(Number(req.body.amount) * 100) / 100;
+    console.log(`[админ] ${req.user.email}: возврат ${amount} ₽ для ${email}`);
+    const r = await payments.refundUser(user, amount, Date.now());
+    if (r.error && !r.refunded) return res.status(400).json({ error: r.error });
+    res.json({ ok: true, refunded: r.refunded, warning: r.error || null });
+  } catch (e) { next(e); }
 });
 
 router.use('/mail', require('./support-mail').router);

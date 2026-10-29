@@ -154,7 +154,7 @@ function renderUsers(){
       <td>${u.quota.monthly ? `${u.quota.used} из ${fmtNum(u.quota.monthly)}` : 'нет'}${u.quota.welcomeLeft > 0 ? `<div class="admin-sub">бонус ${u.quota.welcomeLeft}</div>` : ''}${u.quota.extraLeft > 0 ? `<div class="admin-sub">выдано, осталось ${fmtNum(u.quota.extraLeft)}</div>` : ''}<div class="admin-sub">всего ${fmtNum(u.totalCalcs)}</div><div class="admin-grant"><input type="number" class="admin-grant-count" min="1" max="100000" step="1" placeholder="0" aria-label="Сколько расчётов выдать или забрать ${esc(u.email)}"><button type="button" class="btn-secondary admin-grant-btn">Выдать</button><button type="button" class="btn-secondary admin-take-btn"${u.quota.extraLeft > 0 ? '' : ' disabled title="Выданных расчётов нет"'}>Забрать</button></div></td>
       <td>${u.lastCalcAt ? 'расчёт ' + fmtDate(u.lastCalcAt) : 'расчётов нет'}<div class="admin-sub">${seen}</div></td>
       <td>${u.devices} из ${u.quota.devices}</td>
-      <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button>${u.verified ? '' : '<button type="button" class="btn-secondary admin-verify">Подтвердить почту</button>'}<button type="button" class="btn-secondary admin-skipcode" data-skip="${u.skipLoginCode ? '0' : '1'}">${u.skipLoginCode ? 'Вход с кодом' : 'Вход без кода'}</button>${u.blocked ? '<button type="button" class="btn-secondary admin-unblock">Разблокировать</button>' : `<button type="button" class="btn-secondary admin-block"${u.self ? ' disabled title="Свой аккаунт заблокировать нельзя"' : ''}>Заблокировать</button>`}<button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
+      <td><div class="admin-actions"><button type="button" class="btn-secondary admin-save">Сохранить</button>${u.verified ? '' : '<button type="button" class="btn-secondary admin-verify">Подтвердить почту</button>'}<button type="button" class="btn-secondary admin-skipcode" data-skip="${u.skipLoginCode ? '0' : '1'}">${u.skipLoginCode ? 'Вход с кодом' : 'Вход без кода'}</button>${u.blocked ? '<button type="button" class="btn-secondary admin-unblock">Разблокировать</button>' : `<button type="button" class="btn-secondary admin-block"${u.self ? ' disabled title="Свой аккаунт заблокировать нельзя"' : ''}>Заблокировать</button>`}${u.quota.plan !== 'free' ? '<button type="button" class="btn-secondary admin-refund">Вернуть деньги</button>' : ''}<button type="button" class="btn-secondary admin-delete"${u.self ? ' disabled title="Свой аккаунт удалить нельзя"' : ''}>Удалить</button></div></td>
     </tr>`;
   }).join('') || '<tr><td colspan="6" class="admin-empty">Аккаунтов нет</td></tr>';
 }
@@ -248,6 +248,33 @@ $('adminRows').addEventListener('ui-select-change', e => {
 });
 $('adminRows').addEventListener('keydown', e => {
   if(e.key === 'Enter' && e.target.classList.contains('admin-grant-count')) e.target.closest('tr').querySelector('.admin-grant-btn').click();
+});
+// Возврат по заявлению (п. 6.4): сервер считает сумму за неиспользованные
+// полные дни по оплатам через сайт; сумму можно уменьшить. После возврата
+// аккаунт - на «Пробную».
+$('adminRows').addEventListener('click', async e => {
+  const btn = e.target.closest('.admin-refund');
+  if(!btn || btn.disabled) return;
+  const email = btn.closest('tr').dataset.email;
+  btn.disabled = true;
+  try{
+    const q = await api('refund-quote?email=' + encodeURIComponent(email));
+    if(!q.total){
+      showMsg(`${email}: вернуть нечего - неиспользованных дней ${q.days}, оплат через сайт за это время нет (подписка выдана вручную или уже возвращена).`);
+      return;
+    }
+    const parts = q.items.map(i => `счёт ${i.inv} от ${fmtDate(i.paidAt)}: ${fmtNum(i.refundable)} ₽ из ${fmtNum(i.amount)} ₽ (${i.unusedDays} дн.)`).join('; ');
+    const v = await siteConfirm({ title: `Вернуть деньги ${email}?`, danger: true, ok: 'Вернуть',
+      text: `Не использовано полных дней: ${q.days}. По п. 6.4 к возврату ${fmtNum(q.total)} ₽ - ${parts}. Деньги вернутся тем же способом оплаты через ЮKassa (обычно до нескольких дней), аккаунт сразу перейдёт на «Пробную».`,
+      input: { label: `Сумма возврата, ₽ (не больше ${fmtNum(q.total)})`, value: q.total, inputmode: 'decimal' } });
+    if(v === null) return;
+    const amount = Number(String(v).replace(',', '.').replace(/\s/g, ''));
+    if(!(amount > 0) || amount > q.total) return showMsg(`Сумма возврата - от 1 до ${fmtNum(q.total)} ₽.`);
+    const d = await api('refund', { email, amount });
+    showMsg(d.warning ? `${email}: ${d.warning}` : `${email}: возвращено ${fmtNum(d.refunded)} ₽, аккаунт переведён на «Пробную».`, !d.warning);
+    await load();
+  }catch(err){ showMsg(err.message); }
+  finally{ btn.disabled = false; }
 });
 $('adminRows').addEventListener('click', async e => {
   const btn = e.target.closest('.admin-save, .admin-delete, .admin-block, .admin-unblock, .admin-grant-btn, .admin-take-btn, .admin-verify, .admin-skipcode');

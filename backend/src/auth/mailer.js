@@ -236,4 +236,26 @@ async function sendAutoRenewFailed(email, { planName, date, final, cardDead }) {
   await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\n${SITE_NAME}`, html });
 }
 
-module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice, sendAutoRenewFailed };
+// Подписка скоро закончится (payments.js, sendExpiryReminders): кнопка
+// открывает страницу подписок сразу с окном оплаты этой подписки.
+async function sendExpiryReminder(email, { planName, planId, date }) {
+  const cfg = mailConfig();
+  const day = date.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
+  const link = `${SITE_URL}/plans.html?renew=${encodeURIComponent(planId)}`;
+  const lines = [
+    `Подписка ${planName} действует до ${day}. После этого аккаунт перейдёт на «Пробную».`,
+    'Продлить можно заранее: оплаченный срок добавится к концу текущего, ни один день не пропадёт.',
+  ];
+  if (!mailEnabled(cfg)) {
+    console.log(`[почта, тестовый режим] ${email}: ${lines.join(' ')} ${link}`);
+    return;
+  }
+  const subject = `${SITE_NAME}: подписка ${planName} заканчивается ${day}`;
+  const html = layout('Подписка заканчивается', [
+    ...lines.map(l => mailP(escapeHtml(l))),
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px"><tr><td style="background:${MAIL_C.accent};border-radius:10px"><a href="${link}" style="display:inline-block;padding:12px 22px;font:bold 15px ${MAIL_FONT};color:#FFFFFF;text-decoration:none">Продлить подписку</a></td></tr></table>`,
+  ], `Подписка ${planName} заканчивается ${day}`);
+  await sendMail(cfg, { to: email, subject, text: lines.join('\n\n') + `\n\nПродлить: ${link}\n\n${SITE_NAME}`, html });
+}
+
+module.exports = { sendCode, sendStandardRequest, sendErrorReport, sendAutoRenewNotice, sendAutoRenewFailed, sendExpiryReminder };
