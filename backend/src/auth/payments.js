@@ -1,22 +1,27 @@
-// Оплата подписок через Робокассу (по указанию пользователя). Настройки -
+// Оплата подписок через ЮKassa (по указанию пользователя). Настройки -
 // переменные окружения (вписывает владелец сайта, /etc/taraplus/env):
-//   ROBOKASSA_LOGIN  - идентификатор магазина;
-//   ROBOKASSA_PASS1  - пароль #1 (подпись ссылки на оплату);
-//   ROBOKASSA_PASS2  - пароль #2 (проверка уведомления об оплате);
-//   ROBOKASSA_TEST   - 1: тестовый режим (тестовые пароли из технических
-//                      настроек магазина, деньги не списываются);
-//   ROBOKASSA_HASH   - алгоритм подписи, как в технических настройках
-//                      магазина: sha256 (по умолчанию), md5, sha1, sha384, sha512.
-// Пока логин или пароли не заданы - оплаты нет (на странице подписок кнопки
+//   YOOKASSA_SHOP_ID    - идентификатор магазина (shopId);
+//   YOOKASSA_SECRET_KEY - секретный ключ API (кабинет ЮKassa → Интеграция →
+//                         Ключи API);
+//   YOOKASSA_TEST       - 1: тестовый режим (shopId и ключ тестового
+//                         магазина, деньги не списываются);
+//   YOOKASSA_VAT_CODE   - только если в магазине включены чеки 54-ФЗ от
+//                         ЮKassa: код НДС для чека (1 - без НДС). Самозанятому
+//                         не нужен - доход в «Мой налог» передаёт ЮKassa;
+//   SITE_URL            - адрес сайта для возврата после оплаты (как в mailer.js).
+// Пока shopId или ключ не заданы - оплаты нет (на странице подписок кнопки
 // «Скоро»), маршруты отвечают 404. В тестовом режиме оплата видна и
 // доступна только администраторам (ADMIN_EMAILS): посетители не получат
 // подписку тестовой картой, пока режим не выключен. В боевом режиме
-// уведомление о тестовом платеже (IsTest=1) не принимается.
+// тестовый платёж (test: true) не принимается.
 //
-// Технические настройки магазина в кабинете Робокассы:
-//   Result URL  - https://<домен>/api/pay/result (метод POST);
-//   Success URL - https://<домен>/pay-success.html (GET);
-//   Fail URL    - https://<домен>/pay-fail.html (GET).
+// Кабинет ЮKassa → Интеграция → HTTP-уведомления:
+//   URL - https://<домен>/api/pay/result, события payment.succeeded и
+//   payment.canceled.
+// У уведомлений ЮKassa нет подписи - сайт не верит телу уведомления, а
+// запрашивает платёж у API ЮKassa по его id (confirmPayment). Тот же запрос -
+// при проверке состояния со страницы после оплаты, если уведомление
+// задержалось.
 //
 // Правила (по указанию пользователя; цена - за месяц × срок, без скидок):
 //   - нет действующей платной подписки - новая подписка с момента оплаты;
@@ -29,48 +34,51 @@
 // не выставления счёта (счетов может быть несколько, оплачены в любом
 // порядке): оплаченное время никогда не пропадает - всё, что нельзя
 // применить, как было рассчитано, встаёт в очередь после текущей (applyPayment).
-// Подписка подключается только по уведомлению Робокассы (Result URL) с
-// проверенной подписью; страница Success лишь показывает результат.
+// Подписка подключается только когда API ЮKassa подтвердил платёж
+// (succeeded, сумма и счёт совпадают); страница после оплаты лишь
+// показывает результат.
 //
 // Маршруты:
 //   GET  /api/pay/quote?plan&months - сумма и что произойдёт (для окна на сайте);
-//   POST /api/pay/create { plan, months } - счёт и ссылка на оплату;
-//   POST /api/pay/result - уведомление Робокассы об оплате (ответ «OK<InvId>»);
-//   GET  /api/pay/status?inv - состояние своего счёта (страница Success).
-const crypto = require('crypto');
+//   POST /api/pay/create { plan, months } - счёт, платёж ЮKassa и ссылка на оплату;
+//   POST /api/pay/result - уведомление ЮKassa (ответ 200, иначе ЮKassa повторяет);
+//   GET  /api/pay/status?inv - состояние своего счёта (страница pay-success.html).
 const express = require('express');
 const store = require('./store');
 const { PLANS, PLAN_TERMS, PERIOD_MS, planOf, syncUser, quotaInfo } = require('./plans');
 const { needsReconsent } = require('./legal');
 const { isAdmin } = require('./routes');
 
-const PAY_URL = 'https://auth.robokassa.ru/Merchant/Index.aspx';
-const HASHES = ['md5', 'sha1', 'sha256', 'sha384', 'sha512'];
+const API_URL = 'https://api.yookassa.ru/v3/payments';
+const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
 
 function payConfig() {
   const env = process.env;
-  const hash = String(env.ROBOKASSA_HASH || 'sha256').toLowerCase();
   return {
-    login: env.ROBOKASSA_LOGIN || '', pass1: env.ROBOKASSA_PASS1 || '', pass2: env.ROBOKASSA_PASS2 || '',
-    test: env.ROBOKASSA_TEST === '1', hash: HASHES.includes(hash) ? hash : 'sha256',
+    shopId: env.YOOKASSA_SHOP_ID || '', secret: env.YOOKASSA_SECRET_KEY || '',
+    test: env.YOOKASSA_TEST === '1', vatCode: Number(env.YOOKASSA_VAT_CODE) || 0,
   };
 }
 function payConfigured() {
   const c = payConfig();
-  return Boolean(c.login && c.pass1 && c.pass2);
+  return Boolean(c.shopId && c.secret);
 }
 // Оплата доступна этому посетителю: настроена и (в тестовом режиме) он
 // администратор.
 function payEnabled(user) {
   return payConfigured() && (!payConfig().test || isAdmin(user));
 }
-if (payConfigured() && payConfig().test) console.log('[оплата] ТЕСТОВЫЙ режим Робокассы (ROBOKASSA_TEST=1): оплата доступна только администраторам');
-function sign(cfg, parts) {
-  return crypto.createHash(cfg.hash).update(parts.join(':')).digest('hex');
-}
-function sameSign(a, b) {
-  const x = Buffer.from(String(a || '').toLowerCase()), y = Buffer.from(String(b || '').toLowerCase());
-  return x.length === y.length && crypto.timingSafeEqual(x, y);
+if (payConfigured() && payConfig().test) console.log('[оплата] ТЕСТОВЫЙ режим ЮKassa (YOOKASSA_TEST=1): оплата доступна только администраторам');
+
+// Запрос к API ЮKassa: { ok, status, data }. Ошибка сети - исключение.
+async function ykRequest(method, path, body, idempotenceKey) {
+  const cfg = payConfig();
+  const headers = { Authorization: 'Basic ' + Buffer.from(`${cfg.shopId}:${cfg.secret}`).toString('base64') };
+  if (body) headers['Content-Type'] = 'application/json';
+  if (idempotenceKey) headers['Idempotence-Key'] = idempotenceKey;
+  const r = await fetch(API_URL + path, { method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(15000) });
+  const data = await r.json().catch(() => ({}));
+  return { ok: r.ok, status: r.status, data };
 }
 
 // Что произойдёт при оплате подписки planId на months месяцев: { amount (₽),
@@ -95,7 +103,7 @@ function quote(user, planId, months, now) {
   return { amount: total, kind: 'queue', credit: 0, startsAt: user.planUntil, until: user.planUntil + len };
 }
 
-// Подключить оплаченную подписку (уведомление Робокассы). Состояние аккаунта
+// Подключить оплаченную подписку (платёж подтверждён ЮKassa). Состояние аккаунта
 // могло измениться после выставления счёта (оплачен другой счёт, подписку
 // выдал администратор) - правило применяется к текущему, и оплаченное время
 // не теряется:
@@ -132,8 +140,48 @@ function applyPayment(pay, now) {
   return 'начнётся после текущей';
 }
 
+// Сверить счёт с платежом в ЮKassa и, если оплачен, подключить подписку.
+// Платёж берётся из API ЮKassa (не из уведомления). Возвращает состояние
+// счёта: paid | canceled | pending.
+async function confirmPayment(pay) {
+  if (pay.status !== 'pending' || !pay.ykId) return pay.status;
+  const r = await ykRequest('GET', '/' + encodeURIComponent(pay.ykId));
+  if (!r.ok) {
+    console.log(`[оплата] счёт ${pay.id}: ЮKassa ответила ${r.status} на запрос платежа`);
+    return pay.status;
+  }
+  const yk = r.data, cfg = payConfig();
+  if (yk.id !== pay.ykId || String(yk.metadata && yk.metadata.inv) !== String(pay.id)) {
+    console.log(`[оплата] счёт ${pay.id}: платёж ЮKassa ${yk.id} не от этого счёта`);
+    return pay.status;
+  }
+  if (yk.status === 'canceled') {
+    if (pay.status === 'pending') store.updatePayment(pay, { status: 'canceled', canceledAt: new Date().toISOString(), cancelReason: yk.cancellation_details && yk.cancellation_details.reason });
+    return pay.status;
+  }
+  if (yk.status !== 'succeeded' || !yk.paid) return pay.status;
+  // Тестовый платёж в боевом режиме - не принимать.
+  if (!cfg.test && yk.test) {
+    console.log(`[оплата] счёт ${pay.id}: тестовый платёж в боевом режиме - отклонено`);
+    return pay.status;
+  }
+  if (!yk.amount || yk.amount.currency !== 'RUB' || Math.abs(Number(yk.amount.value) - pay.amount) > 0.005) {
+    console.log(`[оплата] счёт ${pay.id}: сумма ${yk.amount && yk.amount.value} ${yk.amount && yk.amount.currency} не совпадает с ${pay.amount}`);
+    return pay.status;
+  }
+  // После await счёт мог подтвердить параллельный запрос (уведомление и
+  // страница после оплаты) - проверка и подключение ниже без await, поэтому
+  // подписка подключается один раз.
+  if (pay.status !== 'pending') return pay.status;
+  const now = Date.now();
+  const result = applyPayment(pay, now);
+  store.updatePayment(pay, { status: 'paid', paidAt: new Date(now).toISOString(), result });
+  console.log(`[оплата] счёт ${pay.id} оплачен: ${pay.email}, ${pay.plan} × ${pay.months} мес., ${pay.amount} ₽ - подписка ${result}`);
+  return pay.status;
+}
+
 const router = express.Router();
-// Уведомление Робокассы (/result) приходит без входа - нужна только настройка.
+// Уведомление ЮKassa (/result) приходит без входа - нужна только настройка.
 router.use((req, res, next) => ((req.path === '/result' ? payConfigured() : payEnabled(req.user)) ? next() : res.status(404).json({ error: 'Оплата пока не подключена.' })));
 
 // Кто может оплатить: вошёл, не заблокирован, принял действующие документы.
@@ -156,65 +204,74 @@ router.get('/quote', (req, res) => {
   res.json(publicQuote(q));
 });
 
-router.post('/create', (req, res) => {
-  const user = payer(req, res);
-  if (!user) return;
-  const planId = String(req.body.plan || ''), months = Number(req.body.months), now = Date.now();
-  const q = quote(user, planId, months, now);
-  if (q.error) return res.status(400).json({ error: q.error });
-  const cfg = payConfig();
-  const pay = store.createPayment({
-    userId: user.id, email: user.email, plan: planId, months, amount: q.amount, kind: q.kind, credit: q.credit,
-    // Для замены с зачётом - какая подписка была и до какого срока (applyPayment).
-    fromPlan: user.plan, fromUntil: user.planUntil,
-    status: 'pending', test: cfg.test, createdAt: new Date(now).toISOString(),
-  });
-  const outSum = q.amount.toFixed(2);
-  const params = new URLSearchParams({
-    MerchantLogin: cfg.login, OutSum: outSum, InvId: String(pay.id),
-    Description: `Подписка ${PLANS[planId].name} на ${months} мес. - доступ к онлайн-сервису Тара+`,
-    SignatureValue: sign(cfg, [cfg.login, outSum, pay.id, cfg.pass1]),
-    Email: user.email, Culture: 'ru',
-  });
-  if (cfg.test) params.set('IsTest', '1');
-  console.log(`[оплата] счёт ${pay.id}: ${user.email}, ${planId} × ${months} мес., ${outSum} ₽ (${q.kind})${cfg.test ? ', тест' : ''}`);
-  res.json({ url: `${PAY_URL}?${params}`, ...publicQuote(q) });
+router.post('/create', async (req, res, next) => {
+  try {
+    const user = payer(req, res);
+    if (!user) return;
+    const planId = String(req.body.plan || ''), months = Number(req.body.months), now = Date.now();
+    const q = quote(user, planId, months, now);
+    if (q.error) return res.status(400).json({ error: q.error });
+    const cfg = payConfig();
+    const pay = store.createPayment({
+      userId: user.id, email: user.email, plan: planId, months, amount: q.amount, kind: q.kind, credit: q.credit,
+      // Для замены с зачётом - какая подписка была и до какого срока (applyPayment).
+      fromPlan: user.plan, fromUntil: user.planUntil,
+      status: 'pending', test: cfg.test, createdAt: new Date(now).toISOString(),
+    });
+    const value = q.amount.toFixed(2);
+    const description = `Подписка ${PLANS[planId].name} на ${months} мес. - доступ к онлайн-сервису Тара+`;
+    const body = {
+      amount: { value, currency: 'RUB' },
+      capture: true,
+      confirmation: { type: 'redirect', return_url: `${SITE_URL}/pay-success.html?InvId=${pay.id}`, locale: 'ru_RU' },
+      description: description.slice(0, 128),
+      metadata: { inv: String(pay.id), userId: String(user.id) },
+    };
+    if (cfg.vatCode) {
+      body.receipt = {
+        customer: { email: user.email },
+        items: [{ description: description.slice(0, 128), quantity: '1.00', amount: { value, currency: 'RUB' }, vat_code: cfg.vatCode, payment_mode: 'full_payment', payment_subject: 'service' }],
+      };
+    }
+    // Ключ идемпотентности - номер счёта: повтор запроса не создаст второй платёж.
+    const r = await ykRequest('POST', '', body, `taraplus-inv-${pay.id}`);
+    if (!r.ok || !r.data.confirmation || !r.data.confirmation.confirmation_url) {
+      console.log(`[оплата] счёт ${pay.id}: ЮKassa не создала платёж (${r.status}): ${r.data.code || ''} ${r.data.description || ''}`);
+      store.updatePayment(pay, { status: 'failed' });
+      return res.status(502).json({ error: 'Платёжный сервис не ответил. Попробуйте ещё раз через минуту.' });
+    }
+    store.updatePayment(pay, { ykId: r.data.id });
+    console.log(`[оплата] счёт ${pay.id}: ${user.email}, ${planId} × ${months} мес., ${value} ₽ (${q.kind}), платёж ЮKassa ${r.data.id}${cfg.test ? ', тест' : ''}`);
+    res.json({ url: r.data.confirmation.confirmation_url, ...publicQuote(q) });
+  } catch (err) { next(err); }
 });
 
-// Уведомление об оплате: Робокасса шлёт POST (или GET) с OutSum, InvId,
-// SignatureValue = hash(OutSum:InvId:пароль #2). Повторное уведомление по
-// уже оплаченному счёту - снова «OK» без повторного подключения.
-router.all('/result', express.urlencoded({ extended: false }), (req, res) => {
-  const p = { ...req.query, ...(req.body || {}) };
-  const cfg = payConfig();
-  const pay = store.getPayment(Number(p.InvId));
-  if (!pay || !sameSign(p.SignatureValue, sign(cfg, [p.OutSum, p.InvId, cfg.pass2]))) {
-    console.log(`[оплата] отклонено уведомление по счёту ${p.InvId}: неверная подпись или счёт`);
-    return res.status(400).send('bad sign');
+// Уведомление ЮKassa: JSON { type: 'notification', event, object: платёж }.
+// Телу не верим - по object.metadata.inv находим счёт и сверяем платёж через
+// API (confirmPayment). Ответ всегда 200 (кроме сбоя связи с ЮKassa - 500,
+// ЮKassa повторит уведомление позже): иначе ЮKassa повторяет его сутки.
+router.post('/result', async (req, res) => {
+  const obj = (req.body && req.body.object) || {};
+  const pay = store.getPayment(Number(obj.metadata && obj.metadata.inv));
+  if (!pay || pay.ykId !== obj.id) {
+    console.log(`[оплата] уведомление ЮKassa без известного счёта (платёж ${String(obj.id || '').slice(0, 64)})`);
+    return res.sendStatus(200);
   }
-  // Тестовый платёж в боевом режиме - отклонить (на случай, если тестовые
-  // пароли совпали с боевыми).
-  if (!cfg.test && String(p.IsTest || '') === '1') {
-    console.log(`[оплата] счёт ${pay.id}: тестовый платёж в боевом режиме - отклонено`);
-    return res.status(400).send('test payment');
+  try {
+    await confirmPayment(pay);
+    res.sendStatus(200);
+  } catch (err) {
+    console.log(`[оплата] счёт ${pay.id}: нет связи с ЮKassa при проверке уведомления: ${err.message}`);
+    res.sendStatus(500);
   }
-  if (Math.abs(Number(p.OutSum) - pay.amount) > 0.005) {
-    console.log(`[оплата] счёт ${pay.id}: сумма ${p.OutSum} не совпадает с ${pay.amount}`);
-    return res.status(400).send('bad sum');
-  }
-  if (pay.status !== 'paid') {
-    const now = Date.now();
-    const result = applyPayment(pay, now);
-    store.updatePayment(pay, { status: 'paid', paidAt: new Date(now).toISOString(), result });
-    console.log(`[оплата] счёт ${pay.id} оплачен: ${pay.email}, ${pay.plan} × ${pay.months} мес., ${pay.amount} ₽ - подписка ${result}`);
-  }
-  res.type('text/plain').send(`OK${pay.id}`);
 });
 
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   if (!req.user) return res.status(401).json({ error: 'Войдите в аккаунт.' });
   const pay = store.getPayment(Number(req.query.inv));
   if (!pay || pay.userId !== req.user.id) return res.status(404).json({ error: 'Счёт не найден.' });
+  // Уведомление могло задержаться - спросить ЮKassa самим.
+  try { await confirmPayment(pay); } catch (err) { console.log(`[оплата] счёт ${pay.id}: нет связи с ЮKassa: ${err.message}`); }
   res.json({ status: pay.status, plan: PLANS[pay.plan] ? PLANS[pay.plan].name : pay.plan, months: pay.months, amount: pay.amount, quota: quotaInfo(req.user, Date.now()) });
 });
 

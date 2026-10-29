@@ -86,7 +86,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', makeThrottle(), adminRoutes);
 app.use('/api/standards', standardsRoutes);
 app.use('/api/feedback', feedbackRoutes);
-// Оплата подписок через Робокассу (src/auth/payments.js).
+// Оплата подписок через ЮKassa (src/auth/payments.js).
 const payments = require('./src/auth/payments');
 app.use('/api/pay', makeThrottle(), payments.router);
 // payEnabled - на странице подписок кнопки оплаты (иначе «Скоро»).

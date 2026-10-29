@@ -54,7 +54,7 @@ function load() {
   // номера - по порядку.
   db.nextReportId = Number.isInteger(db.nextReportId) ? db.nextReportId : 1;
   db.reports.forEach(r => { if (!Number.isInteger(r.id)) r.id = db.nextReportId++; });
-  // Платежи Робокассы (payments.js): номер счёта (InvId) -> запись.
+  // Платежи (payments.js): номер счёта (InvId) -> запись (ykId - платёж ЮKassa).
   db.payments = db.payments && typeof db.payments === 'object' ? db.payments : {};
   db.nextInvId = Number.isInteger(db.nextInvId) ? db.nextInvId : 1;
   // IP (ipKey) -> времена выдачи бонуса за регистрацию (plans.js, WELCOME_PER_IP).
