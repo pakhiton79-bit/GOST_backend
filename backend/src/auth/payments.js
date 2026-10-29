@@ -17,7 +17,10 @@
 //
 // Кабинет ЮKassa → Интеграция → HTTP-уведомления:
 //   URL - https://<домен>/api/pay/result, события payment.succeeded и
-//   payment.canceled.
+//   payment.canceled, refund.succeeded.
+// Возврат (кабинет ЮKassa → Платежи → «Вернуть», по указанию пользователя):
+// полный - оплаченное этим счётом время снимается (applyRefund), частичный -
+// подписка не меняется, аккаунт помечается для администратора (refundNote).
 // У уведомлений ЮKassa нет подписи - сайт не верит телу уведомления, а
 // запрашивает платёж у API ЮKassa по его id (confirmPayment). Тот же запрос -
 // при проверке состояния со страницы после оплаты, если уведомление
@@ -63,7 +66,7 @@ const { isAdmin } = require('./routes');
 const { autoRenewEnabled, renewAmount } = require('./auto-renew');
 const { sendAutoRenewFailed } = require('./mailer');
 
-const API_URL = 'https://api.yookassa.ru/v3/payments';
+const API_URL = 'https://api.yookassa.ru/v3';
 const SITE_URL = (process.env.SITE_URL || 'https://taraplus.site').replace(/\/+$/, '');
 
 function payConfig() {
@@ -183,7 +186,7 @@ function applyPayment(pay, now) {
 // счёта: paid | canceled | pending.
 async function confirmPayment(pay) {
   if (pay.status !== 'pending' || !pay.ykId) return pay.status;
-  const r = await ykRequest('GET', '/' + encodeURIComponent(pay.ykId));
+  const r = await ykRequest('GET', '/payments/' + encodeURIComponent(pay.ykId));
   if (!r.ok) {
     console.log(`[оплата] счёт ${pay.id}: ЮKassa ответила ${r.status} на запрос платежа`);
     return pay.status;
@@ -307,7 +310,7 @@ async function chargeRenewals(now) {
       body.payment_method_id = user.card.id;
       let status = 'pending', reason = '';
       try {
-        const r = await ykRequest('POST', '', body, `taraplus-inv-${pay.id}`);
+        const r = await ykRequest('POST', '/payments', body, `taraplus-inv-${pay.id}`);
         if (r.ok && r.data.id) {
           store.updatePayment(pay, { ykId: r.data.id });
           status = await confirmPayment(pay);
@@ -402,7 +405,7 @@ router.post('/create', async (req, res, next) => {
     body.confirmation = { type: 'redirect', return_url: `${SITE_URL}/pay-success.html?InvId=${pay.id}`, locale: 'ru_RU' };
     if (arConsent) body.save_payment_method = true;
     // Ключ идемпотентности - номер счёта: повтор запроса не создаст второй платёж.
-    const r = await ykRequest('POST', '', body, `taraplus-inv-${pay.id}`);
+    const r = await ykRequest('POST', '/payments', body, `taraplus-inv-${pay.id}`);
     if (!r.ok || !r.data.confirmation || !r.data.confirmation.confirmation_url) {
       console.log(`[оплата] счёт ${pay.id}: ЮKassa не создала платёж (${r.status}): ${r.data.code || ''} ${r.data.description || ''}`);
       store.updatePayment(pay, { status: 'failed' });
@@ -414,12 +417,85 @@ router.post('/create', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ---- Возвраты ----
+// Полный возврат (возвращено столько, сколько оплачено, - одним или
+// несколькими частичными) снимает оплаченное этим счётом время:
+//   - подключена / продлена - срок подписки короче на оплаченный (дошёл до
+//     «сейчас» - пробная или следующая из очереди, syncUser);
+//   - подключена с зачётом - возвращается прежняя подписка до прежнего срока;
+//   - начнётся после текущей - убирается из очереди.
+// Если аккаунт с тех пор изменился так, что снять точно нельзя (другая
+// подписка, нет в очереди), - ничего не меняется, пометка для администратора.
+// Частичный возврат подписку не трогает (вернули часть по договорённости) -
+// только пометка.
+function applyRefund(pay, now) {
+  const user = store.findUserById(pay.userId);
+  if (!user) return 'аккаунт удалён';
+  syncUser(user, now);
+  const len = pay.months * PERIOD_MS;
+  if (pay.result === 'начнётся после текущей') {
+    const queue = Array.isArray(user.queue) ? user.queue.slice() : [];
+    for (let i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].plan !== pay.plan || queue[i].months < pay.months) continue;
+      if (queue[i].months === pay.months) queue.splice(i, 1);
+      else queue[i] = { plan: queue[i].plan, months: queue[i].months - pay.months };
+      store.updateUser(user, { queue });
+      return 'убрана из очереди';
+    }
+  } else if (user.plan === pay.plan && Number.isFinite(user.planUntil)) {
+    if (pay.result === 'подключена с зачётом' && PLANS[pay.fromPlan] && pay.fromUntil > now) {
+      store.updateUser(user, { plan: pay.fromPlan, planUntil: pay.fromUntil, planSince: now, periodStart: now, used: 0 });
+      return `возвращена прежняя подписка ${PLANS[pay.fromPlan].name}`;
+    }
+    store.updateUser(user, { planUntil: user.planUntil - len });
+    if (syncUser(user, now)) store.updateUser(user);
+    return user.plan === 'free' ? 'подписка снята, теперь пробная' : 'срок сокращён';
+  }
+  return null; // снять точно нельзя - решает администратор
+}
+
+// Уведомление о возврате: refund.payment_id - платёж ЮKassa. Сумма
+// возвращённого - из самого платежа в API (refunded_amount), не из
+// уведомления.
+async function handleRefund(obj) {
+  const ykId = String(obj.payment_id || '');
+  const pay = ykId && store.listPayments().find(p => p.ykId === ykId);
+  if (!pay || pay.status !== 'paid') {
+    console.log(`[возврат] уведомление без оплаченного счёта (платёж ${ykId.slice(0, 64)})`);
+    return;
+  }
+  const r = await ykRequest('GET', '/payments/' + encodeURIComponent(ykId));
+  if (!r.ok) throw new Error(`ЮKassa ответила ${r.status} на запрос платежа`);
+  const refunded = Number(r.data.refunded_amount && r.data.refunded_amount.value) || 0;
+  if (!(refunded > (pay.refunded || 0))) return; // уже учтено
+  const now = Date.now(), full = refunded >= pay.amount - 0.005;
+  store.updatePayment(pay, { refunded, refundedAt: new Date(now).toISOString() });
+  const user = store.findUserById(pay.userId);
+  if (full && !pay.refundApplied) {
+    const result = applyRefund(pay, now);
+    store.updatePayment(pay, { refundApplied: true, refundResult: result || 'не снято - проверить вручную' });
+    // Снято - прежняя пометка (частичный возврат) больше не нужна.
+    if (user) store.updateUser(user, { refundNote: result ? null : `полный возврат ${refunded} ₽ по счёту ${pay.id} - подписку проверить вручную` });
+    console.log(`[возврат] счёт ${pay.id}: ${pay.email}, возвращено ${refunded} ₽ (полностью) - ${result || 'подписка не изменена, проверить вручную'}`);
+  } else if (!full) {
+    if (user) store.updateUser(user, { refundNote: `частичный возврат ${refunded} из ${pay.amount} ₽ по счёту ${pay.id} - подписка не изменена` });
+    console.log(`[возврат] счёт ${pay.id}: ${pay.email}, возвращено ${refunded} из ${pay.amount} ₽ (частично) - подписка не изменена`);
+  }
+}
+
 // Уведомление ЮKassa: JSON { type: 'notification', event, object: платёж }.
 // Телу не верим - по object.metadata.inv находим счёт и сверяем платёж через
 // API (confirmPayment). Ответ всегда 200 (кроме сбоя связи с ЮKassa - 500,
 // ЮKassa повторит уведомление позже): иначе ЮKassa повторяет его сутки.
 router.post('/result', async (req, res) => {
   const obj = (req.body && req.body.object) || {};
+  if (String(req.body && req.body.event || '').startsWith('refund.')) {
+    try { await handleRefund(obj); res.sendStatus(200); } catch (err) {
+      console.log(`[возврат] нет связи с ЮKassa при проверке уведомления: ${err.message}`);
+      res.sendStatus(500);
+    }
+    return;
+  }
   const pay = store.getPayment(Number(obj.metadata && obj.metadata.inv));
   if (!pay || pay.ykId !== obj.id) {
     console.log(`[оплата] уведомление ЮKassa без известного счёта (платёж ${String(obj.id || '').slice(0, 64)})`);

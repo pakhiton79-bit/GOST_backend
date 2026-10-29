@@ -66,6 +66,9 @@ router.get('/users', (req, res) => {
       self: u.id === req.user.id,
       blocked: u.blocked ? { at: new Date(u.blocked.at).toISOString(), reason: u.blocked.reason || '' } : null,
       skipLoginCode: !!u.skipLoginCode,
+      // Возврат денег, который сайт не снял сам (payments.js, handleRefund) -
+      // пометка до следующего сохранения подписки здесь.
+      refundNote: u.refundNote || null,
     };
   });
   res.json({ users, plans: Object.keys(PLANS).map(id => ({ id, name: PLANS[id].name })), terms: PLAN_TERMS });
@@ -85,7 +88,7 @@ router.post('/plan', (req, res) => {
   const now = Date.now();
   const planUntil = plan === 'free' ? null : now + months * PERIOD_MS;
   // planMonths - срок подключения (сумма автопродления, auto-renew.js).
-  store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0, planMonths: plan === 'free' ? null : months });
+  store.updateUser(user, { plan, planSince: now, planUntil, periodStart: now, used: 0, planMonths: plan === 'free' ? null : months, refundNote: null });
   if (syncUser(user, now)) store.updateUser(user); // пробная - автопродление выключается
   store.listUserSessions(user.id).slice(planOf(user).devices).forEach(s => store.deleteSessionById(user.id, s.id));
   res.json({ ok: true, quota: quotaInfo(user, now) });
